@@ -9717,7 +9717,7 @@ function toggleEmployeeStatus(empId) {
         _migratedFromSingleton = true;
       }
       // جلب خفيف (updated_at + device_id) لكل data_* rows
-      var metaRows = await supabaseGet('like.data_*', 'id,updated_at,device_id');
+      var metaRows = await supabaseGet('like.data_%25', 'id,updated_at,device_id');
       if (!metaRows || !metaRows.length) return;
       var myDeviceId = localStorage.getItem('lineh_device_id');
       var changed = false;
