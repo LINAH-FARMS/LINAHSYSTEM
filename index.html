@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>منظومة الشئون الإدارية المتكاملة – مزارع لينه</title>
+  <title>منظومة الشئون الإدارية المتكاملة – لينه فارمز</title>
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -856,7 +856,7 @@
   <div id="login-screen" class="hidden">
     <div id="login-box">
       <div style="font-size:48px;margin-bottom:10px;">🔐</div>
-      <h1>مزارع لينه</h1>
+      <h1>لينه فارمز</h1>
       <p>منظومة الشئون الإدارية المتكاملة</p>
       <div class="form-group">
         <label>اختر المستخدم</label>
@@ -5040,7 +5040,7 @@
       if (todayGuests.length > 0) {
         html += '<div class="rp-section"><div class="rp-section-title">🛎️ الضيوف الحاليون</div><table class="rp-table"><thead><tr><th>الاسم</th><th>التصنيف</th><th>الغرض</th><th>عدد الضيوف</th><th>تاريخ الوصول</th><th>المغادرة</th><th>الوجبات</th></tr></thead><tbody>';
         todayGuests.forEach(function(h) {
-          html += '<tr><td>' + (h.name || '—') + '</td><td>' + (h.type || '—') + '</td><td>' + (h.title || '—') + '</td><td>' + (h.guests || 1) + '</td><td>' + (h.arrival || '—') + '</td><td>' + (h.departure || '—') + '</td><td>' + (h.meals ? h.meals.join(', ') : '—') + '</td></tr>';
+          html += '<tr><td>' + (h.name || '—') + '</td><td>' + (h.type || '—') + '</td><td>' + (h.title || '—') + '</td><td>' + (h.guests || 1) + '</td><td>' + (h.arrival || '—') + '</td><td>' + (h.departure || '—') + '</td><td>' + (h.meals ? (Array.isArray(h.meals) ? h.meals.join(', ') : h.meals) : '—') + '</td></tr>';
         });
         html += '</tbody></table></div>';
       }
@@ -5123,13 +5123,15 @@
       html += '</tbody></table></div>';
       html += '<div class="rp-footer">LINAH FARMS - WAHAT ADMINSTRATION TEAM LEADER<br>تم التوليد بواسطة منظومة الشئون الإدارية المتكاملة - مزارع لينه<br>تاريخ التقرير: ' + dateStr + '</div>';
       html += '</div></div>';
+  try {
   var w = window.open('', '_blank');
-  if (!w) { alert('الرجاء السماح للنوافذ المنبثقة'); return; }
+  if (!w) { alert('الرجاء السماح للنوافذ المنبثقة (Popup)'); return; }
   w.document.write('<html><head><meta charset="UTF-8"><meta name="viewport" content="width=210mm">' +
     '<style>@media print{@page{size:A4;margin:1.5cm}}body{font-family:"Cairo","Segoe UI",sans-serif;direction:rtl;padding:0;margin:0;color:#222;background:#fafafa}</style>' +
     '</head><body>' + html + '</body></html>');
   w.document.close();
   setTimeout(function() { w.print(); }, 1000);
+  } catch(e) { alert('خطأ في التقرير: ' + e.message); }
     }
     var _breadSuggestionIdCounter = 0;
     function suggestBreadForTomorrow() {
@@ -6363,7 +6365,7 @@ function toggleEmployeeStatus(empId) {
       if(document.getElementById('hosp-meal-lh').checked) meals.push("غداء");
       if(document.getElementById('hosp-meal-dn').checked) meals.push("عشاء");
 
-      hospitalities.push({ name, type, title, arrival, departure, guests, meals: meals.join(' + ') });
+      hospitalities.push({ name, type, title, arrival, departure, guests, meals: meals.slice() });
       // تحديث سجل الوجبات بإضافة الضيوف
       updateMealLogFromHospitality(arrival);
       syncStorage(); renderHospitalityTable(); renderMealLogTable();
