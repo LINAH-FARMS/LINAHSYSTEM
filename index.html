@@ -4059,7 +4059,7 @@
       document.getElementById('housing-emp-search').addEventListener('change', showHousingEmployeeResult);
     }
 
-    function syncStorage(noTimestamp) {
+    function syncStorage(noTimestamp, skipSync) {
       localStorage.setItem('lineh_employees', JSON.stringify(employees));
       localStorage.setItem('employees_db', JSON.stringify(employees));
       localStorage.setItem('lineh_rooms_capacity', JSON.stringify(roomsCapacity));
@@ -4094,16 +4094,15 @@
       localStorage.setItem('linah_bakery_invoices', JSON.stringify(bakeryInvoices));
       localStorage.setItem('linah_bakery_stock_log', JSON.stringify(bakeryStockLog));
       calculateSystemStats();
-      syncToServer();
+      if (!skipSync) syncToServer();
       if (!noTimestamp) localStorage.setItem('_localChangeTime', Date.now());
-      syncToCloud();
-      debouncedSyncToSupabase();
+      if (!skipSync) { syncToCloud(); debouncedSyncToSupabase(); }
       setAction('💾 حفظ');
       _dataChangedSinceBackup = true;
       var bakBtn = document.querySelector('button[onclick*="exportBackupSystem"]');
       if (bakBtn) bakBtn.classList.add('btn-backup-pulse');
       callUpdateDXStats();
-      playChangeSound();
+      if (!skipSync) playChangeSound();
     }
 
     function renderDashboard() {
@@ -9743,7 +9742,7 @@ function toggleEmployeeStatus(empId) {
         changed = true;
       }
       if (changed) {
-        syncStorage();
+        syncStorage(true, true);
       }
     }
 
@@ -9868,7 +9867,7 @@ function toggleEmployeeStatus(empId) {
         employees = employees.filter(function(e) { return !exclMap[e.code || e.id || e.name]; });
       }
       normalizeBakeryDates(true);
-      syncStorage();
+      syncStorage(true, true);
       renderTable(); renderHousingLayout(); renderInventoryTable(); renderInventoryItems(); renderVacationsTable(); renderHospitalityTable(); renderMaintenanceTable(); renderSepticTable(); renderPeriodicMaintenance(); renderTeaSugarTable(); renderMealLogTable(); renderDashboard(); renderContractorsTable(); renderBakeryIngredients(); renderBakeryProductions(); renderBakeryContractorSupplies(); renderBakeryInvoices(); updateBakeryStats(); updateBreadSupplyStats(); showSyncToast('تم استلام تحديثات من جهاز آخر');
       updateLastSyncTime();
     }
