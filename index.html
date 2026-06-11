@@ -5124,25 +5124,28 @@
       html += '<div class="rp-footer">LINAH FARMS - WAHAT ADMINSTRATION TEAM LEADER<br>تم التوليد بواسطة منظومة الشئون الإدارية المتكاملة - لينه فارمز<br>تاريخ التقرير: ' + dateStr + '</div>';
       html += '</div></div>';
   try {
-      if (typeof html2pdf === 'undefined') { alert('مكتبة PDF مش متاحة — افتح النافذة الجديدة للطباعة'); return; }
-      var overlay = document.createElement('div');
-      overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.4);display:flex;justify-content:center;align-items:center;z-index:99998;';
-      overlay.innerHTML = '<div style="background:#fff;padding:30px 50px;border-radius:12px;font-size:18px;box-shadow:0 5px 25px rgba(0,0,0,0.3);color:#333;">جاري إنشاء PDF ...</div>';
-      document.body.appendChild(overlay);
-      var container = document.createElement('div');
-      container.innerHTML = html;
-      container.style.cssText = 'position:fixed;top:0;left:0;width:210mm;z-index:99997;background:#fafafa;';
-      document.body.appendChild(container);
-      function limpiar() { try{ document.body.removeChild(container); }catch(e){} try{ document.body.removeChild(overlay); }catch(e){} }
-      setTimeout(function() {
-        html2pdf().set({
-          filename: 'التقرير_اليومي_' + dateInput + '.pdf',
-          margin: [0.4, 0.4, 0.4, 0.4],
-          image: { type: 'jpeg', quality: 0.98 },
-          html2canvas: { scale: 2, useCORS: true, letterRendering: true, logging: false },
-          jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
-        }).from(container).save().then(limpiar).catch(function(e) { limpiar(); alert('خطأ في PDF: ' + e.message); });
-      }, 1500);
+      var fullHtml = '<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8"><title>التقرير اليومي - لينه فارمز</title>' +
+        '<style>@page{size:A4;margin:1.5cm}body{font-family:"Cairo","Segoe UI",sans-serif;direction:rtl;padding:30px;color:#222;background:#fafafa}' +
+        '.rp-container{max-width:190mm;margin:0 auto;background:white;padding:25px;box-shadow:0 2px 20px rgba(0,0,0,0.1)}' +
+        '.rp-header{text-align:center;border-bottom:4px double #1b5e20;padding-bottom:20px;margin-bottom:25px}' +
+        '.rp-header h1{margin:0;color:#1b5e20;font-size:26px}.rp-header h2{margin:5px 0 0;color:#2e7d32;font-size:16px;font-weight:400}' +
+        '.rp-header .rp-date{margin-top:10px;font-size:13px;color:#666}.rp-section{margin-bottom:20px;page-break-inside:avoid}' +
+        '.rp-section-title{font-size:15px;font-weight:700;color:#1b5e20;border-right:5px solid #4caf50;padding-right:10px;margin-bottom:10px}' +
+        '.rp-grid{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:10px}.rp-card{background:#f5f5f5;border-radius:8px;padding:12px 18px;text-align:center;border:1px solid #e0e0e0;flex:1;min-width:120px}' +
+        '.rp-card .rp-card-label{font-size:11px;color:#888}.rp-card .rp-card-value{font-size:20px;font-weight:700;color:#1b5e20}' +
+        '.rp-card.green{background:#e8f5e9}.rp-card.blue{background:#e3f2fd}.rp-card.orange{background:#fff3e0}.rp-card.purple{background:#f3e5f5}' +
+        '.rp-table{width:100%;border-collapse:collapse;margin-bottom:10px;font-size:12px}' +
+        '.rp-table th{background:#1b5e20;color:white;padding:7px 8px;text-align:center;font-size:11px}' +
+        '.rp-table td{padding:5px 8px;border:1px solid #e0e0e0;text-align:center}' +
+        '.rp-table tr:nth-child(even){background:#f9f9f9}.rp-footer{text-align:center;border-top:2px solid #e0e0e0;padding-top:12px;margin-top:25px;font-size:10px;color:#888}' +
+        '</style></head><body><div class="rp-container">' + html + '</div></body></html>';
+      var blob = new Blob([fullHtml], { type: 'text/html;charset=utf-8' });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url; a.download = 'التقرير_اليومي_' + dateInput + '.html';
+      document.body.appendChild(a); a.click();
+      document.body.removeChild(a);
+      setTimeout(function() { URL.revokeObjectURL(url); }, 5000);
   } catch(e) { alert('خطأ: ' + e.message); }
     }
     var _breadSuggestionIdCounter = 0;
