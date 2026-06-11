@@ -4104,7 +4104,6 @@
       var bakBtn = document.querySelector('button[onclick*="exportBackupSystem"]');
       if (bakBtn) bakBtn.classList.add('btn-backup-pulse');
       callUpdateDXStats();
-      if (!skipSync) playChangeSound();
     }
 
     function renderDashboard() {
@@ -9633,6 +9632,7 @@ function toggleEmployeeStatus(empId) {
       } catch(e) { syncLog('❌ PUSH: خطأ ' + (e.message || e)); }
     }
 
+    var _pullCount = 0;
     async function pullFromSupabase() {
       if (!supabaseConnected) { syncLog('⚠️ PULL: غير متصل'); return; }
       try {
@@ -9642,10 +9642,10 @@ function toggleEmployeeStatus(empId) {
         });
         if (!res.ok) { syncLog('❌ PULL: فشل ' + res.status); return; }
         var rows = await res.json();
-        if (!rows || !rows.length || !rows[0].data) { return; }
+        if (!rows || !rows.length || !rows[0].data) { syncLog('ℹ️ PULL #' + (++_pullCount) + ': مفيش داتا'); return; }
         var remote = rows[0].data;
         var hash = JSON.stringify(remote);
-        if (hash === _syncHash) return;
+        if (hash === _syncHash) { syncLog('ℹ️ PULL #' + (++_pullCount) + ': زي ما هو — مفيش تغيير'); return; }
         _syncHash = hash;
         var changed = false;
         if (remote.employees) { employees = JSON.parse(JSON.stringify(remote.employees)); changed = true; }
@@ -9657,11 +9657,13 @@ function toggleEmployeeStatus(empId) {
         if (remote.inventoryItems) { inventoryItems = JSON.parse(JSON.stringify(remote.inventoryItems)); changed = true; }
         if (remote.contractors) { contractors = JSON.parse(JSON.stringify(remote.contractors)); changed = true; }
         if (changed) {
-          syncLog('🔄 PULL: استقبال بيانات جديدة');
+          syncLog('🔄 PULL #' + (++_pullCount) + ': استقبال بيانات جديدة');
           syncStorage(true, true);
           renderTable(); renderHousingLayout(); renderInventoryTable(); renderInventoryItems(); renderVacationsTable(); renderHospitalityTable(); renderMaintenanceTable(); renderSepticTable(); renderPeriodicMaintenance(); renderTeaSugarTable(); renderMealLogTable(); renderDashboard(); renderContractorsTable(); renderBakeryIngredients(); renderBakeryProductions(); renderBakeryContractorSupplies(); renderBakeryInvoices(); updateBakeryStats(); updateBreadSupplyStats();
           updateLastSyncTime();
           showSyncToast('تم استلام تحديثات من جهاز آخر');
+        } else {
+          syncLog('ℹ️ PULL #' + (++_pullCount) + ': hash مختلف بس البيانات نفسها (_t)');
         }
       } catch(e) { syncLog('❌ PULL: خطأ ' + (e.message || e)); }
     }
