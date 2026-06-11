@@ -4096,7 +4096,7 @@
       calculateSystemStats();
       if (!skipSync) syncToServer();
       if (!noTimestamp) localStorage.setItem('_localChangeTime', Date.now());
-      if (!skipSync) { syncToCloud(); debouncedSyncToSupabase(); }
+      if (!skipSync) { syncToCloud(); pushToSupabase(); }
       setAction('💾 حفظ');
       _dataChangedSinceBackup = true;
       var bakBtn = document.querySelector('button[onclick*="exportBackupSystem"]');
@@ -5685,25 +5685,31 @@
     }
 
 // تشغيل صوت عند التغيير
+var _beepCtx = null;
 var _lastBeep = 0;
+function initBeep() {
+    if (!_beepCtx) try { _beepCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e) {}
+}
 function playChangeSound() {
     try {
         var now = Date.now();
         if (now - _lastBeep < 300) return;
         _lastBeep = now;
-        var ctx = new (window.AudioContext || window.webkitAudioContext)();
-        var osc = ctx.createOscillator();
-        var gain = ctx.createGain();
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.frequency.value = 880;
-        osc.type = 'sine';
-        gain.gain.setValueAtTime(0.25, ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.25);
-        osc.start(ctx.currentTime);
-        osc.stop(ctx.currentTime + 0.25);
+        if (!_beepCtx) initBeep();
+        if (!_beepCtx) return;
+        if (_beepCtx.state === 'suspended') _beepCtx.resume();
+        var osc = _beepCtx.createOscillator();
+        var gain = _beepCtx.createGain();
+        osc.connect(gain); gain.connect(_beepCtx.destination);
+        osc.frequency.value = 880; osc.type = 'sine';
+        gain.gain.setValueAtTime(0.2, _beepCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, _beepCtx.currentTime + 0.2);
+        osc.start(); osc.stop(_beepCtx.currentTime + 0.2);
     } catch(e) {}
 }
+
+// activate audio on first user click
+document.addEventListener('click', initBeep, { once: true });
 
 // دالة تبديل الحالة الذكية مع تسجيل وقت المغادرة تلقائي
 function toggleEmployeeStatus(empId) {
@@ -9583,34 +9589,100 @@ function toggleEmployeeStatus(empId) {
     window.addEventListener('online', function() { processOfflineQueue(); });
 
     // ============================
-    //  2.75  SUPABASE REAL-TIME SYNC (REST API)
+    //  2.75  SUPABASE REAL-TIME SYNC (بسيط ومباشر)
     // ============================
     const SUPABASE_URL = 'https://cwqghiqykohefaggedjl.supabase.co';
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN3cWdoaXF5a29oZWZhZ2dlZGpsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEwMjUyMjEsImV4cCI6MjA5NjYwMTIyMX0.3a3hRcNdmYQCtjYjBroAT6df1T_7oz-XWUeD3wagYw8';
     var supabaseConnected = false;
     var _sbEndpoint = SUPABASE_URL + '/rest/v1/sync_data';
-    var _supabasePollTimer = null;
-    var _syncDebounceTimer = null;
-    var _pendingSyncCount = 0;
-    var _reconnectTimer = null;
-    var _lastSyncHashes = {};
-    var _lastRemoteTimestamps = {};
-    var DATA_KEYS = ['employees','roomsCapacity','vacations','hospitalities','maintenanceRecords','septicRecords','inventoryVouchers','inventoryItems','excludedEmployees','periodicMaintenance','teaSugarDisbursements','teaSugarBatches','mealLogs','contractors','dynamicSectors','dynamicRooms','dynamicSeptics','dynamicDepts','dynamicTitles','appUsers','bakeryIngredients','bakeryProductions','bakeryContractorSupplies','bakeryInvoices','currentUser','manualTotalBeds'];
-    // getDataByKey/setDataByKey intentionally not used — see applyRemoteData for direct variable assignments
+    var _syncTimer = null;
+    var _syncHash = '';
 
     function updateSupabaseStatus(status) {
       var el = document.getElementById('supabase-status');
       if (!el) return;
-      if (status === 'connected') {
-        el.textContent = '✅ متصل';
-        el.style.color = '#2e7d32';
-      } else if (status === 'connecting') {
-        el.textContent = '🔄 قيد الاتصال...';
-        el.style.color = '#fdd835';
-      } else {
-        el.textContent = '🔴 غير متصل';
-        el.style.color = '#f44336';
-      }
+      if (status === 'connected') { el.textContent = '✅ متصل'; el.style.color = '#2e7d32'; }
+      else if (status === 'connecting') { el.textContent = '🔄 قيد الاتصال...'; el.style.color = '#fdd835'; }
+      else { el.textContent = '🔴 غير متصل'; el.style.color = '#f44336'; }
+    }
+
+    function getAllDataForSync() {
+      var o = getAllDataObject();
+      return { employees: o.employees, roomsCapacity: o.roomsCapacity, vacations: o.vacations, inventoryVouchers: o.inventoryVouchers, excludedEmployees: o.excludedEmployees, contractors: o.contractors, mealLogs: o.mealLogs, inventoryItems: o.inventoryItems };
+    }
+
+    async function pushToSupabase() {
+      if (!supabaseConnected) return;
+      var data = getAllDataForSync();
+      data._t = Date.now();
+      try {
+        await fetch(_sbEndpoint, {
+          method: 'POST',
+          headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/json', 'Prefer': 'resolution=merge-duplicates' },
+          body: JSON.stringify({ id: 'alldata', data: data })
+        });
+      } catch(e) {}
+    }
+
+    async function pullFromSupabase() {
+      if (!supabaseConnected) return;
+      try {
+        var res = await fetch(_sbEndpoint + '?id=eq.alldata&select=data', {
+          method: 'GET',
+          headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
+        });
+        if (!res.ok) return;
+        var rows = await res.json();
+        if (!rows || !rows.length || !rows[0].data) return;
+        var remote = rows[0].data;
+        var hash = JSON.stringify(remote);
+        if (hash === _syncHash) return;
+        _syncHash = hash;
+        var local = getAllDataForSync();
+        var changed = false;
+        for (var k in remote) {
+          if (k === '_t') continue;
+          if (JSON.stringify(remote[k]) !== JSON.stringify(local[k])) {
+            var p = {}; p[k] = remote[k]; applyRemoteData(p, 'remote');
+            changed = true;
+          }
+        }
+        if (changed) {
+          syncStorage(true, true);
+          updateLastSyncTime();
+          showSyncToast('تم استلام تحديثات من جهاز آخر');
+        }
+      } catch(e) {}
+    }
+
+    function updateLastSyncTime() {
+      var el = document.getElementById('last-sync-time');
+      if (!el) return;
+      el.textContent = 'آخر مزامنة: ' + new Date().toLocaleTimeString('ar-EG', {hour:'2-digit',minute:'2-digit',second:'2-digit'});
+      el.style.display = 'inline';
+    }
+
+    async function connectSupabase() {
+      try {
+        var r = await fetch(_sbEndpoint + '?id=eq.alldata&select=id', { method: 'GET', headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } });
+        if (!r.ok) { setTimeout(connectSupabase, 3000); return; }
+        supabaseConnected = true;
+        updateSupabaseStatus('connected');
+        updateLastSyncTime();
+        startPresence();
+        await pushToSupabase();
+        await pullFromSupabase();
+        if (_syncTimer) clearInterval(_syncTimer);
+        _syncTimer = setInterval(pullFromSupabase, 4000);
+        document.getElementById('cloud-status').textContent = '☁️ متصل';
+      } catch(e) { setTimeout(connectSupabase, 3000); }
+    }
+    setTimeout(connectSupabase, 2000);
+    // backward compatibility for old code references
+    var _lastSyncHashes = {}, _lastRemoteTimestamps = {}, _supabasePollTimer = null, _reconnectTimer = null, _migratedFromSingleton = false;
+    function syncToSupabase() { pushToSupabase(); }
+    function pollSupabase() { pullFromSupabase(); }
+    var debouncedSyncToSupabase = function() { setTimeout(pushToSupabase, 500); };
     }
 
     function updateLastSyncTime() {
