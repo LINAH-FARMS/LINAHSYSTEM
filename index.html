@@ -4098,7 +4098,7 @@
       calculateSystemStats();
       if (!skipSync) syncToServer();
       if (!noTimestamp) localStorage.setItem('_localChangeTime', Date.now());
-      if (!skipSync) { syncToCloud(); pushToSupabase(); }
+      if (!skipSync) { pushToSupabase(); }
       setAction('💾 حفظ');
       _dataChangedSinceBackup = true;
       var bakBtn = document.querySelector('button[onclick*="exportBackupSystem"]');
@@ -9682,8 +9682,8 @@ function toggleEmployeeStatus(empId) {
         updateSupabaseStatus('connected');
         updateLastSyncTime();
         startPresence();
-        await pushToSupabase();
         await pullFromSupabase();
+        await pushToSupabase();
         if (_syncTimer) clearInterval(_syncTimer);
         _syncTimer = setInterval(pullFromSupabase, 4000);
         document.getElementById('cloud-status').textContent = '☁️ متصل';
@@ -10472,19 +10472,8 @@ function toggleEmployeeStatus(empId) {
       employees.forEach(function(e) { if (typeof e.vacationBalance !== 'number') e.vacationBalance = 30; });
       sortEmployeesAlphabetically(); rebuildAllDropdowns(); initEmployeeSearchInputs(); setupItemNameSearch(); populateRoomSectorDropdown(); populateContractorSectorDropdown(); renderTable(); renderInventoryTable(); renderInventoryItems(); renderVacationsTable(); renderHospitalityTable(); renderMaintenanceTable(); renderSepticTable(); renderPeriodicMaintenance(); renderTeaSugarTable(); renderMealLogTable(); autoSaveTodayMeal(); renderContractorsTable(); renderDashboard(); updateEmployeeVacationStatuses(); renderTable(); initAllSortableTables();
 
-      // Auto-sync from cloud on startup
+      // تحميل أولي من Google Drive (مرة واحدة)
       loadFromCloud();
-      setInterval(syncToCloud, 60000);
-      setInterval(loadFromCloud, 300000);
-      setTimeout(function() {
-        if (supabaseConnected) syncToSupabase();
-        else {
-          var checkConn = setInterval(function() {
-            if (supabaseConnected) { syncToSupabase(); clearInterval(checkConn); }
-          }, 500);
-          setTimeout(function() { clearInterval(checkConn); }, 10000);
-        }
-      }, 2000);
 
       // Live dashboard clock
       function updateDashClock() {
