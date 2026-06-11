@@ -9717,13 +9717,14 @@ function toggleEmployeeStatus(empId) {
         _migratedFromSingleton = true;
       }
       // جلب خفيف (updated_at + device_id) لكل data_* rows
-      var metaRows = await supabaseGet('like.data_%25', 'id,updated_at,device_id');
+      var metaRows = await supabaseGet('gte.a', 'id,updated_at,device_id');
       if (!metaRows || !metaRows.length) return;
       var myDeviceId = localStorage.getItem('lineh_device_id');
       var changed = false;
       for (var i = 0; i < metaRows.length; i++) {
         var row = metaRows[i];
-        var key = row.id.replace(/^data_/, '');
+        if (row.id.indexOf('data_') !== 0) continue;
+        var key = row.id.substring(5);
         if (DATA_KEYS.indexOf(key) === -1) continue;
         if (row.updated_at === _lastRemoteTimestamps[key]) continue;
         if (row.device_id === myDeviceId) { _lastRemoteTimestamps[key] = row.updated_at; continue; }
