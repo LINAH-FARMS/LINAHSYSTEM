@@ -5040,7 +5040,7 @@
       if (todayGuests.length > 0) {
         html += '<div class="rp-section"><div class="rp-section-title">🛎️ الضيوف الحاليون</div><table class="rp-table"><thead><tr><th>الاسم</th><th>التصنيف</th><th>الغرض</th><th>عدد الضيوف</th><th>تاريخ الوصول</th><th>المغادرة</th><th>الوجبات</th></tr></thead><tbody>';
         todayGuests.forEach(function(h) {
-          html += '<tr><td>' + (h.name || '—') + '</td><td>' + (h.type || '—') + '</td><td>' + (h.title || '—') + '</td><td>' + (h.guests || 1) + '</td><td>' + (h.arrival || '—') + '</td><td>' + (h.departure || '—') + '</td><td>' + (h.meals ? (Array.isArray(h.meals) ? h.meals.join(', ') : h.meals) : '—') + '</td></tr>';
+          html += '<tr><td>' + (h.name || '—') + '</td><td>' + (h.type || '—') + '</td><td>' + (h.title || '—') + '</td><td>' + (h.guests || 1) + '</td><td>' + (h.arrival || '—') + '</td><td>' + (h.departure || '—') + '</td><td>' + (h.meals ? (Array.isArray(h.meals) ? h.meals.join(', ') : String(h.meals)) : '—') + '</td></tr>';
         });
         html += '</tbody></table></div>';
       }
@@ -9585,7 +9585,7 @@ function toggleEmployeeStatus(empId) {
 
     function getAllDataForSync() {
       var o = getAllDataObject();
-      return { employees: o.employees, roomsCapacity: o.roomsCapacity, vacations: o.vacations, inventoryVouchers: o.inventoryVouchers, excludedEmployees: o.excludedEmployees, contractors: o.contractors, mealLogs: o.mealLogs, inventoryItems: o.inventoryItems };
+      return { employees: o.employees, roomsCapacity: o.roomsCapacity, vacations: o.vacations, inventoryVouchers: o.inventoryVouchers, excludedEmployees: o.excludedEmployees, contractors: o.contractors, mealLogs: o.mealLogs, inventoryItems: o.inventoryItems, hospitalities: o.hospitalities };
     }
 
     function syncLog(msg) {
@@ -9637,6 +9637,7 @@ function toggleEmployeeStatus(empId) {
         if (remote.mealLogs && JSON.stringify(remote.mealLogs) !== JSON.stringify(local.mealLogs)) { mealLogs = JSON.parse(JSON.stringify(remote.mealLogs)); changed = true; }
         if (remote.inventoryItems && JSON.stringify(remote.inventoryItems) !== JSON.stringify(local.inventoryItems)) { inventoryItems = JSON.parse(JSON.stringify(remote.inventoryItems)); changed = true; }
         if (remote.contractors && JSON.stringify(remote.contractors) !== JSON.stringify(local.contractors)) { contractors = JSON.parse(JSON.stringify(remote.contractors)); changed = true; }
+        if (remote.hospitalities && JSON.stringify(remote.hospitalities) !== JSON.stringify(local.hospitalities)) { hospitalities = JSON.parse(JSON.stringify(remote.hospitalities)); changed = true; }
         if (changed) {
           syncLog('🔄 تم استقبال تحديثات');
           syncStorage(true, true);
@@ -10447,7 +10448,13 @@ function toggleEmployeeStatus(empId) {
           { sector: "فاليو", number: "V1", beds: 8 }
         ];
       }
-      // تنظيف المباني القديمة من localStorage (A, B, سكن إداري)
+      // تنظيف بيانات الضيافة المشوشة
+      hospitalities = hospitalities.filter(function(h) { return h.name && h.name.length < 50 && !/[\[{}]/.test(h.name); });
+      hospitalities.forEach(function(h) {
+        if (typeof h.meals === 'string') h.meals = [h.meals];
+        if (typeof h.guests !== 'number' || h.guests < 1) h.guests = 1;
+        if (h.guests > 50) h.guests = 1;
+      });
       if (!localStorage.getItem('_roomsCleaned')) {
         var oldSectors = ['A','B','سكن إداري'];
         roomsCapacity = roomsCapacity.filter(function(r) { return oldSectors.indexOf(r.sector) === -1; });
