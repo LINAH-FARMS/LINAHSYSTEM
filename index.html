@@ -889,9 +889,11 @@
       <span id="presence-users" style="font-size:11px;font-weight:600;display:none;"></span>
       <span id="last-sync-time" style="font-size:10px;color:rgba(255,255,255,0.6);display:none;"></span>
       <span id="backup-status" style="font-size:10px;display:none;"></span>
+      <span onclick="var el=document.getElementById('sync-log');el.style.display=el.style.display==='none'?'block':'none'" style="font-size:10px;cursor:pointer;margin:0 4px;color:rgba(255,255,255,0.5);">📋</span>
       <button id="change-pass-btn" style="background:transparent;color:rgba(255,255,255,0.8);border:1px solid rgba(255,255,255,0.3);padding:4px 10px;border-radius:50px;font-size:11px;cursor:pointer;font-family:'Cairo',sans-serif;" onclick="changeMyPassword()">🔑 تغيير كلمة المرور</button>
       <button id="btn-migrate-server" class="btn btn-warning" style="display:none;padding:3px 8px;font-size:10px;" onclick="migrateToServer()">☁️ ترحيل للسيرفر</button>
     </div>
+    <div id="sync-log" style="display:none;position:fixed;bottom:0;left:0;right:0;max-height:200px;overflow-y:auto;background:rgba(0,0,0,0.88);color:#0f0;font-family:monospace;font-size:12px;padding:6px 10px;z-index:9999;direction:ltr;text-align:left;"></div>
   </header>
 
   <hr style="border:none;border-top:2px solid rgba(27,94,32,0.1);margin:4px 0;">
@@ -9607,8 +9609,17 @@ function toggleEmployeeStatus(empId) {
       return { employees: o.employees, roomsCapacity: o.roomsCapacity, vacations: o.vacations, inventoryVouchers: o.inventoryVouchers, excludedEmployees: o.excludedEmployees, contractors: o.contractors, mealLogs: o.mealLogs, inventoryItems: o.inventoryItems };
     }
 
+    function syncLog(msg) {
+      var el = document.getElementById('sync-log');
+      if (!el) return;
+      var d = new Date();
+      var t = d.getHours().toString().padStart(2,'0') + ':' + d.getMinutes().toString().padStart(2,'0') + ':' + d.getSeconds().toString().padStart(2,'0');
+      el.innerHTML = '<div>' + t + ' ' + msg + '</div>' + el.innerHTML;
+      if (el.children.length > 20) el.removeChild(el.lastChild);
+    }
+
     async function pushToSupabase() {
-      if (!supabaseConnected) return;
+      if (!supabaseConnected) { syncLog('⚠️ PUSH: غير متصل'); return; }
       var data = getAllDataForSync();
       data._t = Date.now();
       try {
@@ -9617,21 +9628,21 @@ function toggleEmployeeStatus(empId) {
           headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/json', 'Prefer': 'resolution=merge-duplicates' },
           body: JSON.stringify({ id: 'alldata', data: data })
         });
-        if (r.ok) console.log('✅ Supabase PUSH ok', Object.keys(data).length, 'keys');
-        else console.log('❌ Supabase PUSH failed', r.status);
-      } catch(e) { console.log('❌ Supabase PUSH error', e); }
+        if (r.ok) syncLog('✅ PUSH: تم رفع ' + Object.keys(data).length + ' keys');
+        else syncLog('❌ PUSH: فشل ' + r.status);
+      } catch(e) { syncLog('❌ PUSH: خطأ ' + (e.message || e)); }
     }
 
     async function pullFromSupabase() {
-      if (!supabaseConnected) return;
+      if (!supabaseConnected) { syncLog('⚠️ PULL: غير متصل'); return; }
       try {
         var res = await fetch(_sbEndpoint + '?id=eq.alldata&select=data', {
           method: 'GET',
           headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
         });
-        if (!res.ok) { console.log('❌ Supabase PULL failed', res.status); return; }
+        if (!res.ok) { syncLog('❌ PULL: فشل ' + res.status); return; }
         var rows = await res.json();
-        if (!rows || !rows.length || !rows[0].data) { console.log('ℹ️ Supabase PULL — no data row yet'); return; }
+        if (!rows || !rows.length || !rows[0].data) { return; }
         var remote = rows[0].data;
         var hash = JSON.stringify(remote);
         if (hash === _syncHash) return;
@@ -9646,13 +9657,13 @@ function toggleEmployeeStatus(empId) {
         if (remote.inventoryItems) { inventoryItems = JSON.parse(JSON.stringify(remote.inventoryItems)); changed = true; }
         if (remote.contractors) { contractors = JSON.parse(JSON.stringify(remote.contractors)); changed = true; }
         if (changed) {
-          console.log('🔄 Supabase PULL — استبدال البيانات المحلية بال remote');
+          syncLog('🔄 PULL: استقبال بيانات جديدة');
           syncStorage(true, true);
           renderTable(); renderHousingLayout(); renderInventoryTable(); renderInventoryItems(); renderVacationsTable(); renderHospitalityTable(); renderMaintenanceTable(); renderSepticTable(); renderPeriodicMaintenance(); renderTeaSugarTable(); renderMealLogTable(); renderDashboard(); renderContractorsTable(); renderBakeryIngredients(); renderBakeryProductions(); renderBakeryContractorSupplies(); renderBakeryInvoices(); updateBakeryStats(); updateBreadSupplyStats();
           updateLastSyncTime();
           showSyncToast('تم استلام تحديثات من جهاز آخر');
         }
-      } catch(e) { console.log('❌ Supabase PULL error', e); }
+      } catch(e) { syncLog('❌ PULL: خطأ ' + (e.message || e)); }
     }
 
     function updateLastSyncTime() {
@@ -9665,9 +9676,9 @@ function toggleEmployeeStatus(empId) {
     async function connectSupabase() {
       try {
         var r = await fetch(_sbEndpoint + '?id=eq.alldata&select=id', { method: 'GET', headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } });
-        if (!r.ok) { console.log('⚠️ Supabase connect failed', r.status, '— retry 3s'); setTimeout(connectSupabase, 3000); return; }
+        if (!r.ok) { syncLog('⚠️ اتصال Supabase فشل ' + r.status + ' — يعيد المحاولة'); setTimeout(connectSupabase, 3000); return; }
         supabaseConnected = true;
-        console.log('✅ Supabase متصل');
+        syncLog('✅ متصل بـ Supabase');
         updateSupabaseStatus('connected');
         updateLastSyncTime();
         startPresence();
