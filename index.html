@@ -5124,14 +5124,26 @@
       html += '<div class="rp-footer">LINAH FARMS - WAHAT ADMINSTRATION TEAM LEADER<br>تم التوليد بواسطة منظومة الشئون الإدارية المتكاملة - لينه فارمز<br>تاريخ التقرير: ' + dateStr + '</div>';
       html += '</div></div>';
   try {
-  var w = window.open('', '_blank');
-  if (!w) { alert('الرجاء السماح للنوافذ المنبثقة (Popup)'); return; }
-  w.document.write('<html><head><meta charset="UTF-8"><meta name="viewport" content="width=210mm">' +
-    '<style>@media print{@page{size:A4;margin:1.5cm}}body{font-family:"Cairo","Segoe UI",sans-serif;direction:rtl;padding:0;margin:0;color:#222;background:#fafafa}</style>' +
-    '</head><body>' + html + '</body></html>');
-  w.document.close();
-  setTimeout(function() { w.print(); }, 1000);
-  } catch(e) { alert('خطأ في التقرير: ' + e.message); }
+      if (typeof html2pdf === 'undefined') { alert('مكتبة PDF مش متاحة — افتح النافذة الجديدة للطباعة'); return; }
+      var overlay = document.createElement('div');
+      overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.4);display:flex;justify-content:center;align-items:center;z-index:99998;';
+      overlay.innerHTML = '<div style="background:#fff;padding:30px 50px;border-radius:12px;font-size:18px;box-shadow:0 5px 25px rgba(0,0,0,0.3);color:#333;">جاري إنشاء PDF ...</div>';
+      document.body.appendChild(overlay);
+      var container = document.createElement('div');
+      container.innerHTML = html;
+      container.style.cssText = 'position:fixed;top:0;left:0;width:210mm;z-index:99997;background:#fafafa;';
+      document.body.appendChild(container);
+      function limpiar() { try{ document.body.removeChild(container); }catch(e){} try{ document.body.removeChild(overlay); }catch(e){} }
+      setTimeout(function() {
+        html2pdf().set({
+          filename: 'التقرير_اليومي_' + dateInput + '.pdf',
+          margin: [0.4, 0.4, 0.4, 0.4],
+          image: { type: 'jpeg', quality: 0.98 },
+          html2canvas: { scale: 2, useCORS: true, letterRendering: true, logging: false },
+          jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
+        }).from(container).save().then(limpiar).catch(function(e) { limpiar(); alert('خطأ في PDF: ' + e.message); });
+      }, 1500);
+  } catch(e) { alert('خطأ: ' + e.message); }
     }
     var _breadSuggestionIdCounter = 0;
     function suggestBreadForTomorrow() {
