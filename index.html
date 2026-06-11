@@ -9636,17 +9636,22 @@ function toggleEmployeeStatus(empId) {
         var hash = JSON.stringify(remote);
         if (hash === _syncHash) return;
         _syncHash = hash;
-        var local = getAllDataForSync();
-        var p = {};
-        for (var k in remote) {
-          if (k === '_t') continue;
-          if (JSON.stringify(remote[k]) !== JSON.stringify(local[k])) p[k] = remote[k];
-        }
-        if (Object.keys(p).length) {
-          console.log('🔄 Supabase PULL — استقبال بيانات جديدة:', Object.keys(p).join(', '));
-          applyRemoteData(p, 'remote');
+        var changed = false;
+        if (remote.employees) { employees = JSON.parse(JSON.stringify(remote.employees)); changed = true; }
+        if (remote.roomsCapacity) { roomsCapacity = JSON.parse(JSON.stringify(remote.roomsCapacity)); changed = true; }
+        if (remote.vacations) { vacations = JSON.parse(JSON.stringify(remote.vacations)); changed = true; }
+        if (remote.inventoryVouchers) { inventoryVouchers = JSON.parse(JSON.stringify(remote.inventoryVouchers)); changed = true; }
+        if (remote.excludedEmployees) { excludedEmployees = JSON.parse(JSON.stringify(remote.excludedEmployees)); changed = true; }
+        if (remote.mealLogs) { mealLogs = JSON.parse(JSON.stringify(remote.mealLogs)); changed = true; }
+        if (remote.inventoryItems) { inventoryItems = JSON.parse(JSON.stringify(remote.inventoryItems)); changed = true; }
+        if (remote.contractors) { contractors = JSON.parse(JSON.stringify(remote.contractors)); changed = true; }
+        if (changed) {
+          console.log('🔄 Supabase PULL — استبدال البيانات المحلية بال remote');
+          syncStorage(true, true);
+          renderTable(); renderHousingLayout(); renderInventoryTable(); renderInventoryItems(); renderVacationsTable(); renderHospitalityTable(); renderMaintenanceTable(); renderSepticTable(); renderPeriodicMaintenance(); renderTeaSugarTable(); renderMealLogTable(); renderDashboard(); renderContractorsTable(); renderBakeryIngredients(); renderBakeryProductions(); renderBakeryContractorSupplies(); renderBakeryInvoices(); updateBakeryStats(); updateBreadSupplyStats();
           updateLastSyncTime();
-        } else { console.log('ℹ️ Supabase PULL — hash تغير لكن البيانات نفسها'); }
+          showSyncToast('تم استلام تحديثات من جهاز آخر');
+        }
       } catch(e) { console.log('❌ Supabase PULL error', e); }
     }
 
