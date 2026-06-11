@@ -4103,6 +4103,7 @@
       var bakBtn = document.querySelector('button[onclick*="exportBackupSystem"]');
       if (bakBtn) bakBtn.classList.add('btn-backup-pulse');
       callUpdateDXStats();
+      playChangeSound();
     }
 
     function renderDashboard() {
@@ -5684,6 +5685,27 @@
       alert('✅ تم استرجاع ' + rec.name + ' إلى قوة العمل');
     }
 
+// تشغيل صوت عند التغيير
+var _lastBeep = 0;
+function playChangeSound() {
+    try {
+        var now = Date.now();
+        if (now - _lastBeep < 300) return;
+        _lastBeep = now;
+        var ctx = new (window.AudioContext || window.webkitAudioContext)();
+        var osc = ctx.createOscillator();
+        var gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.frequency.value = 880;
+        osc.type = 'sine';
+        gain.gain.setValueAtTime(0.25, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.25);
+        osc.start(ctx.currentTime);
+        osc.stop(ctx.currentTime + 0.25);
+    } catch(e) {}
+}
+
 // دالة تبديل الحالة الذكية مع تسجيل وقت المغادرة تلقائي
 function toggleEmployeeStatus(empId) {
     let emp = employees.find(e => e.id == empId);
@@ -5696,6 +5718,7 @@ function toggleEmployeeStatus(empId) {
             emp.departureTime = '';
         }
         
+        playChangeSound();
         syncStorage();
         renderTable();
         calculateSystemStats();
@@ -9667,7 +9690,7 @@ function toggleEmployeeStatus(empId) {
               showSyncToast('📡 تم استعادة الاتصال — جاري رفع البيانات المعلقة');
             }
             pollSupabase().then(function() { syncToSupabase(); });
-            if (!_supabasePollTimer) _supabasePollTimer = setInterval(pollSupabase, 30000);
+            if (!_supabasePollTimer) _supabasePollTimer = setInterval(pollSupabase, 5000);
             clearInterval(_reconnectTimer); _reconnectTimer = null;
           }
         } catch(e) {}
