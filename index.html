@@ -5123,35 +5123,13 @@
       html += '</tbody></table></div>';
       html += '<div class="rp-footer">LINAH FARMS - WAHAT ADMINSTRATION TEAM LEADER<br>تم التوليد بواسطة منظومة الشئون الإدارية المتكاملة - مزارع لينه<br>تاريخ التقرير: ' + dateStr + '</div>';
       html += '</div></div>';
-      var overlay = document.createElement('div');
-      overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.4);display:flex;justify-content:center;align-items:center;z-index:99998;';
-      overlay.innerHTML = '<div style="background:#fff;padding:30px 50px;border-radius:12px;font-size:18px;box-shadow:0 5px 25px rgba(0,0,0,0.3);color:#333;">جاري إنشاء التقرير PDF ...</div>';
-      document.body.appendChild(overlay);
-      var container = document.createElement('div');
-      container.innerHTML = html;
-      container.style.cssText = 'position:fixed;top:0;left:0;width:210mm;z-index:99997;background:#fafafa;';
-      document.body.appendChild(container);
-      function limpiar() { try{ document.body.removeChild(container); }catch(e){} try{ document.body.removeChild(overlay); }catch(e){} }
-      setTimeout(function() {
-        try {
-          if (typeof html2pdf === 'undefined') { limpiar(); alert('خطأ: مكتبة html2pdf لم يتم تحميلها. تأكدي من اتصال الإنترنت ثم F5'); return; }
-          html2pdf().set({
-            filename: 'التقرير_اليومي_' + dateInput + '.pdf',
-            margin: [0.4, 0.4, 0.4, 0.4],
-            image: { type: 'jpeg', quality: 0.98 },
-            html2canvas: { scale: 2, useCORS: true, letterRendering: true, logging: false },
-            jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
-          }).from(container).save().then(function() {
-            limpiar();
-          }).catch(function(e) {
-            limpiar();
-            alert('خطأ في PDF: ' + e.message + ' - أرسلي هذه الرسالة');
-          });
-        } catch(e) {
-          limpiar();
-          alert('خطأ غير متوقع: ' + e.message);
-        }
-      }, 1500);
+  var w = window.open('', '_blank');
+  if (!w) { alert('الرجاء السماح للنوافذ المنبثقة'); return; }
+  w.document.write('<html><head><meta charset="UTF-8"><meta name="viewport" content="width=210mm">' +
+    '<style>@media print{@page{size:A4;margin:1.5cm}}body{font-family:"Cairo","Segoe UI",sans-serif;direction:rtl;padding:0;margin:0;color:#222;background:#fafafa}</style>' +
+    '</head><body>' + html + '</body></html>');
+  w.document.close();
+  setTimeout(function() { w.print(); }, 1000);
     }
     var _breadSuggestionIdCounter = 0;
     function suggestBreadForTomorrow() {
