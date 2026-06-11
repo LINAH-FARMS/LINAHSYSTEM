@@ -9571,7 +9571,7 @@ function toggleEmployeeStatus(empId) {
     var supabaseConnected = false;
     var _sbEndpoint = SUPABASE_URL + '/rest/v1/sync_data';
     var _syncTimer = null;
-    var _syncHash = '';
+
 
     function updateSupabaseStatus(status) {
       var el = document.getElementById('supabase-status');
@@ -9595,55 +9595,54 @@ function toggleEmployeeStatus(empId) {
       if (el.children.length > 20) el.removeChild(el.lastChild);
     }
 
+    var _lastUpdatedAt = '';
     async function pushToSupabase() {
-      if (!supabaseConnected) { syncLog('⚠️ PUSH: غير متصل'); return; }
+      if (!supabaseConnected) return;
       var data = getAllDataForSync();
+      var ts = new Date().toISOString();
       data._t = Date.now();
+      _lastUpdatedAt = ts;
       try {
-        var r = await fetch(_sbEndpoint, {
+        await fetch(_sbEndpoint, {
           method: 'POST',
           headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/json', 'Prefer': 'resolution=merge-duplicates' },
-          body: JSON.stringify({ id: 'alldata', data: data })
+          body: JSON.stringify({ id: 'alldata', data: data, updated_at: ts })
         });
-        if (r.ok) syncLog('✅ PUSH: تم رفع ' + Object.keys(data).length + ' keys');
-        else syncLog('❌ PUSH: فشل ' + r.status);
-      } catch(e) { syncLog('❌ PUSH: خطأ ' + (e.message || e)); }
+      } catch(e) {}
     }
 
-    var _pullCount = 0;
     async function pullFromSupabase() {
-      if (!supabaseConnected) { syncLog('⚠️ PULL: غير متصل'); return; }
+      if (!supabaseConnected) return;
       try {
-        var res = await fetch(_sbEndpoint + '?id=eq.alldata&select=data', {
-          method: 'GET',
-          headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
-        });
-        if (!res.ok) { syncLog('❌ PULL: فشل ' + res.status); return; }
-        var rows = await res.json();
-        if (!rows || !rows.length || !rows[0].data) { syncLog('ℹ️ PULL #' + (++_pullCount) + ': مفيش داتا'); return; }
-        var remote = rows[0].data;
-        var hash = JSON.stringify(remote);
-        if (hash === _syncHash) { syncLog('ℹ️ PULL #' + (++_pullCount) + ': زي ما هو — مفيش تغيير'); return; }
-        _syncHash = hash;
+        var r1 = await fetch(_sbEndpoint + '?id=eq.alldata&select=updated_at', { method: 'GET', headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } });
+        if (!r1.ok) return;
+        var rows1 = await r1.json();
+        if (!rows1 || !rows1.length || !rows1[0].updated_at) return;
+        if (rows1[0].updated_at === _lastUpdatedAt) return;
+        _lastUpdatedAt = rows1[0].updated_at;
+        var r2 = await fetch(_sbEndpoint + '?id=eq.alldata&select=data', { method: 'GET', headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } });
+        if (!r2.ok) return;
+        var rows2 = await r2.json();
+        if (!rows2 || !rows2.length || !rows2[0].data) return;
+        var remote = rows2[0].data;
+        var local = getAllDataForSync();
         var changed = false;
-        if (remote.employees) { employees = JSON.parse(JSON.stringify(remote.employees)); changed = true; }
-        if (remote.roomsCapacity) { roomsCapacity = JSON.parse(JSON.stringify(remote.roomsCapacity)); changed = true; }
-        if (remote.vacations) { vacations = JSON.parse(JSON.stringify(remote.vacations)); changed = true; }
-        if (remote.inventoryVouchers) { inventoryVouchers = JSON.parse(JSON.stringify(remote.inventoryVouchers)); changed = true; }
-        if (remote.excludedEmployees) { excludedEmployees = JSON.parse(JSON.stringify(remote.excludedEmployees)); changed = true; }
-        if (remote.mealLogs) { mealLogs = JSON.parse(JSON.stringify(remote.mealLogs)); changed = true; }
-        if (remote.inventoryItems) { inventoryItems = JSON.parse(JSON.stringify(remote.inventoryItems)); changed = true; }
-        if (remote.contractors) { contractors = JSON.parse(JSON.stringify(remote.contractors)); changed = true; }
+        if (remote.employees && JSON.stringify(remote.employees) !== JSON.stringify(local.employees)) { employees = JSON.parse(JSON.stringify(remote.employees)); changed = true; }
+        if (remote.roomsCapacity && JSON.stringify(remote.roomsCapacity) !== JSON.stringify(local.roomsCapacity)) { roomsCapacity = JSON.parse(JSON.stringify(remote.roomsCapacity)); changed = true; }
+        if (remote.vacations && JSON.stringify(remote.vacations) !== JSON.stringify(local.vacations)) { vacations = JSON.parse(JSON.stringify(remote.vacations)); changed = true; }
+        if (remote.inventoryVouchers && JSON.stringify(remote.inventoryVouchers) !== JSON.stringify(local.inventoryVouchers)) { inventoryVouchers = JSON.parse(JSON.stringify(remote.inventoryVouchers)); changed = true; }
+        if (remote.excludedEmployees && JSON.stringify(remote.excludedEmployees) !== JSON.stringify(local.excludedEmployees)) { excludedEmployees = JSON.parse(JSON.stringify(remote.excludedEmployees)); changed = true; }
+        if (remote.mealLogs && JSON.stringify(remote.mealLogs) !== JSON.stringify(local.mealLogs)) { mealLogs = JSON.parse(JSON.stringify(remote.mealLogs)); changed = true; }
+        if (remote.inventoryItems && JSON.stringify(remote.inventoryItems) !== JSON.stringify(local.inventoryItems)) { inventoryItems = JSON.parse(JSON.stringify(remote.inventoryItems)); changed = true; }
+        if (remote.contractors && JSON.stringify(remote.contractors) !== JSON.stringify(local.contractors)) { contractors = JSON.parse(JSON.stringify(remote.contractors)); changed = true; }
         if (changed) {
-          syncLog('🔄 PULL #' + (++_pullCount) + ': استقبال بيانات جديدة');
+          syncLog('🔄 تم استقبال تحديثات');
           syncStorage(true, true);
           renderTable(); renderHousingLayout(); renderInventoryTable(); renderInventoryItems(); renderVacationsTable(); renderHospitalityTable(); renderMaintenanceTable(); renderSepticTable(); renderPeriodicMaintenance(); renderTeaSugarTable(); renderMealLogTable(); renderDashboard(); renderContractorsTable(); renderBakeryIngredients(); renderBakeryProductions(); renderBakeryContractorSupplies(); renderBakeryInvoices(); updateBakeryStats(); updateBreadSupplyStats();
           updateLastSyncTime();
           showSyncToast('تم استلام تحديثات من جهاز آخر');
-        } else {
-          syncLog('ℹ️ PULL #' + (++_pullCount) + ': hash مختلف بس البيانات نفسها (_t)');
         }
-      } catch(e) { syncLog('❌ PULL: خطأ ' + (e.message || e)); }
+      } catch(e) {}
     }
 
     function updateLastSyncTime() {
@@ -9665,7 +9664,7 @@ function toggleEmployeeStatus(empId) {
         await pullFromSupabase();
         await pushToSupabase();
         if (_syncTimer) clearInterval(_syncTimer);
-        _syncTimer = setInterval(pullFromSupabase, 4000);
+        _syncTimer = setInterval(pullFromSupabase, 15000);
         document.getElementById('cloud-status').textContent = '☁️ متصل';
       } catch(e) { console.log('⚠️ Supabase connect error — retry 3s'); setTimeout(connectSupabase, 3000); }
     }
