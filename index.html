@@ -9676,141 +9676,9 @@ function toggleEmployeeStatus(empId) {
     function syncToSupabase() { pushToSupabase(); }
     function pollSupabase() { pullFromSupabase(); }
     var debouncedSyncToSupabase = function() { setTimeout(pushToSupabase, 500); };
-    }
 
-    function updateLastSyncTime() {
-      var el = document.getElementById('last-sync-time');
-      if (!el) return;
-      el.textContent = 'آخر مزامنة: ' + new Date().toLocaleTimeString('ar-EG');
-      el.style.display = 'inline';
-    }
-
-    async function supabaseUpsert(id, payload) {
-      try {
-        var res = await fetch(_sbEndpoint, {
-          method: 'POST',
-          headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/json', 'Prefer': 'resolution=merge-duplicates' },
-          body: JSON.stringify(Object.assign({ id: id }, payload))
-        });
-        return res.ok;
-      } catch(e) { return false; }
-    }
-    async function supabaseGet(idFilter, select) {
-      try {
-        var res = await fetch(_sbEndpoint + '?id=' + idFilter + '&select=' + (select || '*'), {
-          method: 'GET',
-          headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
-        });
-        if (!res.ok) return null;
-        var rows = await res.json();
-        return rows && rows.length ? rows : null;
-      } catch(e) { return null; }
-    }
-
-    async function syncToSupabase() {
-      if (!supabaseConnected) return;
-      var deviceId = localStorage.getItem('lineh_device_id');
-      if (!deviceId) {
-        deviceId = 'device_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6);
-        localStorage.setItem('lineh_device_id', deviceId);
-      }
-      var changed = false;
-      var fullData = getAllDataObject();
-      for (var key in fullData) {
-        if (DATA_KEYS.indexOf(key) === -1) continue;
-        var val = fullData[key];
-        var hash = JSON.stringify(val);
-        if (hash === _lastSyncHashes[key]) continue;
-        var ok = await supabaseUpsert('data_' + key, { data: val, updated_at: new Date().toISOString(), device_id: deviceId });
-        if (ok) { _lastSyncHashes[key] = hash; _lastRemoteTimestamps[key] = new Date().toISOString(); changed = true; }
-      }
-      if (changed) { updateSupabaseStatus('connected'); updateLastSyncTime(); }
-    }
-
-    function debouncedSyncToSupabase() {
-      if (!supabaseConnected) {
-        _pendingSyncCount++;
-        if (_pendingSyncCount === 1) {
-          showSyncToast('📡 لا يوجد اتصال — البيانات محفوظة محلياً وستُرفع تلقائياً عند عودة النت');
-        }
-        return;
-      }
-      _pendingSyncCount = 0;
-      clearTimeout(_syncDebounceTimer);
-      _syncDebounceTimer = setTimeout(syncToSupabase, 500);
-    }
-
-    function startSupabaseReconnect() {
-      if (_reconnectTimer) return;
-      _reconnectTimer = setInterval(async function() {
-        try {
-          var r = await fetch(_sbEndpoint + '?id=eq.singleton&select=id', { method: 'GET', headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }, signal: AbortSignal.timeout(4000) });
-          if (r.ok) {
-            supabaseConnected = true;
-            startPresence();
-            updateSupabaseStatus('connected');
-            updateLastSyncTime();
-            if (_pendingSyncCount > 0) {
-              showSyncToast('📡 تم استعادة الاتصال — جاري رفع البيانات المعلقة');
-            }
-            pollSupabase().then(function() { syncToSupabase(); });
-            if (!_supabasePollTimer) _supabasePollTimer = setInterval(pollSupabase, 5000);
-            clearInterval(_reconnectTimer); _reconnectTimer = null;
-          }
-        } catch(e) {}
-      }, 5000);
-    }
-    // Start reconnect monitor on init failure
-    setTimeout(function() {
-      if (!supabaseConnected) startSupabaseReconnect();
-    }, 3000);
-
-    var _migratedFromSingleton = false;
-    async function pollSupabase() {
-      if (!supabaseConnected) return;
-      // محاولة ترحيل من row القديم (مرة واحدة)
-      if (!_migratedFromSingleton) {
-        var oldRows = await supabaseGet('eq.singleton', 'id,data');
-        if (oldRows && oldRows.length && oldRows[0].data) {
-          var oldData = oldRows[0].data;
-          for (var k in oldData) {
-            if (DATA_KEYS.indexOf(k) === -1) continue;
-            if (typeof oldData[k] === 'string' && currentUser && k === 'currentUser') continue;
-            var p = {}; p[k] = oldData[k]; applyRemoteData(p, 'migration');
-          }
-        }
-        _migratedFromSingleton = true;
-      }
-      // جلب خفيف (updated_at + device_id) لكل data_* rows
-      var metaRows = await supabaseGet('gte.a', 'id,updated_at,device_id');
-      if (!metaRows || !metaRows.length) return;
-      var myDeviceId = localStorage.getItem('lineh_device_id');
-      var changed = false;
-      for (var i = 0; i < metaRows.length; i++) {
-        var row = metaRows[i];
-        if (row.id.indexOf('data_') !== 0) continue;
-        var key = row.id.substring(5);
-        if (DATA_KEYS.indexOf(key) === -1) continue;
-        if (row.updated_at === _lastRemoteTimestamps[key]) continue;
-        if (row.device_id === myDeviceId) { _lastRemoteTimestamps[key] = row.updated_at; continue; }
-        // تغير — ننزل الداتا كاملة للسطر ده
-        var fullRows = await supabaseGet('eq.' + row.id, 'data');
-        if (!fullRows || !fullRows.length) continue;
-        var remoteVal = fullRows[0].data;
-        // مقارنة مع القيمة المحلية عبر getAllDataObject (آمن مع let)
-        var localObj = getAllDataObject();
-        var localVal = localObj[key];
-        if (localVal !== undefined && JSON.stringify(remoteVal) === JSON.stringify(localVal)) { _lastRemoteTimestamps[key] = row.updated_at; continue; }
-        var p = {}; p[key] = remoteVal; applyRemoteData(p, row.device_id);
-        // تحديث الـ hash عشان ما نرفعش تاني (applyRemoteData غيرت الداتا المحلية)
-        _lastSyncHashes[key] = JSON.stringify(getAllDataObject()[key]);
-        _lastRemoteTimestamps[key] = row.updated_at;
-        changed = true;
-      }
-      if (changed) {
-        syncStorage(true, true);
-      }
-    }
+    // backward compat for old function refs
+    var DATA_KEYS = ['employees','roomsCapacity','vacations','hospitalities','maintenanceRecords','septicRecords','inventoryVouchers','inventoryItems','excludedEmployees','periodicMaintenance','teaSugarDisbursements','teaSugarBatches','mealLogs','contractors','dynamicSectors','dynamicRooms','dynamicSeptics','dynamicDepts','dynamicTitles','appUsers','bakeryIngredients','bakeryProductions','bakeryContractorSupplies','bakeryInvoices','currentUser','manualTotalBeds'];
 
     // -- Presence tracking (multi-device) --
     var _presencePollTimer = null;
@@ -9952,28 +9820,7 @@ function toggleEmployeeStatus(empId) {
       el._hideTimer = setTimeout(function() { el.style.opacity = '0'; }, 4000);
     }
 
-    function initSupabaseSync() {
-      updateSupabaseStatus('connecting');
-      // فحص الاتصال فقط (بدون اعتماد على وجود rows معينة)
-      fetch(_sbEndpoint + '?select=id&limit=1', { method: 'GET', headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }, signal: AbortSignal.timeout(5000) })
-        .then(function(r) {
-          if (!r.ok) { updateSupabaseStatus('error'); startSupabaseReconnect(); return; }
-          supabaseConnected = true;
-          updateSupabaseStatus('connected');
-          startPresence();
-          pollSupabase().then(function() {
-            syncToSupabase();
-          });
-          _supabasePollTimer = setInterval(pollSupabase, 30000);
-        })
-        .catch(function() {
-          supabaseConnected = false;
-          updateSupabaseStatus('error');
-          startSupabaseReconnect();
-        });
-    }
-
-    setTimeout(initSupabaseSync, 1000);
+    function initSupabaseSync() { connectSupabase(); }
 
     async function syncToCloud() {
       try {
