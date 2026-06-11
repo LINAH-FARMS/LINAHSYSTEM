@@ -10411,7 +10411,7 @@ function toggleEmployeeStatus(empId) {
     // Override syncStorage to auto-backup
     let _origSyncStorage = syncStorage;
     syncStorage = function() {
-      _origSyncStorage();
+      _origSyncStorage.apply(null, arguments);
       // Auto-backup to D: drive (debounced)
       if (backupDirHandle) {
         clearTimeout(window.__autoBackupTimer);
