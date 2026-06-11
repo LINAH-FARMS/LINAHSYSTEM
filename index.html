@@ -10444,10 +10444,15 @@ function toggleEmployeeStatus(empId) {
       requireLogin();
       if(roomsCapacity.length === 0) {
         roomsCapacity = [
-          { sector: "A", number: "A1", beds: 4 }, { sector: "A", number: "A2", beds: 4 },
-          { sector: "B", number: "B1", beds: 6 }, { sector: "B", number: "B2", beds: 6 },
-          { sector: "فاليو", number: "V1", beds: 8 }, { sector: "سكن إداري", number: "ادارى", beds: 10 }
+          { sector: "فاليو", number: "V1", beds: 8 }
         ];
+      }
+      // تنظيف المباني القديمة من localStorage (A, B, سكن إداري)
+      if (!localStorage.getItem('_roomsCleaned')) {
+        var oldSectors = ['A','B','سكن إداري'];
+        roomsCapacity = roomsCapacity.filter(function(r) { return oldSectors.indexOf(r.sector) === -1; });
+        localStorage.setItem('lineh_rooms_capacity', JSON.stringify(roomsCapacity));
+        localStorage.setItem('_roomsCleaned', '1');
       }
       // تهيئة الرصيد السنوي للموظفين
       employees.forEach(function(e) { if (typeof e.vacationBalance !== 'number') e.vacationBalance = 30; });
