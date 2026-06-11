@@ -2567,7 +2567,7 @@
     <div style="font-size:10px;color:#999;margin-top:5px;text-align:center;">Enter للإرسال | الذكاء المحلي 🔴 = غير متاح</div>
   </div>
 
-  <script src="seed_data.js" charset="UTF-8"></script>
+  <!-- seed_data removed -->
   <script>
     // ====== API Layer (SQLite server) with localStorage fallback ======
     const API_BASE = 'http://localhost:3001/api';
@@ -10452,7 +10452,7 @@ function toggleEmployeeStatus(empId) {
       sortEmployeesAlphabetically(); rebuildAllDropdowns(); initEmployeeSearchInputs(); setupItemNameSearch(); populateRoomSectorDropdown(); populateContractorSectorDropdown(); renderTable(); renderInventoryTable(); renderInventoryItems(); renderVacationsTable(); renderHospitalityTable(); renderMaintenanceTable(); renderSepticTable(); renderPeriodicMaintenance(); renderTeaSugarTable(); renderMealLogTable(); autoSaveTodayMeal(); renderContractorsTable(); renderDashboard(); updateEmployeeVacationStatuses(); renderTable(); initAllSortableTables();
 
       // تحميل أولي من Google Drive (مرة واحدة)
-      loadFromCloud();
+      // loadFromCloud(); // Google Drive backup معطل
 
       // Live dashboard clock
       function updateDashClock() {
