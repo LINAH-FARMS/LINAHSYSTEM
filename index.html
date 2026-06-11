@@ -9639,19 +9639,12 @@ function toggleEmployeeStatus(empId) {
         if (hash === _syncHash) return;
         _syncHash = hash;
         var local = getAllDataForSync();
-        var changed = false;
+        var p = {};
         for (var k in remote) {
           if (k === '_t') continue;
-          if (JSON.stringify(remote[k]) !== JSON.stringify(local[k])) {
-            var p = {}; p[k] = remote[k]; applyRemoteData(p, 'remote');
-            changed = true;
-          }
+          if (JSON.stringify(remote[k]) !== JSON.stringify(local[k])) p[k] = remote[k];
         }
-        if (changed) {
-          syncStorage(true, true);
-          updateLastSyncTime();
-          showSyncToast('تم استلام تحديثات من جهاز آخر');
-        }
+        if (Object.keys(p).length) { applyRemoteData(p, 'remote'); updateLastSyncTime(); }
       } catch(e) {}
     }
 
