@@ -2422,7 +2422,7 @@
           </div>
         </div>
         <button class="btn btn-primary" onclick="saveBakeryContractorSupply()" style="height:42px;">🚚 تسجيل التوريد</button>
-        <button class="btn btn-danger" onclick="cleanDataBeforeMay23()" style="height:42px;">🗑️ حذف التوريدات قبل 21/5/2026</button>
+
       </div>
       <div class="table-container">
         <div class="filter-bar no-print" style="display:flex;gap:8px;align-items:center;padding:8px 12px;border-bottom:1px solid #e0e0e0;flex-wrap:wrap;">
@@ -9776,41 +9776,39 @@ function toggleEmployeeStatus(empId) {
       container.document.close();
     }
 
-    document.addEventListener('DOMContentLoaded', function() {
-      updateAiStatus();
-      if (!geminiKey) {
-        var box = document.getElementById('ai-key-box');
-        if (box) box.style.display = 'flex';
-      }
-      var aiBtn = document.getElementById('ai-toggle-btn');
-      if (aiBtn) {
-        aiBtn.addEventListener('click', function() {
-          try {
-            var p = document.getElementById('ai-panel');
-            if (!p) return;
-            p.style.display = p.style.display === 'none' ? 'block' : 'none';
-            if (p.style.display === 'none') return;
-            var inp = document.getElementById('ai-input');
-            if (inp) inp.focus();
-            var chat = document.getElementById('ai-chat');
-            if (chat && chat.children.length <= 1) {
-              try {
-                chat.innerHTML = '<div style="background:#e8f5e9;padding:10px;border-radius:8px;font-size:13px;line-height:1.7;align-self:flex-start;">' + generateAITips() + '</div>';
-              } catch(ign) {}
-            }
-          } catch(ign) {}
-        });
-      }
-      document.addEventListener('click', function(e) {
+    try { updateAiStatus(); } catch(ign) {}
+    if (!geminiKey) {
+      var keyBox = document.getElementById('ai-key-box');
+      if (keyBox) keyBox.style.display = 'flex';
+    }
+    var aiBtn = document.getElementById('ai-toggle-btn');
+    if (aiBtn) {
+      aiBtn.addEventListener('click', function() {
         try {
-          var panel = document.getElementById('ai-panel');
-          var btn = document.getElementById('ai-toggle-btn');
-          if (!panel || !btn) return;
-          if (panel.style.display === 'none') return;
-          if (panel.contains(e.target) || btn.contains(e.target)) return;
-          panel.style.display = 'none';
+          var p = document.getElementById('ai-panel');
+          if (!p) return;
+          p.style.display = p.style.display === 'none' ? 'block' : 'none';
+          if (p.style.display === 'none') return;
+          var inp = document.getElementById('ai-input');
+          if (inp) inp.focus();
+          var chat = document.getElementById('ai-chat');
+          if (chat && chat.children.length <= 1) {
+            try {
+              chat.innerHTML = '<div style="background:#e8f5e9;padding:10px;border-radius:8px;font-size:13px;line-height:1.7;align-self:flex-start;">' + generateAITips() + '</div>';
+            } catch(ign) {}
+          }
         } catch(ign) {}
       });
+    }
+    document.addEventListener('click', function(e) {
+      try {
+        var panel = document.getElementById('ai-panel');
+        var btn = document.getElementById('ai-toggle-btn');
+        if (!panel || !btn) return;
+        if (panel.style.display === 'none') return;
+        if (panel.contains(e.target) || btn.contains(e.target)) return;
+        panel.style.display = 'none';
+      } catch(ign) {}
     });
 
     // ============================
