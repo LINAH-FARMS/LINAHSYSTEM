@@ -487,7 +487,7 @@
       input, select, textarea { font-size: 14px; padding: 10px; }
       .btn { min-height: 44px; font-size: 13px; padding: 10px 14px; }
       .quick-action-btn { min-height: 60px; padding: 12px 8px; }
-      #ai-panel { width: 95% !important; left: 2.5% !important; }
+
     }
     @media (max-width: 600px) {
       .dash-summary-grid { grid-template-columns: 1fr !important; }
@@ -705,7 +705,7 @@
       header { display: flex !important; background: white !important; color: #1b5e20 !important; box-shadow: none !important; padding: 10px 0 !important; border-bottom: 2px solid #1b5e20 !important; margin-bottom: 12px !important; }
       header h1 { font-size: 18px !important; color: #1b5e20 !important; }
       header div p { font-size: 12px !important; color: #555 !important; }
-      .nav-tabs, .control-panel, .btn, .no-print, .close-btn, #ai-toggle-btn, #ai-panel, .stats-container, header #live-clock, header #user-selector, header #server-status, header #backup-status, .emp-search-wrapper, .bakery-sub-tabs, .bread-supply-sub-tabs, .game-sub-tabs { display: none !important; }
+      .nav-tabs, .control-panel, .btn, .no-print, .close-btn, .stats-container, header #live-clock, header #user-selector, header #server-status, header #backup-status, .emp-search-wrapper, .bakery-sub-tabs, .bread-supply-sub-tabs, .game-sub-tabs { display: none !important; }
       .print-watermark { display: block !important; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-15deg); z-index: -1; opacity: 0.08; pointer-events: none; }
       .print-watermark img { width: 400px; height: auto; }
       .tab-content { display: none !important; }
@@ -891,7 +891,6 @@
     <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
       <span id="live-clock" style="font-weight:600;font-size:13px;"></span>
       <span id="current-user-display" style="background:rgba(255,255,255,0.12);padding:2px 10px;border-radius:50px;font-size:12px;font-weight:600;white-space:nowrap;" onclick="logout()" title="اضغط لتسجيل الخروج">👤 <span id="current-user-name">...</span></span>
-      <button id="ai-toggle-btn" onclick="var p=document.getElementById('ai-panel');if(!p){alert('خطأ: لوحة المساعد غير موجودة');return;}p.style.display=p.style.display==='none'?'block':'none';if(p.style.display==='none')return;setTimeout(function(){var inp=document.getElementById('ai-input');if(inp)inp.focus();},100);" style="background:#1b5e20;color:white;border:none;padding:6px 12px;border-radius:50px;font-size:13px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.2);">🤖 AI</button>
       <span id="server-status" style="font-size:11px;font-weight:600;display:none;">🔴</span>
       <span id="cloud-status" style="font-size:11px;font-weight:600;">☁️ غير متصل</span>
       <span id="supabase-status" style="font-size:11px;font-weight:600;">🔄 قيد الاتصال...</span>
@@ -2346,7 +2345,6 @@
         <div class="form-group"><label>💷 أجر التشغيل / مصنعية (ج.م)</label><input type="number" id="bprod-opcost" min="0" step="1" value="1200"></div>
         <div class="form-group" style="grid-column:span 2;"><label>ملاحظات</label><input type="text" id="bprod-notes" placeholder="ملاحظات الإنتاج"></div>
         <button class="btn btn-primary" onclick="saveBakeryProduction()" style="height:42px;">🏭 تسجيل الإنتاج</button>
-        <button class="btn btn-excel" onclick="try{openWhatsAppPasteModal()}catch(e){alert('خطأ في فتح نافذة واتساب: '+e.message)}" style="height:42px;background:#075e54;color:white;border:none;border-radius:5px;cursor:pointer;font-weight:600;font-size:14px;">📥 لصق من واتساب</button>
         <button class="btn btn-warning" onclick="suggestBreadForTomorrow()" style="height:42px;background:#1565c0;color:white;border:none;border-radius:5px;cursor:pointer;font-weight:600;font-size:14px;">🥖 اقتراح اعداد الخبز لليوم التالي</button>
       </div>
       <div class="control-panel no-print" style="margin-top:10px;">
@@ -2582,31 +2580,7 @@
     </div>
   </div>
 
-  <div id="ai-panel" style="display:none;position:fixed;bottom:80px;right:20px;width:380px;max-height:550px;background:white;border-radius:20px;padding:15px;z-index:9999;box-shadow:0 4px 20px rgba(0,0,0,.3);overflow:auto; border: 2px solid var(--primary);">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;">
-      <h3 style="color: var(--primary);margin:0;">المساعد الذكي</h3>
-      <div style="display:flex;align-items:center;gap:8px;">
-        <div style="font-size:11px;white-space:nowrap;" id="ai-status"></div>
-        <span onclick="document.getElementById('ai-panel').style.display='none'" style="cursor:pointer;font-size:18px;color:#999;">&times;</span>
-      </div>
-    </div>
-    <p style="font-size:11px; color:#555; margin-bottom:8px;">يحلل كل بيانات النظام والموظفين والإدارات والغرف والمخازن فورا.</p>
-    <div id="ai-key-box" style="display:none;background:#fff8e1;border:1px solid #ffc107;border-radius:6px;padding:8px;margin-bottom:8px;gap:5px;flex-direction:column;font-size:12px;">
-      <div style="color:#795548;">ادخل مفتاح جوجل جيميني عشان الذكاء يشتغل:</div>
-      <div style="display:flex;gap:5px;">
-        <input type="text" id="ai-key-input" placeholder="الصق المفتاح هنا..." style="flex:1;padding:6px;border:1px solid #ccc;border-radius:4px;font-size:12px;">
-        <button onclick="saveAiKey()" style="background:#1b5e20;color:white;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;font-size:12px;">حفظ</button>
-      </div>
-    </div>
-    <div id="ai-chat" style="height:300px;overflow:auto;border:1px solid #ccc;border-radius:10px;padding:10px;margin-bottom:10px;background:#f9f9f9;font-size:13px;display:flex;flex-direction:column;gap:8px;">
-      <div style="background:#e8f5e9; padding:8px; border-radius:8px; align-self:flex-start;">مرحبا! اسألني عن أي حاجة في النظام. أنا بفهم كل حاجة عن الموظفين والغرف والمخزن والصيانة والإنتاج.</div>
-    </div>
-    <div style="display:flex;gap:5px;">
-      <input type="text" id="ai-input" placeholder="اسألني..." style="flex:1;padding:8px;font-size:13px;border:2px solid #e0e0e0;border-radius:8px;">
-      <button class="btn btn-primary" onclick="askSmartAI()" style="padding:5px 12px;">إرسال</button>
-    </div>
-    <div style="font-size:10px;color:#999;margin-top:5px;text-align:center;">Enter للإرسال</div>
-  </div>
+
 
   <!-- seed_data removed -->
   <script>
@@ -5544,84 +5518,7 @@
       }, 300);
     }
 
-    function openAITips() {
-      var p = document.getElementById('ai-panel');
-      if (!p) return;
-      p.style.display = 'block';
-      var tips = generateAITips();
-      var chat = document.getElementById('ai-chat');
-      if (!chat) return;
-      chat.innerHTML = '<div style="background:#e8f5e9;padding:10px;border-radius:8px;font-size:13px;line-height:1.7;align-self:flex-start;">' + tips + '</div>';
-      document.getElementById('ai-input').focus();
-    }
 
-    function generateAITips() {
-      var today = new Date().toLocaleDateString('ar-EG');
-      var html = '<div style="font-weight:700;color:#1b5e20;margin-bottom:6px;">📋 ملخص اليوم — ' + today + '</div>';
-
-      // Open maintenance
-      var openMaint = maintenanceRecords.filter(function(m) { return m.status === 'مفتوحة' || m.status === 'تحت التنفيذ'; });
-      if (openMaint.length) {
-        html += '<div style="margin:4px 0;">🛠️ <b>صيانة مفتوحة:</b> ' + openMaint.length + ' طلب</div>';
-        openMaint.slice(0, 3).forEach(function(m) {
-          html += '<div style="margin:2px 0 2px 12px;font-size:12px;color:#e65100;">· ' + m.task.slice(0, 40) + (m.task.length > 40 ? '...' : '') + '</div>';
-        });
-      }
-
-      // Overdue periodic maintenance
-      var overduePM = periodicMaintenance.filter(function(p) { return p.nextDue && new Date(p.nextDue) < new Date() && p.status !== 'inactive'; });
-      if (overduePM.length) {
-        html += '<div style="margin:4px 0;">⏰ <b>صيانة دورية متأخرة:</b> ' + overduePM.length + ' مهمة</div>';
-      }
-
-      // Low stock ingredients
-      var lowStock = bakeryIngredients.filter(function(i) { return (i.currentQty || 0) < (i.minStock || 0); });
-      if (lowStock.length) {
-        html += '<div style="margin:4px 0;">📉 <b>خامات أقل من الحد الأدنى:</b></div>';
-        lowStock.slice(0, 3).forEach(function(i) {
-          html += '<div style="margin:2px 0 2px 12px;font-size:12px;color:#d32f2f;">· ' + i.name + ': ' + (i.currentQty || 0) + ' ' + (i.unit || '') + ' (الحد: ' + (i.minStock || 0) + ')</div>';
-        });
-      }
-
-      // Unpaid invoices
-      var unpaid = bakeryInvoices.filter(function(inv) { return (inv.paid||0) < (inv.count||0) * (inv.unitPrice||0); });
-      if (unpaid.length) {
-        html += '<div style="margin:4px 0;">💰 <b>فواتير غير مدفوعة بالكامل:</b> ' + unpaid.length + ' فاتورة</div>';
-      }
-
-      // Pending contractor payments
-      var pendingCtr = bakeryContractorSupplies.filter(function(cs) {
-        var rev = (parseInt(cs.count)||0) * (parseFloat(cs.price)||0);
-        var paid = parseFloat(cs.paid)||0;
-        return paid < rev;
-      });
-      if (pendingCtr.length) {
-        html += '<div style="margin:4px 0;">👷 <b>توريد مقاولين متبقي عليه:</b> ' + pendingCtr.length + ' عملية</div>';
-      }
-
-      // Today's production
-      var todayProd = bakeryProductions.filter(function(p) { return p.date === today; });
-      if (todayProd.length) {
-        var totalBread = todayProd.reduce(function(s, p) { return s + (parseInt(p.breadCount)||0); }, 0);
-        html += '<div style="margin:4px 0;">🍞 <b>إنتاج اليوم:</b> ' + totalBread + ' رغيف</div>';
-      } else {
-        html += '<div style="margin:4px 0;">🍞 <b>إنتاج اليوم:</b> لم يتم تسجيله بعد</div>';
-      }
-
-      // Contractor supplies today
-      var todayCtr = bakeryContractorSupplies.filter(function(cs) { return cs.date === today; });
-      if (todayCtr.length) {
-        html += '<div style="margin:4px 0;">🚚 <b>توريد مقاولين اليوم:</b> ' + todayCtr.length + ' عملية</div>';
-      }
-
-      // Backup reminder
-      if (_dataChangedSinceBackup) {
-        html += '<div style="margin:6px 0;padding:5px;background:#fff3e0;border-radius:4px;color:#e65100;font-size:12px;">⚠️ فيه تعديلات من آخر نسخة احتياطية — لا تنسَ التصدير!</div>';
-      }
-
-      html += '<div style="margin-top:8px;font-size:11px;color:#888;">💡 اسألني: "كشف إدارة" أو "مين في غرفة" أو "عهدة اسم"</div>';
-      return html;
-    }
 
     window.addEventListener('beforeunload', function(e) {
       if (_dataChangedSinceBackup) {
@@ -8598,355 +8495,6 @@ function toggleEmployeeStatus(empId) {
       }
     }
 
-    // ====== Gemini AI Integration ======
-    let geminiKey = localStorage.getItem('linah_gemini_key') || '';
-
-    function saveAiKey() {
-      var inp = document.getElementById('ai-key-input');
-      if (!inp) return;
-      geminiKey = inp.value.trim();
-      if (geminiKey) {
-        localStorage.setItem('linah_gemini_key', geminiKey);
-        document.getElementById('ai-key-box').style.display = 'none';
-        updateAiStatus();
-      }
-    }
-
-    function updateAiStatus() {
-      var se = document.getElementById('ai-status');
-      if (!se) return;
-      if (geminiKey) {
-        se.innerHTML = 'متصل';
-        se.style.color = '#4caf50';
-      } else {
-        se.innerHTML = 'غير متصل - اضغط لتضبط المفتاح';
-        se.style.color = '#f44336';
-        se.style.cursor = 'pointer';
-        se.onclick = function() {
-          var box = document.getElementById('ai-key-box');
-          if (box) box.style.display = 'flex';
-        };
-      }
-    }
-
-    async function askGemini(query, context, model) {
-      if (!geminiKey) return null;
-      model = model || 'gemini-2.0-flash';
-      try {
-        var systemPrompt = 'أنت مساعد ذكي لنظام إدارة لينه فارمز. لديك البيانات التالية:\n' + context + '\n\nأجب بالعربية بدقة واختصار. استخدم البيانات المقدمة فقط. لو سأل عن حاجة مش موجودة في البيانات قل انها مش مسجلة.';
-        var body = {
-          contents: [{
-            role: 'user',
-            parts: [{ text: systemPrompt + '\n\nسؤال المستخدم: ' + query }]
-          }],
-          generationConfig: { temperature: 0.3, maxOutputTokens: 800 }
-        };
-        var url = 'https://generativelanguage.googleapis.com/v1beta/models/' + model + ':generateContent?key=' + geminiKey;
-        var res = await fetch(url, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(body)
-        });
-        if (!res.ok) {
-          var errText = await res.text();
-          console.error('Gemini API error (' + res.status + '):', errText);
-          // Retry with older model if 2.0 fails
-          if (model === 'gemini-2.0-flash') {
-            return askGemini(query, context, 'gemini-1.5-flash');
-          }
-          return null;
-        }
-        var data = await res.json();
-        if (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts) {
-          return data.candidates[0].content.parts.map(function(p) { return p.text; }).join('');
-        }
-        if (model === 'gemini-2.0-flash') {
-          return askGemini(query, context, 'gemini-1.5-flash');
-        }
-        return null;
-      } catch(e) { console.error('askGemini exception:', e); return null; }
-    }
-
-    function buildSystemContext() {
-      let ctx = '';
-      ctx += `- إجمالي الموظفين: ${employees.length}\n`;
-      ctx += `- متواجدين P: ${employees.filter(e=>e.status==='P').length}\n`;
-      ctx += `- في إجازة V: ${employees.filter(e=>e.status==='V').length}\n`;
-      ctx += `- الإدارات: ${dynamicDepts.join('، ')}\n`;
-      ctx += `- المباني: ${dynamicSectors.join('، ')}\n`;
-      ctx += `- غرف السكن: ${roomsCapacity.length} غرفة، إجمالي ${roomsCapacity.reduce((s,r)=>s+(parseInt(r.beds)||0),0)} سرير\n`;
-      ctx += `- أصناف المخزن: ${inventoryItems.length}\n`;
-      ctx += `- بونات الصرف: ${inventoryVouchers.length}\n`;
-      ctx += `- إجازات مسجلة: ${vacations.length}\n`;
-      ctx += `- ضيافة: ${hospitalities.length}\n`;
-      ctx += `- صيانة: ${maintenanceRecords.length}\n`;
-      ctx += `- بيارات: ${septicRecords.length}\n`;
-      ctx += `- مستبعدين: ${excludedEmployees.length}\n`;
-      ctx += `- صيانة دورية: ${periodicMaintenance.length}\n`;
-      ctx += `- صرف شاي وسكر: ${teaSugarDisbursements.length}\n`;
-      ctx += `- وجبات: ${mealLogs.length}\n`;
-      ctx += `- مقاولين: ${contractors.length}\n`;
-      return ctx;
-    }
-
-    function queryEmployees(q) {
-      const ql = q.toLowerCase();
-      let results = [];
-
-      // By department
-      const dept = dynamicDepts.find(d => ql.includes(d.toLowerCase()));
-      if (dept) {
-        results = employees.filter(e => e.dept === dept);
-        if (results.length > 0) {
-          let p = results.filter(e=>e.status==='P').length;
-          let v = results.length - p;
-          let names = results.slice(0, 15).map(e => `- ${e.name} [${e.code||'بدون كود'}] ${e.status==='P'?'✅':'🌴'}`).join('\n');
-          return `📋 <b>تقرير إدارة [${dept}]</b><br>إجمالي: ${results.length} | متواجد: ${p} | إجازة: ${v}<br>${names}${results.length>15 ? `<br>...و ${results.length-15} آخرين` : ''}`;
-        }
-      }
-
-      // By sector/building
-      const sector = dynamicSectors.find(s => ql.includes(s.toLowerCase()));
-      if (sector) {
-        results = employees.filter(e => e.sector === sector);
-        if (results.length > 0) {
-          let p = results.filter(e=>e.status==='P').length;
-          let names = results.filter(e=>e.status==='P').slice(0, 15).map(e => `- ${e.name} (غرفة ${e.room||'?'})`).join('\n');
-          return `🏠 <b>المبنى [${sector}]</b><br>إجمالي المقيمين: ${results.length} | متواجد حالياً: ${p}<br>${names}${results.length>15 ? `<br>...و ${results.length-15} آخرين` : ''}`;
-        }
-      }
-
-      // By status
-      if (ql.includes('متواجد') || ql.includes('p') || ql.includes('الموقف')) {
-        results = employees.filter(e => e.status === 'P');
-        let byDept = {};
-        results.forEach(e => { let d = e.dept||'أخرى'; byDept[d] = (byDept[d]||0)+1; });
-        let deptBreakdown = Object.entries(byDept).sort((a,b)=>b[1]-a[1]).slice(0, 10).map(([d,c]) => `- ${d}: ${c}`).join('\n');
-        return `✅ <b>المتواجدين بالموقع (P)</b><br>الإجمالي: ${results.length} فرد<br><b>حسب الإدارة:</b><br>${deptBreakdown}`;
-      }
-      if (ql.includes('إجازة') || ql.includes('v') || ql.includes('اجازة')) {
-        results = employees.filter(e => e.status === 'V');
-        return `🌴 <b>في الإجازات (V)</b><br>الإجمالي: ${results.length} فرد`;
-      }
-
-      // By name search
-      const words = ql.split(/\s+/).filter(w => w.length > 1);
-      for (const word of words) {
-        results = employees.filter(e => (e.name||'').toLowerCase().includes(word) || (e.code||'').toLowerCase() === word);
-        if (results.length > 0 && results.length <= 10) break;
-        if (results.length > 10) { results = results.slice(0, 10); break; }
-      }
-      if (results.length > 0 && results.length <= 10) {
-        return `🔍 <b>نتائج البحث عن "${q}"</b><br>` + results.map(e =>
-          `- ${e.name} | كود: ${e.code||'-'} | ${e.dept||'-'} | ${e.title||'-'} | ${e.contract||'-'} | ${e.status==='P'?'✅ متواجد':'🌴 إجازة'} ${e.sector ? `| ${e.sector} غرفة ${e.room||'-'}` : ''} ${e.assets&&e.assets.length ? `| عهدة: ${e.assets.map(a=>`${a.item||a.name} (${a.qty||a.quantity})`).join(', ')}` : ''}`
-        ).join('<br>');
-      }
-
-      // Assets query
-      if (ql.includes('عهدة') || ql.includes('عهده') || ql.includes('ممتلكات')) {
-        for (const word of words) {
-          let emp = employees.find(e => (e.name||'').toLowerCase().includes(word));
-          if (emp) {
-            let assets = emp.assets || [];
-            if (assets.length > 0) {
-              return `👤 <b>عهدة [${emp.name}]</b><br>` + assets.map(a => `- ${a.item||a.name}: ${a.qty||a.quantity}`).join('<br>');
-            } else {
-              return `👤 <b>${emp.name}</b><br>لا يوجد عهدة مسجلة`;
-            }
-          }
-        }
-        return `⚠️ لم أجد موظف بهذا الاسم. جرب الكتابة بشكل أدق.`;
-      }
-
-      return null;
-    }
-
-    function queryHousing(q) {
-      const ql = q.toLowerCase();
-      if (ql.includes('غرفة') || ql.includes('room') || ql.includes('سكن') || ql.includes('سرير') || ql.includes('اشغال') || ql.includes('مشغول')) {
-        let totalBeds = roomsCapacity.reduce((s,r) => s + (parseInt(r.beds)||0), 0);
-        let occupied = employees.filter(e => e.status==='P' && e.room).length;
-        let bedsBySector = {};
-        roomsCapacity.forEach(r => {
-          if (!bedsBySector[r.sector]) bedsBySector[r.sector] = { beds:0, rooms:0 };
-          bedsBySector[r.sector].beds += parseInt(r.beds)||0;
-          bedsBySector[r.sector].rooms++;
-        });
-        let sectorHtml = Object.entries(bedsBySector).map(([s, d]) => {
-          let occ = employees.filter(e => e.status==='P' && e.sector===s).length;
-          return `- <b>${s}</b>: ${d.rooms} غرفة، ${d.beds} سرير، مشغول ${occ}، شاغر ${d.beds-occ}`;
-        }).join('<br>');
-        return `🏠 <b>إشغال السكن</b><br>إجمالي الأسرة: ${totalBeds} | مشغول: ${occupied} | شاغر: ${totalBeds-occupied}<br><br>${sectorHtml}`;
-      }
-      return null;
-    }
-
-    function queryInventory(q) {
-      const ql = q.toLowerCase();
-      if (ql.includes('مخزن') || ql.includes('صنف') || ql.includes('بون') || ql.includes('صرف')) {
-        let totalQty = inventoryVouchers.reduce((s, v) => s + (parseInt(v.qty)||0), 0);
-        let recent = [...inventoryVouchers].reverse().slice(0, 10);
-        let html = `📦 <b>طلبات صرف المخزن</b><br>أصناف: ${inventoryItems.length} | بونات صرف: ${inventoryVouchers.length} | إجمالي الكميات المصروفة: ${totalQty}<br><br>`;
-        if (ql.includes('أصناف') || ql.includes('items')) {
-          let stores = {};
-          inventoryItems.forEach(i => { let s = i.store||'عام'; stores[s] = (stores[s]||0)+1; });
-          html += `<b>الأصناف حسب المخزن:</b><br>` + Object.entries(stores).map(([s,c]) => `- ${s}: ${c} صنف`).join('<br>');
-        } else {
-          html += `<b>آخر البونات:</b><br>` + recent.map(v =>
-            `- ${v.voucherId||v.id||'?'}: ${v.itemName||'?'} ×${v.qty||0} | ${v.empName||'-'} | ${v.date||'-'}`
-          ).join('<br>');
-        }
-        return html;
-      }
-      return null;
-    }
-
-    function queryGeneral(q) {
-      const ql = q.toLowerCase();
-      // Count queries
-      if (ql.includes('كم عدد') || ql.includes('count') || ql.includes('إجمالي') || ql.includes('عدد')) {
-        let total = employees.length;
-        let p = employees.filter(e=>e.status==='P').length;
-        let v = total - p;
-        let beds = roomsCapacity.reduce((s,r)=>s+(parseInt(r.beds)||0),0);
-        let occ = employees.filter(e=>e.status==='P'&&e.room).length;
-        return `📊 <b>إحصائيات عامة</b><br>👤 القوة: ${total} (P: ${p} | V: ${v})<br>🏠 السكن: ${beds} سرير (مشغول ${occ} | شاغر ${beds-occ})<br>📦 المخزن: ${inventoryItems.length} صنف، ${inventoryVouchers.length} بون<br>🍵 شاي وسكر: ${teaSugarDisbursements.length} عملية<br>📅 إجازات: ${vacations.length}<br>🚫 مستبعدين: ${excludedEmployees.length}<br>👷 مقاولين: ${contractors.length}<br>🛎️ ضيافة: ${hospitalities.length}<br>🛠️ صيانة: ${maintenanceRecords.length} | دورية: ${periodicMaintenance.length}<br>🚛 بيارات: ${septicRecords.length}<br>📊 وجبات: ${mealLogs.length}`;
-      }
-
-      // Contractors
-      if (ql.includes('مقاول') || ql.includes('مقاولين')) {
-        let totalDaily = contractors.reduce((s,c) => s + (parseInt(c.dailyRate)||0), 0);
-        let active = contractors.filter(c => !c.endDate || c.endDate >= new Date().toISOString().slice(0,10));
-        return `👷 <b>المقاولين</b><br>الإجمالي: ${contractors.length} | النشطين حالياً: ${active.length}<br>إجمالي اليومية: ${totalDaily.toLocaleString()} ج.م<br><br>` +
-          contractors.slice(0, 20).map(c => `- ${c.name} | ${c.sector||'-'} | ${(c.dailyRate||0).toLocaleString()} ج.م/يوم | ${c.phone||'-'}`).join('<br>');
-      }
-
-      // Vacations
-      if (ql.includes('إجاز') || ql.includes('اجاز')) {
-        let recent = [...vacations].reverse().slice(0, 15);
-        return `📅 <b>الإجازات (آخر ${recent.length})</b><br>` +
-          recent.map(v => `- ${v.name||'-'} | ${v.start||'-'} (${v.days||'?'} يوم) → ${v.end||'-'} | سفر: ${v.travelDate||'-'} رجوع: ${v.returnDate||'-'} ${v.notes ? '| '+v.notes : ''}`).join('<br>') +
-          (vacations.length > 15 ? `<br>...و ${vacations.length - 15} إجازات أخرى` : '');
-      }
-
-      // Hospitality
-      if (ql.includes('ضياف') || ql.includes('زائر') || ql.includes('ضيوف')) {
-        let recent = [...hospitalities].reverse().slice(0, 15);
-        return `🛎️ <b>الضيافة (آخر ${recent.length})</b><br>` +
-          recent.map(h => `- ${h.name||'-'} | ${h.type||'-'} | ${h.arrival||'-'} → ${h.departure||'-'}`).join('<br>');
-      }
-
-      // Maintenance
-      if (ql.includes('صيان') || ql.includes('مهمة') || ql.includes('اصلاح')) {
-        let recent = [...maintenanceRecords].reverse().slice(0, 15);
-        let html = `🛠️ <b>الصيانة (آخر ${recent.length})</b><br>` +
-          recent.map(m => `- ${m.task||'-'} | فني: ${m.tech||'-'} | ${m.date||'-'}`).join('<br>');
-        if (periodicMaintenance.length) {
-          let overdue = periodicMaintenance.filter(p => p.nextDue && p.nextDue < new Date().toISOString().slice(0,10));
-          html += `<br><br>🛡️ <b>الصيانة الدورية:</b> ${periodicMaintenance.length} مهمة | ${overdue.length} متأخرة`;
-          if (overdue.length) {
-            html += `<br>` + overdue.slice(0, 5).map(p => `- ⚠️ ${p.name} (كان موعدها ${p.nextDue})`).join('<br>');
-          }
-        }
-        return html;
-      }
-
-      // Septic
-      if (ql.includes('بيار') || ql.includes('كسح') || ql.includes('بالوع')) {
-        let total = septicRecords.length;
-        let totalTrips = septicRecords.reduce((s, r) => s + (parseInt(r.trips)||0), 0);
-        return `🚛 <b>البيارات</b><br>إجمالي عمليات الكسح: ${total} | إجمالي النقلات: ${totalTrips}`;
-      }
-
-      // Tea & Sugar
-      if (ql.includes('شاي') || ql.includes('سكر') || ql.includes('تموين')) {
-        let totalTea = teaSugarDisbursements.reduce((s, t) => s + (parseInt(t.teaPacks)||0), 0);
-        let totalSugar = teaSugarDisbursements.reduce((s, t) => s + (parseInt(t.sugarKg)||0), 0);
-        return `🍵 <b>صرف الشاي والسكر</b><br>إجمالي العمليات: ${teaSugarDisbursements.length}<br>عبوات شاي: ${totalTea} باكو<br>سكر: ${totalSugar} كجم`;
-      }
-
-      // Meals
-      if (ql.includes('وجبة') || ql.includes('وجبات') || ql.includes('أكل') || ql.includes('اكل')) {
-        let todayISO = new Date().toISOString().split('T')[0];
-        let todayDisplay = fmtDate(new Date());
-        let todayMeal = mealLogs.find(m => m.date === todayISO);
-        let totalMeals = mealLogs.length;
-        let html = `📊 <b>الوجبات</b><br>إجمالي الأيام المسجلة: ${totalMeals}`;
-        if (todayMeal) {
-          html += `<br><br>📋 <b>وجبات اليوم (${todayDisplay}):</b><br>🍳 إفطار: ${todayMeal.breakfast||0} | 🍗 غداء: ${todayMeal.lunch||0} | 🧀 عشاء: ${todayMeal.dinner||0}`;
-          var tg = calcHospGuestsForDate(todayISO);
-          if (tg.gBf || tg.gLh || tg.gDn) {
-            html += `<br>👥 ضيوف: إفطار ${tg.gBf} | غداء ${tg.gLh} | عشاء ${tg.gDn}`;
-          }
-        } else {
-          html += `<br>⚠️ لم يتم تسجيل وجبات اليوم بعد`;
-        }
-        return html;
-      }
-
-      // Excluded
-      if (ql.includes('مستبعد') || ql.includes('مفصول') || ql.includes('استبعاد')) {
-        let reasons = {};
-        excludedEmployees.forEach(e => { let r = e.reason||'أخرى'; reasons[r] = (reasons[r]||0)+1; });
-        return `🚫 <b>المستبعدين</b><br>الإجمالي: ${excludedEmployees.length}<br><b>حسب السبب:</b><br>` +
-          Object.entries(reasons).map(([r, c]) => `- ${r}: ${c}`).join('<br>') +
-          `<br><br>آخر المستبعدين:<br>` +
-          [...excludedEmployees].reverse().slice(0, 10).map(e => `- ${e.name||'-'} | ${e.dept||'-'} | ${e.reason||'-'} | ${e.date||'-'}`).join('<br>');
-      }
-
-      return null;
-    }
-
-    function askSmartAI() {
-      let field = document.getElementById('ai-input'); let query = field.value.trim(); if(!query) return;
-      let chat = document.getElementById('ai-chat');
-      let userDiv = document.createElement('div');
-      userDiv.style = "background:#eceff1; padding:8px; border-radius:8px; align-self:flex-end; max-width:85%; font-weight:600; margin-bottom:5px;";
-      userDiv.innerText = query; chat.appendChild(userDiv); field.value = '';
-      chat.scrollTop = chat.scrollHeight;
-
-      let thinkingDiv = document.createElement('div');
-      thinkingDiv.style = "background:#e8f5e9; padding:8px; border-radius:8px; align-self:flex-start; max-width:85%; font-weight:600; font-size:13px; line-height:1.6;";
-      thinkingDiv.innerHTML = '⏳ جاري التحليل...';
-      chat.appendChild(thinkingDiv);
-      chat.scrollTop = chat.scrollHeight;
-
-      let responder = (html) => {
-        thinkingDiv.innerHTML = html;
-        chat.scrollTop = chat.scrollHeight;
-      };
-
-      // Try rule-based first
-      let response = queryEmployees(query) || queryHousing(query) || queryInventory(query) || queryGeneral(query);
-
-      if (response) {
-        setTimeout(() => responder(response), 100);
-        return;
-      }
-
-      // Fallback to Gemini if key is set
-      if (geminiKey) {
-        var context = buildSystemContext();
-        askGemini(query, context).then(function(aiResponse) {
-          if (aiResponse) {
-            responder(aiResponse.replace(/\n/g, '<br>'));
-          } else {
-            responder('عذرا، حصل خطأ في الاتصال بالذكاء. تأكد من صحة المفتاح.');
-          }
-        });
-      } else {
-        responder('عذرا، ما فيش مفتاح ذكاء مضبوط. اضغط على كلمة غير متصل فوق عشان تدخل المفتاح.');
-      }
-    }
-
-    // Enter key for AI input
-    document.addEventListener('keydown', function(e) {
-      if (e.key === 'Enter' && document.activeElement === document.getElementById('ai-input')) {
-        e.preventDefault();
-        askSmartAI();
-      }
-    });
-
     // ====== Bakery Functions ======
     function switchBakerySub(id, btn) {
       document.querySelectorAll('.bakery-sub-content').forEach(el => el.classList.remove('active'));
@@ -9364,149 +8912,6 @@ function toggleEmployeeStatus(empId) {
         document.getElementById('bprod-notes').value = '';
         ingIds.forEach(function(id) { document.getElementById('bprod-ing-' + id).value = '0'; });
       } catch(e) { if (e.message !== 'رصيد غير كافٍ') alert('❌ خطأ: ' + e.message); }
-    }
-
-    function openWhatsAppPasteModal() {
-      document.getElementById('wa-paste-text').value = '';
-      document.getElementById('wa-parse-result').innerHTML = '';
-      openModal('modal-whatsapp-paste');
-      setTimeout(function() { document.getElementById('wa-paste-text').focus(); }, 100);
-    }
-
-    function parseWhatsAppMessage() {
-      try {
-        var el = document.getElementById('wa-parse-result');
-        var text = document.getElementById('wa-paste-text').value.trim();
-        if (!text) { el.innerHTML = '<span style="color:red;">⚠️ الصق رسالة الواتساب أولاً</span>'; return; }
-
-        var lines = text.split(/\n/).map(function(l) { return l.trim(); }).filter(Boolean);
-        var full = text;
-
-        var dateVal = new Date().toISOString().split('T')[0];
-        for (var i = 0; i < lines.length; i++) {
-          var ds = lines[i].match(/(\d{1,2})\s*[/-]\s*(\d{1,2})\s*[/-]\s*(\d{2,4})/);
-          if (ds) {
-            var d = ('0' + ds[1]).slice(-2), m = ('0' + ds[2]).slice(-2), y = ds[3];
-            if (y.length === 2) y = '20' + y;
-            dateVal = y + '-' + m + '-' + d;
-            break;
-          }
-        }
-
-        // Split kitchen / contractors at "للمقاولين"
-        var splitIdx = full.indexOf('للمقاولين');
-        if (splitIdx < 0) splitIdx = full.indexOf('المقاولين');
-        var kitchenBlock = splitIdx >= 0 ? full.substring(0, splitIdx) : full;
-        var ctrBlock = splitIdx >= 0 ? full.substring(splitIdx) : '';
-
-        // ---- Kitchen: "X كيلو دقيق =Y" or "Xكيلو دقيق=Y" ----
-        var kitchenFlour = 0, kitchenBread = 0, kitchenDelivered = 0, kitchenRemaining = 0;
-        var kbExtract = kitchenBlock.match(/(\d+[.,]?\d*)\s*كيلو\s*.?\s*دقيق\s*[=:]\s*(\d+)/);
-        if (kbExtract) {
-          kitchenFlour = parseFloat(kbExtract[1].replace(',','.'));
-          kitchenBread = parseInt(kbExtract[2]);
-        }
-        // تسليم المطبخ X
-        var kdMatch = kitchenBlock.match(/(?:تسليم|للمطبخ)\s*(?:المطبخ)?\s*(\d+)/);
-        if (kdMatch) kitchenDelivered = parseInt(kdMatch[1]);
-        // داخل الفرن X
-        var krMatch = kitchenBlock.match(/(?:داخل|الفرن|متبقي|باقي)\s*(?:الفرن)?\s*(\d+)/);
-        if (krMatch) kitchenRemaining = parseInt(krMatch[1]);
-
-        // ---- Contractors: "X كيلو دقيق=Y" ----
-        var ctrFlour = 0, ctrBread = 0;
-        var cbExtract = ctrBlock.match(/(\d+[.,]?\d*)\s*كيلو\s*.?\s*دقيق\s*[=:]\s*(\d+)/);
-        if (cbExtract) {
-          ctrFlour = parseFloat(cbExtract[1].replace(',','.'));
-          ctrBread = parseInt(cbExtract[2]);
-        }
-
-        // ---- Ingredients ----
-        var ingMap = { 'خميرة':0, 'ملح':0, 'ردة':0 };
-        function parseQtyWord(s) {
-          s = s.trim();
-          var m = s.match(/^(\d+[.,]?\d*)/);
-          if (m) return parseFloat(m[1].replace(',','.'));
-          if (s.indexOf('نص') === 0 || s.indexOf('نصف') === 0) return 0.5;
-          if (s.indexOf('ربع') === 0) return 0.25;
-          if (s.indexOf('كيلو') === 0) return 1;
-          return null;
-        }
-        for (var j = 0; j < lines.length; j++) {
-          var line = lines[j];
-          for (var ingName in ingMap) {
-            var idx = line.indexOf(ingName);
-            if (idx >= 0) {
-              var before = line.substring(0, idx).trim();
-              var q = parseQtyWord(before);
-              if (q !== null && q > 0 && ingMap[ingName] === 0) ingMap[ingName] = q;
-            }
-          }
-        }
-        // "5 هالك" is not an ingredient, ignore
-
-        // ---- Fill form ----
-        var filled = [];
-        if (dateVal) { document.getElementById('bprod-date').value = dateVal; filled.push('التاريخ: ' + dateVal); }
-
-        var totalLoaves = kitchenBread + ctrBread;
-        if (totalLoaves > 0) {
-          document.getElementById('bprod-count').value = totalLoaves;
-          filled.push('الأرغفة: ' + totalLoaves + (' (مطبخ ' + kitchenBread + ' + مقاولين ' + ctrBread + ')'));
-        }
-
-        var totalFlour = kitchenFlour + ctrFlour;
-        if (totalFlour > 0) {
-          document.getElementById('bprod-ing-ING001').value = totalFlour;
-          filled.push('دقيق: ' + totalFlour + ' كجم' + (' (مطبخ ' + kitchenFlour + ' + مقاولين ' + ctrFlour + ')'));
-        }
-
-        var idMap = { 'خميرة':'ING002', 'ملح':'ING003', 'ردة':'ING004' };
-        for (var id in idMap) {
-          if (ingMap[id] > 0) {
-            document.getElementById('bprod-ing-' + idMap[id]).value = ingMap[id];
-            filled.push(id + ': ' + ingMap[id]);
-          }
-        }
-
-        // ---- Notes ----
-        var notesParts = [];
-        if (kitchenDelivered > 0) notesParts.push('تسليم مطبخ: ' + kitchenDelivered);
-        if (kitchenRemaining > 0) notesParts.push('باقي الفرن: ' + kitchenRemaining);
-
-        var ctrNames = ['مصطفى عبد الكريم','عبد الرازق جبر','اسامه سمير','اسامه عبد الرازق','كرم الزيات','محمد شعبان','محمود قاسم','كامل احمد','محمد حسنى','اسعد اسماعيل','عبد الرازق','ابراهيم شحاته','شحاته','البدري','مصطفى','كرم','الزيات','اسامه','سمير','ممدوح','كامل','محمد','ابوعمار','ناجح','فارس','اسعد','اسماعيل','ام جبريل'];
-        var ctrList = [];
-        if (ctrBlock) {
-          var ctrLines = ctrBlock.split(/\n/);
-          for (var ci = 0; ci < ctrLines.length; ci++) {
-            var cl = ctrLines[ci].trim();
-            if (cl.length < 3) continue;
-            for (var ni = 0; ni < ctrNames.length; ni++) {
-              if (cl.indexOf(ctrNames[ni]) >= 0) {
-                var cn = cl.match(/(\d+)/);
-                if (cn) { ctrList.push(ctrNames[ni] + ':' + cn[1]); break; }
-              }
-            }
-          }
-        }
-        if (ctrList.length > 0) notesParts.push('مقاولين: ' + ctrList.join(', '));
-        document.getElementById('bprod-notes').value = notesParts.join(' | ');
-
-        // ---- Results ----
-        var html = '<div style="font-weight:600;color:#075e54;margin-bottom:6px;">✅ تم التحليل والتعبئة:</div>';
-        if (filled.length > 0) {
-          html += '<ul style="margin:4px 0;padding-right:20px;">';
-          for (var fi = 0; fi < filled.length; fi++) { html += '<li>' + filled[fi] + '</li>'; }
-          html += '</ul>';
-        }
-        html += '<div style="color:#888;font-size:12px;margin-top:6px;">📝 راجع البيانات قبل الحفظ. تفاصيل المقاولين والتسليم في الملاحظات.</div>';
-        if (ctrList.length > 0) {
-          html += '<div style="margin-top:8px;padding:8px;background:#e8f5e9;border-radius:6px;font-size:12px;">🚚 تم كشف ' + ctrList.length + ' مقاولين. سجل التوريد لكل مقاول من تبويب "توريد مقاولين".</div>';
-        }
-        el.innerHTML = html;
-      } catch(e) {
-        document.getElementById('wa-parse-result').innerHTML = '<span style="color:red;">❌ خطأ في التحليل: ' + e.message + '</span>';
-      }
     }
 
     function deleteBakeryProduction(idx) { if (!requireAdmin()) return;
@@ -9962,25 +9367,6 @@ function toggleEmployeeStatus(empId) {
       container.document.close();
     }
 
-    try { updateAiStatus(); } catch(ign) {}
-    if (!geminiKey) {
-      try { document.getElementById('ai-key-box').style.display = 'flex'; } catch(ign) {}
-    }
-    function toggleAi() {
-      try {
-        var p = document.getElementById('ai-panel');
-        if (!p) { console.error('ai-panel not found'); return; }
-        p.style.display = p.style.display === 'none' ? 'block' : 'none';
-        if (p.style.display === 'none') return;
-        var inp = document.getElementById('ai-input');
-        if (inp) inp.focus();
-        var chat = document.getElementById('ai-chat');
-        if (chat && chat.children.length <= 1) {
-          try { var tips = generateAITips(); chat.innerHTML = '<div style="background:#e8f5e9;padding:10px;border-radius:8px;font-size:13px;line-height:1.7;align-self:flex-start;">' + tips + '</div>'; } catch(tipErr) { console.error('generateAITips error:', tipErr); }
-        }
-      } catch(e) { console.error('toggleAi error:', e); }
-    }
-
     // ============================
     //  1.  REFRESH SYSTEM (تحديث)
     // ============================
@@ -10018,7 +9404,7 @@ function toggleEmployeeStatus(empId) {
 
       // Reset all form fields
       document.querySelectorAll('input[type="text"], input[type="number"], input[type="date"], input[type="search"], textarea').forEach(el => {
-        if (!el.id.includes('search') && !el.id.includes('filter') && !el.id.includes('ai-input')) {
+        if (!el.id.includes('search') && !el.id.includes('filter')) {
           if (el.id !== 'ctr-daily-rate' && el.id !== 'ctr-beds') el.value = '';
         }
       });
@@ -12000,23 +11386,7 @@ function toggleEmployeeStatus(empId) {
       <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:10px;background:#e65100;" onclick="confirmAddBakeryStock()">💾 إضافة الرصيد</button>
     </div>
   </div>
-  <div id="modal-whatsapp-paste" class="modal">
-    <div class="modal-content" style="max-width:700px;border-top:5px solid #075e54;max-height:90vh;display:flex;flex-direction:column;">
-      <div class="modal-header">
-        <h2 style="color:#075e54;">📥 لصق من واتساب</h2>
-        <span class="close-btn" onclick="closeModal('modal-whatsapp-paste')">&times;</span>
-      </div>
-      <div style="padding:10px 0;flex:1;display:flex;flex-direction:column;gap:10px;">
-        <p style="font-size:13px;color:#555;margin:0;">الصق رسالة الواتساب بالكامل في المساحة أدناه ثم اضغط "تحليل". سيتم تعبئة نموذج الإنتاج بالمطبخ تلقائياً.</p>
-        <textarea id="wa-paste-text" style="width:100%;min-height:180px;flex:1;padding:10px;font-size:13px;border:2px solid #ddd;border-radius:8px;resize:vertical;font-family:sans-serif;" placeholder="الصق رسالة الواتساب هنا..."></textarea>
-        <div style="display:flex;gap:10px;">
-          <button class="btn btn-primary" onclick="parseWhatsAppMessage()" style="background:#075e54;">🔍 تحليل</button>
-          <button class="btn" onclick="document.getElementById('wa-paste-text').value='';document.getElementById('wa-parse-result').innerHTML='';" style="background:#e0e0e0;color:#333;">🗑️ مسح</button>
-        </div>
-        <div id="wa-parse-result" style="padding:10px;background:#f9f9f9;border-radius:8px;border:1px solid #e0e0e0;max-height:250px;overflow:auto;font-size:13px;"></div>
-      </div>
-    </div>
-  </div>
+
 
   <div id="modal-field-check" class="modal">
     <div class="modal-content" style="max-width:700px;border-top:5px solid #1565c0;max-height:85vh;display:flex;flex-direction:column;">
@@ -12064,50 +11434,6 @@ function toggleEmployeeStatus(empId) {
     if (!inp || inp.id) { if(inp && inp.id) lbl.setAttribute('for',inp.id); return; }
     inp.id = 'auto-label-' + (++c);
     lbl.setAttribute('for', inp.id);
-  });
-})();
-</script>
-<script>
-(function(){
-  var ready = function(fn) {
-    if (document.readyState !== 'loading') { fn(); }
-    else { document.addEventListener('DOMContentLoaded', fn); }
-  };
-  ready(function(){
-    var aiBtn = document.getElementById('ai-toggle-btn');
-    if (aiBtn) {
-      aiBtn.onclick = function() {
-        var panel = document.getElementById('ai-panel');
-        if (!panel) { alert('AI panel not found'); return; }
-        panel.style.display = (panel.style.display === 'none') ? 'block' : 'none';
-      };
-    }
-    var waBtn = Array.from(document.querySelectorAll('button')).filter(function(b){ return b.textContent.indexOf('واتساب') >= 0 || b.textContent.indexOf('WhatsApp') >= 0; })[0];
-    if (!waBtn) waBtn = document.querySelector('button[onclick*="WhatsApp"], button[onclick*="whatsapp"], button[onclick*="واتساب"]');
-    if (!waBtn) {
-      var allBtns = document.querySelectorAll('button');
-      for (var i = 0; i < allBtns.length; i++) {
-        if (allBtns[i].innerHTML.indexOf('واتساب') >= 0 || allBtns[i].innerHTML.indexOf('WhatsApp') >= 0) { waBtn = allBtns[i]; break; }
-        if (allBtns[i].getAttribute('onclick') && allBtns[i].getAttribute('onclick').indexOf('WhatsApp') >= 0) { waBtn = allBtns[i]; break; }
-      }
-    }
-    if (waBtn) {
-      waBtn.onclick = function() {
-        var modal = document.getElementById('modal-whatsapp-paste');
-        if (modal) {
-          modal.classList.add('open');
-          var txt = document.getElementById('wa-paste-text');
-          if (txt) setTimeout(function(){ txt.focus(); }, 100);
-        } else {
-          alert('WhatsApp modal not found in DOM');
-        }
-      };
-    }
-    var indicator = document.createElement('div');
-    indicator.id = 'fix-indicator';
-    indicator.style.cssText = 'position:fixed;bottom:5px;left:5px;background:#4caf50;color:white;padding:2px 8px;border-radius:4px;font-size:11px;z-index:99999;';
-    indicator.textContent = '✓';
-    document.body.appendChild(indicator);
   });
 })();
 </script>
