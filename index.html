@@ -11428,7 +11428,9 @@ var saLast=null;
 function saHandle(t){
   var p=saParse(t);
   if(p&&(p.kb>0||p.cb>0||p.fl>0)){saLast=p;var h='<strong>✅ تم التحليل:</strong><br>';if(p.dt)h+='📅 '+p.dt+'<br>';if(p.kb>0)h+='🍞 مطبخ: '+p.kb+' رغيف<br>';if(p.kd>0)h+='🚚 تسليم: '+p.kd+'<br>';if(p.kr>0)h+='🔥 بالفرن: '+p.kr+'<br>';if(p.cb>0)h+='👷 مقاولين: '+p.cb+' رغيف<br>';h+='<br>صحيح? <button onclick="saConfirm()" style="padding:4px 12px;background:#1b5e20;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px;">✅ نعم</button>';saAddMsg(h,'bot');return;}
-  saAddMsg('لم أجد بيانات إنتاج في الرسالة. تأكد من المحتوى.','bot');
+  saAskGemini(t);
+}
+function saAskGemini(t){var k=localStorage.getItem('sa_gemini_key');if(!k){k=prompt('🔑 أدخل مفتاح Gemini API:','');if(!k){saAddMsg('❌ لا يوجد مفتاح API.','bot');return;}localStorage.setItem('sa_gemini_key',k);}saAddMsg('⏳ جاري التفكير...','bot');fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key='+k,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contents:[{parts:[{text:'أنت مساعد إداري لنظام لينه فارمز أجب بالعامية المصرية: '+t}]}]})}).then(function(r){return r.json();}).then(function(d){try{var r=d.candidates[0].content.parts[0].text;saAddMsg(r,'bot');}catch(e){saAddMsg('❌ خطأ: '+(d.error&&d.error.message?d.error.message:JSON.stringify(d)),'bot');}}).catch(function(e){saAddMsg('❌ خطأ: '+e.message,'bot');});
 }
 function saConfirm(){var p=saLast;if(!p)return;var d=document.getElementById('bprod-date');if(d&&p.dt)d.value=p.dt;var c=document.getElementById('bprod-count');if(c)c.value=p.kb+p.cb;var g=document.getElementById('bprod-ing-ING001');if(g)g.value=p.fl;if(p.yeast>0){var y=document.getElementById('bprod-ing-ING002');if(y)y.value=p.yeast;}if(p.salt>0){var s=document.getElementById('bprod-ing-ING003');if(s)s.value=p.salt;}if(p.bran>0){var b=document.getElementById('bprod-ing-ING004');if(b)b.value=p.bran;}var n=[];if(p.kd>0)n.push('تسليم: '+p.kd);if(p.kr>0)n.push('باقي: '+p.kr);var nf=document.getElementById('bprod-notes');if(nf)nf.value=n.join(' | ');saLast=null;saAddMsg('✅ تم تعبئة النموذج!','bot');}
 function saParse(t){
