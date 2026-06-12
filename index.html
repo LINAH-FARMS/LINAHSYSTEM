@@ -5758,8 +5758,7 @@
       if(!code) return alert("⚠️ لم يتم توليد الكود — تأكد من اختيار نوع التعاقد");
 
       if(!editId) {
-        let allPeople = [...employees, ...excludedEmployees];
-        let dupCode = allPeople.find(e => e.code && e.code.toString().toLowerCase() === code.toLowerCase());
+        let dupCode = employees.find(e => e.code && e.code.toString().toLowerCase() === code.toLowerCase());
         if(dupCode) return alert(`⚠️ الكود [${code}] موجود مسبقاً للموظف [${dupCode.name}]!`);
         let dupName = allPeople.find(e => e.name && e.name.trim().toLowerCase() === name.toLowerCase());
         if(dupName) {
