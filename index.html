@@ -705,7 +705,7 @@
       header { display: flex !important; background: white !important; color: #1b5e20 !important; box-shadow: none !important; padding: 10px 0 !important; border-bottom: 2px solid #1b5e20 !important; margin-bottom: 12px !important; }
       header h1 { font-size: 18px !important; color: #1b5e20 !important; }
       header div p { font-size: 12px !important; color: #555 !important; }
-      .nav-tabs, .control-panel, .btn, .no-print, .close-btn, .stats-container, header #live-clock, header #user-selector, header #server-status, header #backup-status, .emp-search-wrapper, .bakery-sub-tabs, .bread-supply-sub-tabs, .game-sub-tabs { display: none !important; }
+      .nav-tabs, .control-panel, .btn, .no-print, .close-btn, .stats-container, header #live-clock, header #user-selector, header #server-status, header #backup-status, .emp-search-wrapper, .bakery-sub-tabs, .bread-supply-sub-tabs, .game-sub-tabs, #sa-panel { display: none !important; }
       .print-watermark { display: block !important; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-15deg); z-index: -1; opacity: 0.08; pointer-events: none; }
       .print-watermark img { width: 400px; height: auto; }
       .tab-content { display: none !important; }
@@ -914,6 +914,7 @@
     <button class="btn btn-sm admin-only" style="padding:5px 12px;font-size:12px;background:#6a1b9a;color:white;border:none;border-radius:6px;cursor:pointer;" onclick="openManageUsers()">👥 إدارة المستخدمين</button>
     <button class="btn btn-sm" style="padding:5px 12px;font-size:12px;background:#c62828;color:white;border:none;border-radius:6px;cursor:pointer;" onclick="exportPdfActiveTab()">📄 تصدير PDF</button>
     <button class="btn btn-sm" style="padding:5px 12px;font-size:12px;background:#1b5e20;color:white;border:none;border-radius:6px;cursor:pointer;" onclick="openDailyReport()">📋 التقرير</button>
+    <button class="btn btn-sm" onclick="SA.toggle()" style="padding:5px 12px;font-size:12px;background:#e65100;color:white;border:none;border-radius:6px;cursor:pointer;">🤖 الذكي</button>
     <span style="flex:1;"></span>
   </div>
 
@@ -11411,8 +11412,6 @@ function toggleEmployeeStatus(empId) {
 
 <!-- ====== المساعد الذكي ====== -->
 <style>
-#sa-btn{position:fixed;bottom:20px;right:20px;z-index:99999;background:#1b5e20;color:#fff;width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:26px;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,.3);border:none;transition:transform .2s;}
-#sa-btn:hover{transform:scale(1.08);}
 #sa-panel{display:none;position:fixed;bottom:90px;right:20px;width:440px;max-height:620px;background:#fff;border-radius:16px;z-index:99998;box-shadow:0 4px 24px rgba(0,0,0,.25);overflow:hidden;flex-direction:column;font-family:Cairo,sans-serif;direction:rtl;}
 #sa-panel.open{display:flex;}
 #sa-header{background:#1b5e20;color:#fff;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;font-weight:700;font-size:15px;}
@@ -11427,9 +11426,8 @@ function toggleEmployeeStatus(empId) {
 #sa-input-area input{flex:1;padding:10px 14px;border:2px solid #e0e0e0;border-radius:24px;font-size:13px;outline:none;font-family:Cairo,sans-serif;}
 #sa-input-area input:focus{border-color:#1b5e20;}
 #sa-input-area button{padding:8px 16px;background:#1b5e20;color:#fff;border:none;border-radius:24px;cursor:pointer;font-size:13px;font-family:Cairo,sans-serif;white-space:nowrap;}
-@media(max-width:500px){#sa-panel{width:calc(100vw - 20px);right:10px;bottom:80px;max-height:70vh;}#sa-btn{right:10px;bottom:10px;width:48px;height:48px;font-size:22px;}}
+@media(max-width:500px){#sa-panel{width:calc(100vw - 20px);right:10px;bottom:80px;max-height:70vh;}}
 </style>
-<div id="sa-btn" onclick="SA.toggle()">🤖</div>
 <div id="sa-panel">
   <div id="sa-header"><span>🧠 المساعد الذكي</span><button onclick="SA.toggle()">&times;</button></div>
   <div id="sa-msgs"><div class="msg bot">👋 مرحباً! ابدأ بالصق رسالة واتساب هنا وهحللها لك. بعد ما نتناقش، هحط البيانات في مكانها الصحيح.<br><br>⚠️ أول مرة هتطلب منك إدخال مفتاح Gemini — الصق المفتاح اللي عندك.</div></div>
