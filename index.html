@@ -5593,13 +5593,13 @@
         codeField.readOnly = true;
         codeField.style.background = '#f0f0f0';
         codeField.style.cursor = 'not-allowed';
-        let sameType = employees.filter(e => e.contract === contract);
-        let maxCode = 1000;
-        sameType.forEach(e => {
-          let num = parseInt(e.code);
-          if (num > maxCode) maxCode = num;
-        });
-        codeField.value = maxCode + 1;
+      let sameType = employees.filter(e => e.contract === contract);
+      let allCodes = sameType.map(function(e){ return parseInt(e.code); });
+      excludedEmployees.forEach(function(e){
+        if (e.contract === contract) { var n = parseInt(e.code); if (n) allCodes.push(n); }
+      });
+      var maxCode = Math.max(1000, ...allCodes.filter(function(n){ return !isNaN(n); }));
+      codeField.value = maxCode + 1;
       }
     }
 
@@ -5758,7 +5758,8 @@
       if(!code) return alert("⚠️ لم يتم توليد الكود — تأكد من اختيار نوع التعاقد");
 
       if(!editId) {
-        let dupCode = employees.find(e => e.code && e.code.toString().toLowerCase() === code.toLowerCase());
+        let allPeople = [...employees, ...excludedEmployees];
+        let dupCode = allPeople.find(e => e.code && e.code.toString().toLowerCase() === code.toLowerCase());
         if(dupCode) return alert(`⚠️ الكود [${code}] موجود مسبقاً للموظف [${dupCode.name}]!`);
         let dupName = allPeople.find(e => e.name && e.name.trim().toLowerCase() === name.toLowerCase());
         if(dupName) {
