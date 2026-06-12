@@ -7364,6 +7364,7 @@ function toggleEmployeeStatus(empId) {
     function normalizeDateStr(d) {
       if (!d) return '';
       var s = d.replace(/[٠-٩]/g, function(c) { return String.fromCharCode(c.charCodeAt(0)-0x660+0x30); });
+      s = s.replace(/[^0-9\-\/]/g, '');
       var m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
       if (m) return m[1]+'-'+('0'+m[2]).slice(-2)+'-'+('0'+m[3]).slice(-2);
       var m2 = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
@@ -7536,8 +7537,7 @@ function toggleEmployeeStatus(empId) {
 
       if(!name || !trips) return alert("البيارة وعدد النقلات حقول إجبارية");
       let dateInput = document.getElementById('septic-date').value;
-      let recordDate = dateInput ? new Date(dateInput).toLocaleDateString('ar-EG') : '—';
-      septicRecords.push({ name, trips: parseInt(trips), time: time || '—', supervisor: superv || '—', date: recordDate });
+      septicRecords.push({ name, trips: parseInt(trips), time: time || '—', supervisor: superv || '—', date: dateInput || '—' });
       syncStorage(); renderSepticTable();
       document.getElementById('septic-supervisor').value = '';
       document.getElementById('septic-time').value = '';
