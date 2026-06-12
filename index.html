@@ -2439,6 +2439,7 @@
           <input type="file" id="b-ctr-excel-file" style="display:none;" accept=".xlsx, .xls" onchange="importBakeryContractorSuppliesFromExcel(event)">
           <button class="btn" style="padding:4px 10px;font-size:12px;background:#1565c0;color:white;" onclick="showPrintChoice('table-bakery-ctr-supply')">🖨️ طباعة</button>
           <button class="btn" style="padding:4px 10px;font-size:12px;background:#c62828;color:white;" onclick="exportPdfActiveTab()">📄 PDF</button>
+          <button class="btn btn-danger" onclick="cleanDataBeforeMay23()" style="height:38px;padding:4px 10px;font-size:12px;">🗑️ حذف التوريدات قبل 21/5/2026</button>
         </div>
         <table id="table-bakery-ctr-supply"><thead><tr><th style="width:30px;" class="no-print"><input type="checkbox" class="check-all" data-table="table-bakery-ctr-supply" onchange="toggleAllCheckboxes(this)"></th><th data-sort-key="date">التاريخ</th><th data-sort-key="name">المقاول</th><th data-sort-key="count">عدد الأرغفة</th><th data-sort-key="price">سعر الوحدة</th><th>الإجمالي</th><th data-sort-key="paid">المدفوع</th><th>المتبقي</th><th>الحالة</th><th data-sort-key="responsible">المسؤول</th><th class="no-print">إجراءات</th></tr></thead><tbody id="bakery-ctr-supply-body"></tbody></table>
       </div>
