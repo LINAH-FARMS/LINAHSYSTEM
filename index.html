@@ -5218,8 +5218,10 @@
       } catch(e) { alert('خطأ: ' + e.message); }
     }
     function generateWeeklyReport(fromDate, toDate, opts) {
+      try {
       var start = new Date(fromDate + 'T00:00:00');
       var end = new Date(toDate + 'T00:00:00');
+      if (isNaN(start.getTime()) || isNaN(end.getTime())) { alert('تاريخ غير صحيح: ' + fromDate + ' → ' + toDate); return; }
       var days = [];
       for (var d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
         days.push(d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2));
@@ -5349,7 +5351,6 @@
         sectionsHtml +
         '<div class="rp-footer">منظومة الشئون الإدارية المتكاملة - لينه فارمز | ' + dateStr + '</div>' +
         '</div></body></html>';
-      try {
         var blob = new Blob([fullHtml], { type: 'text/html;charset=utf-8' });
         var url = URL.createObjectURL(blob);
         var a = document.createElement('a');
@@ -5357,7 +5358,7 @@
         document.body.appendChild(a); a.click();
         document.body.removeChild(a);
         setTimeout(function() { URL.revokeObjectURL(url); }, 5000);
-      } catch(e) { alert('خطأ: ' + e.message); }
+      } catch(e) { alert('❌ خطأ في التقرير الأسبوعي: ' + e.message + '\n' + e.stack); }
     }
     var _breadSuggestionIdCounter = 0;
     function suggestBreadForTomorrow() {
