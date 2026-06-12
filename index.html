@@ -5152,8 +5152,7 @@
         sectionsHtml += '<div class="rp-section">' + sec('🛠️ الصيانة', todayMaint.length + ' مهمة | ' + openM + ' مفتوحة') + '</div>';
       }
       if (opts['rpt-septic']) {
-        var septCost = todaySeptic.reduce(function(s,sp) { return s + (parseFloat(sp.cost) || 0); }, 0);
-        sectionsHtml += '<div class="rp-section">' + sec('🚛 البيارات', todaySeptic.length + ' عملية | تكلفة ' + septCost.toFixed(0) + ' ج.م') + '</div>';
+        sectionsHtml += '<div class="rp-section">' + sec('🚛 البيارات', todaySeptic.length + ' عملية') + '</div>';
       }
       if (opts['rpt-bakery-prod']) {
         var prodTotal = todayProd.reduce(function(s,p) { return s + (p.breadCount || 0); }, 0);
