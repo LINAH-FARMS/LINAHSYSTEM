@@ -2347,14 +2347,13 @@
         <div class="form-group" style="grid-column:span 2;"><label>ملاحظات</label><input type="text" id="bprod-notes" placeholder="ملاحظات الإنتاج"></div>
         <button class="btn btn-primary" onclick="saveBakeryProduction()" style="height:42px;">🏭 تسجيل الإنتاج</button>
         <button class="btn btn-warning" onclick="suggestBreadForTomorrow()" style="height:42px;background:#1565c0;color:white;border:none;border-radius:5px;cursor:pointer;font-weight:600;font-size:14px;">🥖 اقتراح اعداد الخبز لليوم التالي</button>
-        <button class="btn" onclick="var p=this.parentElement.nextElementSibling;if(p){p.style.display=p.style.display==='none'?'flex':'none'}" style="height:42px;background:#e65100;color:white;border:none;border-radius:5px;cursor:pointer;font-weight:600;font-size:14px;">🧠 تحليل واتساب</button>
       </div>
-      <div style="display:none;background:#fff;border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,.15);overflow:hidden;flex-direction:column;font-family:Cairo,sans-serif;direction:rtl;margin-bottom:15px;">
-        <div style="background:#1b5e20;color:#fff;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;font-weight:700;font-size:15px;"><span>🧠 المساعد الذكي</span><span onclick="this.parentElement.parentElement.style.display='none'" style="cursor:pointer;font-size:20px;">&times;</span></div>
-        <div id="sa-msgs" style="flex:1;overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:8px;background:#f5f5f5;min-height:180px;max-height:350px;font-size:13px;line-height:1.6;"><div style="max-width:88%;padding:10px 14px;border-radius:12px;background:#fff;align-self:flex-start;box-shadow:0 1px 3px rgba(0,0,0,.08);">👋 الصق رسالة واتساب وهحللها. أول مرة هتطلب مفتاح Gemini.</div></div>
+      <div style="background:#fff;border-radius:12px;box-shadow:0 2px 12px rgba(0,0,0,.1);overflow:hidden;flex-direction:column;font-family:Cairo,sans-serif;direction:rtl;margin-bottom:15px;">
+        <div style="background:#e65100;color:#fff;padding:10px 16px;display:flex;justify-content:space-between;align-items:center;font-weight:700;font-size:14px;"><span>🧠 تحليل رسائل واتساب</span><span style="font-size:11px;font-weight:400;opacity:0.8;">الصق الرسالة ثم اضغط إرسال</span></div>
+        <div id="sa-msgs" style="flex:1;overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:8px;background:#f5f5f5;min-height:150px;max-height:250px;font-size:13px;line-height:1.6;"><div style="max-width:88%;padding:10px 14px;border-radius:12px;background:#fff;align-self:flex-start;box-shadow:0 1px 3px rgba(0,0,0,.08);">👋 الصق رسالة واتساب وهحللها. أول مرة هتطلب مفتاح Gemini.</div></div>
         <div style="display:flex;gap:6px;padding:10px;border-top:1px solid #e0e0e0;background:#fff;">
           <input id="sa-input" placeholder="الصق رسالة واتساب..." onkeydown="if(event.key==='Enter')saSend()" style="flex:1;padding:8px 12px;border:2px solid #ddd;border-radius:20px;font-size:13px;outline:none;font-family:Cairo,sans-serif;">
-          <button onclick="saSend()" style="padding:8px 16px;background:#1b5e20;color:#fff;border:none;border-radius:20px;cursor:pointer;font-size:13px;font-family:Cairo,sans-serif;">إرسال</button>
+          <button onclick="saSend()" style="padding:8px 16px;background:#e65100;color:#fff;border:none;border-radius:20px;cursor:pointer;font-size:13px;font-family:Cairo,sans-serif;">إرسال</button>
         </div>
       </div>
       <div class="control-panel no-print" style="margin-top:10px;">
