@@ -1434,7 +1434,8 @@
           <label><input type="checkbox" id="hosp-meal-dn" checked> 🧀 عشاء</label>
         </div>
       </div>
-      <button class="btn btn-primary" onclick="addHospitalityRecord()" style="justify-content: center; height: 42px;">🛎️ تسجيل وإعتماد الزيارة</button>
+      <input type="hidden" id="hosp-edit-id">
+      <button class="btn btn-primary" id="hosp-save-btn" onclick="addHospitalityRecord()" style="justify-content: center; height: 42px;">🛎️ تسجيل وإعتماد الزيارة</button>
       <button class="btn btn-excel" onclick="exportHospitalityToExcel()" style="background-color:#1565c0;">📤 تصدير Excel</button>
       <button class="btn btn-excel" onclick="document.getElementById('hosp-excel-file').click()" style="background-color:#0d47a1;">📥 استيراد شيت (Excel)</button>
       <input type="file" id="hosp-excel-file" style="display:none;" accept=".xlsx, .xls" onchange="importHospitalityFromExcel(event)">
@@ -6633,7 +6634,8 @@ function toggleEmployeeStatus(empId) {
       let arrival = document.getElementById('hosp-arrival').value;
       let departure = document.getElementById('hosp-departure').value;
       let guests = parseInt(document.getElementById('hosp-guests').value) || 1;
-      
+      let editId = document.getElementById('hosp-edit-id').value;
+
       if(!name || !arrival) return alert("اسم الزائر وتاريخ الوصول حقول إلزامية!");
 
       let meals = [];
@@ -6641,12 +6643,39 @@ function toggleEmployeeStatus(empId) {
       if(document.getElementById('hosp-meal-lh').checked) meals.push("غداء");
       if(document.getElementById('hosp-meal-dn').checked) meals.push("عشاء");
 
-      hospitalities.push({ name, type, title, arrival, departure, guests, meals: meals.slice() });
-      // تحديث سجل الوجبات بإضافة الضيوف
+      if (editId) {
+        let idx = hospitalities.findIndex(h => h._id == editId);
+        if (idx !== -1) {
+          hospitalities[idx] = { _id: editId, name, type, title, arrival, departure, guests, meals: meals.slice() };
+        }
+        document.getElementById('hosp-edit-id').value = '';
+        document.getElementById('hosp-save-btn').innerHTML = '🛎️ تسجيل وإعتماد الزيارة';
+        document.getElementById('hosp-save-btn').onclick = function() { addHospitalityRecord(); };
+      } else {
+        hospitalities.push({ _id: Date.now().toString(), name, type, title, arrival, departure, guests, meals: meals.slice() });
+      }
       updateMealLogFromHospitality(arrival);
       syncStorage(); renderHospitalityTable(); renderMealLogTable();
       document.getElementById('hosp-name').value = ''; document.getElementById('hosp-title').value = '';
       alert("تم تسجيل الزيارة وإضافة الوجبات إلى سجل الوجبات.");
+    }
+
+    function editHospitality(id) {
+      let h = hospitalities.find(h => h._id == id);
+      if (!h) return;
+      document.getElementById('hosp-edit-id').value = h._id;
+      document.getElementById('hosp-name').value = h.name;
+      document.getElementById('hosp-type').value = h.type;
+      document.getElementById('hosp-title').value = h.title || '';
+      document.getElementById('hosp-arrival').value = h.arrival;
+      document.getElementById('hosp-departure').value = h.departure || '';
+      document.getElementById('hosp-guests').value = h.guests || 1;
+      document.getElementById('hosp-meal-bf').checked = (h.meals || []).includes('إفطار');
+      document.getElementById('hosp-meal-lh').checked = (h.meals || []).includes('غداء');
+      document.getElementById('hosp-meal-dn').checked = (h.meals || []).includes('عشاء');
+      document.getElementById('hosp-save-btn').innerHTML = '💾 حفظ التعديل';
+      document.getElementById('hosp-save-btn').onclick = function() { addHospitalityRecord(); };
+      document.getElementById('hosp-name').focus();
     }
 
     function updateMealLogFromHospitality(dateStr) {
@@ -6680,7 +6709,10 @@ function toggleEmployeeStatus(empId) {
           <td>${h.departure || '—'}</td>
           <td style="text-align:center;font-weight:700;">${h.guests || 1}</td>
           <td style="text-align:center;">${(h.meals||'').includes('إفطار') ? '<span style="display:inline-block;background:#fff3e0;color:#e65100;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:700;margin:1px;">🍳 فطار</span>' : ''} ${(h.meals||'').includes('غداء') ? '<span style="display:inline-block;background:#e8f5e9;color:#2e7d32;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:700;margin:1px;">🍗 غداء</span>' : ''} ${(h.meals||'').includes('عشاء') ? '<span style="display:inline-block;background:#e3f2fd;color:#1565c0;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:700;margin:1px;">🧀 عشاء</span>' : ''} ${!h.meals || h.meals === '' ? '<span style="color:#999;font-size:11px;">—</span>' : ''}</td>
-          <td class="no-print"><button class="btn btn-danger" style="padding:2px 6px; font-size:11px;" onclick="deleteHospitality(${realIdx})">🗑️</button></td>
+          <td class="no-print" style="white-space:nowrap;">
+            <button class="btn btn-secondary" style="padding:2px 6px; font-size:11px;" onclick="editHospitality('${h._id}')">📝</button>
+            <button class="btn btn-danger" style="padding:2px 6px; font-size:11px;" onclick="deleteHospitality(${realIdx})">🗑️</button>
+          </td>
         `;
         tbody.appendChild(tr);
       });
@@ -8148,7 +8180,7 @@ function toggleEmployeeStatus(empId) {
             let exists = hospitalities.some(h => h.name === name && h.arrival === (r["تاريخ الوصول"]||''));
             if(exists) { skipped++; continue; }
             let mealsStr = r["الوجبات"]||'';
-            hospitalities.push({ name: name, type: r["نوع الزيارة"]||'', title: r["المسمى"]||'', guests: Number(r["عدد الضيوف"])||1, arrival: r["تاريخ الوصول"]||'', departure: r["تاريخ المغادرة"]||'', meals: mealsStr ? mealsStr.split(',').map(s=>s.trim()) : [] });
+            hospitalities.push({ _id: Date.now().toString() + '_' + added, name: name, type: r["نوع الزيارة"]||'', title: r["المسمى"]||'', guests: Number(r["عدد الضيوف"])||1, arrival: r["تاريخ الوصول"]||'', departure: r["تاريخ المغادرة"]||'', meals: mealsStr ? mealsStr.split(',').map(s=>s.trim()) : [] });
             added++;
           }
           syncStorage(); renderAll(); alert(`تم استيراد ${added} زيارة ضيافة بنجاح.\nتم تخطي ${skipped} مكرر.`);
@@ -10740,6 +10772,7 @@ function toggleEmployeeStatus(empId) {
         if (typeof h.meals === 'string') h.meals = [h.meals];
         if (typeof h.guests !== 'number' || h.guests < 1) h.guests = 1;
         if (h.guests > 50) h.guests = 1;
+        if (!h._id) h._id = Date.now().toString() + '_' + Math.random().toString(36).slice(2, 6);
       });
       if (!localStorage.getItem('_roomsCleaned')) {
         var oldSectors = ['A','B','سكن إداري'];
