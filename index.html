@@ -5119,7 +5119,9 @@
       var todayMaint = maintenanceRecords.filter(function(m) { return m.date && normalizeDateStr(m.date) === dateInput; });
       var todaySeptic = septicRecords.filter(function(s) { return s.date && normalizeDateStr(s.date) === dateInput; });
       var todayProd = bakeryProductions.filter(function(p) { return normalizeDateStr(p.date) === dateInput; });
-      var todayCtr = bakeryContractorSupplies.filter(function(s) { return normalizeDateStr(s.date) === dateInput; });
+      var yesterday = new Date(today); yesterday.setDate(yesterday.getDate()-1);
+      var yesterdayInput = yesterday.getFullYear()+'-'+('0'+(yesterday.getMonth()+1)).slice(-2)+'-'+('0'+yesterday.getDate()).slice(-2);
+      var todayCtr = bakeryContractorSupplies.filter(function(s) { return normalizeDateStr(s.date) === yesterdayInput; });
       var todayInv = inventoryVouchers.filter(function(v) { return v.date && normalizeDateStr(v.date) === dateInput; });
       var todayTea = teaSugarDisbursements.filter(function(t) { return t.date && normalizeDateStr(t.date) === dateInput; });
       var todayPM = periodicMaintenance.filter(function(p) { return p.date && normalizeDateStr(p.date) === dateInput; });
