@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8">
@@ -2346,7 +2346,7 @@
         <div class="form-group"><label>💷 أجر التشغيل / مصنعية (ج.م)</label><input type="number" id="bprod-opcost" min="0" step="1" value="1200"></div>
         <div class="form-group" style="grid-column:span 2;"><label>ملاحظات</label><input type="text" id="bprod-notes" placeholder="ملاحظات الإنتاج"></div>
         <button class="btn btn-primary" onclick="saveBakeryProduction()" style="height:42px;">🏭 تسجيل الإنتاج</button>
-        <button class="btn btn-excel" onclick="document.getElementById('wa-paste-text').value='';document.getElementById('wa-parse-result').innerHTML='';openModal('modal-whatsapp-paste');setTimeout(function(){document.getElementById('wa-paste-text').focus()},100);" style="height:42px;background:#075e54;color:white;border:none;border-radius:5px;cursor:pointer;font-weight:600;font-size:14px;">📥 لصق من واتساب</button>
+        <button class="btn btn-excel" onclick="openWhatsAppPasteModal()" style="height:42px;background:#075e54;color:white;border:none;border-radius:5px;cursor:pointer;font-weight:600;font-size:14px;">📥 لصق من واتساب</button>
         <button class="btn btn-warning" onclick="suggestBreadForTomorrow()" style="height:42px;background:#1565c0;color:white;border:none;border-radius:5px;cursor:pointer;font-weight:600;font-size:14px;">🥖 اقتراح اعداد الخبز لليوم التالي</button>
       </div>
       <div class="control-panel no-print" style="margin-top:10px;">
@@ -9747,29 +9747,40 @@ function toggleEmployeeStatus(empId) {
       container.document.close();
     }
 
-    document.getElementById('ai-toggle-btn').addEventListener('click', () => {
-      let p = document.getElementById('ai-panel'); p.style.display = p.style.display === 'none' ? 'block' : 'none';
-      if (p.style.display === 'block') {
-        document.getElementById('ai-input').focus();
-        // Show tips if chat only has default message
-        var chat = document.getElementById('ai-chat');
-        if (chat && chat.children.length <= 1) {
-          chat.innerHTML = '<div style="background:#e8f5e9;padding:10px;border-radius:8px;font-size:13px;line-height:1.7;align-self:flex-start;">' + generateAITips() + '</div>';
-        }
-        // Check Ollama availability
-        checkOllama().then(ok => {
-          let statusEl = document.getElementById('ai-ollama-status');
-          if (statusEl) statusEl.innerHTML = ok ? '🟢' : '🔴';
+    document.addEventListener('DOMContentLoaded', function() {
+      var aiBtn = document.getElementById('ai-toggle-btn');
+      if (aiBtn) {
+        aiBtn.addEventListener('click', function() {
+          try {
+            var p = document.getElementById('ai-panel');
+            if (!p) return;
+            p.style.display = p.style.display === 'none' ? 'block' : 'none';
+            if (p.style.display === 'none') return;
+            var inp = document.getElementById('ai-input');
+            if (inp) inp.focus();
+            var chat = document.getElementById('ai-chat');
+            if (chat && chat.children.length <= 1) {
+              try {
+                chat.innerHTML = '<div style="background:#e8f5e9;padding:10px;border-radius:8px;font-size:13px;line-height:1.7;align-self:flex-start;">' + generateAITips() + '</div>';
+              } catch(ign) {}
+            }
+            checkOllama().then(function(ok) {
+              var se = document.getElementById('ai-ollama-status');
+              if (se) se.innerHTML = ok ? '🟢' : '🔴';
+            });
+          } catch(ign) {}
         });
       }
-    });
-
-    document.addEventListener('click', (e) => {
-      let panel = document.getElementById('ai-panel');
-      let btn = document.getElementById('ai-toggle-btn');
-      if (panel.style.display === 'none') return;
-      if (panel.contains(e.target) || btn.contains(e.target)) return;
-      panel.style.display = 'none';
+      document.addEventListener('click', function(e) {
+        try {
+          var panel = document.getElementById('ai-panel');
+          var btn = document.getElementById('ai-toggle-btn');
+          if (!panel || !btn) return;
+          if (panel.style.display === 'none') return;
+          if (panel.contains(e.target) || btn.contains(e.target)) return;
+          panel.style.display = 'none';
+        } catch(ign) {}
+      });
     });
 
     // ============================
