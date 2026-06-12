@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8">
@@ -1634,6 +1634,19 @@
         <div id="title-list" style="margin-top:8px;font-size:12px;"></div>
       </div>
 
+      <!-- ربط الوظائف بالإدارات -->
+      <div style="background:#fff;border-radius:12px;padding:15px;border:1px solid #e0e0e0;">
+        <h4 style="margin:0 0 10px 0;color:#6a1b9a;">🔗 ربط الوظائف بالإدارات</h4>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:8px;">
+          <select id="dept-title-dept-select" style="flex:1;min-width:120px;padding:6px;border:2px solid #e0e0e0;border-radius:6px;font-size:12px;">
+            <option value="">اختر الإدارة</option>
+          </select>
+          <input type="text" id="new-dept-title" placeholder="مسمى وظيفي" style="flex:1;min-width:100px;padding:6px 10px;border:2px solid #e0e0e0;border-radius:6px;font-size:13px;">
+          <button class="btn btn-primary" onclick="addDeptTitle()" style="padding:6px 12px;font-size:13px;">➕ إضافة</button>
+        </div>
+        <div id="dept-title-list" style="margin-top:8px;font-size:12px;max-height:200px;overflow-y:auto;"></div>
+      </div>
+
       <!-- سكن المقاولين -->
       <div style="background:#fff;border-radius:12px;padding:15px;border:1px solid #e0e0e0;">
         <h4 style="margin:0 0 10px 0;color:#e65100;">🏗️ سكن المقاولين</h4>
@@ -1745,19 +1758,20 @@
       <input type="hidden" id="edit-emp-id">
       <div class="form-grid">
         <div class="form-group">
-          <label>الكود الإداري</label>
-          <input type="text" id="form-emp-code">
-        </div>
-        <div class="form-group">
-          <label>الاسم رباعي *</label>
-          <input type="text" id="form-emp-name" required>
-        </div>
-        <div class="form-group">
-          <label>نوع التعاقع</label>
-          <select id="form-emp-contract">
+          <label>نوع التعاقد *</label>
+          <select id="form-emp-contract" onchange="generateEmployeeCode()">
             <option value="دائم">دائم</option>
             <option value="كاجول">كاجول</option>
           </select>
+        </div>
+        <div class="form-group">
+          <label>الكود الإداري</label>
+          <input type="text" id="form-emp-code" readonly style="background:#f0f0f0; cursor:not-allowed;">
+        </div>
+        <div class="form-group" style="position:relative;">
+          <label>الاسم رباعي *</label>
+          <input type="text" id="form-emp-name" required>
+          <div id="emp-name-suggestions" style="position:absolute; top:100%; left:0; right:0; z-index:999; background:#fff; border:1px solid #cfd8dc; border-radius:0 0 5px 5px; max-height:200px; overflow-y:auto; display:none; box-shadow:0 4px 12px rgba(0,0,0,0.15);"></div>
         </div>
         <div class="form-group">
           <label>رقم الموبايل</label>
@@ -1769,11 +1783,14 @@
         </div>
         <div class="form-group">
           <label>الإدارة</label>
-          <select id="form-emp-dept"></select>
+          <select id="form-emp-dept" onchange="filterTitlesByDept()"></select>
         </div>
-        <div class="form-group">
+        <div class="form-group" style="position:relative;">
           <label>الوظيفة</label>
-          <select id="form-emp-title-select"></select>
+          <div style="display:flex; gap:5px;">
+            <select id="form-emp-title-select" style="flex:1;" onchange="onTitleSelectChange()"></select>
+            <button type="button" class="btn btn-secondary" style="padding:5px 8px; font-size:11px; white-space:nowrap;" onclick="addNewTitleForDept()" title="إضافة وظيفة جديدة للإدارة المختارة">➕</button>
+          </div>
         </div>
         <div class="form-group">
           <label>المحافظة</label>
@@ -1799,8 +1816,9 @@
           <input type="number" id="form-emp-vacation-balance" value="30" min="0">
         </div>
         <div class="form-group full-width">
-          <label style="font-weight: bold; margin-top: 10px;">العهدة المستلمة:</label>
-          <div id="default-assets-grid" style="display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:10px; margin-bottom:15px;">
+          <details>
+            <summary style="font-weight: bold; margin: 10px 0 5px; cursor: pointer; color: var(--primary);">📦 العهدة المستلمة (اضغط للعرض)</summary>
+            <div id="default-assets-grid" style="display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:10px; margin-top:10px; margin-bottom:15px;">
             <div class="asset-row">
               <span style="flex:2; font-weight:600;">بطانية 8 كيلو</span>
               <input type="number" min="0" value="0" class="asset-qty default-asset" data-item="بطانية 8 كيلو" style="flex:1;">
@@ -1888,6 +1906,7 @@
           </div>
           <div id="assets-form-container"></div>
           <button type="button" class="btn btn-secondary" style="padding:5px 10px; margin-top:5px; width:fit-content;" onclick="addAssetRowField('', 1)">➕ أخرى</button>
+          </details>
         </div>
       </div>
       <button class="btn btn-primary" style="width: 100%; justify-content: center;" onclick="saveEmployeeData()">💾 حفظ بيانات الموظف</button>
@@ -3933,28 +3952,34 @@
       });
       localStorage.setItem('dyn_depts', JSON.stringify(dynamicDepts));
       localStorage.setItem('dyn_titles', JSON.stringify(dynamicTitles));
+      rebuildDeptTitles();
 
-      fillSelectWithOptions('form-emp-dept', dynamicDepts);
-      fillSelectWithOptions('form-emp-title-select', dynamicTitles);
-      fillSelectWithOptions('form-emp-gov', allGovs);
-      fillSelectWithOptions('form-emp-sector', dynamicSectors);
+      fillSelectWithOptions('form-emp-dept', dynamicDepts, '-- اختر الإدارة --');
+      fillSelectWithOptions('form-emp-gov', allGovs, '-- اختر المحافظة --');
+      fillSelectWithOptions('form-emp-sector', dynamicSectors, '-- اختر المبنى --');
       var secSel = document.getElementById('form-emp-sector');
       if (secSel) { secSel.onchange = updateEmpRoomBySector; }
       updateEmpRoomBySector();
+      filterTitlesByDept();
 
-      fillSelectWithOptions('inv-dept-select', dynamicDepts);
-      fillSelectWithOptions('septic-name-select', dynamicSeptics);
+      fillSelectWithOptions('inv-dept-select', dynamicDepts, '-- اختر الإدارة --');
+      fillSelectWithOptions('septic-name-select', dynamicSeptics, '-- اختر البيارة --');
       var sd = document.getElementById('septic-date');
       if (sd && !sd.value) sd.value = new Date().toISOString().split('T')[0];
       populateContractorSectorDropdown();
-      fillSelectWithOptions('transfer-dept-select', dynamicDepts);
-      fillSelectWithOptions('transfer-title-select', dynamicTitles);
+      fillSelectWithOptions('transfer-dept-select', dynamicDepts, '-- اختر الإدارة --');
+      fillSelectWithOptions('transfer-title-select', dynamicTitles, '-- اختر الوظيفة --');
     }
 
-    function fillSelectWithOptions(selectId, optionsArray) {
+    function fillSelectWithOptions(selectId, optionsArray, placeholder) {
       const select = document.getElementById(selectId);
       if(!select) return;
       select.innerHTML = '';
+      if (placeholder) {
+        let ph = document.createElement('option');
+        ph.value = ''; ph.textContent = placeholder;
+        select.appendChild(ph);
+      }
       optionsArray.forEach(opt => {
         let el = document.createElement('option');
         el.value = opt;
@@ -3987,6 +4012,19 @@
         opt.value = r.number; opt.textContent = r.number + ' (عدد الأسرّة: ' + r.beds + ')';
         roomSel.appendChild(opt);
       });
+      // ترتيب الخيارات
+      sortSelectOptions(roomSel);
+    }
+
+    function sortSelectOptions(sel) {
+      let opts = Array.from(sel.options);
+      opts.sort(function(a, b) {
+        var aNum = parseInt(a.value, 10);
+        var bNum = parseInt(b.value, 10);
+        if (!isNaN(aNum) && !isNaN(bNum)) return aNum - bNum;
+        return a.value.localeCompare(b.value, 'ar');
+      });
+      opts.forEach(function(o) { sel.appendChild(o); });
     }
 
     function setupEmployeeSearch(inputId, hiddenId, suggestionsId) {
@@ -4466,6 +4504,56 @@
       syncStorage(); rebuildAllDropdowns(); renderDynamicLists();
     }
 
+    function addDeptTitle() {
+      let dept = document.getElementById('dept-title-dept-select').value;
+      let titleName = document.getElementById('new-dept-title').value.trim();
+      if(!dept) return alert("⚠️ اختر الإدارة أولاً");
+      if(!titleName) return alert("⚠️ اكتب المسمى الوظيفي");
+      if (!deptTitles[dept]) deptTitles[dept] = [];
+      if (deptTitles[dept].includes(titleName)) return alert("⚠️ هذه الوظيفة موجودة بالفعل في هذه الإدارة");
+      deptTitles[dept].push(titleName);
+      if (!dynamicTitles.includes(titleName)) dynamicTitles.push(titleName);
+      document.getElementById('new-dept-title').value = '';
+      localStorage.setItem('dept_titles', JSON.stringify(deptTitles));
+      localStorage.setItem('dyn_titles', JSON.stringify(dynamicTitles));
+      rebuildAllDropdowns();
+      renderDeptTitleList();
+    }
+
+    function renderDeptTitleList() {
+      let container = document.getElementById('dept-title-list');
+      if (!container) return;
+      container.innerHTML = '';
+      let depts = Object.keys(deptTitles).filter(d => d);
+      if (!depts.length) { container.innerHTML = '<div style="color:#999;padding:4px;">— لا توجد بيانات —</div>'; return; }
+      depts.forEach(dept => {
+        let titles = deptTitles[dept] || [];
+        let block = document.createElement('div');
+        block.style.cssText = 'border:1px solid #e0e0e0;border-radius:6px;padding:8px;margin-bottom:6px;';
+        let titleHtml = '';
+        titles.forEach(t => {
+          let sanitizedDept = dept.replace(/'/g, "\\'");
+          let sanitizedTitle = t.replace(/'/g, "\\'");
+          titleHtml += `<span style="background:#f3e5f5;padding:2px 8px;border-radius:4px;font-size:11px;display:inline-flex;align-items:center;gap:4px;margin:2px;">
+            ${t} <span style="cursor:pointer;color:#c62828;" onclick="removeDeptTitle('${sanitizedDept}','${sanitizedTitle}')">✕</span></span>`;
+        });
+        block.innerHTML = `<div style="font-weight:700;color:#6a1b9a;margin-bottom:4px;">📌 ${dept}</div>
+          <div style="display:flex;flex-wrap:wrap;gap:4px;">${titleHtml}</div>`;
+        container.appendChild(block);
+      });
+    }
+
+    function removeDeptTitle(dept, title) {
+      if (!confirm(`إزالة "${title}" من إدارة "${dept}"؟`)) return;
+      if (deptTitles[dept]) {
+        deptTitles[dept] = deptTitles[dept].filter(t => t !== title);
+        if (deptTitles[dept].length === 0) delete deptTitles[dept];
+      }
+      localStorage.setItem('dept_titles', JSON.stringify(deptTitles));
+      rebuildAllDropdowns();
+      renderDeptTitleList();
+    }
+
     function loadEmployeeCurrentDetails() {
       let empId = document.getElementById('transfer-emp-id').value;
       let div = document.getElementById('transfer-current-details');
@@ -4495,6 +4583,7 @@
         employees[empIndex].dept = targetDept;
         employees[empIndex].title = targetTitle;
         
+        rebuildDeptTitles();
         syncStorage(); renderTable(); rebuildAllDropdowns(); loadEmployeeCurrentDetails();
         alert(`🚀 تم التحويل الإداري بنجاح!\nالموظف: ${employees[empIndex].name}\nمن إدارة [${oldDept}] إلى [${targetDept}]\nوتغيير الوظيفة من [${oldTitle}] إلى [${targetTitle}].`);
       }
@@ -4511,13 +4600,34 @@
         🏗️ <b>سكن المقاولين:</b> ${contractorSectors.join(' | ')}
       `;
       renderListItems('sector', dynamicSectors, 'sector');
-      renderListItems('room', dynamicRooms, 'room');
+      var sortedRooms = dynamicRooms.slice().sort(naturalCompare);
+      renderListItems('room', sortedRooms, 'room');
       renderListItems('septic', dynamicSeptics, 'septic');
       renderListItems('dept', dynamicDepts, 'dept');
       renderListItems('title', dynamicTitles, 'title');
       renderListItems('ctr-sector', contractorSectors, 'ctr-sector');
       renderContractorRoomsList();
       populateContractorRoomSectorDropdown();
+      renderDeptTitleList();
+      var dts = document.getElementById('dept-title-dept-select');
+      if (dts) { fillSelectWithOptions('dept-title-dept-select', dynamicDepts, '-- اختر الإدارة --'); }
+    }
+
+    function naturalCompare(a, b) {
+      var re = /(\d+)|(\D+)/g;
+      var aParts = a.match(re) || [];
+      var bParts = b.match(re) || [];
+      for (var i = 0; i < Math.min(aParts.length, bParts.length); i++) {
+        var aNum = parseInt(aParts[i], 10);
+        var bNum = parseInt(bParts[i], 10);
+        if (!isNaN(aNum) && !isNaN(bNum)) {
+          if (aNum !== bNum) return aNum - bNum;
+        } else {
+          var cmp = aParts[i].localeCompare(bParts[i], 'ar');
+          if (cmp !== 0) return cmp;
+        }
+      }
+      return aParts.length - bParts.length;
     }
 
     function renderListItems(inputId, arr, listId) {
@@ -5444,17 +5554,129 @@
       document.getElementById('print-step-1').style.display = 'block';
       document.getElementById('print-step-2').style.display = 'none';
     }
+    function generateEmployeeCode() {
+      let contract = document.getElementById('form-emp-contract').value;
+      let editId = document.getElementById('edit-emp-id').value;
+      if (editId) return;
+      let sameType = employees.filter(e => e.contract === contract);
+      let maxCode = 1000;
+      sameType.forEach(e => {
+        let num = parseInt(e.code);
+        if (num > maxCode) maxCode = num;
+      });
+      document.getElementById('form-emp-code').value = maxCode + 1;
+    }
+
+    function setupNameAutocomplete() {
+      let inp = document.getElementById('form-emp-name');
+      let sug = document.getElementById('emp-name-suggestions');
+      if (!inp || !sug) return;
+      inp.addEventListener('input', function() {
+        let val = this.value.trim();
+        let parts = val.split(/\s+/).filter(p => p.length > 0);
+        sug.innerHTML = ''; sug.style.display = 'none';
+        if (parts.length < 3) return;
+        let q = val.toLowerCase();
+        let allPeople = [...employees, ...excludedEmployees];
+        let matches = allPeople.filter(p =>
+          (p.name || '').toLowerCase().includes(q)
+        ).slice(0, 8);
+        if (!matches.length) return;
+        sug.style.display = 'block';
+        matches.forEach(p => {
+          let d = document.createElement('div');
+          d.style.cssText = 'padding:8px 12px; cursor:pointer; font-size:13px; border-bottom:1px solid #f0f0f0;';
+          d.innerText = `[${p.code || '—'}] ${p.name}${p.dept ? ' | ' + p.dept : ''}`;
+          d.onclick = function() {
+            inp.value = p.name;
+            sug.style.display = 'none';
+          };
+          d.onmouseenter = function() { this.style.background = '#e3f2fd'; };
+          d.onmouseleave = function() { this.style.background = ''; };
+          sug.appendChild(d);
+        });
+      });
+      inp.addEventListener('blur', function() { setTimeout(() => { sug.style.display = 'none'; }, 200); });
+      inp.addEventListener('focus', function() {
+        if (sug.children.length > 0) sug.style.display = 'block';
+      });
+    }
+
+    let deptTitles = JSON.parse(localStorage.getItem('dept_titles')) || {};
+
+    function rebuildDeptTitles() {
+      employees.forEach(e => {
+        if (e.dept && e.title) {
+          if (!deptTitles[e.dept]) deptTitles[e.dept] = [];
+          if (!deptTitles[e.dept].includes(e.title)) deptTitles[e.dept].push(e.title);
+        }
+      });
+      excludedEmployees.forEach(e => {
+        if (e.dept && e.title) {
+          if (!deptTitles[e.dept]) deptTitles[e.dept] = [];
+          if (!deptTitles[e.dept].includes(e.title)) deptTitles[e.dept].push(e.title);
+        }
+      });
+      localStorage.setItem('dept_titles', JSON.stringify(deptTitles));
+    }
+
+    function filterTitlesByDept() {
+      let dept = document.getElementById('form-emp-dept').value;
+      let titleSelect = document.getElementById('form-emp-title-select');
+      titleSelect.innerHTML = '';
+      if (!dept) {
+        let opt = document.createElement('option'); opt.value = ''; opt.textContent = '-- اختر إدارة أولاً --';
+        titleSelect.appendChild(opt); return;
+      }
+      let titles = deptTitles[dept] || [];
+      if (titles.length === 0) {
+        let opt = document.createElement('option'); opt.value = ''; opt.textContent = '⚠️ لا توجد وظائف — اضغط ➕ للإضافة';
+        titleSelect.appendChild(opt);
+      } else {
+        titles.forEach(t => {
+          let opt = document.createElement('option'); opt.value = t; opt.textContent = t;
+          titleSelect.appendChild(opt);
+        });
+      }
+    }
+
+    function onTitleSelectChange() {
+      // Add new title flow is handled by the ➕ button
+    }
+
+    function addNewTitleForDept() {
+      let dept = document.getElementById('form-emp-dept').value;
+      if (!dept) return alert('⚠️ اختر الإدارة أولاً');
+      let newTitle = prompt('أدخل المسمى الوظيفي الجديد للإدارة "' + dept + '":');
+      if (!newTitle || !newTitle.trim()) return;
+      newTitle = newTitle.trim();
+      if (!deptTitles[dept]) deptTitles[dept] = [];
+      if (deptTitles[dept].includes(newTitle)) return alert('⚠️ هذه الوظيفة موجودة بالفعل في هذه الإدارة');
+      deptTitles[dept].push(newTitle);
+      if (!dynamicTitles.includes(newTitle)) dynamicTitles.push(newTitle);
+      localStorage.setItem('dept_titles', JSON.stringify(deptTitles));
+      localStorage.setItem('dyn_titles', JSON.stringify(dynamicTitles));
+      filterTitlesByDept();
+      document.getElementById('form-emp-title-select').value = newTitle;
+    }
+
     function openModal(id) {
       document.getElementById(id).style.display = 'flex';
       if(id === 'modal-add-emp' && !document.getElementById('edit-emp-id').value) {
         rebuildAllDropdowns();
         document.getElementById('modal-emp-title').innerText = "إضافة موظف جديد للقوة";
-        document.getElementById('form-emp-code').value = (employees.length + 1001);
+        document.getElementById('form-emp-code').value = '';
         document.getElementById('form-emp-name').value = '';
         document.getElementById('form-emp-national-id').value = '';
+        document.getElementById('form-emp-hire-date').value = new Date().toISOString().split('T')[0];
         document.getElementById('form-emp-vacation-balance').value = 30;
+        document.getElementById('form-emp-dept').value = '';
+        document.getElementById('form-emp-title-select').innerHTML = '<option value="">-- اختر الوظيفة --</option>';
+        document.getElementById('form-emp-contract').value = 'دائم';
         document.getElementById('assets-form-container').innerHTML = '';
         document.querySelectorAll('.default-asset').forEach(i => i.value = 0);
+        document.getElementById('emp-name-suggestions').style.display = 'none';
+        generateEmployeeCode();
       }
     }
 
@@ -5462,6 +5684,7 @@
       document.getElementById(id).style.display = 'none';
       if(id === 'modal-add-emp') {
         document.getElementById('edit-emp-id').value = '';
+        document.getElementById('emp-name-suggestions').style.display = 'none';
       }
     }
 
@@ -5493,13 +5716,15 @@
       let editId = document.getElementById('edit-emp-id').value;
 
       if(!name) return alert("اسم الموظف رباعي مطلوب إجبارياً");
+      if(!code) return alert("⚠️ لم يتم توليد الكود — تأكد من اختيار نوع التعاقد");
 
       if(!editId) {
-        let dupCode = employees.find(e => e.code && e.code.toLowerCase() === code.toLowerCase());
+        let allPeople = [...employees, ...excludedEmployees];
+        let dupCode = allPeople.find(e => e.code && e.code.toString().toLowerCase() === code.toLowerCase());
         if(dupCode) return alert(`⚠️ الكود [${code}] موجود مسبقاً للموظف [${dupCode.name}]!`);
-        let similarName = employees.find(e => e.name && e.name.trim().toLowerCase() === name.toLowerCase());
-        if(similarName) {
-          if(!confirm(`⚠️ يوجد موظف بنفس الاسم بالضبط: [${similarName.name}] كود ${similarName.code || 'بدون'}.\nهل تريد إضافة الموظف رغم التشابه؟`)) return;
+        let dupName = allPeople.find(e => e.name && e.name.trim().toLowerCase() === name.toLowerCase());
+        if(dupName) {
+          if(!confirm(`⚠️ يوجد موظف بنفس الاسم بالضبط: [${dupName.name}] كود ${dupName.code || 'بدون'}.\nهل تريد إضافة الموظف رغم التشابه؟`)) return;
         }
       }
 
@@ -5524,6 +5749,7 @@
         employees.push(newEmp);
       }
 
+      rebuildDeptTitles();
       sortEmployeesAlphabetically(); syncStorage(); renderTable(); renderHousingLayout(); rebuildAllDropdowns(); closeModal('modal-add-emp');
     }
 
@@ -5540,7 +5766,17 @@
       
       rebuildAllDropdowns();
       document.getElementById('form-emp-dept').value = emp.dept || '';
-      document.getElementById('form-emp-title-select').value = emp.title || '';
+      filterTitlesByDept();
+      if (emp.title) {
+        let titleSelect = document.getElementById('form-emp-title-select');
+        let exists = Array.from(titleSelect.options).some(o => o.value === emp.title);
+        if (!exists) {
+          let opt = document.createElement('option');
+          opt.value = emp.title; opt.textContent = emp.title;
+          titleSelect.appendChild(opt);
+        }
+        titleSelect.value = emp.title;
+      }
       document.getElementById('form-emp-gov').value = emp.gov || '';
       document.getElementById('form-emp-status').value = emp.status || 'P';
       document.getElementById('form-emp-sector').value = emp.sector || '';
@@ -5592,8 +5828,9 @@
       excludedRecord.assetsStr = (emp.assets && emp.assets.length > 0) ? emp.assets.map(a => `${a.item} (${a.qty})`).join('، ') : "لا يوجد";
 
       excludedEmployees.push(excludedRecord);
-      employees.splice(idx, 1); // الحذف الآمن والترحيل للأرشيف فقط عبر زر الاستبعاد
+      employees.splice(idx, 1);
 
+      rebuildDeptTitles();
       syncStorage(); renderTable(); rebuildAllDropdowns(); closeModal('modal-exclude-emp');
       document.getElementById('exclude-notes-input').value = '';
       alert(`🚫 تم نقل الموظف [${excludedRecord.name}] بنجاح إلى أرشيف المستبعدين والمستقيلين وتفريغ مكانه بالسكن.`);
@@ -5670,6 +5907,7 @@
       employees.push(emp);
       excludedEmployees.splice(idx, 1);
       sortEmployeesAlphabetically();
+      rebuildDeptTitles();
       syncStorage();
       renderExcludedTable();
       renderTable();
@@ -5819,7 +6057,7 @@ function toggleEmployeeStatus(empId) {
       document.getElementById('housing-result-name').textContent = emp.name || '-';
       document.getElementById('housing-result-code').textContent = '[' + (emp.code || 'بدون') + ']';
       document.getElementById('housing-result-detail').textContent = 'القطاع: ' + (emp.sector || 'بدون') + ' | الغرفة: ' + (emp.room || 'بدون') + ' | الحالة: ' + (emp.status === 'P' ? '✅ متواجد' : emp.status === 'V' ? '🔴 إجازة' : emp.status || '-');
-      fillSelectWithOptions('housing-edit-sector', dynamicSectors);
+      fillSelectWithOptions('housing-edit-sector', dynamicSectors, '-- اختر المبنى --');
       var sectorSel = document.getElementById('housing-edit-sector');
       sectorSel.value = emp.sector || '';
       sectorSel.onchange = function() { updateHousingEditRoom(); };
@@ -5843,6 +6081,7 @@ function toggleEmployeeStatus(empId) {
         opt.value = r.number; opt.textContent = r.number + ' (سعة: ' + r.beds + ')';
         roomSel.appendChild(opt);
       });
+      sortSelectOptions(roomSel);
       var empId = document.getElementById('housing-emp-id').value;
       if (empId) {
         var emp = employees.find(function(e) { return (e.id || e.code) == empId; });
@@ -8069,7 +8308,7 @@ function toggleEmployeeStatus(empId) {
       _dataChangedSinceBackup = false;
       var bakBtn = document.querySelector('button[onclick*="exportBackupSystem"]');
       if (bakBtn) bakBtn.classList.remove('btn-backup-pulse');
-      let data = { employees, roomsCapacity, vacations, hospitalities, maintenanceRecords, septicRecords, inventoryVouchers, excludedEmployees, periodicMaintenance, teaSugarDisbursements, teaSugarBatches, mealLogs, inventoryItems, contractors, dynamicSectors, contractorSectors, contractorRooms, dynamicRooms, dynamicSeptics, dynamicDepts, dynamicTitles, bakeryIngredients, bakeryProductions, bakeryContractorSupplies, bakeryInvoices, appUsers, currentUser, manualTotalBeds };
+      let data = { employees, roomsCapacity, vacations, hospitalities, maintenanceRecords, septicRecords, inventoryVouchers, excludedEmployees, periodicMaintenance, teaSugarDisbursements, teaSugarBatches, mealLogs, inventoryItems, contractors, dynamicSectors, contractorSectors, contractorRooms, dynamicRooms, dynamicSeptics, dynamicDepts, dynamicTitles, deptTitles, bakeryIngredients, bakeryProductions, bakeryContractorSupplies, bakeryInvoices, appUsers, currentUser, manualTotalBeds };
       let blob = new Blob([JSON.stringify(data)], {type: "application/json"});
       let a = document.createElement('a'); a.href = URL.createObjectURL(blob);
       a.download = `نسخة_احتياطية_شاملة_لينه_${Date.now()}.json`; a.click();
@@ -8142,6 +8381,7 @@ function toggleEmployeeStatus(empId) {
         if(data.dynamicSeptics) dynamicSeptics = data.dynamicSeptics;
         if(data.dynamicDepts) dynamicDepts = data.dynamicDepts;
         if(data.dynamicTitles) dynamicTitles = data.dynamicTitles;
+        if(data.deptTitles) deptTitles = data.deptTitles;
         if(data.appUsers) appUsers = data.appUsers;
         if(data.currentUser) currentUser = data.currentUser;
         if(data.manualTotalBeds) manualTotalBeds = data.manualTotalBeds;
@@ -9694,7 +9934,7 @@ function toggleEmployeeStatus(empId) {
     var debouncedSyncToSupabase = function() { setTimeout(pushToSupabase, 500); };
 
     // backward compat for old function refs
-    var DATA_KEYS = ['employees','roomsCapacity','vacations','hospitalities','maintenanceRecords','septicRecords','inventoryVouchers','inventoryItems','excludedEmployees','periodicMaintenance','teaSugarDisbursements','teaSugarBatches','mealLogs','contractors','dynamicSectors','dynamicRooms','dynamicSeptics','dynamicDepts','dynamicTitles','appUsers','bakeryIngredients','bakeryProductions','bakeryContractorSupplies','bakeryInvoices','currentUser','manualTotalBeds'];
+    var DATA_KEYS = ['employees','roomsCapacity','vacations','hospitalities','maintenanceRecords','septicRecords','inventoryVouchers','inventoryItems','excludedEmployees','periodicMaintenance','teaSugarDisbursements','teaSugarBatches','mealLogs','contractors','dynamicSectors','dynamicRooms','dynamicSeptics','dynamicDepts','dynamicTitles','deptTitles','appUsers','bakeryIngredients','bakeryProductions','bakeryContractorSupplies','bakeryInvoices','currentUser','manualTotalBeds'];
 
     // -- Presence tracking (multi-device) --
     var _presencePollTimer = null;
@@ -9803,6 +10043,12 @@ function toggleEmployeeStatus(empId) {
       dynamicSeptics = mergeArrays(dynamicSeptics, d.dynamicSeptics);
       dynamicDepts = mergeArrays(dynamicDepts, d.dynamicDepts);
       dynamicTitles = mergeArrays(dynamicTitles, d.dynamicTitles);
+      if (d.deptTitles) {
+        Object.keys(d.deptTitles).forEach(dept => {
+          if (!deptTitles[dept]) deptTitles[dept] = [];
+          d.deptTitles[dept].forEach(t => { if (!deptTitles[dept].includes(t)) deptTitles[dept].push(t); });
+        });
+      }
       if (d.appUsers) appUsers = mergeArrays(appUsers, d.appUsers, function(u) { return u.name; });
       if (d.currentUser) currentUser = d.currentUser;
       bakeryIngredients = mergeArrays(bakeryIngredients, d.bakeryIngredients, function(b) { return b.name || JSON.stringify(b); });
@@ -9868,7 +10114,7 @@ function toggleEmployeeStatus(empId) {
         if (!res.ok) return;
         var data = await res.json();
         if (!data || !data.employees) return;
-        var localJson = JSON.stringify({employees,roomsCapacity,vacations,hospitalities,maintenanceRecords,septicRecords,inventoryVouchers,inventoryItems,excludedEmployees,periodicMaintenance,teaSugarDisbursements,teaSugarBatches,mealLogs,contractors,dynamicSectors,contractorSectors,contractorRooms,dynamicRooms,dynamicSeptics,dynamicDepts,dynamicTitles,appUsers,currentUser,bakeryIngredients,bakeryProductions,bakeryContractorSupplies,bakeryInvoices,manualTotalBeds});
+        var localJson = JSON.stringify({employees,roomsCapacity,vacations,hospitalities,maintenanceRecords,septicRecords,inventoryVouchers,inventoryItems,excludedEmployees,periodicMaintenance,teaSugarDisbursements,teaSugarBatches,mealLogs,contractors,dynamicSectors,contractorSectors,contractorRooms,dynamicRooms,dynamicSeptics,dynamicDepts,dynamicTitles,deptTitles,appUsers,currentUser,bakeryIngredients,bakeryProductions,bakeryContractorSupplies,bakeryInvoices,manualTotalBeds});
         lastCloudData = JSON.stringify(data);
         if (JSON.stringify(data) === localJson) return;
         var localTime = parseInt(localStorage.getItem('_localChangeTime')) || 0;
@@ -9899,6 +10145,7 @@ function toggleEmployeeStatus(empId) {
         if (data.dynamicSeptics) dynamicSeptics = data.dynamicSeptics;
         if (data.dynamicDepts) dynamicDepts = data.dynamicDepts;
         if (data.dynamicTitles) dynamicTitles = data.dynamicTitles;
+        if (data.deptTitles) deptTitles = data.deptTitles;
         if (data.appUsers) appUsers = data.appUsers;
         if (data.currentUser) currentUser = data.currentUser;
         if (data.bakeryIngredients) {
@@ -10109,6 +10356,7 @@ function toggleEmployeeStatus(empId) {
         if (data.dynamicSeptics) dynamicSeptics = data.dynamicSeptics;
         if (data.dynamicDepts) dynamicDepts = data.dynamicDepts;
         if (data.dynamicTitles) dynamicTitles = data.dynamicTitles;
+        if (data.deptTitles) deptTitles = data.deptTitles;
         if (data.appUsers) appUsers = data.appUsers;
         if (data.currentUser) currentUser = data.currentUser;
         if (data.bakeryIngredients) {
@@ -10293,6 +10541,7 @@ function toggleEmployeeStatus(empId) {
         if (data.dynamicSeptics) dynamicSeptics = data.dynamicSeptics;
         if (data.dynamicDepts) dynamicDepts = data.dynamicDepts;
         if (data.dynamicTitles) dynamicTitles = data.dynamicTitles;
+        if (data.deptTitles) deptTitles = data.deptTitles;
         if (data.appUsers) appUsers = data.appUsers;
         if (data.currentUser) currentUser = data.currentUser;
 
@@ -10478,7 +10727,7 @@ function toggleEmployeeStatus(empId) {
       }
       // تهيئة الرصيد السنوي للموظفين
       employees.forEach(function(e) { if (typeof e.vacationBalance !== 'number') e.vacationBalance = 30; });
-      sortEmployeesAlphabetically(); rebuildAllDropdowns(); initEmployeeSearchInputs(); setupItemNameSearch(); populateRoomSectorDropdown(); populateContractorSectorDropdown(); renderTable(); renderInventoryTable(); renderInventoryItems(); renderVacationsTable(); renderHospitalityTable(); renderMaintenanceTable(); renderSepticTable(); renderPeriodicMaintenance(); renderTeaSugarTable(); renderMealLogTable(); autoSaveTodayMeal(); renderContractorsTable(); renderDashboard(); updateEmployeeVacationStatuses(); renderTable(); initAllSortableTables();
+      sortEmployeesAlphabetically(); rebuildDeptTitles(); rebuildAllDropdowns(); initEmployeeSearchInputs(); setupItemNameSearch(); setupNameAutocomplete(); populateRoomSectorDropdown(); populateContractorSectorDropdown(); renderTable(); renderInventoryTable(); renderInventoryItems(); renderVacationsTable(); renderHospitalityTable(); renderMaintenanceTable(); renderSepticTable(); renderPeriodicMaintenance(); renderTeaSugarTable(); renderMealLogTable(); autoSaveTodayMeal(); renderContractorsTable(); renderDashboard(); updateEmployeeVacationStatuses(); renderTable(); initAllSortableTables();
 
       // تحميل أولي من Google Drive (مرة واحدة)
       // loadFromCloud(); // Google Drive backup معطل
@@ -10536,6 +10785,7 @@ function toggleEmployeeStatus(empId) {
               if (data.dynamicSeptics) dynamicSeptics = data.dynamicSeptics;
               if (data.dynamicDepts) dynamicDepts = data.dynamicDepts;
               if (data.dynamicTitles) dynamicTitles = data.dynamicTitles;
+        if (data.deptTitles) deptTitles = data.deptTitles;
               employees.forEach(function(e) { if (typeof e.vacationBalance !== 'number') e.vacationBalance = 30; });
               syncStorage();
               sortEmployeesAlphabetically(); rebuildAllDropdowns();
