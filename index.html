@@ -2245,12 +2245,12 @@
     </div>
 
     <div class="bakery-sub-tabs no-print">
-      <button class="bakery-sub-tab" onclick="switchBakerySub('bsub-production',this)" style="background:#e65100;color:white;font-size:16px;padding:10px 24px;">🏭 الإنتاج</button>
-      <button class="bakery-sub-tab active" onclick="switchBakerySub('bsub-materials',this)">🥫 الخامات</button>
+      <button class="bakery-sub-tab active" onclick="switchBakerySub('bsub-production',this)" style="background:#e65100;color:white;font-size:16px;padding:10px 24px;">🏭 الإنتاج</button>
+      <button class="bakery-sub-tab" onclick="switchBakerySub('bsub-materials',this)">🥫 الخامات</button>
     </div>
 
     <!-- 🥫 Materials (Ingredients + Stock Log) -->
-    <div id="bsub-materials" class="bakery-sub-content active">
+    <div id="bsub-materials" class="bakery-sub-content">
       <div class="control-panel no-print" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;">
         <div class="form-group"><label>المكون</label><select id="bing-name" onchange="onBakeryIngredientSelect()"><option value="">اختر المكون</option><option value="دقيق">دقيق</option><option value="خميرة">خميرة</option><option value="ملح">ملح</option><option value="ردة">ردة</option><option value="سولار">سولار</option></select></div>
         <div class="form-group"><label>الوحدة</label><select id="bing-unit"><option>كجم</option><option>لتر</option><option>باكو</option><option>كيس</option><option>علبة</option><option>قطعة</option></select></div>
@@ -2306,7 +2306,7 @@
     </div>
 
     <!-- 🏭 Production -->
-    <div id="bsub-production" class="bakery-sub-content">
+    <div id="bsub-production" class="bakery-sub-content active">
       <div class="control-panel no-print" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;">
         <div class="form-group"><label>التاريخ</label><input type="date" id="bprod-date"></div>
         <div class="form-group"><label>عدد الأرغفة</label><input type="number" id="bprod-count" min="1" value="0" oninput="estimateBprodIngredients()"></div>
