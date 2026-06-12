@@ -51,7 +51,7 @@ function saAnalyze(){
   if(p.salt>0)r.push(row('🧂 ملح','sa-ed-salt',p.salt,'0.1',' كجم'));
   if(p.bran>0)r.push(row('🌾 ردة','sa-ed-bran',p.bran,'0.1',' كجم'));
   if(p.waste>0)r.push(row('❌ هالك','sa-ed-waste',p.waste,'0.1',' كجم'));
-  var dieselVal=p.diesel||33;
+  var dieselVal=p.diesel||Math.round((p.kb+p.cb)*0.00979*100)/100;
   r.push(row('⛽ سولار','sa-ed-diesel',dieselVal,'1',' لتر'));
   var notes=[];if(p.kd>0)notes.push('تسليم مطبخ: '+p.kd);if(p.kr>0)notes.push('بالفرن احتياطي: '+p.kr);
   var h='<div style="background:#f8fdf8;padding:10px;border-radius:8px;border:1px solid #c8e6c9;font-size:13px;">';
@@ -78,7 +78,14 @@ function saFill(){
   var nY=g('sa-ed-yeast');if(nY&&g('bprod-ing-ING002'))g('bprod-ing-ING002').value=parseFloat(nY.value);
   var nS=g('sa-ed-salt');if(nS&&g('bprod-ing-ING003'))g('bprod-ing-ING003').value=parseFloat(nS.value);
   var nB=g('sa-ed-bran');if(nB&&g('bprod-ing-ING004'))g('bprod-ing-ING004').value=parseFloat(nB.value);
-  var nD=g('sa-ed-diesel');if(nD&&g('bprod-ing-ING007'))g('bprod-ing-ING007').value=parseFloat(nD.value);
+  var nD=g('sa-ed-diesel');if(nD&&g('bprod-ing-ING007')){
+    var dv=parseFloat(nD.value);if(dv<=0||dv===33){
+      var ttl=parseInt(g('sa-ed-kb').value)||0;var ctrInputs=document.querySelectorAll('[id^="sa-ed-ctr-"]');
+      ctrInputs.forEach(function(x){ttl+=parseInt(x.value)||0;});
+      if(ttl>0)dv=Math.round(ttl*0.00979*100)/100;
+    }
+    g('bprod-ing-ING007').value=dv;
+  }
   var notes=[];
   g('sa-ed-kd')&&parseInt(g('sa-ed-kd').value)>0?notes.push('تسليم مطبخ: '+parseInt(g('sa-ed-kd').value)):0;
   g('sa-ed-kr')&&parseInt(g('sa-ed-kr').value)>0?notes.push('بالفرن احتياطي: '+parseInt(g('sa-ed-kr').value)):0;
