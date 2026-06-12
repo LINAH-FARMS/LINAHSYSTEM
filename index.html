@@ -5162,7 +5162,8 @@
         var ctrBread = todayCtr.reduce(function(s,c) { return s + (c.count || 0); }, 0);
         var ctrRev = todayCtr.reduce(function(s,c) { return s + ((c.count || 0) * (c.price || 0)); }, 0);
         var ctrPaid = todayCtr.reduce(function(s,c) { return s + (parseFloat(c.paid) || 0); }, 0);
-        sectionsHtml += '<div class="rp-section">' + sec('🚚 توريد الخبز', ctrBread + ' رغيف | إيراد ' + ctrRev.toFixed(0) + ' ج.م | مدفوع ' + ctrPaid.toFixed(0) + ' ج.م') + '</div>';
+        var ctrNames = todayCtr.map(function(c) { return c.name + ' ' + (c.count || 0); }).join(' | ');
+        sectionsHtml += '<div class="rp-section">' + sec('🚚 توريد الخبز', ctrBread + ' رغيف | ' + ctrNames) + '</div>';
       }
       if (opts['rpt-inventory']) {
         var invItems = todayInv.reduce(function(s,v) { return s + (parseInt(v.qty) || 0); }, 0);
