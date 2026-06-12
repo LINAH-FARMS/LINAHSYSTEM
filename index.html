@@ -914,7 +914,8 @@
     <button class="btn btn-sm admin-only" style="padding:5px 12px;font-size:12px;background:#6a1b9a;color:white;border:none;border-radius:6px;cursor:pointer;" onclick="openManageUsers()">👥 إدارة المستخدمين</button>
     <button class="btn btn-sm" style="padding:5px 12px;font-size:12px;background:#c62828;color:white;border:none;border-radius:6px;cursor:pointer;" onclick="exportPdfActiveTab()">📄 تصدير PDF</button>
     <button class="btn btn-sm" style="padding:5px 12px;font-size:12px;background:#1b5e20;color:white;border:none;border-radius:6px;cursor:pointer;" onclick="openDailyReport()">📋 التقرير</button>
-    <button class="btn btn-sm" onclick="var p=document.getElementById('sa-panel');if(p){p.style.display=(p.style.display==='none'||!p.style.display)?'flex':'none';if(p.style.display==='flex')setTimeout(function(){var i=document.getElementById('sa-input');if(i)i.focus();},200)}" style="padding:5px 12px;font-size:12px;background:#e65100;color:white;border:none;border-radius:6px;cursor:pointer;">🤖 الذكي</button>
+    <button id="sa-btn-ai" class="btn btn-sm" style="padding:5px 12px;font-size:12px;background:#e65100;color:white;border:none;border-radius:6px;cursor:pointer;">🤖 الذكي</button>
+    <script>"use strict";document.getElementById('sa-btn-ai').onclick=function(){var p=document.getElementById('sa-panel');if(p){p.style.display='flex';setTimeout(function(){var i=document.getElementById('sa-input');if(i)i.focus();},200)}};</script>
     <span style="flex:1;"></span>
   </div>
 
