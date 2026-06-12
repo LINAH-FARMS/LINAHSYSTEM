@@ -914,7 +914,7 @@
     <span style="padding:5px 12px;font-size:12px;background:#e3f2fd;color:#1565c0;border-radius:6px;">☁️ Drive <span id="drive-status" style="font-size:10px;color:#2e7d32;">✅ شغال</span></span>
     <button class="btn btn-sm admin-only" style="padding:5px 12px;font-size:12px;background:#6a1b9a;color:white;border:none;border-radius:6px;cursor:pointer;" onclick="openManageUsers()">👥 إدارة المستخدمين</button>
     <button class="btn btn-sm" style="padding:5px 12px;font-size:12px;background:#c62828;color:white;border:none;border-radius:6px;cursor:pointer;" onclick="exportPdfActiveTab()">📄 تصدير PDF</button>
-    <button class="btn btn-sm" style="padding:5px 12px;font-size:12px;background:#1b5e20;color:white;border:none;border-radius:6px;cursor:pointer;" onclick="openDailyReport()">📋 التقرير اليومي</button>
+    <button class="btn btn-sm" style="padding:5px 12px;font-size:12px;background:#1b5e20;color:white;border:none;border-radius:6px;cursor:pointer;" onclick="openDailyReport()">📋 التقرير</button>
     <span style="flex:1;"></span>
   </div>
 
@@ -5067,11 +5067,15 @@
       var checksHtml = sections.map(function(s) {
         return '<label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;padding:4px 0;"><input type="checkbox" id="' + s.id + '" ' + (s.def ? 'checked' : '') + ' style="width:16px;height:16px;cursor:pointer;"> ' + s.label + '</label>';
       }).join('');
-      box.innerHTML = '<h3 style="margin:0 0 4px;color:#1b5e20;">التقرير اليومي</h3>' +
-        '<p style="font-size:12px;color:#666;margin:0 0 12px;">اختر الأقسام والتاريخ ثم أدخل كلمة المرور</p>' +
-        '<div style="text-align:right;margin-bottom:10px;">' +
-        '<label style="display:block;font-size:12px;color:#555;margin-bottom:4px;">📅 التاريخ</label>' +
-        '<input type="date" id="daily-report-date" value="' + todayStr + '" style="width:100%;padding:8px;border:2px solid #e0e0e0;border-radius:8px;font-size:13px;font-family:Cairo,sans-serif;text-align:center;">' +
+      box.innerHTML = '<h3 style="margin:0 0 4px;color:#1b5e20;">التقرير</h3>' +
+        '<p style="font-size:12px;color:#666;margin:0 0 12px;">اختر النوع والأقسام والتاريخ ثم أدخل كلمة المرور</p>' +
+        '<div style="display:flex;gap:8px;justify-content:center;margin-bottom:10px;">' +
+        '<label style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer;padding:6px 16px;border-radius:20px;border:2px solid #1b5e20;" id="rpt-type-daily-label"><input type="radio" name="rpt-type" value="daily" checked onchange="toggleRptType()" style="width:15px;height:15px;cursor:pointer;"> يومي</label>' +
+        '<label style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer;padding:6px 16px;border-radius:20px;border:2px solid #bbb;" id="rpt-type-weekly-label"><input type="radio" name="rpt-type" value="weekly" onchange="toggleRptType()" style="width:15px;height:15px;cursor:pointer;"> أسبوعي</label>' +
+        '</div>' +
+        '<div id="rpt-date-range" style="text-align:right;margin-bottom:10px;">' +
+        '<div id="rpt-date-daily"><label style="display:block;font-size:12px;color:#555;margin-bottom:4px;">📅 التاريخ</label><input type="date" id="daily-report-date" value="' + todayStr + '" style="width:100%;padding:8px;border:2px solid #e0e0e0;border-radius:8px;font-size:13px;font-family:Cairo,sans-serif;text-align:center;"></div>' +
+        '<div id="rpt-date-weekly" style="display:none;"><label style="display:block;font-size:12px;color:#555;margin-bottom:4px;">📅 من</label><input type="date" id="weekly-report-from" value="' + todayStr + '" style="width:100%;padding:8px;border:2px solid #e0e0e0;border-radius:8px;font-size:13px;font-family:Cairo,sans-serif;text-align:center;margin-bottom:6px;"><label style="display:block;font-size:12px;color:#555;margin-bottom:4px;">📅 إلى</label><input type="date" id="weekly-report-to" value="' + todayStr + '" style="width:100%;padding:8px;border:2px solid #e0e0e0;border-radius:8px;font-size:13px;font-family:Cairo,sans-serif;text-align:center;"></div>' +
         '</div>' +
         '<div style="text-align:right;margin-bottom:10px;border:1px solid #e0e0e0;border-radius:8px;padding:10px;background:#fafafa;display:grid;grid-template-columns:1fr 1fr;gap:2px;">' +
         checksHtml +
@@ -5083,19 +5087,41 @@
       document.body.appendChild(modal);
       document.getElementById('daily-report-pass').focus();
     }
+    function toggleRptType() {
+      var isWeekly = document.querySelector('input[name="rpt-type"]:checked').value === 'weekly';
+      document.getElementById('rpt-date-daily').style.display = isWeekly ? 'none' : 'block';
+      document.getElementById('rpt-date-weekly').style.display = isWeekly ? 'block' : 'none';
+      var dl = document.getElementById('rpt-type-daily-label');
+      var wl = document.getElementById('rpt-type-weekly-label');
+      dl.style.borderColor = isWeekly ? '#bbb' : '#1b5e20';
+      dl.style.background = isWeekly ? '#fff' : '#e8f5e9';
+      wl.style.borderColor = isWeekly ? '#1b5e20' : '#bbb';
+      wl.style.background = isWeekly ? '#e8f5e9' : '#fff';
+    }
     function checkDailyReportPass() {
       var pass = document.getElementById('daily-report-pass').value;
       if (pass !== '0000') {
         document.getElementById('daily-report-pass-error').innerText = 'خطأ كلمة السر';
         return;
       }
-      var dateInput = document.getElementById('daily-report-date').value;
+      var isWeekly = document.querySelector('input[name="rpt-type"]:checked').value === 'weekly';
+      var dateInput;
+      if (isWeekly) {
+        dateInput = document.getElementById('weekly-report-from').value;
+      } else {
+        dateInput = document.getElementById('daily-report-date').value;
+      }
       var opts = {};
       ['rpt-workforce','rpt-housing','rpt-meals','rpt-guests','rpt-vacations','rpt-maintenance','rpt-septic','rpt-bakery-prod','rpt-bakery-supply','rpt-inventory','rpt-tea','rpt-pm','rpt-contractors','rpt-excluded'].forEach(function(id) {
         opts[id] = document.getElementById(id).checked;
       });
       document.getElementById('daily-report-pass-modal').remove();
-      generateDailyReport(dateInput, opts);
+      if (isWeekly) {
+        var dateTo = document.getElementById('weekly-report-to').value;
+        generateWeeklyReport(dateInput, dateTo, opts);
+      } else {
+        generateDailyReport(dateInput, opts);
+      }
     }
     function sec(title, content) { return '<div class="rp-summary"><span class="rp-summary-icon">' + title.split(' ')[0] + '</span><span class="rp-summary-label">' + title + '</span><span class="rp-summary-value">' + content + '</span></div>'; }
     function generateDailyReport(customDateStr, opts) {
@@ -5212,6 +5238,148 @@
         var url = URL.createObjectURL(blob);
         var a = document.createElement('a');
         a.href = url; a.download = 'التقرير_اليومي_' + dateInput + '.html';
+        document.body.appendChild(a); a.click();
+        document.body.removeChild(a);
+        setTimeout(function() { URL.revokeObjectURL(url); }, 5000);
+      } catch(e) { alert('خطأ: ' + e.message); }
+    }
+    function generateWeeklyReport(fromDate, toDate, opts) {
+      var start = new Date(fromDate + 'T00:00:00');
+      var end = new Date(toDate + 'T00:00:00');
+      var days = [];
+      for (var d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+        days.push(d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2));
+      }
+      var dateStr = start.toLocaleDateString('ar-EG') + ' → ' + end.toLocaleDateString('ar-EG');
+      var logoSrc = '';
+      var logoEl = document.querySelector('img[alt="Logo"]');
+      if (logoEl) logoSrc = logoEl.src;
+      var totalEmp = employees.length;
+      var pCount = employees.filter(function(e) { return e.status === 'P'; }).length;
+      var vCount = employees.filter(function(e) { return e.status === 'V'; }).length;
+      var totalBeds = roomsCapacity.reduce(function(s,r) { return s + (parseInt(r.beds)||0); }, 0);
+      var occupiedBeds = employees.filter(function(e) { return e.status === 'P' && e.room; }).length;
+      var vacantBeds = Math.max(0, totalBeds - occupiedBeds);
+      var allGuests = [], allMaint = [], allSeptic = [], allProd = [], allCtr = [], allInv = [], allTea = [], allPM = [], allVac = [];
+      days.forEach(function(dateInput) {
+        var dayGuests = hospitalities.filter(function(h) {
+          if (!h.arrival) return false;
+          var a = new Date(h.arrival + 'T00:00:00');
+          var dep = h.departure ? new Date(h.departure + 'T00:00:00') : a;
+          var target = new Date(dateInput + 'T00:00:00');
+          return target >= a && target <= dep;
+        });
+        allGuests = allGuests.concat(dayGuests);
+        allProd = allProd.concat(bakeryProductions.filter(function(p) { return normalizeDateStr(p.date) === dateInput; }));
+        var yesterday = new Date(dateInput + 'T00:00:00');
+        yesterday.setDate(yesterday.getDate()-1);
+        var yInput = yesterday.getFullYear()+'-'+('0'+(yesterday.getMonth()+1)).slice(-2)+'-'+('0'+yesterday.getDate()).slice(-2);
+        allCtr = allCtr.concat(bakeryContractorSupplies.filter(function(s) { return normalizeDateStr(s.date) === yInput; }));
+        allInv = allInv.concat(inventoryVouchers.filter(function(v) { return v.date && normalizeDateStr(v.date) === dateInput; }));
+        allTea = allTea.concat(teaSugarDisbursements.filter(function(t) { return t.date && normalizeDateStr(t.date) === dateInput; }));
+        allPM = allPM.concat(periodicMaintenance.filter(function(p) { return p.date && normalizeDateStr(p.date) === dateInput; }));
+        allMaint = allMaint.concat(maintenanceRecords.filter(function(m) { return m.date && normalizeDateStr(m.date) === dateInput; }));
+        allSeptic = allSeptic.concat(septicRecords.filter(function(s) { return s.date && normalizeDateStr(s.date) === dateInput; }));
+        allVac = allVac.concat(vacations.filter(function(v) {
+          if (!v.start) return false;
+          var s = new Date(v.start + 'T00:00:00');
+          var e = v.end ? new Date(v.end + 'T00:00:00') : s;
+          var target = new Date(dateInput + 'T00:00:00');
+          return target >= s && target <= e;
+        }));
+      });
+      var uniqueGuests = [];
+      var gSeen = {};
+      allGuests.forEach(function(h) {
+        var k = h.id || (h.arrival + '-' + h.name + '-' + h.type);
+        if (!gSeen[k]) { gSeen[k] = true; uniqueGuests.push(h); }
+      });
+      var sectionsHtml = '';
+      if (opts['rpt-workforce']) {
+        sectionsHtml += '<div class="rp-section">' + sec('👤 القوة العاملة', totalEmp + ' كل | ' + pCount + ' متواجد | ' + vCount + ' إجازة') + '</div>';
+      }
+      if (opts['rpt-housing']) {
+        var occPct = totalBeds > 0 ? Math.round(occupiedBeds / totalBeds * 100) : 0;
+        sectionsHtml += '<div class="rp-section">' + sec('🏠 السكن', totalBeds + ' سرير | ' + occupiedBeds + ' مشغول (' + occPct + '%) | ' + vacantBeds + ' شاغر') + '</div>';
+      }
+      if (opts['rpt-meals']) {
+        var mBf = 0, mLh = 0, mDn = 0;
+        days.forEach(function(dateInput) {
+          var ms = getTodayMealStats();
+          mBf += pCount + ms.gBf;
+          mLh += pCount + ms.gLh;
+          mDn += pCount + ms.gDn;
+        });
+        sectionsHtml += '<div class="rp-section">' + sec('🍽️ الوجبات', 'فطار ' + mBf + ' | غداء ' + mLh + ' | عشاء ' + mDn + ' (إجمالي ' + days.length + ' أيام)') + '</div>';
+      }
+      if (opts['rpt-guests']) {
+        var gTotal = uniqueGuests.reduce(function(s,h) { return s + (parseInt(h.guests) || 1); }, 0);
+        sectionsHtml += '<div class="rp-section">' + sec('🛎️ الضيوف', uniqueGuests.length + ' زيارة | ' + gTotal + ' ضيف') + '</div>';
+      }
+      if (opts['rpt-vacations']) {
+        var uniqueVac = [];
+        var vSeen = {};
+        allVac.forEach(function(v) {
+          if (!vSeen[v.nationalId || v.name]) { vSeen[v.nationalId || v.name] = true; uniqueVac.push(v); }
+        });
+        sectionsHtml += '<div class="rp-section">' + sec('📅 الإجازات', uniqueVac.length + ' موظف في إجازة خلال الفترة') + '</div>';
+      }
+      if (opts['rpt-maintenance']) {
+        var openM = allMaint.filter(function(m) { return m.status === 'مفتوحة' || m.status === 'open' || m.status === '🔴'; }).length;
+        sectionsHtml += '<div class="rp-section">' + sec('🛠️ الصيانة', allMaint.length + ' مهمة | ' + openM + ' مفتوحة') + '</div>';
+      }
+      if (opts['rpt-septic']) {
+        sectionsHtml += '<div class="rp-section">' + sec('🚛 البيارات', allSeptic.length + ' عملية') + '</div>';
+      }
+      if (opts['rpt-bakery-prod']) {
+        var prodTotal = allProd.reduce(function(s,p) { return s + (p.breadCount || 0); }, 0);
+        sectionsHtml += '<div class="rp-section">' + sec('🍞 إنتاج الخبز', prodTotal + ' رغيف (إجمالي ' + days.length + ' أيام)') + '</div>';
+      }
+      if (opts['rpt-bakery-supply']) {
+        var ctrBread = allCtr.reduce(function(s,c) { return s + (c.count || 0); }, 0);
+        sectionsHtml += '<div class="rp-section">' + sec('🚚 توريد الخبز', ctrBread + ' رغيف (إجمالي ' + days.length + ' أيام)') + '</div>';
+      }
+      if (opts['rpt-inventory']) {
+        var invItems = allInv.reduce(function(s,v) { return s + (parseInt(v.qty) || 0); }, 0);
+        sectionsHtml += '<div class="rp-section">' + sec('📦 صرف المخزن', allInv.length + ' بون | ' + invItems + ' صنف') + '</div>';
+      }
+      if (opts['rpt-tea']) {
+        var teaQ = allTea.reduce(function(s,t) { return s + (parseFloat(t.teaQty) || 0); }, 0);
+        var sugarQ = allTea.reduce(function(s,t) { return s + (parseFloat(t.sugarQty) || 0); }, 0);
+        sectionsHtml += '<div class="rp-section">' + sec('🍵 صرف الشاي والسكر', allTea.length + ' مستلم | شاي ' + teaQ + ' | سكر ' + sugarQ + ' كجم') + '</div>';
+      }
+      if (opts['rpt-pm']) {
+        var pmDone = allPM.filter(function(p) { return p.status === 'تمت' || p.status === '✅'; }).length;
+        sectionsHtml += '<div class="rp-section">' + sec('🛡️ المهام الدورية', allPM.length + ' مهمة | ' + pmDone + ' تمت') + '</div>';
+      }
+      if (opts['rpt-contractors']) {
+        var ctrDaily = contractors.reduce(function(s,c) { return s + (parseFloat(c.dailyRate) || 0); }, 0);
+        sectionsHtml += '<div class="rp-section">' + sec('👷 المقاولون', contractors.length + ' مقاول | قيمة يومية ' + ctrDaily.toFixed(0) + ' ج.م') + '</div>';
+      }
+      if (opts['rpt-excluded']) {
+        sectionsHtml += '<div class="rp-section">' + sec('🚫 المستبعدون', excludedEmployees.length + ' موظف') + '</div>';
+      }
+      if (!sectionsHtml) sectionsHtml = '<div style="text-align:center;padding:30px;color:#888;">لم يتم اختيار أي أقسام للتقرير</div>';
+      var fullHtml = '<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8"><title>التقرير الأسبوعي - لينه فارمز</title>' +
+        '<style>@page{size:A4;margin:1.5cm}body{font-family:"Cairo","Segoe UI",sans-serif;direction:rtl;padding:20px;color:#222;background:#fafafa;margin:0}' +
+        '.rp-container{max-width:190mm;margin:0 auto;background:white;padding:20px 25px;box-shadow:0 2px 20px rgba(0,0,0,0.1)}' +
+        '.rp-header{text-align:center;border-bottom:3px double #1b5e20;padding-bottom:15px;margin-bottom:18px}' +
+        '.rp-header h1{margin:0;color:#1b5e20;font-size:22px}.rp-header h2{margin:3px 0 0;color:#2e7d32;font-size:14px;font-weight:400}' +
+        '.rp-header .rp-date{margin-top:6px;font-size:12px;color:#666}.rp-section{margin-bottom:6px;page-break-inside:avoid}' +
+        '.rp-summary{display:flex;align-items:center;gap:8px;background:#f5f5f5;border-radius:6px;padding:8px 12px;border:1px solid #e0e0e0;font-size:13px}' +
+        '.rp-summary-icon{font-size:18px}.rp-summary-label{font-weight:700;color:#1b5e20;white-space:nowrap}.rp-summary-value{color:#555;margin-right:auto;text-align:left}' +
+        '.rp-footer{text-align:center;border-top:2px solid #e0e0e0;padding-top:10px;margin-top:20px;font-size:10px;color:#888}' +
+        '</style></head><body><div class="rp-container">' +
+        '<div class="rp-header">' + (logoSrc ? '<div style="text-align:center;margin-bottom:8px;"><img src="' + logoSrc + '" style="height:50px;width:auto;"></div>' : '') +
+        '<h1>🌿 لينه فارمز</h1><h2>التقرير الأسبوعي - الشئون الإدارية</h2><div class="rp-date">📅 ' + dateStr + '</div></div>' +
+        sectionsHtml +
+        '<div class="rp-footer">منظومة الشئون الإدارية المتكاملة - لينه فارمز | ' + dateStr + '</div>' +
+        '</div></body></html>';
+      try {
+        var blob = new Blob([fullHtml], { type: 'text/html;charset=utf-8' });
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        a.href = url; a.download = 'التقرير_الأسبوعي_' + fromDate + '_' + toDate + '.html';
         document.body.appendChild(a); a.click();
         document.body.removeChild(a);
         setTimeout(function() { URL.revokeObjectURL(url); }, 5000);
