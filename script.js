@@ -1,6 +1,12 @@
 function saNorm(t){
   return t.replace(/نص\s*(باكو|كجم|كيلو|لتر)?/g,'0.5 $1').replace(/ربع\s*(باكو|كجم|كيلو|لتر)?/g,'0.25 $1');
 }
+function saGetQty(t,kw,def){
+  var r=new RegExp('([\\d.]+)\\s*(?:كجم|كيلو|باكو|لتر|وحدة)?\\s*'+kw);var m=t.match(r);
+  if(m)return parseFloat(m[1]);
+  if(t.indexOf(kw)>=0)return def;
+  return 0;
+}
 function saParse(t){
   t=saNorm(t);
   var dt='';var ds=t.match(/(\d{1,2})\s*[/-]\s*(\d{1,2})\s*[/-]\s*(\d{2,4})/);
@@ -10,26 +16,17 @@ function saParse(t){
   var kx=farm.match(/([\d.]+)\s*كيلو\s*.?\s*دقيق\s*[=:]\s*(\d+)/);var kf=kx?parseFloat(kx[1]):0;var kb=kx?parseInt(kx[2]):0;
   var kdM=farm.match(/(?:تسليم|للمطبخ)\s*(\d+)/);var kd=kdM?parseInt(kdM[1]):0;
   var krM=farm.match(/(?:داخل|الفرن|متبقي|باقي)\s*(\d+)/);var kr=krM?parseInt(krM[1]):0;
-  var yeast=0,salt=0,bran=0,waste=0;
-  farm.split(/\n/).forEach(function(ln){
-    if(/خميره/.test(ln)||/خميرة/.test(ln)){
-      var m=ln.match(/([\d.]+)/);yeast+=m?parseFloat(m[1]):1;
-    }
-    if(/ملح/.test(ln)){
-      var m=ln.match(/([\d.]+)/);salt+=m?parseFloat(m[1]):1;
-    }
-    if(/رده/.test(ln)||/ردة/.test(ln)){var m=ln.match(/([\d.]+)/);if(m)bran+=parseFloat(m[1]);}
-    if(/هالك/.test(ln)){var m=ln.match(/([\d.]+)/);if(m)waste+=parseFloat(m[1]);}
-  });
+  var yeast=saGetQty(farm,'خميره',1)||saGetQty(farm,'خميرة',1);
+  var salt=saGetQty(farm,'ملح',1);
+  var bran=saGetQty(farm,'رده',0)||saGetQty(farm,'ردة',0);
+  var waste=saGetQty(farm,'هالك',0);
   var cx=ctrPart.match(/([\d.]+)\s*كيلو\s*.?\s*دقيق\s*[=:]\s*(\d+)/);var cf=cx?parseFloat(cx[1]):0;var cb=cx?parseInt(cx[2]):0;
-  var cYeast=0,cSalt=0,cBran=0;
-  ctrPart.split(/\n/).forEach(function(ln){
-    if(/خميره/.test(ln)||/خميرة/.test(ln)){var m=ln.match(/([\d.]+)/);cYeast+=m?parseFloat(m[1]):1;}
-    if(/ملح/.test(ln)){var m=ln.match(/([\d.]+)/);cSalt+=m?parseFloat(m[1]):1;}
-    if(/رده/.test(ln)||/ردة/.test(ln)){var m=ln.match(/([\d.]+)/);if(m)cBran+=parseFloat(m[1]);}
-  });
+  var cYeast=saGetQty(ctrPart,'خميره',1)||saGetQty(ctrPart,'خميرة',1);
+  var cSalt=saGetQty(ctrPart,'ملح',1);
+  var cBran=saGetQty(ctrPart,'رده',0)||saGetQty(ctrPart,'ردة',0);
   var ctrNames=[];var noCtr=0;
-  ctrPart.split(/\n/).forEach(function(ln){
+  var items=ctrPart.split(/\s{2,}|(?:\d+\s*[=\n])/);
+  items.forEach(function(ln){
     ln=ln.trim();if(!ln||/دقيق|كيلو|خميره|خميرة|ملح|رده|ردة|سولار|استخدام/.test(ln))return;
     var nm=ln.match(/^[.\s]*([\u0600-\u06FF][\u0600-\u06FF\s.]+)\s*(\d+)$/);
     if(nm&&nm[2]&&parseInt(nm[2])>0&&parseInt(nm[2])<(cb||99999)){
