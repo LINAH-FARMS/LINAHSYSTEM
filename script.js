@@ -1,11 +1,3 @@
-var aiBtn=document.getElementById('ai-trigger');
-var aiPanel=document.getElementById('sa-panel');
-var aiInput=document.getElementById('sa-input');
-if(aiBtn&&aiPanel){aiBtn.onclick=function(){
-  var h=aiPanel.style.display==='none'||!aiPanel.style.display;
-  aiPanel.style.display=h?'flex':'none';
-  if(h&&aiInput)setTimeout(function(){aiInput.focus();},100);
-};}
 function saAddMsg(t,r){var d=document.createElement('div');d.style.cssText='max-width:88%;padding:10px 14px;border-radius:12px;font-size:13px;line-height:1.6;word-wrap:break-word;';d.style.background=r==='user'?'#e8f5e9':'#fff';d.style.alignSelf=r==='user'?'flex-end':'flex-start';d.style.borderBottomLeftRadius=r==='user'?'4px':'12px';d.style.borderBottomRightRadius=r==='user'?'12px':'4px';d.innerHTML=t;document.getElementById('sa-msgs').appendChild(d);d.scrollIntoView({behavior:'smooth',block:'end'});return d;}
 function saSend(){var i=document.getElementById('sa-input'),t=i.value.trim();if(!t)return;i.value='';saAddMsg(t,'user');saHandle(t);}
 var saLast=null;
