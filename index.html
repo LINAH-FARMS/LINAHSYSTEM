@@ -9223,7 +9223,7 @@ function toggleEmployeeStatus(empId) {
         var lines = text.split(/\n/).map(function(l) { return l.trim(); }).filter(Boolean);
         var full = text;
 
-        var dateVal = getTodaysDate();
+        var dateVal = new Date().toISOString().split('T')[0];
         for (var i = 0; i < lines.length; i++) {
           var ds = lines[i].match(/(\d{1,2})\s*[/-]\s*(\d{1,2})\s*[/-]\s*(\d{2,4})/);
           if (ds) {
