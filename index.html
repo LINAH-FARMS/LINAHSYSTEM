@@ -5035,20 +5035,38 @@
       modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:99999;display:flex;align-items:center;justify-content:center;';
       modal.onclick = function(e) { if (e.target === modal) modal.remove(); };
       var box = document.createElement('div');
-      box.style.cssText = 'background:#fff;padding:24px;border-radius:12px;width:350px;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,.3);';
+      box.style.cssText = 'background:#fff;padding:24px;border-radius:12px;width:420px;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,.3);max-height:90vh;overflow-y:auto;';
       var todayStr = new Date().toISOString().split('T')[0];
-      box.innerHTML = '<h3 style="margin:0 0 8px;color:#1b5e20;">التقرير اليومي</h3>' +
-        '<p style="font-size:13px;color:#666;margin:0 0 16px;">أدخل كلمة المرور للتوليد</p>' +
+      var sections = [
+        {id:'rpt-workforce', label:'👤 القوة العاملة', def:true},
+        {id:'rpt-housing', label:'🏠 السكن', def:true},
+        {id:'rpt-meals', label:'🍽️ الوجبات', def:true},
+        {id:'rpt-guests', label:'🛎️ الضيوف', def:true},
+        {id:'rpt-vacations', label:'📅 الإجازات', def:true},
+        {id:'rpt-maintenance', label:'🛠️ الصيانة', def:true},
+        {id:'rpt-septic', label:'🚛 البيارات', def:true},
+        {id:'rpt-bakery-prod', label:'🍞 إنتاج الخبز', def:true},
+        {id:'rpt-bakery-supply', label:'🚚 توريد الخبز', def:true},
+        {id:'rpt-inventory', label:'📦 صرف المخزن', def:true},
+        {id:'rpt-tea', label:'🍵 صرف الشاي والسكر', def:true},
+        {id:'rpt-pm', label:'🛡️ المهام الدورية', def:true},
+        {id:'rpt-contractors', label:'👷 المقاولون', def:true},
+        {id:'rpt-excluded', label:'🚫 المستبعدون', def:true}
+      ];
+      var checksHtml = sections.map(function(s) {
+        return '<label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;padding:4px 0;"><input type="checkbox" id="' + s.id + '" ' + (s.def ? 'checked' : '') + ' style="width:16px;height:16px;cursor:pointer;"> ' + s.label + '</label>';
+      }).join('');
+      box.innerHTML = '<h3 style="margin:0 0 4px;color:#1b5e20;">التقرير اليومي</h3>' +
+        '<p style="font-size:12px;color:#666;margin:0 0 12px;">اختر الأقسام والتاريخ ثم أدخل كلمة المرور</p>' +
         '<div style="text-align:right;margin-bottom:10px;">' +
-        '<label style="display:block;font-size:13px;color:#555;margin-bottom:4px;">اختيار التاريخ</label>' +
-        '<input type="date" id="daily-report-date" value="' + todayStr + '" style="width:100%;padding:10px;border:2px solid #e0e0e0;border-radius:8px;font-size:14px;font-family:Cairo,sans-serif;margin-bottom:10px;text-align:center;">' +
+        '<label style="display:block;font-size:12px;color:#555;margin-bottom:4px;">📅 التاريخ</label>' +
+        '<input type="date" id="daily-report-date" value="' + todayStr + '" style="width:100%;padding:8px;border:2px solid #e0e0e0;border-radius:8px;font-size:13px;font-family:Cairo,sans-serif;text-align:center;">' +
         '</div>' +
-        '<div style="text-align:right;margin-bottom:12px;display:flex;align-items:center;gap:8px;">' +
-        '<input type="checkbox" id="daily-report-no-housing" style="width:18px;height:18px;cursor:pointer;">' +
-        '<label for="daily-report-no-housing" style="font-size:13px;color:#555;cursor:pointer;">استبعاد السكن</label>' +
+        '<div style="text-align:right;margin-bottom:10px;border:1px solid #e0e0e0;border-radius:8px;padding:10px;background:#fafafa;display:grid;grid-template-columns:1fr 1fr;gap:2px;">' +
+        checksHtml +
         '</div>' +
-        '<input type="password" id="daily-report-pass" placeholder="أدخل كلمة المرور" style="width:100%;padding:10px;border:2px solid #e0e0e0;border-radius:8px;font-size:14px;font-family:Cairo,sans-serif;margin-bottom:12px;text-align:center;" onkeydown="if(event.key===\'Enter\')checkDailyReportPass()">' +
-        '<button onclick="checkDailyReportPass()" style="width:100%;padding:10px;background:#1b5e20;color:#fff;border:none;border-radius:8px;font-size:15px;font-family:Cairo,sans-serif;cursor:pointer;">تأكيد</button>' +
+        '<input type="password" id="daily-report-pass" placeholder="كلمة المرور" style="width:100%;padding:8px;border:2px solid #e0e0e0;border-radius:8px;font-size:13px;font-family:Cairo,sans-serif;margin-bottom:8px;text-align:center;" onkeydown="if(event.key===\'Enter\')checkDailyReportPass()">' +
+        '<button onclick="checkDailyReportPass()" style="width:100%;padding:10px;background:#1b5e20;color:#fff;border:none;border-radius:8px;font-size:14px;font-family:Cairo,sans-serif;cursor:pointer;">تأكيد وتوليد التقرير</button>' +
         '<div id="daily-report-pass-error" style="color:#d32f2f;font-size:12px;margin-top:8px;min-height:18px;"></div>';
       modal.appendChild(box);
       document.body.appendChild(modal);
@@ -5061,12 +5079,15 @@
         return;
       }
       var dateInput = document.getElementById('daily-report-date').value;
-      var noHousing = document.getElementById('daily-report-no-housing').checked;
+      var opts = {};
+      ['rpt-workforce','rpt-housing','rpt-meals','rpt-guests','rpt-vacations','rpt-maintenance','rpt-septic','rpt-bakery-prod','rpt-bakery-supply','rpt-inventory','rpt-tea','rpt-pm','rpt-contractors','rpt-excluded'].forEach(function(id) {
+        opts[id] = document.getElementById(id).checked;
+      });
       document.getElementById('daily-report-pass-modal').remove();
-      generateDailyReport(dateInput, !noHousing);
+      generateDailyReport(dateInput, opts);
     }
-    function generateDailyReport(customDateStr, includeHousing) {
-      if (includeHousing === undefined) includeHousing = true;
+    function sec(title, content) { return '<div class="rp-summary"><span class="rp-summary-icon">' + title.split(' ')[0] + '</span><span class="rp-summary-label">' + title + '</span><span class="rp-summary-value">' + content + '</span></div>'; }
+    function generateDailyReport(customDateStr, opts) {
       var today = customDateStr ? new Date(customDateStr + 'T00:00:00') : new Date();
       var dateStr = today.toLocaleDateString('ar-EG');
       var dateInput = today.getFullYear()+'-'+('0'+(today.getMonth()+1)).slice(-2)+'-'+('0'+today.getDate()).slice(-2);
@@ -5094,180 +5115,94 @@
       var todayInv = inventoryVouchers.filter(function(v) { return v.date && normalizeDateStr(v.date) === dateInput; });
       var todayTea = teaSugarDisbursements.filter(function(t) { return t.date && normalizeDateStr(t.date) === dateInput; });
       var todayPM = periodicMaintenance.filter(function(p) { return p.date && normalizeDateStr(p.date) === dateInput; });
-      var html = '<div id="report-root"><style>';
-      html += '#report-root { font-family: "Cairo", "Segoe UI", sans-serif; padding: 0; margin: 0; color: #222; background: #fafafa; direction: rtl; }';
-      html += '@page { size: A4; margin: 1.5cm; }';
-      html += 'body { font-family: "Cairo", "Segoe UI", sans-serif; padding: 0; margin: 0; color: #222; background: #fafafa; }';
-      html += '.rp-container { max-width: 210mm; margin: 0 auto; background: white; padding: 30px 35px; box-shadow: 0 2px 20px rgba(0,0,0,0.1); }';
-      html += '.rp-header { text-align: center; border-bottom: 4px double #1b5e20; padding-bottom: 20px; margin-bottom: 25px; position: relative; }';
-      html += '.rp-header h1 { margin: 0; color: #1b5e20; font-size: 28px; letter-spacing: 1px; }';
-      html += '.rp-header h2 { margin: 5px 0 0; color: #2e7d32; font-size: 18px; font-weight: 400; }';
-      html += '.rp-header .rp-date { margin-top: 10px; font-size: 14px; color: #666; }';
-      html += '.rp-header .rp-badge { display: inline-block; background: #1b5e20; color: white; padding: 3px 18px; border-radius: 50px; font-size: 12px; margin-top: 8px; }';
-      html += '.rp-section { margin-bottom: 22px; page-break-inside: avoid; }';
-      html += '.rp-section-title { font-size: 16px; font-weight: 700; color: #1b5e20; border-right: 5px solid #4caf50; padding-right: 10px; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }';
-      html += '.rp-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 10px; }';
-      html += '.rp-card { background: #f5f5f5; border-radius: 10px; padding: 14px; text-align: center; border: 1px solid #e0e0e0; }';
-      html += '.rp-card .rp-card-label { font-size: 11px; color: #888; margin-bottom: 4px; }';
-      html += '.rp-card .rp-card-value { font-size: 22px; font-weight: 700; color: #1b5e20; }';
-      html += '.rp-card.green { background: #e8f5e9; border-color: #a5d6a7; }';
-      html += '.rp-card.blue { background: #e3f2fd; border-color: #90caf9; }';
-      html += '.rp-card.orange { background: #fff3e0; border-color: #ffcc80; }';
-      html += '.rp-card.purple { background: #f3e5f5; border-color: #ce93d8; }';
-      html += '.rp-table { width: 100%; border-collapse: collapse; margin-bottom: 10px; font-size: 12px; }';
-      html += '.rp-table th { background: #1b5e20; color: white; padding: 8px 10px; text-align: center; font-size: 11px; }';
-      html += '.rp-table td { padding: 6px 8px; border: 1px solid #e0e0e0; text-align: center; }';
-      html += '.rp-table tr:nth-child(even) { background: #f9f9f9; }';
-      html += '.rp-table tr:hover { background: #f0f8f0; }';
-      html += '.rp-footer { text-align: center; border-top: 2px solid #e0e0e0; padding-top: 15px; margin-top: 30px; font-size: 11px; color: #888; }';
-      html += '.rp-logo { text-align: center; margin-bottom: 10px; }';
-      html += '.rp-logo img { height: 60px; width: auto; }';
-      html += '.no-print { display: none !important; }';
-      html += '</style>';
-      html += '<div class="rp-container">';
-      html += '<div class="rp-header">' + (logoSrc ? '<div class="rp-logo"><img src="' + logoSrc + '"></div>' : '') + '<h1>🌿 لينه فارمز</h1><h2>التقرير اليومي لنشاط الشئون الإدارية</h2><div class="rp-date">📅 ' + dateStr + '</div><div class="rp-badge">تقرير شامل</div></div>';
-      html += '<div class="rp-section"><div class="rp-section-title">👤 القوة العاملة</div><div class="rp-grid">';
-      html += '<div class="rp-card green"><div class="rp-card-label">إجمالي القوة</div><div class="rp-card-value">' + totalEmp + '</div></div>';
-      html += '<div class="rp-card blue"><div class="rp-card-label">المتواجدون (P)</div><div class="rp-card-value">' + pCount + '</div></div>';
-      html += '<div class="rp-card orange"><div class="rp-card-label">في إجازة (V)</div><div class="rp-card-value">' + vCount + '</div></div>';
-      html += '<div class="rp-card purple"><div class="rp-card-label">المستبعدون</div><div class="rp-card-value">' + excludedEmployees.length + '</div></div>';
-      html += '</div></div>';
-      if (includeHousing) {
-      html += '<div class="rp-section"><div class="rp-section-title">🏠 السكن</div><div class="rp-grid">';
-      html += '<div class="rp-card green"><div class="rp-card-label">إجمالي الأسرة</div><div class="rp-card-value">' + totalBeds + '</div></div>';
-      html += '<div class="rp-card blue"><div class="rp-card-label">مشغول</div><div class="rp-card-value">' + occupiedBeds + '</div></div>';
-      html += '<div class="rp-card orange"><div class="rp-card-label">شاغر</div><div class="rp-card-value">' + vacantBeds + '</div></div>';
-      html += '</div>';
-      var sectorMap = {};
-      roomsCapacity.forEach(function(r) {
-        if (!sectorMap[r.sector]) sectorMap[r.sector] = { beds: 0, rooms: 0 };
-        sectorMap[r.sector].beds += parseInt(r.beds) || 0;
-        sectorMap[r.sector].rooms++;
+      var activeVacations = vacations.filter(function(v) {
+        if (!v.start) return false;
+        var s = new Date(v.start + 'T00:00:00');
+        var e = v.end ? new Date(v.end + 'T00:00:00') : s;
+        var target = new Date(dateInput + 'T00:00:00');
+        return target >= s && target <= e;
       });
-      html += '<table class="rp-table"><thead><tr><th>المبنى</th><th>الغرف</th><th>الأسرة</th><th>مشغول</th><th>شاغر</th><th>الإشغال</th></tr></thead><tbody>';
-      Object.keys(sectorMap).sort().forEach(function(sec) {
-        var occ = employees.filter(function(e) { return e.status === 'P' && e.sector === sec; }).length;
-        var vac = sectorMap[sec].beds - occ;
-        var pct = sectorMap[sec].beds > 0 ? Math.round(occ / sectorMap[sec].beds * 100) : 0;
-        html += '<tr><td>' + sec + '</td><td>' + sectorMap[sec].rooms + '</td><td>' + sectorMap[sec].beds + '</td><td>' + occ + '</td><td>' + vac + '</td><td>' + pct + '%</td></tr>';
-      });
-      html += '</tbody></table></div>';
+      var sectionsHtml = '';
+      if (opts['rpt-workforce']) {
+        sectionsHtml += '<div class="rp-section">' + sec('👤 القوة العاملة', totalEmp + ' كل | ' + pCount + ' متواجد | ' + vCount + ' إجازة') + '</div>';
       }
-      html += '<div class="rp-section"><div class="rp-section-title">🍽️ الوجبات - ' + dateStr + '</div><div class="rp-grid">';
-      html += '<div class="rp-card green"><div class="rp-card-label">🍳 إفطار</div><div class="rp-card-value">' + (pCount + mealStats.gBf) + '</div><div style="font-size:10px;color:#888;">قوة: ' + pCount + ' | ضيوف: ' + mealStats.gBf + '</div></div>';
-      html += '<div class="rp-card blue"><div class="rp-card-label">🍗 غداء</div><div class="rp-card-value">' + (pCount + mealStats.gLh) + '</div><div style="font-size:10px;color:#888;">قوة: ' + pCount + ' | ضيوف: ' + mealStats.gLh + '</div></div>';
-      html += '<div class="rp-card orange"><div class="rp-card-label">🧀 عشاء</div><div class="rp-card-value">' + (pCount + mealStats.gDn) + '</div><div style="font-size:10px;color:#888;">قوة: ' + pCount + ' | ضيوف: ' + mealStats.gDn + '</div></div>';
-      html += '</div></div>';
-      if (todayGuests.length > 0) {
-        html += '<div class="rp-section"><div class="rp-section-title">🛎️ الضيوف الحاليون</div><table class="rp-table"><thead><tr><th>الاسم</th><th>التصنيف</th><th>الغرض</th><th>عدد الضيوف</th><th>تاريخ الوصول</th><th>المغادرة</th><th>الوجبات</th></tr></thead><tbody>';
-        todayGuests.forEach(function(h) {
-          html += '<tr><td>' + (h.name || '—') + '</td><td>' + (h.type || '—') + '</td><td>' + (h.title || '—') + '</td><td>' + (h.guests || 1) + '</td><td>' + (h.arrival || '—') + '</td><td>' + (h.departure || '—') + '</td><td>' + (h.meals ? (Array.isArray(h.meals) ? h.meals.join(', ') : String(h.meals)) : '—') + '</td></tr>';
-        });
-        html += '</tbody></table></div>';
+      if (opts['rpt-housing']) {
+        var occPct = totalBeds > 0 ? Math.round(occupiedBeds / totalBeds * 100) : 0;
+        sectionsHtml += '<div class="rp-section">' + sec('🏠 السكن', totalBeds + ' سرير | ' + occupiedBeds + ' مشغول (' + occPct + '%) | ' + vacantBeds + ' شاغر') + '</div>';
       }
-      if (todayMaint.length > 0) {
-        html += '<div class="rp-section"><div class="rp-section-title">🛠️ الصيانة المسجلة اليوم</div><table class="rp-table"><thead><tr><th>النوع</th><th>الوصف</th><th>الفني</th><th>الحالة</th></tr></thead><tbody>';
-        todayMaint.forEach(function(m) {
-          html += '<tr><td>' + (m.category || '—') + '</td><td>' + (m.task || m.notes || '—') + '</td><td>' + (m.tech || '—') + '</td><td>' + (m.status || '—') + '</td></tr>';
-        });
-        html += '</tbody></table></div>';
+      if (opts['rpt-meals']) {
+        sectionsHtml += '<div class="rp-section">' + sec('🍽️ الوجبات', 'فطار ' + (pCount + mealStats.gBf) + ' | غداء ' + (pCount + mealStats.gLh) + ' | عشاء ' + (pCount + mealStats.gDn)) + '</div>';
       }
-      if (todaySeptic.length > 0) {
-        html += '<div class="rp-section"><div class="rp-section-title">🚛 البيارات - كسح اليوم</div><table class="rp-table"><thead><tr><th>البيارة</th><th>التفاصيل</th><th>التكلفة</th></tr></thead><tbody>';
-        todaySeptic.forEach(function(s) {
-          html += '<tr><td>' + (s.name || s.septicName || '—') + '</td><td>' + (s.notes || '—') + '</td><td>' + (s.cost || 0) + '</td></tr>';
-        });
-        html += '</tbody></table></div>';
+      if (opts['rpt-guests']) {
+        var gTotal = todayGuests.reduce(function(s,h) { return s + (parseInt(h.guests) || 1); }, 0);
+        sectionsHtml += '<div class="rp-section">' + sec('🛎️ الضيوف', todayGuests.length + ' زيارة | ' + gTotal + ' ضيف') + '</div>';
       }
-      if (todayProd.length > 0) {
-        var prodTotal = 0, prodCost = 0;
-        todayProd.forEach(function(p) {
-          var ingCost = 0;
-          var ingKeys = ['flourUsed','yeastUsed','saltUsed','branUsed','dieselUsed'];
-          ingKeys.forEach(function(k) { if (p[k]) {
-            var ingId = { flourUsed:'ING001', yeastUsed:'ING002', saltUsed:'ING003', branUsed:'ING004', dieselUsed:'ING007' }[k];
-            var ing = bakeryIngredients.find(function(i) { return i.id === ingId; });
-            if (ing) ingCost += (p[k] || 0) * ing.pricePerUnit;
-          }});
-          prodTotal += p.breadCount || 0;
-          prodCost += ingCost + (p.operatingCost || 0);
-        });
-        html += '<div class="rp-section"><div class="rp-section-title">🍞 إنتاج الخبز - ' + dateStr + '</div><div class="rp-grid">';
-        html += '<div class="rp-card green"><div class="rp-card-label">إجمالي الأرغفة</div><div class="rp-card-value">' + prodTotal + '</div></div>';
-        html += '<div class="rp-card orange"><div class="rp-card-label">إجمالي التكلفة</div><div class="rp-card-value">' + prodCost.toFixed(2) + ' ج.م</div></div>';
-        html += '<div class="rp-card blue"><div class="rp-card-label">تكلفة الرغيف</div><div class="rp-card-value">' + (prodTotal > 0 ? (prodCost / prodTotal).toFixed(2) : 0) + ' ج.م</div></div>';
-        html += '</div></div>';
+      if (opts['rpt-vacations']) {
+        sectionsHtml += '<div class="rp-section">' + sec('📅 الإجازات', activeVacations.length + ' موظف في إجازة اليوم') + '</div>';
       }
-      if (todayCtr.length > 0) {
-        var ctrTotalBread = 0, ctrTotalRev = 0;
-        todayCtr.forEach(function(c) {
-          ctrTotalBread += c.count || 0;
-          ctrTotalRev += (c.count || 0) * (c.price || 0);
-        });
-        html += '<div class="rp-section"><div class="rp-section-title">🚚 توريد الخبز للمقاولين - ' + dateStr + '</div><table class="rp-table"><thead><tr><th>المقاول</th><th>عدد الأرغفة</th><th>سعر الرغيف</th><th>الإجمالي</th><th>المدفوع</th><th>المتبقي</th></tr></thead><tbody>';
-        todayCtr.forEach(function(c) {
-          var total = (c.count || 0) * (c.price || 0);
-          var rem = total - (c.paid || 0);
-          html += '<tr><td>' + (c.name || '—') + '</td><td>' + (c.count || 0) + '</td><td>' + (c.price || 0) + '</td><td>' + total.toFixed(2) + '</td><td>' + (c.paid || 0) + '</td><td>' + rem.toFixed(2) + '</td></tr>';
-        });
-        html += '</tbody></table></div>';
+      if (opts['rpt-maintenance']) {
+        var openM = todayMaint.filter(function(m) { return m.status === 'مفتوحة' || m.status === 'open' || m.status === '🔴'; }).length;
+        sectionsHtml += '<div class="rp-section">' + sec('🛠️ الصيانة', todayMaint.length + ' مهمة | ' + openM + ' مفتوحة') + '</div>';
       }
-      if (todayInv.length > 0) {
-        html += '<div class="rp-section"><div class="rp-section-title">📦 صرف المخزن اليوم</div><table class="rp-table"><thead><tr><th>رقم البون</th><th>الموظف</th><th>الصنف</th><th>الكمية</th><th>الوحدة</th></tr></thead><tbody>';
-        todayInv.forEach(function(v) {
-          html += '<tr><td>' + (v.voucherId || '—') + '</td><td>' + (v.empName || '—') + '</td><td>' + (v.itemName || '—') + '</td><td>' + (v.qty || 0) + '</td><td>' + (v.unit || '—') + '</td></tr>';
-        });
-        html += '</tbody></table></div>';
+      if (opts['rpt-septic']) {
+        var septCost = todaySeptic.reduce(function(s,sp) { return s + (parseFloat(sp.cost) || 0); }, 0);
+        sectionsHtml += '<div class="rp-section">' + sec('🚛 البيارات', todaySeptic.length + ' عملية | تكلفة ' + septCost.toFixed(0) + ' ج.م') + '</div>';
       }
-      if (todayTea.length > 0) {
-        html += '<div class="rp-section"><div class="rp-section-title">🍵 صرف الشاي والسكر اليوم</div><table class="rp-table"><thead><tr><th>المستلم</th><th>الشاي</th><th>السكر</th><th>التاريخ</th></tr></thead><tbody>';
-        todayTea.forEach(function(t) {
-          html += '<tr><td>' + (t.recipient || '—') + '</td><td>' + (t.teaQty || 0) + '</td><td>' + (t.sugarQty || 0) + '</td><td>' + (t.date || '—') + '</td></tr>';
-        });
-        html += '</tbody></table></div>';
+      if (opts['rpt-bakery-prod']) {
+        var prodTotal = todayProd.reduce(function(s,p) { return s + (p.breadCount || 0); }, 0);
+        sectionsHtml += '<div class="rp-section">' + sec('🍞 إنتاج الخبز', prodTotal + ' رغيف') + '</div>';
       }
-      if (todayPM.length > 0) {
-        html += '<div class="rp-section"><div class="rp-section-title">🛡️ المهام الدورية اليوم</div><table class="rp-table"><thead><tr><th>المهمة</th><th>التفاصيل</th><th>الجهة</th><th>الحالة</th></tr></thead><tbody>';
-        todayPM.forEach(function(p) {
-          html += '<tr><td>' + (p.task || p.name || '—') + '</td><td>' + (p.notes || '—') + '</td><td>' + (p.tech || p.responsible || '—') + '</td><td>' + (p.status || '—') + '</td></tr>';
-        });
-        html += '</tbody></table></div>';
+      if (opts['rpt-bakery-supply']) {
+        var ctrBread = todayCtr.reduce(function(s,c) { return s + (c.count || 0); }, 0);
+        var ctrRev = todayCtr.reduce(function(s,c) { return s + ((c.count || 0) * (c.price || 0)); }, 0);
+        var ctrPaid = todayCtr.reduce(function(s,c) { return s + (parseFloat(c.paid) || 0); }, 0);
+        sectionsHtml += '<div class="rp-section">' + sec('🚚 توريد الخبز', ctrBread + ' رغيف | إيراد ' + ctrRev.toFixed(0) + ' ج.م | مدفوع ' + ctrPaid.toFixed(0) + ' ج.م') + '</div>';
       }
-      html += '<div class="rp-section"><div class="rp-section-title">👷 المقاولون الحاليون</div><table class="rp-table"><thead><tr><th>الاسم</th><th>رقم الهاتف</th><th>السكن</th><th>قيمة اليومية</th></tr></thead><tbody>';
-      if (contractors.length > 0) {
-        contractors.forEach(function(c) {
-          html += '<tr><td>' + (c.name || '—') + '</td><td>' + (c.phone || '—') + '</td><td>' + (c.sector || '') + (c.room ? ' - ' + c.room : '') + '</td><td>' + (c.dailyRate || 0) + '</td></tr>';
-        });
-      } else {
-        html += '<tr><td colspan="4" style="color:#888;">لا يوجد مقاولون مسجلون</td></tr>';
+      if (opts['rpt-inventory']) {
+        var invItems = todayInv.reduce(function(s,v) { return s + (parseInt(v.qty) || 0); }, 0);
+        sectionsHtml += '<div class="rp-section">' + sec('📦 صرف المخزن', todayInv.length + ' بون | ' + invItems + ' صنف') + '</div>';
       }
-      html += '</tbody></table></div>';
-      html += '<div class="rp-footer">LINAH FARMS - WAHAT ADMINSTRATION TEAM LEADER<br>تم التوليد بواسطة منظومة الشئون الإدارية المتكاملة - لينه فارمز<br>تاريخ التقرير: ' + dateStr + '</div>';
-      html += '</div></div>';
-  try {
+      if (opts['rpt-tea']) {
+        var teaQ = todayTea.reduce(function(s,t) { return s + (parseFloat(t.teaQty) || 0); }, 0);
+        var sugarQ = todayTea.reduce(function(s,t) { return s + (parseFloat(t.sugarQty) || 0); }, 0);
+        sectionsHtml += '<div class="rp-section">' + sec('🍵 صرف الشاي والسكر', todayTea.length + ' مستلم | شاي ' + teaQ + ' | سكر ' + sugarQ + ' كجم') + '</div>';
+      }
+      if (opts['rpt-pm']) {
+        var pmDone = todayPM.filter(function(p) { return p.status === 'تمت' || p.status === '✅'; }).length;
+        sectionsHtml += '<div class="rp-section">' + sec('🛡️ المهام الدورية', todayPM.length + ' مهمة | ' + pmDone + ' تمت') + '</div>';
+      }
+      if (opts['rpt-contractors']) {
+        var ctrDaily = contractors.reduce(function(s,c) { return s + (parseFloat(c.dailyRate) || 0); }, 0);
+        sectionsHtml += '<div class="rp-section">' + sec('👷 المقاولون', contractors.length + ' مقاول | قيمة يومية ' + ctrDaily.toFixed(0) + ' ج.م') + '</div>';
+      }
+      if (opts['rpt-excluded']) {
+        sectionsHtml += '<div class="rp-section">' + sec('🚫 المستبعدون', excludedEmployees.length + ' موظف') + '</div>';
+      }
+      if (!sectionsHtml) sectionsHtml = '<div style="text-align:center;padding:30px;color:#888;">لم يتم اختيار أي أقسام للتقرير</div>';
       var fullHtml = '<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8"><title>التقرير اليومي - لينه فارمز</title>' +
-        '<style>@page{size:A4;margin:1.5cm}body{font-family:"Cairo","Segoe UI",sans-serif;direction:rtl;padding:30px;color:#222;background:#fafafa}' +
-        '.rp-container{max-width:190mm;margin:0 auto;background:white;padding:25px;box-shadow:0 2px 20px rgba(0,0,0,0.1)}' +
-        '.rp-header{text-align:center;border-bottom:4px double #1b5e20;padding-bottom:20px;margin-bottom:25px}' +
-        '.rp-header h1{margin:0;color:#1b5e20;font-size:26px}.rp-header h2{margin:5px 0 0;color:#2e7d32;font-size:16px;font-weight:400}' +
-        '.rp-header .rp-date{margin-top:10px;font-size:13px;color:#666}.rp-section{margin-bottom:20px;page-break-inside:avoid}' +
-        '.rp-section-title{font-size:15px;font-weight:700;color:#1b5e20;border-right:5px solid #4caf50;padding-right:10px;margin-bottom:10px}' +
-        '.rp-grid{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:10px}.rp-card{background:#f5f5f5;border-radius:8px;padding:12px 18px;text-align:center;border:1px solid #e0e0e0;flex:1;min-width:120px}' +
-        '.rp-card .rp-card-label{font-size:11px;color:#888}.rp-card .rp-card-value{font-size:20px;font-weight:700;color:#1b5e20}' +
-        '.rp-card.green{background:#e8f5e9}.rp-card.blue{background:#e3f2fd}.rp-card.orange{background:#fff3e0}.rp-card.purple{background:#f3e5f5}' +
-        '.rp-table{width:100%;border-collapse:collapse;margin-bottom:10px;font-size:12px}' +
-        '.rp-table th{background:#1b5e20;color:white;padding:7px 8px;text-align:center;font-size:11px}' +
-        '.rp-table td{padding:5px 8px;border:1px solid #e0e0e0;text-align:center}' +
-        '.rp-table tr:nth-child(even){background:#f9f9f9}.rp-footer{text-align:center;border-top:2px solid #e0e0e0;padding-top:12px;margin-top:25px;font-size:10px;color:#888}' +
-        '</style></head><body><div class="rp-container">' + html + '</div></body></html>';
-      var blob = new Blob([fullHtml], { type: 'text/html;charset=utf-8' });
-      var url = URL.createObjectURL(blob);
-      var a = document.createElement('a');
-      a.href = url; a.download = 'التقرير_اليومي_' + dateInput + '.html';
-      document.body.appendChild(a); a.click();
-      document.body.removeChild(a);
-      setTimeout(function() { URL.revokeObjectURL(url); }, 5000);
-  } catch(e) { alert('خطأ: ' + e.message); }
+        '<style>@page{size:A4;margin:1.5cm}body{font-family:"Cairo","Segoe UI",sans-serif;direction:rtl;padding:20px;color:#222;background:#fafafa;margin:0}' +
+        '.rp-container{max-width:190mm;margin:0 auto;background:white;padding:20px 25px;box-shadow:0 2px 20px rgba(0,0,0,0.1)}' +
+        '.rp-header{text-align:center;border-bottom:3px double #1b5e20;padding-bottom:15px;margin-bottom:18px}' +
+        '.rp-header h1{margin:0;color:#1b5e20;font-size:22px}.rp-header h2{margin:3px 0 0;color:#2e7d32;font-size:14px;font-weight:400}' +
+        '.rp-header .rp-date{margin-top:6px;font-size:12px;color:#666}.rp-section{margin-bottom:6px;page-break-inside:avoid}' +
+        '.rp-summary{display:flex;align-items:center;gap:8px;background:#f5f5f5;border-radius:6px;padding:8px 12px;border:1px solid #e0e0e0;font-size:13px}' +
+        '.rp-summary-icon{font-size:18px}.rp-summary-label{font-weight:700;color:#1b5e20;white-space:nowrap}.rp-summary-value{color:#555;margin-right:auto;text-align:left}' +
+        '.rp-footer{text-align:center;border-top:2px solid #e0e0e0;padding-top:10px;margin-top:20px;font-size:10px;color:#888}' +
+        '</style></head><body><div class="rp-container">' +
+        '<div class="rp-header">' + (logoSrc ? '<div style="text-align:center;margin-bottom:8px;"><img src="' + logoSrc + '" style="height:50px;width:auto;"></div>' : '') +
+        '<h1>🌿 لينه فارمز</h1><h2>التقرير اليومي - الشئون الإدارية</h2><div class="rp-date">📅 ' + dateStr + '</div></div>' +
+        sectionsHtml +
+        '<div class="rp-footer">منظومة الشئون الإدارية المتكاملة - لينه فارمز | ' + dateStr + '</div>' +
+        '</div></body></html>';
+      try {
+        var blob = new Blob([fullHtml], { type: 'text/html;charset=utf-8' });
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        a.href = url; a.download = 'التقرير_اليومي_' + dateInput + '.html';
+        document.body.appendChild(a); a.click();
+        document.body.removeChild(a);
+        setTimeout(function() { URL.revokeObjectURL(url); }, 5000);
+      } catch(e) { alert('خطأ: ' + e.message); }
     }
     var _breadSuggestionIdCounter = 0;
     function suggestBreadForTomorrow() {
