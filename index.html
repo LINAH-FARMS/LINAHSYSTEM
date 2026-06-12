@@ -914,7 +914,7 @@
     <button class="btn btn-sm admin-only" style="padding:5px 12px;font-size:12px;background:#6a1b9a;color:white;border:none;border-radius:6px;cursor:pointer;" onclick="openManageUsers()">👥 إدارة المستخدمين</button>
     <button class="btn btn-sm" style="padding:5px 12px;font-size:12px;background:#c62828;color:white;border:none;border-radius:6px;cursor:pointer;" onclick="exportPdfActiveTab()">📄 تصدير PDF</button>
     <button class="btn btn-sm" style="padding:5px 12px;font-size:12px;background:#1b5e20;color:white;border:none;border-radius:6px;cursor:pointer;" onclick="openDailyReport()">📋 التقرير</button>
-    <button class="btn btn-sm" onclick="SA.toggle()" style="padding:5px 12px;font-size:12px;background:#e65100;color:white;border:none;border-radius:6px;cursor:pointer;">🤖 الذكي</button>
+    <button class="btn btn-sm" onclick="toggleSA()" style="padding:5px 12px;font-size:12px;background:#e65100;color:white;border:none;border-radius:6px;cursor:pointer;">🤖 الذكي</button>
     <span style="flex:1;"></span>
   </div>
 
@@ -11430,188 +11430,79 @@ function toggleEmployeeStatus(empId) {
 @media(max-width:500px){#sa-panel{width:calc(100vw - 20px);right:10px;bottom:80px;max-height:70vh;}}
 </style>
 <div id="sa-panel">
-  <div id="sa-header"><span>🧠 المساعد الذكي</span><button onclick="SA.toggle()">&times;</button></div>
+  <div id="sa-header"><span>🧠 المساعد الذكي</span><button onclick="toggleSA()">&times;</button></div>
   <div id="sa-msgs"><div class="msg bot">👋 مرحباً! ابدأ بالصق رسالة واتساب هنا وهحللها لك. بعد ما نتناقش، هحط البيانات في مكانها الصحيح.<br><br>⚠️ أول مرة هتطلب منك إدخال مفتاح Gemini — الصق المفتاح اللي عندك.</div></div>
   <div id="sa-input-area">
-    <input type="text" id="sa-input" placeholder="الصق رسالة واتساب أو اسأل..." onkeydown="if(event.key==='Enter')SA.send()">
-    <button onclick="SA.send()">إرسال</button>
+    <input type="text" id="sa-input" placeholder="الصق رسالة واتساب أو اسأل..." onkeydown="if(event.key==='Enter')sendSA()">
+    <button onclick="sendSA()">إرسال</button>
   </div>
 </div>
 <script>
-(function(){
-  var MODEL = 'gemini-2.0-flash';
-  function getKey(){ var k = localStorage.getItem('sa_gemini_key'); if(!k){ k = prompt('🧠 أدخل مفتاح Google Gemini API:\n(حقن المفتاح مرة واحدة فقط)'); if(k) localStorage.setItem('sa_gemini_key',k); } return k; }
-  var lastParsed = null;
-  window.SA = {
-    toggle: function(){
-      var p = document.getElementById('sa-panel');
-      var open = p.classList.toggle('open');
-      if(open) setTimeout(function(){ document.getElementById('sa-input').focus(); }, 200);
-    },
-    addMsg: function(text, role){
-      var div = document.createElement('div');
-      div.className = 'msg ' + role;
-      div.innerHTML = text;
-      document.getElementById('sa-msgs').appendChild(div);
-      div.scrollIntoView({behavior:'smooth',block:'end'});
-      return div;
-    },
-    send: function(){
-      var inp = document.getElementById('sa-input');
-      var text = inp.value.trim();
-      if(!text) return;
-      inp.value = '';
-      SA.addMsg(text, 'user');
-      SA.handle(text);
-    },
-    handle: function(text){
-      var lower = text.toLowerCase();
-      // Try parsing as WhatsApp message
-      var parsed = SA.parseWhatsApp(text);
-      if(parsed && (parsed.kitchenBread > 0 || parsed.ctrBread > 0 || parsed.flour > 0)){
-        lastParsed = parsed;
-        var html = '<strong>✅ تم تحليل الرسالة:</strong><br>';
-        if(parsed.date) html += '📅 التاريخ: ' + parsed.date + '<br>';
-        if(parsed.kitchenBread > 0) html += '🍞 المطبخ: ' + parsed.kitchenBread + ' رغيف (دقيق: ' + parsed.kitchenFlour + ' كجم)<br>';
-        if(parsed.kitchenDelivered > 0) html += '🚚 تسليم مطبخ: ' + parsed.kitchenDelivered + '<br>';
-        if(parsed.kitchenRemaining > 0) html += '🔥 داخل الفرن: ' + parsed.kitchenRemaining + '<br>';
-        if(parsed.ctrBread > 0) html += '👷 مقاولين: ' + parsed.ctrBread + ' رغيف (دقيق: ' + parsed.ctrFlour + ' كجم)<br>';
-        if(parsed.yeast > 0) html += '🧫 خميرة: ' + parsed.yeast + '<br>';
-        if(parsed.salt > 0) html += '🧂 ملح: ' + parsed.salt + '<br>';
-        if(parsed.bran > 0) html += '🌾 ردة: ' + parsed.bran + '<br>';
-        if(parsed.contractors && parsed.contractors.length) html += '👥 مقاولين: ' + parsed.contractors.join('، ') + '<br>';
-        html += '<br>هل البيانات صحيحة؟';
-        html += '<br><button class="btn-confirm" onclick="SA.confirm()">✅ نعم، تعبئة النموذج</button>';
-        html += ' <button class="btn-confirm" style="background:#c62828;" onclick="SA.cancel()">❌ لا، راجعها</button>';
-        var bot = SA.addMsg(html, 'bot');
-        return;
-      }
-      // Ask Gemini for general questions
-      SA.askAI(text, function(response){
-        if(response){
-          SA.addMsg(response, 'bot');
-        } else {
-          SA.addMsg('عذراً، ما فهمتش الرسالة. تأكد إنها رسالة واتساب صحيحة لمخبز أو اسأل سؤال.', 'bot');
-        }
-      });
-    },
-    parseWhatsApp: function(text){
-      var lines = text.split(/\n/).map(function(l){return l.trim();}).filter(Boolean);
-      var full = text;
-      var dateVal = '';
-      for(var i=0;i<lines.length;i++){
-        var ds = lines[i].match(/(\d{1,2})\s*[/-]\s*(\d{1,2})\s*[/-]\s*(\d{2,4})/);
-        if(ds){
-          var d = ('0'+ds[1]).slice(-2), m = ('0'+ds[2]).slice(-2), y = ds[3];
-          if(y.length===2) y='20'+y;
-          dateVal = y+'-'+m+'-'+d; break;
-        }
-      }
-      var splitIdx = full.indexOf('للمقاولين');
-      if(splitIdx<0) splitIdx = full.indexOf('المقاولين');
-      var kitchenBlock = splitIdx>=0 ? full.substring(0,splitIdx) : full;
-      var ctrBlock = splitIdx>=0 ? full.substring(splitIdx) : '';
-      var kitchenFlour=0, kitchenBread=0, kitchenDelivered=0, kitchenRemaining=0;
-      var kbExtract = kitchenBlock.match(/(\d+[.,]?\d*)\s*كيلو\s*.?\s*دقيق\s*[=:]\s*(\d+)/);
-      if(kbExtract){ kitchenFlour = parseFloat(kbExtract[1].replace(',','.')); kitchenBread = parseInt(kbExtract[2]); }
-      var kdMatch = kitchenBlock.match(/(?:تسليم|للمطبخ)\s*(?:المطبخ)?\s*(\d+)/);
-      if(kdMatch) kitchenDelivered = parseInt(kdMatch[1]);
-      var krMatch = kitchenBlock.match(/(?:داخل|الفرن|متبقي|باقي)\s*(?:الفرن)?\s*(\d+)/);
-      if(krMatch) kitchenRemaining = parseInt(krMatch[1]);
-      var ctrFlour=0, ctrBread=0;
-      var cbExtract = ctrBlock.match(/(\d+[.,]?\d*)\s*كيلو\s*.?\s*دقيق\s*[=:]\s*(\d+)/);
-      if(cbExtract){ ctrFlour = parseFloat(cbExtract[1].replace(',','.')); ctrBread = parseInt(cbExtract[2]); }
-      var ingMap = {yeast:0, salt:0, bran:0};
-      var ingNames = {'خميرة':'yeast','ملح':'salt','ردة':'bran'};
-      for(var j=0;j<lines.length;j++){
-        var line = lines[j];
-        for(var arName in ingNames){
-          var idx = line.indexOf(arName);
-          if(idx>=0){
-            var before = line.substring(0,idx).trim();
-            var m2 = before.match(/^(\d+[.,]?\d*)/);
-            var q = m2 ? parseFloat(m2[1].replace(',','.')) : null;
-            if(!q && (before.indexOf('نص')===0||before.indexOf('نصف')===0)) q=0.5;
-            if(!q && before.indexOf('ربع')===0) q=0.25;
-            if(!q && before.indexOf('كيلو')===0) q=1;
-            if(q!==null && q>0 && ingMap[ingNames[arName]]===0) ingMap[ingNames[arName]]=q;
-          }
-        }
-      }
-      var ctrNames = ['مصطفى عبد الكريم','عبد الرازق جبر','اسامه سمير','اسامه عبد الرازق','كرم الزيات','محمد شعبان','محمود قاسم','كامل احمد','محمد حسنى','اسعد اسماعيل','عبد الرازق','ابراهيم شحاته','شحاته','البدري','مصطفى','كرم','الزيات','اسامه','سمير','ممدوح','كامل','محمد','ابوعمار','ناجح','فارس','اسعد','اسماعيل','ام جبريل'];
-      var ctrList = [];
-      if(ctrBlock){
-        var ctrLines = ctrBlock.split(/\n/);
-        for(var ci=0;ci<ctrLines.length;ci++){
-          var cl = ctrLines[ci].trim();
-          if(cl.length<3) continue;
-          for(var ni=0;ni<ctrNames.length;ni++){
-            if(cl.indexOf(ctrNames[ni])>=0){
-              var cn = cl.match(/(\d+)/);
-              if(cn){ ctrList.push(ctrNames[ni]+':'+cn[1]); break; }
-            }
-          }
-        }
-      }
-      return {
-        date: dateVal,
-        kitchenFlour: kitchenFlour, kitchenBread: kitchenBread,
-        kitchenDelivered: kitchenDelivered, kitchenRemaining: kitchenRemaining,
-        ctrFlour: ctrFlour, ctrBread: ctrBread,
-        flour: kitchenFlour + ctrFlour,
-        yeast: ingMap.yeast, salt: ingMap.salt, bran: ingMap.bran,
-        contractors: ctrList
-      };
-    },
-    confirm: function(){
-      if(!lastParsed) return;
-      var p = lastParsed;
-      // Fill production form
-      var d = document.getElementById('bprod-date');
-      if(d && p.date) d.value = p.date;
-      var cnt = document.getElementById('bprod-count');
-      if(cnt) cnt.value = p.kitchenBread + p.ctrBread;
-      var ing = document.getElementById('bprod-ing-ING001');
-      if(ing) ing.value = p.flour;
-      if(p.yeast>0){ var y = document.getElementById('bprod-ing-ING002'); if(y) y.value = p.yeast; }
-      if(p.salt>0){ var s = document.getElementById('bprod-ing-ING003'); if(s) s.value = p.salt; }
-      if(p.bran>0){ var b = document.getElementById('bprod-ing-ING004'); if(b) b.value = p.bran; }
-      var notes = [];
-      if(p.kitchenDelivered>0) notes.push('تسليم مطبخ: '+p.kitchenDelivered);
-      if(p.kitchenRemaining>0) notes.push('باقي الفرن: '+p.kitchenRemaining);
-      if(p.contractors.length) notes.push('مقاولين: '+p.contractors.join(', '));
-      var nf = document.getElementById('bprod-notes');
-      if(nf) nf.value = notes.join(' | ');
-      var dateStr = p.date ? new Date(p.date+'T00:00:00').toLocaleDateString('ar-EG') : 'اليوم';
-      SA.addMsg('✅ <strong>تم التعبئة!</strong><br>📅 '+dateStr+'<br>🍞 إجمالي الأرغفة: '+(p.kitchenBread+p.ctrBread)+'<br>📦 دقيق: '+p.flour+' كجم<br>📍 راجع البيانات واضغط "تسجيل الإنتاج" و"توريد مقاولين" لكل مقاول.', 'bot');
-      lastParsed = null;
-      // Switch to bakery tab
-      var btns = document.querySelectorAll('.tab-btn, .nav-tab');
-      for(var i=0;i<btns.length;i++){ if(btns[i].textContent.indexOf('مخبز')>=0||btns[i].textContent.indexOf('bakery')>=0||btns[i].textContent.indexOf('خبز')>=0){ btns[i].click(); break; } }
-    },
-    cancel: function(){
-      lastParsed = null;
-      SA.addMsg('👌 تمام، الصق الرسالة تاني بعد التعديل.', 'bot');
-    },
-    askAI: function(text, callback){
-      var key = getKey();
-      if(!key){ SA.addMsg('⚠️ من فضلك أدخل مفتاح Gemini أولاً (هتظهر نافذة)', 'bot'); setTimeout(function(){ getKey(); }, 500); return; }
-      var systemPrompt = 'أنت مساعد ذكي لنظام إدارة مخبز. دورك: تحليل رسائل واتساب الخاصة بإنتاج الخبز، استخراج بيانات الأرغفة والدقيق والخميرة والملح والردة، وتحديد بيانات المقاولين والتسليم. أجب بالعربية فقط وباختصار. لو مش فاهم حاجة من المستخدم، اسأله يوضح.';
-      var url = 'https://generativelanguage.googleapis.com/v1beta/models/'+MODEL+':generateContent?key='+key;
-      fetch(url, {
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({contents:[{role:'user',parts:[{text:systemPrompt+'\n\n'+text}]}],generationConfig:{temperature:0.3,maxOutputTokens:600}})
-      }).then(function(r){ return r.json(); }).then(function(data){
-        if(data.candidates&&data.candidates[0]&&data.candidates[0].content&&data.candidates[0].content.parts){
-          callback(data.candidates[0].content.parts.map(function(p){return p.text;}).join(''));
-        } else {
-          callback(null);
-        }
-      }).catch(function(){ callback(null); });
-    }
-  };
-})();
+var SAL = { lastParsed: null, MODEL: 'gemini-2.0-flash' };
+function toggleSA(){ var p=document.getElementById('sa-panel'); if(!p) return; var o=p.classList.toggle('open'); if(o) setTimeout(function(){ var i=document.getElementById('sa-input'); if(i) i.focus(); },200); }
+function addMsgSA(t,r){ var d=document.createElement('div'); d.className='msg '+r; d.innerHTML=t; document.getElementById('sa-msgs').appendChild(d); d.scrollIntoView({behavior:'smooth',block:'end'}); return d; }
+function sendSA(){ var i=document.getElementById('sa-input'); var t=i.value.trim(); if(!t) return; i.value=''; addMsgSA(t,'user'); handleSA(t); }
+function handleSA(t){
+  var p = parseWASA(t);
+  if(p && (p.kitchenBread>0||p.ctrBread>0||p.flour>0)){
+    SAL.lastParsed=p; var h='<strong>✅ تم تحليل الرسالة:</strong><br>';
+    if(p.date) h+='📅 التاريخ: '+p.date+'<br>';
+    if(p.kitchenBread>0) h+='🍞 المطبخ: '+p.kitchenBread+' رغيف (دقيق: '+p.kitchenFlour+' كجم)<br>';
+    if(p.kitchenDelivered>0) h+='🚚 تسليم مطبخ: '+p.kitchenDelivered+'<br>';
+    if(p.kitchenRemaining>0) h+='🔥 داخل الفرن: '+p.kitchenRemaining+'<br>';
+    if(p.ctrBread>0) h+='👷 مقاولين: '+p.ctrBread+' رغيف (دقيق: '+p.ctrFlour+' كجم)<br>';
+    if(p.yeast>0) h+='🧫 خميرة: '+p.yeast+'<br>';
+    if(p.salt>0) h+='🧂 ملح: '+p.salt+'<br>';
+    if(p.bran>0) h+='🌾 ردة: '+p.bran+'<br>';
+    if(p.contractors&&p.contractors.length) h+='👥 مقاولين: '+p.contractors.join('، ')+'<br>';
+    h+='<br>هل البيانات صحيحة?<br><button class="btn-confirm" onclick="confirmSA()">✅ نعم</button> <button class="btn-confirm" style="background:#c62828;" onclick="cancelSA()">❌ لا</button>';
+    addMsgSA(h,'bot'); return;
+  }
+  askAISA(t,function(r){ if(r) addMsgSA(r,'bot'); else addMsgSA('عذراً، ما فهمتش. تأكد إنها رسالة واتساب صحيحة أو اسأل سؤال.','bot'); });
+}
+function confirmSA(){
+  var p=SAL.lastParsed; if(!p) return;
+  var d=document.getElementById('bprod-date'); if(d&&p.date) d.value=p.date;
+  var c=document.getElementById('bprod-count'); if(c) c.value=p.kitchenBread+p.ctrBread;
+  var g=document.getElementById('bprod-ing-ING001'); if(g) g.value=p.flour;
+  if(p.yeast>0){ var y=document.getElementById('bprod-ing-ING002'); if(y) y.value=p.yeast; }
+  if(p.salt>0){ var s=document.getElementById('bprod-ing-ING003'); if(s) s.value=p.salt; }
+  if(p.bran>0){ var b=document.getElementById('bprod-ing-ING004'); if(b) b.value=p.bran; }
+  var n=[];
+  if(p.kitchenDelivered>0) n.push('تسليم مطبخ: '+p.kitchenDelivered);
+  if(p.kitchenRemaining>0) n.push('باقي الفرن: '+p.kitchenRemaining);
+  if(p.contractors.length) n.push('مقاولين: '+p.contractors.join(', '));
+  var nf=document.getElementById('bprod-notes'); if(nf) nf.value=n.join(' | ');
+  var ds=p.date?new Date(p.date+'T00:00:00').toLocaleDateString('ar-EG'):'اليوم';
+  addMsgSA('✅ <strong>تم التعبئة!</strong><br>📅 '+ds+'<br>🍞 إجمالي الأرغفة: '+(p.kitchenBread+p.ctrBread)+'<br>📍 راجع البيانات واضغط تسجيل الإنتاج.','bot');
+  SAL.lastParsed=null;
+}
+function cancelSA(){ SAL.lastParsed=null; addMsgSA('👌 تمام، الصق الرسالة تاني.','bot'); }
+function askAISA(t,cb){
+  var k=localStorage.getItem('sa_gemini_key'); if(!k){ k=prompt('🧠 أدخل مفتاح Gemini:'); if(k) localStorage.setItem('sa_gemini_key',k); }
+  if(!k){ addMsgSA('⚠️ ما فيش مفتاح Gemini.','bot'); return; }
+  fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key='+k,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contents:[{role:'user',parts:[{text:'أنت مساعد مخبز. أجب بالعربية:\n\n'+t}]}],generationConfig:{temperature:0.3,maxOutputTokens:600}})})
+  .then(function(r){return r.json()}).then(function(d){if(d.candidates&&d.candidates[0]&&d.candidates[0].content&&d.candidates[0].content.parts){cb(d.candidates[0].content.parts.map(function(p){return p.text;}).join(''));}else{cb(null);}}).catch(function(){cb(null);});
+}
+function parseWASA(t){
+  var lines=t.split(/\n/).map(function(l){return l.trim();}).filter(Boolean);
+  var full=t,dateVal='';
+  for(var i=0;i<lines.length;i++){ var ds=lines[i].match(/(\d{1,2})\s*[/-]\s*(\d{1,2})\s*[/-]\s*(\d{2,4})/); if(ds){ var d=('0'+ds[1]).slice(-2),m=('0'+ds[2]).slice(-2),y=ds[3]; if(y.length===2)y='20'+y; dateVal=y+'-'+m+'-'+d; break; } }
+  var si=full.indexOf('للمقاولين'); if(si<0) si=full.indexOf('المقاولين');
+  var kb=si>=0?full.substring(0,si):full, cb2=si>=0?full.substring(si):'';
+  var kf=0,kbr=0,kd=0,kr=0;
+  var kx=kb.match(/(\d+[.,]?\d*)\s*كيلو\s*.?\s*دقيق\s*[=:]\s*(\d+)/); if(kx){kf=parseFloat(kx[1].replace(',','.'));kbr=parseInt(kx[2]);}
+  var kdm=kb.match(/(?:تسليم|للمطبخ)\s*(?:المطبخ)?\s*(\d+)/); if(kdm) kd=parseInt(kdm[1]);
+  var krm=kb.match(/(?:داخل|الفرن|متبقي|باقي)\s*(?:الفرن)?\s*(\d+)/); if(krm) kr=parseInt(krm[1]);
+  var cf=0,cbr=0;
+  var cx=cb2.match(/(\d+[.,]?\d*)\s*كيلو\s*.?\s*دقيق\s*[=:]\s*(\d+)/); if(cx){cf=parseFloat(cx[1].replace(',','.'));cbr=parseInt(cx[2]);}
+  var im={yeast:0,salt:0,bran:0},inm={'خميرة':'yeast','ملح':'salt','ردة':'bran'};
+  for(var j=0;j<lines.length;j++){ var l=lines[j]; for(var an in inm){ var ix=l.indexOf(an); if(ix>=0){ var b=l.substring(0,ix).trim(), m2=b.match(/^(\d+[.,]?\d*)/), q=m2?parseFloat(m2[1].replace(',','.')):null; if(!q&&(b.indexOf('نص')===0||b.indexOf('نصف')===0)) q=0.5; if(!q&&b.indexOf('ربع')===0) q=0.25; if(!q&&b.indexOf('كيلو')===0) q=1; if(q!==null&&q>0&&im[inm[an]]===0) im[inm[an]]=q; } } }
+  var cn=['مصطفى عبد الكريم','عبد الرازق جبر','اسامه سمير','اسامه عبد الرازق','كرم الزيات','محمد شعبان','محمود قاسم','كامل احمد','محمد حسنى','اسعد اسماعيل','عبد الرازق','ابراهيم شحاته','شحاته','البدري','مصطفى','كرم','الزيات','اسامه','سمير','ممدوح','كامل','محمد','ابوعمار','ناجح','فارس','اسعد','اسماعيل','ام جبريل'];
+  var cl=[];
+  if(cb2){ var cLines=cb2.split(/\n/); for(var ci=0;ci<cLines.length;ci++){ var cl2=cLines[ci].trim(); if(cl2.length<3) continue; for(var ni=0;ni<cn.length;ni++){ if(cl2.indexOf(cn[ni])>=0){ var cnm=cl2.match(/(\d+)/); if(cnm){cl.push(cn[ni]+':'+cnm[1]);break;} } } } }
+  return {date:dateVal,kitchenFlour:kf,kitchenBread:kbr,kitchenDelivered:kd,kitchenRemaining:kr,ctrFlour:cf,ctrBread:cbr,flour:kf+cf,yeast:im.yeast,salt:im.salt,bran:im.bran,contractors:cl};
+}
 </script>
 </body>
 </html>
