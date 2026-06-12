@@ -26,10 +26,14 @@ function saParse(t){
   });
   var ctrNames=[];var noCtr=0;
   ctrPart.split(/\n/).forEach(function(ln){
-    var nm=ln.match(/^([\u0600-\u06FF\s]+)\s*(\d+)$/);if(nm&&nm[2]&&parseInt(nm[2])<cb){ctrNames.push({name:nm[1].trim(),count:parseInt(nm[2])});noCtr+=parseInt(nm[2]);}
+    ln=ln.trim();if(!ln||/دقيق|كيلو|خميره|خميرة|ملح|رده|ردة|سولار|استخدام/.test(ln))return;
+    var nm=ln.match(/^[.\s]*([\u0600-\u06FF][\u0600-\u06FF\s.]+)\s*(\d+)$/);
+    if(nm&&nm[2]&&parseInt(nm[2])>0&&parseInt(nm[2])<(cb||99999)){
+      ctrNames.push({name:nm[1].trim().replace(/^[.\s]+/,''),count:parseInt(nm[2])});noCtr+=parseInt(nm[2]);
+    }
   });
   if(ctrNames.length&&noCtr<cb){ctrNames.push({name:'باقي',count:cb-noCtr});}
-  return{dt:dt,kb:kb,kf:kf,kd:kd,kr:kr,yeast:yeast,salt:salt,bran:bran,waste:waste,cb:cb,cf:cf,cYeast:cYeast,cSalt:cSalt,cBran:cBran,fl:kf+cf,ctrNames:ctrNames,txt:t};
+  return{dt:dt,kb:kb,kf:kf,kd:kd,kr:kr,yeast:yeast,salt:salt,bran:bran,waste:waste,cb:cb,cf:cf,cYeast:cYeast,cSalt:cSalt,cBran:cBran,fl:kf+cf,ctrNames:ctrNames};
 }
 function saAnalyze(){
   var inp=document.getElementById('sa-input');if(!inp)return;var txt=inp.value.trim();if(!txt)return;
@@ -39,8 +43,8 @@ function saAnalyze(){
   }
   var r=[];
   r.push(row('📅 التاريخ','sa-ed-dt',p.dt));
-  r.push(row('🍞 إنتاج فرن المزرعة','sa-ed-kb',p.kb));
-  r.push(row('🌾 دقيق مستخدم','sa-ed-fl',p.fl,'0.1',' كجم'));
+  r.push(row('🍞 إنتاج المزرعة','sa-ed-kb',p.kb));
+  r.push(row('🌾 دقيق','sa-ed-fl',p.fl,'0.1',' كجم'));
   if(p.yeast>0)r.push(row('🧫 خميرة','sa-ed-yeast',p.yeast,'0.1',' كجم'));
   if(p.salt>0)r.push(row('🧂 ملح','sa-ed-salt',p.salt,'0.1',' كجم'));
   if(p.bran>0)r.push(row('🌾 ردة','sa-ed-bran',p.bran,'0.1',' كجم'));
@@ -59,52 +63,8 @@ function saAnalyze(){
     });
     h+='</div>';
   }
-  h+='<div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;"><button onclick="saFill()" style="padding:6px 16px;background:#1b5e20;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;font-family:Cairo;">📋 تعبئة + توريد مقاولين</button><button onclick="saAnalyzeGemini()" style="padding:6px 16px;background:#e65100;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;font-family:Cairo;">🧠 تحليل ذكي (AI)</button><button onclick="saClear()" style="padding:6px 16px;background:#757575;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;font-family:Cairo;">✕ مسح</button></div>';
+  h+='<div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;"><button onclick="saFill()" style="padding:6px 16px;background:#1b5e20;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;font-family:Cairo;">📋 تعبئة + توريد مقاولين</button><button onclick="saClear()" style="padding:6px 16px;background:#757575;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;font-family:Cairo;">✕ مسح</button></div>';
   h+='</div>';res.innerHTML=h;
-}
-function saAnalyzeGemini(){
-  var inp=document.getElementById('sa-input');if(!inp)return;var txt=inp.value.trim();if(!txt)return;
-  var k=localStorage.getItem('sa_gemini_key');if(!k){k=prompt('🔑 أدخل مفتاح Gemini API:','');if(!k)return;localStorage.setItem('sa_gemini_key',k);}
-  var res=document.getElementById('sa-result');if(!res)return;
-  res.innerHTML='<div style="background:#fff8e1;padding:8px 12px;border-radius:8px;color:#e65100;font-size:13px;">⏳ جاري التحليل بالذكاء الاصطناعي...</div>';
-  var prompt='أنت مساعد لتحليل رسائل واتساب إنتاج مخبز. استخرج البيانات التالية من الرسالة وأرجعها بصيغة JSON فقط دون أي نص آخر:\n{\n"date":"YYYY-MM-DD",\n"farmBread":عدد أرغفة المزرعة,\n"flourKg":كيلو الدقيق الكلي,\n"yeastKg":كمية الخميرة بالكيلو,\n"saltKg":كمية الملح بالكيلو,\n"branKg":كمية الردة بالكيلو,\n"wasteKg":هالك,\n"kitchenDelivery":عدد المسلم للمطبخ,\n"ovenRemaining":عدد المتبقي بالفرن,\n"contractors":[\n{"name":"اسم المقاول","count":عدد الأرغفة}\n]\n}\n\nملاحظات:\n- لو مكتوب "نص" فمعناها 0.5، "ربع" = 0.25\n- المقاولين هتلاقي أسمائهم جنب الأرقام في السطر\n- لو مش لاقي حاجة، ارجع القيمة 0 أو مصفوفة فاضية\n- أرجع JSON فقط\n\nالرسالة:\n'+txt;
-  fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key='+k,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contents:[{parts:[{text:prompt}]}],generationConfig:{temperature:0.1,maxOutputTokens:1024}})}).then(function(r){return r.json();}).then(function(d){
-    var msg='';
-    try{
-      var t=d.candidates[0].content.parts[0].text;
-      t=t.replace(/```json/g,'').replace(/```/g,'').trim();
-      var j=JSON.parse(t);
-      var res2=document.getElementById('sa-result');
-      var h='<div style="background:#f8fdf8;padding:10px;border-radius:8px;border:1px solid #c8e6c9;font-size:13px;">';
-      h+='<div style="display:flex;justify-content:space-between;"><strong style="color:#1b5e20;">🧠 تحليل ذكي</strong></div>';
-      h+='<div style="display:grid;grid-template-columns:auto 1fr;gap:4px 8px;margin-top:6px;">';
-      h+='<span style="font-size:12px;">📅 التاريخ</span><span><input type="date" id="sa-ed-dt" value="'+(j.date||'')+'" style="width:100%;padding:2px 6px;border:1px solid #ccc;border-radius:4px;font-size:12px;font-family:Cairo;"></span>';
-      h+='<span style="font-size:12px;">🍞 إنتاج المزرعة</span><span><input type="number" id="sa-ed-kb" value="'+(j.farmBread||0)+'" style="width:100%;padding:2px 6px;border:1px solid #ccc;border-radius:4px;font-size:12px;font-family:Cairo;"></span>';
-      h+='<span style="font-size:12px;">🌾 دقيق (كجم)</span><span><input type="number" id="sa-ed-fl" value="'+(j.flourKg||0)+'" step="0.1" style="width:100%;padding:2px 6px;border:1px solid #ccc;border-radius:4px;font-size:12px;font-family:Cairo;"></span>';
-      if(j.yeastKg>0)h+='<span style="font-size:12px;">🧫 خميرة</span><span><input type="number" id="sa-ed-yeast" value="'+j.yeastKg+'" step="0.1" style="width:100%;padding:2px 6px;border:1px solid #ccc;border-radius:4px;font-size:12px;font-family:Cairo;"></span>';
-      if(j.saltKg>0)h+='<span style="font-size:12px;">🧂 ملح</span><span><input type="number" id="sa-ed-salt" value="'+j.saltKg+'" step="0.1" style="width:100%;padding:2px 6px;border:1px solid #ccc;border-radius:4px;font-size:12px;font-family:Cairo;"></span>';
-      if(j.branKg>0)h+='<span style="font-size:12px;">🌾 ردة</span><span><input type="number" id="sa-ed-bran" value="'+j.branKg+'" step="0.1" style="width:100%;padding:2px 6px;border:1px solid #ccc;border-radius:4px;font-size:12px;font-family:Cairo;"></span>';
-      if(j.wasteKg>0)h+='<span style="font-size:12px;">❌ هالك</span><span><input type="number" id="sa-ed-waste" value="'+j.wasteKg+'" step="0.1" style="width:100%;padding:2px 6px;border:1px solid #ccc;border-radius:4px;font-size:12px;font-family:Cairo;"></span>';
-      h+='</div>';
-      if(j.contractors&&j.contractors.length){
-        h+='<hr style="margin:6px 0;border:none;border-top:1px dashed #ccc;"><strong style="color:#e65100;">👷 المقاولين:</strong><div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 8px;margin-top:4px;">';
-        j.contractors.forEach(function(c,i){
-          h+='<span style="font-size:12px;color:#555;">'+(i+1)+'. '+c.name+'</span><span><input type="number" id="sa-ed-ctr-'+i+'" data-name="'+c.name+'" value="'+(c.count||0)+'" style="width:80px;padding:2px 6px;border:1px solid #ccc;border-radius:4px;font-size:12px;font-family:Cairo;"></span>';
-        });
-        h+='</div>';
-      }
-      h+='<div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;"><button onclick="saFill()" style="padding:6px 16px;background:#1b5e20;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;font-family:Cairo;">📋 تعبئة + توريد مقاولين</button><button onclick="saClear()" style="padding:6px 16px;background:#757575;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;font-family:Cairo;">✕ مسح</button></div>';
-      h+='</div>';
-      if(res2)res2.innerHTML=h;
-    }catch(e){
-      var er=d.error&&d.error.message?d.error.message:'ما فهمتش الرسالة. جرب صيغة تاني.';
-      var r3=document.getElementById('sa-result');
-      if(r3)r3.innerHTML='<div style="background:#ffebee;padding:8px 12px;border-radius:8px;color:#c62828;font-size:13px;">❌ خطأ: '+er+'</div>';
-    }
-  }).catch(function(e){
-    var r4=document.getElementById('sa-result');
-    if(r4)r4.innerHTML='<div style="background:#ffebee;padding:8px 12px;border-radius:8px;color:#c62828;font-size:13px;">❌ خطأ اتصال: '+e.message+'</div>';
-  });
 }
 function saFill(){
   var g=function(id){return document.getElementById(id);};
