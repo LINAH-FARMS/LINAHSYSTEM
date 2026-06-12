@@ -12,16 +12,20 @@ function saParse(t){
   var krM=farm.match(/(?:داخل|الفرن|متبقي|باقي)\s*(\d+)/);var kr=krM?parseInt(krM[1]):0;
   var yeast=0,salt=0,bran=0,waste=0;
   farm.split(/\n/).forEach(function(ln){
-    if(/خميره/.test(ln)||/خميرة/.test(ln)){var m=ln.match(/([\d.]+)/);if(m)yeast+=parseFloat(m[1]);}
-    if(/ملح/.test(ln)){var m=ln.match(/([\d.]+)/);if(m)salt+=parseFloat(m[1]);}
+    if(/خميره/.test(ln)||/خميرة/.test(ln)){
+      var m=ln.match(/([\d.]+)/);yeast+=m?parseFloat(m[1]):1;
+    }
+    if(/ملح/.test(ln)){
+      var m=ln.match(/([\d.]+)/);salt+=m?parseFloat(m[1]):1;
+    }
     if(/رده/.test(ln)||/ردة/.test(ln)){var m=ln.match(/([\d.]+)/);if(m)bran+=parseFloat(m[1]);}
     if(/هالك/.test(ln)){var m=ln.match(/([\d.]+)/);if(m)waste+=parseFloat(m[1]);}
   });
   var cx=ctrPart.match(/([\d.]+)\s*كيلو\s*.?\s*دقيق\s*[=:]\s*(\d+)/);var cf=cx?parseFloat(cx[1]):0;var cb=cx?parseInt(cx[2]):0;
   var cYeast=0,cSalt=0,cBran=0;
   ctrPart.split(/\n/).forEach(function(ln){
-    if(/خميره/.test(ln)||/خميرة/.test(ln)){var m=ln.match(/([\d.]+)/);if(m)cYeast+=parseFloat(m[1]);}
-    if(/ملح/.test(ln)){var m=ln.match(/([\d.]+)/);if(m)cSalt+=parseFloat(m[1]);}
+    if(/خميره/.test(ln)||/خميرة/.test(ln)){var m=ln.match(/([\d.]+)/);cYeast+=m?parseFloat(m[1]):1;}
+    if(/ملح/.test(ln)){var m=ln.match(/([\d.]+)/);cSalt+=m?parseFloat(m[1]):1;}
     if(/رده/.test(ln)||/ردة/.test(ln)){var m=ln.match(/([\d.]+)/);if(m)cBran+=parseFloat(m[1]);}
   });
   var ctrNames=[];var noCtr=0;
