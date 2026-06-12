@@ -2437,7 +2437,6 @@
           <input type="file" id="b-ctr-excel-file" style="display:none;" accept=".xlsx, .xls" onchange="importBakeryContractorSuppliesFromExcel(event)">
           <button class="btn" style="padding:4px 10px;font-size:12px;background:#1565c0;color:white;" onclick="showPrintChoice('table-bakery-ctr-supply')">🖨️ طباعة</button>
           <button class="btn" style="padding:4px 10px;font-size:12px;background:#c62828;color:white;" onclick="exportPdfActiveTab()">📄 PDF</button>
-          <button class="btn btn-danger" onclick="cleanDataBeforeMay23()" style="height:38px;padding:4px 10px;font-size:12px;">🗑️ حذف التوريدات قبل 21/5/2026</button>
         </div>
         <table id="table-bakery-ctr-supply"><thead><tr><th style="width:30px;" class="no-print"><input type="checkbox" class="check-all" data-table="table-bakery-ctr-supply" onchange="toggleAllCheckboxes(this)"></th><th data-sort-key="date">التاريخ</th><th data-sort-key="name">المقاول</th><th data-sort-key="count">عدد الأرغفة</th><th data-sort-key="price">سعر الوحدة</th><th>الإجمالي</th><th data-sort-key="paid">المدفوع</th><th>المتبقي</th><th>الحالة</th><th data-sort-key="responsible">المسؤول</th><th class="no-print">إجراءات</th></tr></thead><tbody id="bakery-ctr-supply-body"></tbody></table>
       </div>
@@ -10818,34 +10817,6 @@ function toggleEmployeeStatus(empId) {
       XLSX.utils.book_append_sheet(wb, ws, 'توريد خبز');
       downloadWB(wb, filename);
       document.getElementById('dx-export-log').innerText = '✅ تم تصدير توريد الخبز (' + bakeryContractorSupplies.length + ' توريد)';
-    }
-
-    function cleanDataBeforeMay23() {
-      if (!confirm('⚠️ هل أنت متأكد؟ سيتم حذف جميع البيانات قبل 21/5/2026 من كل التقارير.')) return;
-      if (!confirm('⚠️ تأكيد نهائي؟ لا يمكن التراجع عن هذا الإجراء.')) return;
-      function parseDate(d) {
-        if (!d) return null;
-        var cleaned = d.replace(/[٠-٩]/g, function(c) { return String.fromCharCode(c.charCodeAt(0) - 1584); }).replace(/[^\d\/\-]/g, '');
-        var m = cleaned.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
-        if (m) return new Date(parseInt(m[1]), parseInt(m[2])-1, parseInt(m[3]));
-        var m2 = cleaned.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
-        if (m2) return new Date(parseInt(m2[3]), parseInt(m2[2])-1, parseInt(m2[1]));
-        return null;
-      }
-      function isBeforeCutoff(d) {
-        var dt = parseDate(d);
-        if (!dt) return false; // can't parse → keep it
-        return dt.getTime() < new Date(2026, 4, 21).getTime();
-      }
-      var before = { meals: mealLogs.length, tea: teaSugarDisbursements.length, septic: septicRecords.length, prod: bakeryProductions.length, ctr: bakeryContractorSupplies.length };
-      mealLogs = mealLogs.filter(function(r) { return !isBeforeCutoff(r.date); });
-      teaSugarDisbursements = teaSugarDisbursements.filter(function(r) { return !isBeforeCutoff(r.date); });
-      septicRecords = septicRecords.filter(function(r) { return !isBeforeCutoff(r.date); });
-      bakeryProductions = bakeryProductions.filter(function(r) { return !isBeforeCutoff(r.date); });
-      bakeryContractorSupplies = bakeryContractorSupplies.filter(function(r) { return !isBeforeCutoff(r.date); });
-      syncStorage(); updateDXStats(); renderMealLogTable(); renderTeaSugarTable(); renderSepticTable(); renderBakeryProductions(); renderBakeryContractorSupplies(); updateBakeryStats(); updateBreadSupplyStats();
-      var after = { meals: mealLogs.length, tea: teaSugarDisbursements.length, septic: septicRecords.length, prod: bakeryProductions.length, ctr: bakeryContractorSupplies.length };
-      document.getElementById('dx-export-log').innerText = '✅ تم الحذف: الوجبات ' + (before.meals - after.meals) + ' | شاي وسكر ' + (before.tea - after.tea) + ' | صرف صحي ' + (before.septic - after.septic) + ' | إنتاج ' + (before.prod - after.prod) + ' | توريد ' + (before.ctr - after.ctr);
     }
 
     function checkMissingFields() {
