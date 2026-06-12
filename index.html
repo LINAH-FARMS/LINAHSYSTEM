@@ -2583,18 +2583,25 @@
 
   <div id="ai-panel" style="display:none;position:fixed;bottom:80px;right:20px;width:380px;max-height:550px;background:white;border-radius:20px;padding:15px;z-index:9999;box-shadow:0 4px 20px rgba(0,0,0,.3);overflow:auto; border: 2px solid var(--primary);">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;">
-      <h3 style="color: var(--primary);margin:0;">🤖 المساعد الذكي</h3>
-      <div style="display:flex;align-items:center;gap:4px;font-size:11px;" id="ai-ollama-status">🔴</div>
+      <h3 style="color: var(--primary);margin:0;">المساعد الذكي</h3>
+      <div style="display:flex;align-items:center;gap:4px;font-size:11px;white-space:nowrap;" id="ai-status"></div>
     </div>
-    <p style="font-size:11px; color:#555; margin-bottom:8px;">يحلل كل بيانات النظام والموظفين والإدارات والغرف والمخازن فوراً.</p>
+    <p style="font-size:11px; color:#555; margin-bottom:8px;">يحلل كل بيانات النظام والموظفين والإدارات والغرف والمخازن فورا.</p>
+    <div id="ai-key-box" style="display:none;background:#fff8e1;border:1px solid #ffc107;border-radius:6px;padding:8px;margin-bottom:8px;gap:5px;flex-direction:column;font-size:12px;">
+      <div style="color:#795548;">ادخل مفتاح جوجل جيميني عشان الذكاء يشتغل:</div>
+      <div style="display:flex;gap:5px;">
+        <input type="text" id="ai-key-input" placeholder="الصق المفتاح هنا..." style="flex:1;padding:6px;border:1px solid #ccc;border-radius:4px;font-size:12px;">
+        <button onclick="saveAiKey()" style="background:#1b5e20;color:white;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;font-size:12px;">حفظ</button>
+      </div>
+    </div>
     <div id="ai-chat" style="height:300px;overflow:auto;border:1px solid #ccc;border-radius:10px;padding:10px;margin-bottom:10px;background:#f9f9f9;font-size:13px;display:flex;flex-direction:column;gap:8px;">
-      <div style="background:#e8f5e9; padding:8px; border-radius:8px; align-self:flex-start;">مرحباً! اسألني عن أي حاجة في النظام: "كشف [إدارة]" أو "مين في غرفة" أو "عهدة [اسم]" أو "كم عدد" أو "المخزن" أو أي استفسار إداري.</div>
+      <div style="background:#e8f5e9; padding:8px; border-radius:8px; align-self:flex-start;">مرحبا! اسألني عن أي حاجة في النظام. أنا بفهم كل حاجة عن الموظفين والغرف والمخزن والصيانة والإنتاج.</div>
     </div>
     <div style="display:flex;gap:5px;">
       <input type="text" id="ai-input" placeholder="اسألني..." style="flex:1;padding:8px;font-size:13px;border:2px solid #e0e0e0;border-radius:8px;">
-      <button class="btn btn-primary" onclick="askSmartAI()" style="padding:5px 12px;">↵ إرسال</button>
+      <button class="btn btn-primary" onclick="askSmartAI()" style="padding:5px 12px;">إرسال</button>
     </div>
-    <div style="font-size:10px;color:#999;margin-top:5px;text-align:center;">Enter للإرسال | الذكاء المحلي 🔴 = غير متاح</div>
+    <div style="font-size:10px;color:#999;margin-top:5px;text-align:center;">Enter للإرسال</div>
   </div>
 
   <!-- seed_data removed -->
@@ -8417,38 +8424,60 @@ function toggleEmployeeStatus(empId) {
       }
     }
 
-    // ====== Ollama AI Integration ======
-    const OLLAMA_URL = 'http://localhost:11434/api/generate';
-    let ollamaAvailable = false;
+    // ====== Gemini AI Integration ======
+    let geminiKey = localStorage.getItem('linah_gemini_key') || '';
 
-    async function checkOllama() {
-      try {
-        const res = await fetch('http://localhost:11434/api/tags', { signal: AbortSignal.timeout(2000) });
-        if (res.ok) { ollamaAvailable = true; return true; }
-      } catch(e) {}
-      ollamaAvailable = false;
-      return false;
+    function saveAiKey() {
+      var inp = document.getElementById('ai-key-input');
+      if (!inp) return;
+      geminiKey = inp.value.trim();
+      if (geminiKey) {
+        localStorage.setItem('linah_gemini_key', geminiKey);
+        document.getElementById('ai-key-box').style.display = 'none';
+        updateAiStatus();
+      }
     }
 
-    async function askOllama(query, context) {
-      if (!ollamaAvailable) return null;
+    function updateAiStatus() {
+      var se = document.getElementById('ai-status');
+      if (!se) return;
+      if (geminiKey) {
+        se.innerHTML = 'متصل';
+        se.style.color = '#4caf50';
+      } else {
+        se.innerHTML = 'غير متصل - اضغط لتضبط المفتاح';
+        se.style.color = '#f44336';
+        se.style.cursor = 'pointer';
+        se.onclick = function() {
+          var box = document.getElementById('ai-key-box');
+          if (box) box.style.display = 'flex';
+        };
+      }
+    }
+
+    async function askGemini(query, context) {
+      if (!geminiKey) return null;
       try {
-        const systemPrompt = `أنت مساعد ذكي لنظام إدارة لينه فارمز. لديك البيانات التالية:\n${context}\n\nأجب بالعربية بدقة واختصار.`;
-        const res = await fetch(OLLAMA_URL, {
+        var systemPrompt = 'أنت مساعد ذكي لنظام إدارة لينه فارمز. لديك البيانات التالية:\n' + context + '\n\nأجب بالعربية بدقة واختصار. استخدم البيانات المقدمة فقط. لو سأل عن حاجة مش موجودة في البيانات قل انها مش مسجلة.';
+        var body = {
+          contents: [{
+            role: 'user',
+            parts: [{ text: systemPrompt + '\n\nسؤال المستخدم: ' + query }]
+          }],
+          generationConfig: { temperature: 0.3, maxOutputTokens: 800 }
+        };
+        var url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' + geminiKey;
+        var res = await fetch(url, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            model: 'aya:8b',
-            system: systemPrompt,
-            prompt: query,
-            stream: false,
-            options: { temperature: 0.3, max_tokens: 500 }
-          }),
-          signal: AbortSignal.timeout(15000)
+          body: JSON.stringify(body)
         });
         if (!res.ok) return null;
-        const data = await res.json();
-        return data.response || null;
+        var data = await res.json();
+        if (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts) {
+          return data.candidates[0].content.parts.map(function(p) { return p.text; }).join('');
+        }
+        return null;
       } catch(e) { return null; }
     }
 
@@ -8709,18 +8738,18 @@ function toggleEmployeeStatus(empId) {
         return;
       }
 
-      // Fallback to Ollama if available
-      if (ollamaAvailable) {
-        let context = buildSystemContext();
-        askOllama(query, context).then(ollamaResponse => {
-          if (ollamaResponse) {
-            responder(`🤖 <b>المساعد الذكي:</b><br>${ollamaResponse.replace(/\n/g, '<br>')}`);
+      // Fallback to Gemini if key is set
+      if (geminiKey) {
+        var context = buildSystemContext();
+        askGemini(query, context).then(function(aiResponse) {
+          if (aiResponse) {
+            responder(aiResponse.replace(/\n/g, '<br>'));
           } else {
-            responder(`🤖 <b>الرد المباشر:</b><br>القوة ${employees.length} فرد، المتواجدين ${employees.filter(e=>e.status==='P').length}، في إجازة ${employees.filter(e=>e.status==='V').length}. المستبعدين ${excludedEmployees.length}، المقاولين ${contractors.length}.<br><br>💡 اسأل عن: "كشف [إدارة]" أو "مين في غرفة" أو "عهدة [اسم]" أو "كم عدد" أو "المخزن"`);
+            responder('عذرا، حصل خطأ في الاتصال بالذكاء. تأكد من صحة المفتاح.');
           }
         });
       } else {
-        responder(`🤖 <b>الرد المباشر:</b><br>القوة ${employees.length} فرد، المتواجدين ${employees.filter(e=>e.status==='P').length}، في إجازة ${employees.filter(e=>e.status==='V').length}. المستبعدين ${excludedEmployees.length}، المقاولين ${contractors.length}.<br><br>💡 اسأل عن: "كشف [إدارة]" أو "مين في غرفة" أو "عهدة [اسم]" أو "كم عدد" أو "المخزن"`);
+        responder('عذرا، ما فيش مفتاح ذكاء مضبوط. اضغط على كلمة غير متصل فوق عشان تدخل المفتاح.');
       }
     }
 
@@ -9748,6 +9777,11 @@ function toggleEmployeeStatus(empId) {
     }
 
     document.addEventListener('DOMContentLoaded', function() {
+      updateAiStatus();
+      if (!geminiKey) {
+        var box = document.getElementById('ai-key-box');
+        if (box) box.style.display = 'flex';
+      }
       var aiBtn = document.getElementById('ai-toggle-btn');
       if (aiBtn) {
         aiBtn.addEventListener('click', function() {
@@ -9764,10 +9798,6 @@ function toggleEmployeeStatus(empId) {
                 chat.innerHTML = '<div style="background:#e8f5e9;padding:10px;border-radius:8px;font-size:13px;line-height:1.7;align-self:flex-start;">' + generateAITips() + '</div>';
               } catch(ign) {}
             }
-            checkOllama().then(function(ok) {
-              var se = document.getElementById('ai-ollama-status');
-              if (se) se.innerHTML = ok ? '🟢' : '🔴';
-            });
           } catch(ign) {}
         });
       }
