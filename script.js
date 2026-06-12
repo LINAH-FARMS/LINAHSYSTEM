@@ -20,6 +20,7 @@ function saParse(t){
   var salt=saGetQty(farm,'ملح',1);
   var bran=saGetQty(farm,'رده',0)||saGetQty(farm,'ردة',0);
   var waste=saGetQty(farm,'هالك',0);
+  var diesel=saGetQty(farm,'سولار',0)||saGetQty(farm,'سولر',0);
   var cx=ctrPart.match(/([\d.]+)\s*كيلو\s*.?\s*دقيق\s*[=:]\s*(\d+)/);var cf=cx?parseFloat(cx[1]):0;var cb=cx?parseInt(cx[2]):0;
   var cYeast=saGetQty(ctrPart,'خميره',1)||saGetQty(ctrPart,'خميرة',1);
   var cSalt=saGetQty(ctrPart,'ملح',1);
@@ -34,7 +35,7 @@ function saParse(t){
     }
   });
   if(ctrNames.length&&noCtr<cb){ctrNames.push({name:'باقي',count:cb-noCtr});}
-  return{dt:dt,kb:kb,kf:kf,kd:kd,kr:kr,yeast:yeast,salt:salt,bran:bran,waste:waste,cb:cb,cf:cf,cYeast:cYeast,cSalt:cSalt,cBran:cBran,fl:kf+cf,ctrNames:ctrNames};
+  return{dt:dt,kb:kb,kf:kf,kd:kd,kr:kr,yeast:yeast,salt:salt,bran:bran,waste:waste,diesel:diesel,cb:cb,cf:cf,cYeast:cYeast,cSalt:cSalt,cBran:cBran,fl:kf+cf,ctrNames:ctrNames};
 }
 function saAnalyze(){
   var inp=document.getElementById('sa-input');if(!inp)return;var txt=inp.value.trim();if(!txt)return;
@@ -50,6 +51,8 @@ function saAnalyze(){
   if(p.salt>0)r.push(row('🧂 ملح','sa-ed-salt',p.salt,'0.1',' كجم'));
   if(p.bran>0)r.push(row('🌾 ردة','sa-ed-bran',p.bran,'0.1',' كجم'));
   if(p.waste>0)r.push(row('❌ هالك','sa-ed-waste',p.waste,'0.1',' كجم'));
+  var dieselVal=p.diesel||33;
+  r.push(row('⛽ سولار','sa-ed-diesel',dieselVal,'1',' لتر'));
   var notes=[];if(p.kd>0)notes.push('تسليم مطبخ: '+p.kd);if(p.kr>0)notes.push('بالفرن احتياطي: '+p.kr);
   var h='<div style="background:#f8fdf8;padding:10px;border-radius:8px;border:1px solid #c8e6c9;font-size:13px;">';
   h+='<div style="display:flex;justify-content:space-between;"><strong style="color:#1b5e20;">✅ إنتاج المزرعة</strong>';
@@ -75,6 +78,7 @@ function saFill(){
   var nY=g('sa-ed-yeast');if(nY&&g('bprod-ing-ING002'))g('bprod-ing-ING002').value=parseFloat(nY.value);
   var nS=g('sa-ed-salt');if(nS&&g('bprod-ing-ING003'))g('bprod-ing-ING003').value=parseFloat(nS.value);
   var nB=g('sa-ed-bran');if(nB&&g('bprod-ing-ING004'))g('bprod-ing-ING004').value=parseFloat(nB.value);
+  var nD=g('sa-ed-diesel');if(nD&&g('bprod-ing-ING007'))g('bprod-ing-ING007').value=parseFloat(nD.value);
   var notes=[];
   g('sa-ed-kd')&&parseInt(g('sa-ed-kd').value)>0?notes.push('تسليم مطبخ: '+parseInt(g('sa-ed-kd').value)):0;
   g('sa-ed-kr')&&parseInt(g('sa-ed-kr').value)>0?notes.push('بالفرن احتياطي: '+parseInt(g('sa-ed-kr').value)):0;
