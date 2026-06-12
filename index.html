@@ -11437,6 +11437,212 @@ function toggleEmployeeStatus(empId) {
   });
 })();
 </script>
+
+<!-- ====== المساعد الذكي ====== -->
+<style>
+#sa-btn{position:fixed;bottom:20px;right:20px;z-index:99999;background:#1b5e20;color:#fff;width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:26px;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,.3);border:none;transition:transform .2s;}
+#sa-btn:hover{transform:scale(1.08);}
+#sa-panel{display:none;position:fixed;bottom:90px;right:20px;width:440px;max-height:620px;background:#fff;border-radius:16px;z-index:99998;box-shadow:0 4px 24px rgba(0,0,0,.25);overflow:hidden;flex-direction:column;font-family:Cairo,sans-serif;direction:rtl;}
+#sa-panel.open{display:flex;}
+#sa-header{background:#1b5e20;color:#fff;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;font-weight:700;font-size:15px;}
+#sa-header button{background:none;border:none;color:#fff;font-size:20px;cursor:pointer;padding:0 4px;}
+#sa-msgs{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:8px;background:#f5f5f5;min-height:200px;max-height:420px;}
+#sa-msgs .msg{max-width:88%;padding:10px 14px;border-radius:12px;font-size:13px;line-height:1.6;word-wrap:break-word;}
+#sa-msgs .msg.user{background:#e8f5e9;align-self:flex-end;border-bottom-left-radius:4px;}
+#sa-msgs .msg.bot{background:#fff;align-self:flex-start;border-bottom-right-radius:4px;box-shadow:0 1px 4px rgba(0,0,0,.08);}
+#sa-msgs .msg.bot strong{color:#1b5e20;}
+#sa-msgs .msg .btn-confirm{display:inline-block;margin-top:8px;padding:6px 16px;background:#1b5e20;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:12px;font-family:Cairo,sans-serif;}
+#sa-input-area{display:flex;gap:8px;padding:10px 12px;border-top:1px solid #e0e0e0;background:#fff;}
+#sa-input-area input{flex:1;padding:10px 14px;border:2px solid #e0e0e0;border-radius:24px;font-size:13px;outline:none;font-family:Cairo,sans-serif;}
+#sa-input-area input:focus{border-color:#1b5e20;}
+#sa-input-area button{padding:8px 16px;background:#1b5e20;color:#fff;border:none;border-radius:24px;cursor:pointer;font-size:13px;font-family:Cairo,sans-serif;white-space:nowrap;}
+@media(max-width:500px){#sa-panel{width:calc(100vw - 20px);right:10px;bottom:80px;max-height:70vh;}#sa-btn{right:10px;bottom:10px;width:48px;height:48px;font-size:22px;}}
+</style>
+<div id="sa-btn" onclick="SA.toggle()">🤖</div>
+<div id="sa-panel">
+  <div id="sa-header"><span>🧠 المساعد الذكي</span><button onclick="SA.toggle()">&times;</button></div>
+  <div id="sa-msgs"><div class="msg bot">👋 مرحباً! ابدأ بالصق رسالة واتساب هنا وهحللها لك. بعد ما نتناقش، هحط البيانات في مكانها الصحيح.<br><br>⚠️ أول مرة هتطلب منك إدخال مفتاح Gemini — الصق المفتاح اللي عندك.</div></div>
+  <div id="sa-input-area">
+    <input type="text" id="sa-input" placeholder="الصق رسالة واتساب أو اسأل..." onkeydown="if(event.key==='Enter')SA.send()">
+    <button onclick="SA.send()">إرسال</button>
+  </div>
+</div>
+<script>
+(function(){
+  var MODEL = 'gemini-2.0-flash';
+  function getKey(){ var k = localStorage.getItem('sa_gemini_key'); if(!k){ k = prompt('🧠 أدخل مفتاح Google Gemini API:\n(حقن المفتاح مرة واحدة فقط)'); if(k) localStorage.setItem('sa_gemini_key',k); } return k; }
+  var lastParsed = null;
+  window.SA = {
+    toggle: function(){
+      var p = document.getElementById('sa-panel');
+      var open = p.classList.toggle('open');
+      if(open) setTimeout(function(){ document.getElementById('sa-input').focus(); }, 200);
+    },
+    addMsg: function(text, role){
+      var div = document.createElement('div');
+      div.className = 'msg ' + role;
+      div.innerHTML = text;
+      document.getElementById('sa-msgs').appendChild(div);
+      div.scrollIntoView({behavior:'smooth',block:'end'});
+      return div;
+    },
+    send: function(){
+      var inp = document.getElementById('sa-input');
+      var text = inp.value.trim();
+      if(!text) return;
+      inp.value = '';
+      SA.addMsg(text, 'user');
+      SA.handle(text);
+    },
+    handle: function(text){
+      var lower = text.toLowerCase();
+      // Try parsing as WhatsApp message
+      var parsed = SA.parseWhatsApp(text);
+      if(parsed && (parsed.kitchenBread > 0 || parsed.ctrBread > 0 || parsed.flour > 0)){
+        lastParsed = parsed;
+        var html = '<strong>✅ تم تحليل الرسالة:</strong><br>';
+        if(parsed.date) html += '📅 التاريخ: ' + parsed.date + '<br>';
+        if(parsed.kitchenBread > 0) html += '🍞 المطبخ: ' + parsed.kitchenBread + ' رغيف (دقيق: ' + parsed.kitchenFlour + ' كجم)<br>';
+        if(parsed.kitchenDelivered > 0) html += '🚚 تسليم مطبخ: ' + parsed.kitchenDelivered + '<br>';
+        if(parsed.kitchenRemaining > 0) html += '🔥 داخل الفرن: ' + parsed.kitchenRemaining + '<br>';
+        if(parsed.ctrBread > 0) html += '👷 مقاولين: ' + parsed.ctrBread + ' رغيف (دقيق: ' + parsed.ctrFlour + ' كجم)<br>';
+        if(parsed.yeast > 0) html += '🧫 خميرة: ' + parsed.yeast + '<br>';
+        if(parsed.salt > 0) html += '🧂 ملح: ' + parsed.salt + '<br>';
+        if(parsed.bran > 0) html += '🌾 ردة: ' + parsed.bran + '<br>';
+        if(parsed.contractors && parsed.contractors.length) html += '👥 مقاولين: ' + parsed.contractors.join('، ') + '<br>';
+        html += '<br>هل البيانات صحيحة؟';
+        html += '<br><button class="btn-confirm" onclick="SA.confirm()">✅ نعم، تعبئة النموذج</button>';
+        html += ' <button class="btn-confirm" style="background:#c62828;" onclick="SA.cancel()">❌ لا، راجعها</button>';
+        var bot = SA.addMsg(html, 'bot');
+        return;
+      }
+      // Ask Gemini for general questions
+      SA.askAI(text, function(response){
+        if(response){
+          SA.addMsg(response, 'bot');
+        } else {
+          SA.addMsg('عذراً، ما فهمتش الرسالة. تأكد إنها رسالة واتساب صحيحة لمخبز أو اسأل سؤال.', 'bot');
+        }
+      });
+    },
+    parseWhatsApp: function(text){
+      var lines = text.split(/\n/).map(function(l){return l.trim();}).filter(Boolean);
+      var full = text;
+      var dateVal = '';
+      for(var i=0;i<lines.length;i++){
+        var ds = lines[i].match(/(\d{1,2})\s*[/-]\s*(\d{1,2})\s*[/-]\s*(\d{2,4})/);
+        if(ds){
+          var d = ('0'+ds[1]).slice(-2), m = ('0'+ds[2]).slice(-2), y = ds[3];
+          if(y.length===2) y='20'+y;
+          dateVal = y+'-'+m+'-'+d; break;
+        }
+      }
+      var splitIdx = full.indexOf('للمقاولين');
+      if(splitIdx<0) splitIdx = full.indexOf('المقاولين');
+      var kitchenBlock = splitIdx>=0 ? full.substring(0,splitIdx) : full;
+      var ctrBlock = splitIdx>=0 ? full.substring(splitIdx) : '';
+      var kitchenFlour=0, kitchenBread=0, kitchenDelivered=0, kitchenRemaining=0;
+      var kbExtract = kitchenBlock.match(/(\d+[.,]?\d*)\s*كيلو\s*.?\s*دقيق\s*[=:]\s*(\d+)/);
+      if(kbExtract){ kitchenFlour = parseFloat(kbExtract[1].replace(',','.')); kitchenBread = parseInt(kbExtract[2]); }
+      var kdMatch = kitchenBlock.match(/(?:تسليم|للمطبخ)\s*(?:المطبخ)?\s*(\d+)/);
+      if(kdMatch) kitchenDelivered = parseInt(kdMatch[1]);
+      var krMatch = kitchenBlock.match(/(?:داخل|الفرن|متبقي|باقي)\s*(?:الفرن)?\s*(\d+)/);
+      if(krMatch) kitchenRemaining = parseInt(krMatch[1]);
+      var ctrFlour=0, ctrBread=0;
+      var cbExtract = ctrBlock.match(/(\d+[.,]?\d*)\s*كيلو\s*.?\s*دقيق\s*[=:]\s*(\d+)/);
+      if(cbExtract){ ctrFlour = parseFloat(cbExtract[1].replace(',','.')); ctrBread = parseInt(cbExtract[2]); }
+      var ingMap = {yeast:0, salt:0, bran:0};
+      var ingNames = {'خميرة':'yeast','ملح':'salt','ردة':'bran'};
+      for(var j=0;j<lines.length;j++){
+        var line = lines[j];
+        for(var arName in ingNames){
+          var idx = line.indexOf(arName);
+          if(idx>=0){
+            var before = line.substring(0,idx).trim();
+            var m2 = before.match(/^(\d+[.,]?\d*)/);
+            var q = m2 ? parseFloat(m2[1].replace(',','.')) : null;
+            if(!q && (before.indexOf('نص')===0||before.indexOf('نصف')===0)) q=0.5;
+            if(!q && before.indexOf('ربع')===0) q=0.25;
+            if(!q && before.indexOf('كيلو')===0) q=1;
+            if(q!==null && q>0 && ingMap[ingNames[arName]]===0) ingMap[ingNames[arName]]=q;
+          }
+        }
+      }
+      var ctrNames = ['مصطفى عبد الكريم','عبد الرازق جبر','اسامه سمير','اسامه عبد الرازق','كرم الزيات','محمد شعبان','محمود قاسم','كامل احمد','محمد حسنى','اسعد اسماعيل','عبد الرازق','ابراهيم شحاته','شحاته','البدري','مصطفى','كرم','الزيات','اسامه','سمير','ممدوح','كامل','محمد','ابوعمار','ناجح','فارس','اسعد','اسماعيل','ام جبريل'];
+      var ctrList = [];
+      if(ctrBlock){
+        var ctrLines = ctrBlock.split(/\n/);
+        for(var ci=0;ci<ctrLines.length;ci++){
+          var cl = ctrLines[ci].trim();
+          if(cl.length<3) continue;
+          for(var ni=0;ni<ctrNames.length;ni++){
+            if(cl.indexOf(ctrNames[ni])>=0){
+              var cn = cl.match(/(\d+)/);
+              if(cn){ ctrList.push(ctrNames[ni]+':'+cn[1]); break; }
+            }
+          }
+        }
+      }
+      return {
+        date: dateVal,
+        kitchenFlour: kitchenFlour, kitchenBread: kitchenBread,
+        kitchenDelivered: kitchenDelivered, kitchenRemaining: kitchenRemaining,
+        ctrFlour: ctrFlour, ctrBread: ctrBread,
+        flour: kitchenFlour + ctrFlour,
+        yeast: ingMap.yeast, salt: ingMap.salt, bran: ingMap.bran,
+        contractors: ctrList
+      };
+    },
+    confirm: function(){
+      if(!lastParsed) return;
+      var p = lastParsed;
+      // Fill production form
+      var d = document.getElementById('bprod-date');
+      if(d && p.date) d.value = p.date;
+      var cnt = document.getElementById('bprod-count');
+      if(cnt) cnt.value = p.kitchenBread + p.ctrBread;
+      var ing = document.getElementById('bprod-ing-ING001');
+      if(ing) ing.value = p.flour;
+      if(p.yeast>0){ var y = document.getElementById('bprod-ing-ING002'); if(y) y.value = p.yeast; }
+      if(p.salt>0){ var s = document.getElementById('bprod-ing-ING003'); if(s) s.value = p.salt; }
+      if(p.bran>0){ var b = document.getElementById('bprod-ing-ING004'); if(b) b.value = p.bran; }
+      var notes = [];
+      if(p.kitchenDelivered>0) notes.push('تسليم مطبخ: '+p.kitchenDelivered);
+      if(p.kitchenRemaining>0) notes.push('باقي الفرن: '+p.kitchenRemaining);
+      if(p.contractors.length) notes.push('مقاولين: '+p.contractors.join(', '));
+      var nf = document.getElementById('bprod-notes');
+      if(nf) nf.value = notes.join(' | ');
+      var dateStr = p.date ? new Date(p.date+'T00:00:00').toLocaleDateString('ar-EG') : 'اليوم';
+      SA.addMsg('✅ <strong>تم التعبئة!</strong><br>📅 '+dateStr+'<br>🍞 إجمالي الأرغفة: '+(p.kitchenBread+p.ctrBread)+'<br>📦 دقيق: '+p.flour+' كجم<br>📍 راجع البيانات واضغط "تسجيل الإنتاج" و"توريد مقاولين" لكل مقاول.', 'bot');
+      lastParsed = null;
+      // Switch to bakery tab
+      var btns = document.querySelectorAll('.tab-btn, .nav-tab');
+      for(var i=0;i<btns.length;i++){ if(btns[i].textContent.indexOf('مخبز')>=0||btns[i].textContent.indexOf('bakery')>=0||btns[i].textContent.indexOf('خبز')>=0){ btns[i].click(); break; } }
+    },
+    cancel: function(){
+      lastParsed = null;
+      SA.addMsg('👌 تمام، الصق الرسالة تاني بعد التعديل.', 'bot');
+    },
+    askAI: function(text, callback){
+      var key = getKey();
+      if(!key){ SA.addMsg('⚠️ من فضلك أدخل مفتاح Gemini أولاً (هتظهر نافذة)', 'bot'); setTimeout(function(){ getKey(); }, 500); return; }
+      var systemPrompt = 'أنت مساعد ذكي لنظام إدارة مخبز. دورك: تحليل رسائل واتساب الخاصة بإنتاج الخبز، استخراج بيانات الأرغفة والدقيق والخميرة والملح والردة، وتحديد بيانات المقاولين والتسليم. أجب بالعربية فقط وباختصار. لو مش فاهم حاجة من المستخدم، اسأله يوضح.';
+      var url = 'https://generativelanguage.googleapis.com/v1beta/models/'+MODEL+':generateContent?key='+key;
+      fetch(url, {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({contents:[{role:'user',parts:[{text:systemPrompt+'\n\n'+text}]}],generationConfig:{temperature:0.3,maxOutputTokens:600}})
+      }).then(function(r){ return r.json(); }).then(function(data){
+        if(data.candidates&&data.candidates[0]&&data.candidates[0].content&&data.candidates[0].content.parts){
+          callback(data.candidates[0].content.parts.map(function(p){return p.text;}).join(''));
+        } else {
+          callback(null);
+        }
+      }).catch(function(){ callback(null); });
+    }
+  };
+})();
+</script>
 </body>
 </html>
 
