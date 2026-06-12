@@ -891,7 +891,7 @@
     <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
       <span id="live-clock" style="font-weight:600;font-size:13px;"></span>
       <span id="current-user-display" style="background:rgba(255,255,255,0.12);padding:2px 10px;border-radius:50px;font-size:12px;font-weight:600;white-space:nowrap;" onclick="logout()" title="اضغط لتسجيل الخروج">👤 <span id="current-user-name">...</span></span>
-      <button id="ai-toggle-btn" style="background:#1b5e20;color:white;border:none;padding:6px 12px;border-radius:50px;font-size:13px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.2);">🤖 AI</button>
+      <button id="ai-toggle-btn" onclick="toggleAi()" style="background:#1b5e20;color:white;border:none;padding:6px 12px;border-radius:50px;font-size:13px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.2);">🤖 AI</button>
       <span id="server-status" style="font-size:11px;font-weight:600;display:none;">🔴</span>
       <span id="cloud-status" style="font-size:11px;font-weight:600;">☁️ غير متصل</span>
       <span id="supabase-status" style="font-size:11px;font-weight:600;">🔄 قيد الاتصال...</span>
@@ -2346,7 +2346,7 @@
         <div class="form-group"><label>💷 أجر التشغيل / مصنعية (ج.م)</label><input type="number" id="bprod-opcost" min="0" step="1" value="1200"></div>
         <div class="form-group" style="grid-column:span 2;"><label>ملاحظات</label><input type="text" id="bprod-notes" placeholder="ملاحظات الإنتاج"></div>
         <button class="btn btn-primary" onclick="saveBakeryProduction()" style="height:42px;">🏭 تسجيل الإنتاج</button>
-        <button class="btn btn-excel" onclick="openWhatsAppPasteModal()" style="height:42px;background:#075e54;color:white;border:none;border-radius:5px;cursor:pointer;font-weight:600;font-size:14px;">📥 لصق من واتساب</button>
+        <button class="btn btn-excel" onclick="try{openWhatsAppPasteModal()}catch(e){}" style="height:42px;background:#075e54;color:white;border:none;border-radius:5px;cursor:pointer;font-weight:600;font-size:14px;">📥 لصق من واتساب</button>
         <button class="btn btn-warning" onclick="suggestBreadForTomorrow()" style="height:42px;background:#1565c0;color:white;border:none;border-radius:5px;cursor:pointer;font-weight:600;font-size:14px;">🥖 اقتراح اعداد الخبز لليوم التالي</button>
       </div>
       <div class="control-panel no-print" style="margin-top:10px;">
@@ -2585,7 +2585,10 @@
   <div id="ai-panel" style="display:none;position:fixed;bottom:80px;right:20px;width:380px;max-height:550px;background:white;border-radius:20px;padding:15px;z-index:9999;box-shadow:0 4px 20px rgba(0,0,0,.3);overflow:auto; border: 2px solid var(--primary);">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;">
       <h3 style="color: var(--primary);margin:0;">المساعد الذكي</h3>
-      <div style="display:flex;align-items:center;gap:4px;font-size:11px;white-space:nowrap;" id="ai-status"></div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <div style="font-size:11px;white-space:nowrap;" id="ai-status"></div>
+        <span onclick="document.getElementById('ai-panel').style.display='none'" style="cursor:pointer;font-size:18px;color:#999;">&times;</span>
+      </div>
     </div>
     <p style="font-size:11px; color:#555; margin-bottom:8px;">يحلل كل بيانات النظام والموظفين والإدارات والغرف والمخازن فورا.</p>
     <div id="ai-key-box" style="display:none;background:#fff8e1;border:1px solid #ffc107;border-radius:6px;padding:8px;margin-bottom:8px;gap:5px;flex-direction:column;font-size:12px;">
@@ -9781,38 +9784,22 @@ function toggleEmployeeStatus(empId) {
 
     try { updateAiStatus(); } catch(ign) {}
     if (!geminiKey) {
-      var keyBox = document.getElementById('ai-key-box');
-      if (keyBox) keyBox.style.display = 'flex';
+      try { document.getElementById('ai-key-box').style.display = 'flex'; } catch(ign) {}
     }
-    var aiBtn = document.getElementById('ai-toggle-btn');
-    if (aiBtn) {
-      aiBtn.addEventListener('click', function() {
-        try {
-          var p = document.getElementById('ai-panel');
-          if (!p) return;
-          p.style.display = p.style.display === 'none' ? 'block' : 'none';
-          if (p.style.display === 'none') return;
-          var inp = document.getElementById('ai-input');
-          if (inp) inp.focus();
-          var chat = document.getElementById('ai-chat');
-          if (chat && chat.children.length <= 1) {
-            try {
-              chat.innerHTML = '<div style="background:#e8f5e9;padding:10px;border-radius:8px;font-size:13px;line-height:1.7;align-self:flex-start;">' + generateAITips() + '</div>';
-            } catch(ign) {}
-          }
-        } catch(ign) {}
-      });
-    }
-    document.addEventListener('click', function(e) {
+    function toggleAi() {
       try {
-        var panel = document.getElementById('ai-panel');
-        var btn = document.getElementById('ai-toggle-btn');
-        if (!panel || !btn) return;
-        if (panel.style.display === 'none') return;
-        if (panel.contains(e.target) || btn.contains(e.target)) return;
-        panel.style.display = 'none';
+        var p = document.getElementById('ai-panel');
+        if (!p) return;
+        p.style.display = p.style.display === 'none' ? 'block' : 'none';
+        if (p.style.display === 'none') return;
+        var inp = document.getElementById('ai-input');
+        if (inp) inp.focus();
+        var chat = document.getElementById('ai-chat');
+        if (chat && chat.children.length <= 1) {
+          chat.innerHTML = '<div style="background:#e8f5e9;padding:10px;border-radius:8px;font-size:13px;line-height:1.7;align-self:flex-start;">' + generateAITips() + '</div>';
+        }
       } catch(ign) {}
-    });
+    }
 
     // ============================
     //  1.  REFRESH SYSTEM (تحديث)
