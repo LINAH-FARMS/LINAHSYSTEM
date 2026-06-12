@@ -11899,6 +11899,50 @@ function toggleEmployeeStatus(empId) {
   });
 })();
 </script>
+<script>
+(function(){
+  var ready = function(fn) {
+    if (document.readyState !== 'loading') { fn(); }
+    else { document.addEventListener('DOMContentLoaded', fn); }
+  };
+  ready(function(){
+    var aiBtn = document.getElementById('ai-toggle-btn');
+    if (aiBtn) {
+      aiBtn.onclick = function() {
+        var panel = document.getElementById('ai-panel');
+        if (!panel) { alert('AI panel not found'); return; }
+        panel.style.display = (panel.style.display === 'none') ? 'block' : 'none';
+      };
+    }
+    var waBtn = Array.from(document.querySelectorAll('button')).filter(function(b){ return b.textContent.indexOf('واتساب') >= 0 || b.textContent.indexOf('WhatsApp') >= 0; })[0];
+    if (!waBtn) waBtn = document.querySelector('button[onclick*="WhatsApp"], button[onclick*="whatsapp"], button[onclick*="واتساب"]');
+    if (!waBtn) {
+      var allBtns = document.querySelectorAll('button');
+      for (var i = 0; i < allBtns.length; i++) {
+        if (allBtns[i].innerHTML.indexOf('واتساب') >= 0 || allBtns[i].innerHTML.indexOf('WhatsApp') >= 0) { waBtn = allBtns[i]; break; }
+        if (allBtns[i].getAttribute('onclick') && allBtns[i].getAttribute('onclick').indexOf('WhatsApp') >= 0) { waBtn = allBtns[i]; break; }
+      }
+    }
+    if (waBtn) {
+      waBtn.onclick = function() {
+        var modal = document.getElementById('modal-whatsapp-paste');
+        if (modal) {
+          modal.classList.add('open');
+          var txt = document.getElementById('wa-paste-text');
+          if (txt) setTimeout(function(){ txt.focus(); }, 100);
+        } else {
+          alert('WhatsApp modal not found in DOM');
+        }
+      };
+    }
+    var indicator = document.createElement('div');
+    indicator.id = 'fix-indicator';
+    indicator.style.cssText = 'position:fixed;bottom:5px;left:5px;background:#4caf50;color:white;padding:2px 8px;border-radius:4px;font-size:11px;z-index:99999;';
+    indicator.textContent = '✓';
+    document.body.appendChild(indicator);
+  });
+})();
+</script>
 </body>
 </html>
 
