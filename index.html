@@ -1766,7 +1766,7 @@
         </div>
         <div class="form-group">
           <label>الكود الإداري</label>
-          <input type="text" id="form-emp-code" readonly style="background:#f0f0f0; cursor:not-allowed;">
+          <input type="text" id="form-emp-code">
         </div>
         <div class="form-group" style="position:relative;">
           <label>الاسم رباعي *</label>
@@ -5556,15 +5556,27 @@
     }
     function generateEmployeeCode() {
       let contract = document.getElementById('form-emp-contract').value;
+      let codeField = document.getElementById('form-emp-code');
       let editId = document.getElementById('edit-emp-id').value;
       if (editId) return;
-      let sameType = employees.filter(e => e.contract === contract);
-      let maxCode = 1000;
-      sameType.forEach(e => {
-        let num = parseInt(e.code);
-        if (num > maxCode) maxCode = num;
-      });
-      document.getElementById('form-emp-code').value = maxCode + 1;
+      if (contract === 'دائم') {
+        codeField.readOnly = false;
+        codeField.style.background = '#fff';
+        codeField.style.cursor = 'text';
+        codeField.value = '';
+        codeField.focus();
+      } else {
+        codeField.readOnly = true;
+        codeField.style.background = '#f0f0f0';
+        codeField.style.cursor = 'not-allowed';
+        let sameType = employees.filter(e => e.contract === contract);
+        let maxCode = 1000;
+        sameType.forEach(e => {
+          let num = parseInt(e.code);
+          if (num > maxCode) maxCode = num;
+        });
+        codeField.value = maxCode + 1;
+      }
     }
 
     function setupNameAutocomplete() {
@@ -5676,6 +5688,9 @@
         document.getElementById('assets-form-container').innerHTML = '';
         document.querySelectorAll('.default-asset').forEach(i => i.value = 0);
         document.getElementById('emp-name-suggestions').style.display = 'none';
+        // كاجول ← تلقائي، دائم ← يدوي
+        var cf = document.getElementById('form-emp-code');
+        cf.readOnly = false; cf.style.background = '#fff'; cf.style.cursor = 'text';
         generateEmployeeCode();
       }
     }
@@ -5761,6 +5776,13 @@
       document.getElementById('form-emp-code').value = emp.code || '';
       document.getElementById('form-emp-name').value = emp.name || '';
       document.getElementById('form-emp-contract').value = emp.contract || 'دائم';
+      // حالة الكود أثناء التعديل
+      var cf = document.getElementById('form-emp-code');
+      if (emp.contract === 'دائم') {
+        cf.readOnly = false; cf.style.background = '#fff'; cf.style.cursor = 'text';
+      } else {
+        cf.readOnly = true; cf.style.background = '#f0f0f0'; cf.style.cursor = 'not-allowed';
+      }
       document.getElementById('form-emp-national-id').value = emp.nationalId || '';
       document.getElementById('form-emp-hire-date').value = emp.hireDate || '';
       
