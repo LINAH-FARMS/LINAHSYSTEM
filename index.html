@@ -1446,6 +1446,7 @@
           <span id="ov-month-label" style="font-size:15px;font-weight:700;color:#333;min-width:140px;text-align:center;"></span>
           <button onclick="ovNextMonth()" style="padding:4px 10px;border:1px solid #ccc;background:#fff;border-radius:4px;cursor:pointer;font-size:16px;">▶</button>
           <button onclick="renderOvertimeCalendar()" style="padding:4px 10px;border:1px solid #ccc;background:#fff;border-radius:4px;cursor:pointer;font-size:12px;">🗓️ اليوم</button>
+          <button onclick="exportOvertimeExcel()" style="padding:4px 10px;border:1px solid #1b5e20;background:#1b5e20;color:#fff;border-radius:4px;cursor:pointer;font-size:12px;">📤 تصدير إكسل</button>
           <div style="flex:1;"></div>
           <span style="font-size:11px;color:#888;">مجموع الساعات: <b id="ov-month-total">0</b></span>
         </div>
@@ -1598,6 +1599,7 @@
         <thead>
           <tr>
             <th style="width:30px;" class="no-print"><input type="checkbox" class="check-all" data-table="table-maintenance" onchange="toggleAllCheckboxes(this)"></th>
+            <th onclick="sortTable('table-maintenance','category')">نوع الصيانة</th>
             <th onclick="sortTable('table-maintenance','task')">بند الصيانة</th>
             <th onclick="sortTable('table-maintenance','tech')">الفني</th>
             <th onclick="sortTable('table-maintenance','status')">الحالة</th>
@@ -6876,10 +6878,10 @@ function toggleEmployeeStatus(empId) {
           `<span style="display:inline-block;background:#e3f2fd;padding:1px 5px;margin:1px;border-radius:3px;font-size:11px;border:1px solid #90caf9;">${mat.name} × ${mat.qty}</span>`
         ).join(' ') : '—';
         let tr = document.createElement('tr');
-        let catHtml = m.category ? `<span style="display:inline-block;background:#fff3e0;padding:1px 5px;margin:1px;border-radius:3px;font-size:11px;border:1px solid #ffe0b2;">${m.category}</span><br>` : '';
         tr.innerHTML = `
           <td class="no-print"><input type="checkbox" class="row-check" data-table="table-maintenance"></td>
-          <td>${catHtml}<b>${m.task}</b></td>
+          <td>${m.category || '—'}</td>
+          <td><b>${m.task}</b></td>
           <td>${m.tech || '—'}</td>
           <td><span style="color:${stColor};font-weight:bold;font-size:12px;">${stIcon} ${m.status||'مفتوحة'}</span></td>
           <td style="font-size:11px;">${matsHtml}</td>
@@ -8409,6 +8411,31 @@ function toggleEmployeeStatus(empId) {
         openOvertimeModal(dateKey);
         renderOvertimeCalendar();
       }
+    }
+
+    function exportOvertimeExcel() {
+      if (!adminOvertime.length) { alert('⚠️ لا توجد بيانات إضافي للتصدير.'); return; }
+      var year = ovViewDate.getFullYear();
+      var month = ovViewDate.getMonth();
+      var monthName = ovMonthNames[month];
+      var filtered = adminOvertime.filter(function(e) {
+        return e.date && e.date.indexOf(year + '-' + String(month+1).padStart(2,'0')) === 0;
+      });
+      if (!filtered.length) { alert('⚠️ لا توجد بيانات إضافي في هذا الشهر.'); return; }
+      var data = [['تقرير الساعات الإضافية — ' + monthName + ' ' + year], []];
+      data.push(['م', 'التاريخ', 'كود الموظف', 'اسم الموظف', 'الساعات', 'ملاحظات']);
+      var total = 0;
+      filtered.forEach(function(e, i) {
+        data.push([i+1, e.date, e.empCode, e.empName, Number(e.hours)||0, e.notes||'']);
+        total += Number(e.hours)||0;
+      });
+      data.push([]);
+      data.push(['', '', '', 'الإجمالي', total, '']);
+      var ws = XLSX.utils.aoa_to_sheet(data);
+      ws['!cols'] = [{wch:4},{wch:12},{wch:12},{wch:22},{wch:10},{wch:20}];
+      var wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'الإضافي');
+      downloadWB(wb, 'إضافي_' + year + '-' + String(month+1).padStart(2,'0') + '.xlsx');
     }
 
     function importHospitalityFromExcel(evt) {
