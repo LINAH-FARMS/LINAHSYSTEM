@@ -8660,7 +8660,7 @@ function toggleEmployeeStatus(empId) {
       _dataChangedSinceBackup = false;
       var bakBtn = document.querySelector('button[onclick*="exportBackupSystem"]');
       if (bakBtn) bakBtn.classList.remove('btn-backup-pulse');
-      let data = { employees, roomsCapacity, vacations, hospitalities, maintenanceRecords, septicRecords, inventoryVouchers, excludedEmployees, periodicMaintenance, teaSugarDisbursements, teaSugarBatches, mealLogs, inventoryItems, contractors, dynamicSectors, contractorSectors, contractorRooms, dynamicRooms, dynamicSeptics, dynamicDepts, dynamicTitles, deptTitles, bakeryIngredients, bakeryProductions, bakeryContractorSupplies, bakeryInvoices, appUsers, currentUser, manualTotalBeds };
+      let data = { employees, roomsCapacity, vacations, hospitalities, maintenanceRecords, septicRecords, inventoryVouchers, excludedEmployees, periodicMaintenance, teaSugarDisbursements, teaSugarBatches, mealLogs, inventoryItems, contractors, dynamicSectors, contractorSectors, contractorRooms, dynamicRooms, dynamicSeptics, dynamicDepts, dynamicTitles, deptTitles, bakeryIngredients, bakeryProductions, bakeryContractorSupplies, bakeryInvoices, appUsers, currentUser, manualTotalBeds, adminOvertime, evaluations };
       let blob = new Blob([JSON.stringify(data)], {type: "application/json"});
       let a = document.createElement('a'); a.href = URL.createObjectURL(blob);
       a.download = `نسخة_احتياطية_شاملة_لينه_${Date.now()}.json`; a.click();
@@ -8669,6 +8669,7 @@ function toggleEmployeeStatus(empId) {
     function importBackupSystem(evt) {
       if (!requireAdmin()) return;
       let file = evt.target.files[0]; if(!file) return;
+      evt.target.value = '';
       let reader = new FileReader();
       reader.onload = function(e) {
         try {
@@ -8737,6 +8738,8 @@ function toggleEmployeeStatus(empId) {
         if(data.appUsers) appUsers = data.appUsers;
         if(data.currentUser) currentUser = data.currentUser;
         if(data.manualTotalBeds) manualTotalBeds = data.manualTotalBeds;
+        if(data.adminOvertime) adminOvertime = data.adminOvertime;
+        if(data.evaluations) evaluations = data.evaluations;
 
         // منع ظهور المستبعدين في قائمة القوة
         if (excludedEmployees.length > 0) {
@@ -8753,7 +8756,7 @@ function toggleEmployeeStatus(empId) {
 
         syncStorage(); renderTable(); renderHousingLayout(); renderInventoryTable(); renderInventoryItems(); renderVacationsTable(); renderOvertimeCalendar(); renderHospitalityTable(); renderMaintenanceTable(); renderSepticTable(); renderPeriodicMaintenance(); renderTeaSugarTable(); renderMealLogTable(); autoSaveTodayMeal(); populateContractorSectorDropdown(); renderContractorsTable(); rebuildAllDropdowns();
         renderBakeryIngredients(); renderBakeryProductions(); renderBakeryContractorSupplies(); renderBakeryInvoices();
-        renderContractorRoomsList(); populateContractorRoomSectorDropdown();
+        renderContractorRoomsList(); populateContractorRoomSectorDropdown(); renderEvaluations();
         _dataChangedSinceBackup = false;
         var restoreBtn = document.querySelector('button[onclick*="header-import-backup"]');
         if (restoreBtn) restoreBtn.classList.remove('btn-restore-pulse');
