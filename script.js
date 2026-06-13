@@ -73,7 +73,11 @@ function saAnalyze(){
     h+='<strong style="color:#e65100;">👷 المقاولين:</strong><div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 8px;margin-top:4px;">';
     p.ctrNames.forEach(function(c,i){
       var rn=saResolveName(c.name);
-      h+='<span style="font-size:12px;color:#555;">'+(i+1)+'. '+(rn!==c.name?'<span style="color:#999;text-decoration:line-through;font-size:10px;">'+c.name+'</span> ':'')+rn+'</span><span><input type="number" id="sa-ed-ctr-'+i+'" data-name="'+rn+'" value="'+c.count+'" style="width:80px;padding:2px 6px;border:1px solid #ccc;border-radius:4px;font-size:12px;font-family:Cairo;"></span>';
+      h+='<span style="font-size:12px;color:#555;">'+(i+1)+'.</span>'
+        +'<span style="display:flex;gap:4px;">'
+        +'<input type="text" id="sa-ed-ctr-name-'+i+'" value="'+rn+'" style="flex:1;padding:2px 6px;border:1px solid #ccc;border-radius:4px;font-size:12px;font-family:Cairo;">'
+        +'<input type="number" id="sa-ed-ctr-'+i+'" value="'+c.count+'" style="width:70px;padding:2px 6px;border:1px solid #ccc;border-radius:4px;font-size:12px;font-family:Cairo;">'
+        +'</span>';
     });
     h+='</div>';
   }
@@ -90,7 +94,7 @@ function saFill(){
   var nB=g('sa-ed-bran');if(nB&&g('bprod-ing-ING004'))g('bprod-ing-ING004').value=parseFloat(nB.value);
   var nD=g('sa-ed-diesel');if(nD&&g('bprod-ing-ING007')){
     var dv=parseFloat(nD.value);if(dv<=0||dv===33){
-      var ttl=parseInt(g('sa-ed-kb').value)||0;var ctrInputs=document.querySelectorAll('[id^="sa-ed-ctr-"]');
+      var ttl=parseInt(g('sa-ed-kb').value)||0;var ctrInputs=document.querySelectorAll('[id^="sa-ed-ctr-"]:not([id*="name"])');
       ctrInputs.forEach(function(x){ttl+=parseInt(x.value)||0;});
       if(ttl>0)dv=Math.round(ttl*0.00979*100)/100;
     }
@@ -105,8 +109,8 @@ function saFill(){
   while(g('sa-ed-ctr-'+i)){
     var cnt=parseInt(g('sa-ed-ctr-'+i).value);if(cnt>0){
       var p=2;
-      var nm='مقاول '+(i+1);var li=g('sa-ed-ctr-'+i);
-      if(li&&li.getAttribute('data-name'))nm=li.getAttribute('data-name');
+      var nm='مقاول '+(i+1);var ni=g('sa-ed-ctr-name-'+i);
+      if(ni&&ni.value.trim())nm=ni.value.trim();
       if(typeof bakeryContractorSupplies!=='undefined'){
         var nrm=typeof normalizeDateStr==='function'?normalizeDateStr(dt):dt;
         var dup=typeof bakeryContractorSupplies.find==='function'?bakeryContractorSupplies.find(function(r){return r.date===nrm&&r.name===nm}):null;
