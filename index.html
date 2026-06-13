@@ -2600,6 +2600,38 @@
     </div>
   </div>
 
+  
+  <div id="tab-audit" class="tab-content">
+    <div class="control-panel no-print" style="margin-bottom:12px;">
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+        <input type="text" id="search-audit" class="search-input" placeholder="بحث في سجل التعديلات..." oninput="renderAuditLog()" style="flex:2;min-width:180px;">
+        <select id="filter-audit-action" onchange="renderAuditLog()" style="flex:1;min-width:90px;">
+          <option value="">كل الإجراءات</option>
+          <option value="add">إضافة</option>
+          <option value="edit">تعديل</option>
+          <option value="delete">حذف</option>
+        </select>
+        <select id="filter-audit-type" onchange="renderAuditLog()" style="flex:1;min-width:100px;">
+          <option value="">كل الأنواع</option>
+        </select>
+        <button class="btn btn-danger" style="padding:4px 10px;font-size:12px;" onclick="if(confirm('هل تمسح بالفعل كل سجل التعديلات؟ لا يمكن التراجع')){auditLog=[];localStorage.setItem('linah_audit_log','[]');renderAuditLog();}">مسح السجل</button>
+      </div>
+    </div>
+    <div class="table-container">
+      <table id="table-audit-log">
+        <thead><tr>
+          <th data-sort-key="time" style="min-width:130px;">تاريخ ووقت</th>
+          <th data-sort-key="user">المستخدم</th>
+          <th data-sort-key="action" style="width:80px;">الإجراء</th>
+          <th data-sort-key="targetType">نوع الكيان</th>
+          <th data-sort-key="targetName">الاسم</th>
+          <th style="min-width:120px;">تفاصيل</th>
+        </tr></thead>
+        <tbody id="audit-log-body"></tbody>
+      </table>
+      <div id="audit-empty" style="text-align:center;padding:40px;color:#888;font-size:14px;">لا يوجد سجل تعديلات</div>
+    </div>
+  </div>
   <div id="tab-data-exchange" class="tab-content">
     <div style="background:#e8f5e9;border-radius:12px;padding:20px;margin-bottom:20px;text-align:center;border:2px solid #a5d6a7;">
       <div style="font-size:28px;font-weight:700;color:#1b5e20;">📤 تصدير البيانات لقسم المعلومات</div>
@@ -4004,6 +4036,21 @@
       document.getElementById('live-clock').innerText = "⏱️ التوقيت الحالي: " + now.toLocaleString('ar-EG');
     }, 1000);
 
+
+    let auditLog = JSON.parse(localStorage.getItem('linah_audit_log')) || [];
+
+    function logAction(action, targetType, targetName, details) {
+      auditLog.push({
+        id: Date.now().toString(36) + Math.random().toString(36).slice(2,6),
+        time: new Date().toISOString(),
+        user: currentUser,
+        action: action,
+        targetType: targetType,
+        targetName: targetName || '',
+        details: details || ''
+      });
+      localStorage.setItem('linah_audit_log', JSON.stringify(auditLog));
+    }
     function sortEmployeesAlphabetically() {
       employees.sort((a, b) => (a.name || "").localeCompare(b.name || "ar"));
     }
@@ -4192,6 +4239,7 @@
       localStorage.setItem('lineh_evaluations', JSON.stringify(evaluations));
       localStorage.setItem('lineh_eval_templates', JSON.stringify(evalTemplates));
       localStorage.setItem('lineh_users', JSON.stringify(appUsers));
+      localStorage.setItem('linah_audit_log', JSON.stringify(auditLog));
       localStorage.setItem('lineh_current_user', currentUser);
       localStorage.setItem('linah_bakery_ingredients', JSON.stringify(bakeryIngredients));
       localStorage.setItem('linah_bakery_productions', JSON.stringify(bakeryProductions));
@@ -4478,13 +4526,56 @@
       }
     }
 
+
+    function populateAuditTypeFilter() {
+      var sel = document.getElementById('filter-audit-type');
+      if (!sel) return;
+      var types = {};
+      auditLog.forEach(function(e) { types[e.targetType] = true; });
+      var val = sel.value;
+      sel.innerHTML = '<option value="">كل الأنواع</option>' + Object.keys(types).sort().map(function(t) { return '<option value="' + t + '">' + t + '</option>'; }).join('');
+      sel.value = val;
+    }
+
+    function renderAuditLog() {
+      var tbody = document.getElementById('audit-log-body');
+      if (!tbody) return;
+      var empty = document.getElementById('audit-empty');
+      if (empty) empty.style.display = 'none';
+      tbody.innerHTML = '';
+      var q = (document.getElementById('search-audit')?.value || '').toLowerCase();
+      var actFil = document.getElementById('filter-audit-action')?.value || '';
+      var typeFil = document.getElementById('filter-audit-type')?.value || '';
+      var filtered = auditLog.filter(function(e) {
+        if (actFil && e.action !== actFil) return false;
+        if (typeFil && e.targetType !== typeFil) return false;
+        if (q && (e.user||'').toLowerCase().indexOf(q) === -1 && (e.targetName||'').toLowerCase().indexOf(q) === -1 && (e.targetType||'').toLowerCase().indexOf(q) === -1 && (e.details||'').toLowerCase().indexOf(q) === -1) return false;
+        return true;
+      });
+      if (!filtered.length) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:30px;color:#888;">لا توجد نتائج تطابق البحث</td></tr>';
+        return;
+      }
+      var st = sortState['table-audit-log'];
+      if (st && st.key) filtered = sortData(filtered, st.key, st.dir);
+      else filtered = sortNewestFirst(filtered, 'time');
+      filtered.forEach(function(e) {
+        var actionLabels = { add:'إضافة', edit:'تعديل', delete:'حذف' };
+        var actionColors = { add:'#2e7d32', edit:'#1565c0', delete:'#d32f2f' };
+        var d = new Date(e.time);
+        var timeStr = d.toLocaleDateString('ar-EG') + ' ' + d.toLocaleTimeString('ar-EG', {hour:'2-digit',minute:'2-digit'});
+        var tr = document.createElement('tr');
+        tr.innerHTML = '<td style="white-space:nowrap;font-size:11px;">' + timeStr + '</td><td><b>' + (e.user||'') + '</b></td><td><span style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;color:white;background:' + (actionColors[e.action]||'#888') + ';">' + (actionLabels[e.action]||e.action) + '</span></td><td>' + (e.targetType||'') + '</td><td>' + (e.targetName||'') + '</td><td style="font-size:11px;color:#555;">' + (e.details||'') + '</td>';
+        tbody.appendChild(tr);
+      });
+    }
     function switchTab(tabId, el) {
       if (!el) el = document.querySelector(`.tab-btn[onclick*="'${tabId}'"]`) || document.querySelector(`.tab-btn[onclick*='"${tabId}"']`);
       document.querySelectorAll('.tab-content').forEach(e => e.classList.remove('active'));
       document.querySelectorAll('.tab-btn').forEach(e => e.classList.remove('active'));
       document.getElementById(tabId).classList.add('active');
       if (el) el.classList.add('active');
-      var tabNames = { 'tab-dashboard':'الرئيسية','tab-employees':'القوة','tab-housing':'السكن','tab-inventory':'المخزن','tab-vacations':'إجازات وإضافي الشئون الإدارية','tab-hospitality':'الضيافة','tab-maintenance':'الصيانة','tab-septic':'البيارات','tab-dynamic':'الإدارة المرنة','tab-excluded':'المستبعدين','tab-periodic-maint':'الصيانة الدورية','tab-tea-sugar':'شاي وسكر','tab-meal-log':'الوجبات','tab-contractors':'المقاولين','tab-bakery':'المخبز','tab-bread-supply':'توريد الخبز','tab-evaluations':'التقييمات','tab-data-exchange':'تبادل البيانات' };
+      var tabNames = { 'tab-dashboard':'الرئيسية','tab-employees':'القوة','tab-housing':'السكن','tab-inventory':'المخزن','tab-vacations':'إجازات وإضافي الشئون الإدارية','tab-hospitality':'الضيافة','tab-maintenance':'الصيانة','tab-septic':'البيارات','tab-dynamic':'الإدارة المرنة','tab-excluded':'المستبعدين','tab-periodic-maint':'الصيانة الدورية','tab-tea-sugar':'شاي وسكر','tab-meal-log':'الوجبات','tab-contractors':'المقاولين','tab-bakery':'المخبز','tab-bread-supply':'توريد الخبز','tab-evaluations':'التقييمات','tab-audit':'سجل التعديلات','tab-data-exchange':'تبادل البيانات' };
       setAction('🔍 ' + (tabNames[tabId] || tabId));
       if(tabId === 'tab-dashboard') { renderDashboard(); }
       if(tabId === 'tab-housing') { renderHousingLayout(); updateHousingStats(); }
@@ -8659,7 +8750,7 @@ function toggleEmployeeStatus(empId) {
       _dataChangedSinceBackup = false;
       var bakBtn = document.querySelector('button[onclick*="exportBackupSystem"]');
       if (bakBtn) bakBtn.classList.remove('btn-backup-pulse');
-      let data = { employees, roomsCapacity, vacations, hospitalities, maintenanceRecords, septicRecords, inventoryVouchers, excludedEmployees, periodicMaintenance, teaSugarDisbursements, teaSugarBatches, mealLogs, inventoryItems, contractors, dynamicSectors, contractorSectors, contractorRooms, dynamicRooms, dynamicSeptics, dynamicDepts, dynamicTitles, deptTitles, bakeryIngredients, bakeryProductions, bakeryContractorSupplies, bakeryInvoices, appUsers, currentUser, manualTotalBeds, adminOvertime, evaluations };
+      let data = { employees, roomsCapacity, vacations, hospitalities, maintenanceRecords, septicRecords, inventoryVouchers, excludedEmployees, periodicMaintenance, teaSugarDisbursements, teaSugarBatches, mealLogs, inventoryItems, contractors, dynamicSectors, contractorSectors, contractorRooms, dynamicRooms, dynamicSeptics, dynamicDepts, dynamicTitles, deptTitles, bakeryIngredients, bakeryProductions, bakeryContractorSupplies, bakeryInvoices, appUsers, currentUser, manualTotalBeds, adminOvertime, evaluations, auditLog };
       let blob = new Blob([JSON.stringify(data)], {type: "application/json"});
       let a = document.createElement('a'); a.href = URL.createObjectURL(blob);
       a.download = `نسخة_احتياطية_شاملة_لينه_${Date.now()}.json`; a.click();
@@ -9962,7 +10053,7 @@ function toggleEmployeeStatus(empId) {
     var debouncedSyncToSupabase = function() { setTimeout(pushToSupabase, 500); };
 
     // backward compat for old function refs
-    var DATA_KEYS = ['employees','roomsCapacity','vacations','hospitalities','maintenanceRecords','septicRecords','inventoryVouchers','inventoryItems','excludedEmployees','periodicMaintenance','teaSugarDisbursements','teaSugarBatches','mealLogs','contractors','dynamicSectors','dynamicRooms','dynamicSeptics','dynamicDepts','dynamicTitles','deptTitles','appUsers','bakeryIngredients','bakeryProductions','bakeryContractorSupplies','bakeryInvoices','currentUser','manualTotalBeds'];
+    var DATA_KEYS = ['employees','roomsCapacity','vacations','hospitalities','maintenanceRecords','septicRecords','inventoryVouchers','inventoryItems','excludedEmployees','periodicMaintenance','teaSugarDisbursements','teaSugarBatches','mealLogs','contractors','dynamicSectors','dynamicRooms','dynamicSeptics','dynamicDepts','dynamicTitles','deptTitles','appUsers','auditLog','bakeryIngredients','bakeryProductions','bakeryContractorSupplies','bakeryInvoices','currentUser','manualTotalBeds'];
 
     // -- Presence tracking (multi-device) --
     var _presencePollTimer = null;
