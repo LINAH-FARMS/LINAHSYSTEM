@@ -37,11 +37,11 @@ function saResolveName(n){
   var cSalt=saGetQty(ctrPart,'ملح',1);
   var cBran=saGetQty(ctrPart,'رده',0)||saGetQty(ctrPart,'ردة',0);
   var ctrNames=[];var noCtr=0;
-  var ctrClean=ctrPart.replace(/[\d.]+\s*(?:كجم|كيلو|باكو|لتر)?\s*(?:خميره|خميرة|ملح|رده|ردة|سولار|دقيق)\s*(?:[=:]\s*\d+)?/g,'');
+  var ctrClean=ctrPart.replace(/[\d.]+\s*(?:كجم|كيلو|باكو|لتر)?\s*(?:خميره|خميرة|ملح|رده|ردة|سولار|دقيق)\s*(?:[=:]\s*\d+)?/g,'').replace(/للمقاولين|المقاولين|وتم استخدام|وتم/g,' ');
   var ctrRe=/([\u0600-\u06FF][\u0600-\u06FF\s.]+?)\s*(\d+)(?=\s|$)/g;var cm;
   while((cm=ctrRe.exec(ctrClean))!==null){
     var cn=cm[1].trim(),cc=parseInt(cm[2]);
-    if(cc>0&&cc<(cb||99999)&&!/للمقاولين|وتم|استخدام/.test(cn)){ctrNames.push({name:cn,count:cc});noCtr+=cc;}
+    if(cc>0&&cc<(cb||99999)&&!/^[\s.\d]+$/.test(cn)){ctrNames.push({name:cn,count:cc});noCtr+=cc;}
   }
   if(ctrNames.length&&noCtr<cb){ctrNames.push({name:'باقي',count:cb-noCtr});}
   return{dt:dt,kb:kb,kf:kf,kd:kd,kr:kr,yeast:yeast,salt:salt,bran:bran,waste:waste,diesel:diesel,cb:cb,cf:cf,cYeast:cYeast,cSalt:cSalt,cBran:cBran,fl:kf+cf,ctrNames:ctrNames};
