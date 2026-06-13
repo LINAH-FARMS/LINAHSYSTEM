@@ -6579,7 +6579,7 @@ function toggleEmployeeStatus(empId) {
       let st = sortState['table-vacations'];
       if (!st || !st.key) filtered = sortNewestFirst(filtered, 'start');
       if (st && st.key) filtered = sortData(filtered, st.key, st.dir);
-      filtered.forEach((v) => {
+      filtered.forEach((v, realIdx) => {
           var sd = new Date(v.start + 'T00:00:00');
           var ed = new Date(v.end + 'T00:00:00');
           v.days = Math.round((ed - sd) / 86400000) + 1;
