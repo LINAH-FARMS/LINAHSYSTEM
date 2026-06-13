@@ -950,6 +950,7 @@
     <span style="padding:5px 12px;font-size:12px;background:#e3f2fd;color:#1565c0;border-radius:6px;">☁️ Drive <span id="drive-status" style="font-size:10px;color:#2e7d32;">✅ شغال</span></span>
     <button class="btn btn-sm admin-only" style="padding:5px 12px;font-size:12px;background:#6a1b9a;color:white;border:none;border-radius:6px;cursor:pointer;" onclick="openManageUsers()">👥 إدارة المستخدمين</button>
     <button class="btn btn-sm" style="padding:5px 12px;font-size:12px;background:#c62828;color:white;border:none;border-radius:6px;cursor:pointer;" onclick="exportPdfActiveTab()">📄 تصدير PDF</button>
+    <button class="btn btn-sm" style="padding:5px 12px;font-size:12px;background:#e65100;color:white;border:none;border-radius:6px;cursor:pointer;" onclick="exportSelectedToExcel()">📤 تصدير المحدد Excel</button>
     <button class="btn btn-sm" style="padding:5px 12px;font-size:12px;background:#1b5e20;color:white;border:none;border-radius:6px;cursor:pointer;" onclick="openDailyReport()">📋 التقرير</button>
 
     <span style="flex:1;"></span>
@@ -10861,6 +10862,39 @@ function toggleEmployeeStatus(empId) {
       link.download = filename;
       link.click();
       URL.revokeObjectURL(link.href);
+    }
+
+    function exportSelectedToExcel() {
+      var activeTab = document.querySelector('.tab-content.active');
+      if (!activeTab) { alert('⚠️ لا يوجد تبويب نشط'); return; }
+      var tables = activeTab.querySelectorAll('table');
+      if (!tables.length) { alert('⚠️ لا يوجد جداول في هذا التبويب.'); return; }
+      var selectedData = null;
+      for (var ti = 0; ti < tables.length; ti++) {
+        var tbl = tables[ti], checked = tbl.querySelectorAll('.row-check:checked');
+        if (!checked.length) continue;
+        var data = [];
+        var headerRow = (tbl.querySelector('thead') ? tbl.querySelector('thead').querySelector('tr') : null) || tbl.querySelector('tr');
+        if (headerRow) {
+          var headers = [];
+          headerRow.querySelectorAll('th, td').forEach(function(cell) { if (!cell.classList.contains('no-print')) headers.push(cell.innerText.trim()); });
+          if (headers.length) data.push(headers);
+        }
+        checked.forEach(function(cb) {
+          var row = cb.closest('tr');
+          if (!row) return;
+          var rowData = [];
+          row.querySelectorAll('td').forEach(function(cell) { if (!cell.classList.contains('no-print')) rowData.push(cell.innerText.trim()); });
+          if (rowData.length) data.push(rowData);
+        });
+        if (data.length > 1) { selectedData = data; break; }
+      }
+      if (!selectedData) { alert('⚠️ لم يتم تحديد أي صفوف.'); return; }
+      var tabName = document.querySelector('.tab-btn.active')?.innerText?.replace(/[^a-zA-Z0-9\u0600-\u06FF\s]/g,'').trim() || 'report';
+      var ws = XLSX.utils.aoa_to_sheet(selectedData);
+      var wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, tabName);
+      downloadWB(wb, tabName + '_selected.xlsx');
     }
 
     function getDXDateRange() {
