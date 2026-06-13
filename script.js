@@ -106,12 +106,18 @@ function saAnalyze(){
 function saFill(){
   window._saFilling=1;
   var g=function(id){return document.getElementById(id);};
+  var _p=window._saLastParse||{};
   if(g('bprod-date')&&g('sa-ed-dt'))g('bprod-date').value=g('sa-ed-dt').value;
   if(g('bprod-count')&&g('sa-ed-kb'))g('bprod-count').value=parseInt(g('sa-ed-kb').value);
-  var nFl=g('sa-ed-fl');if(nFl&&g('bprod-ing-ING001'))g('bprod-ing-ING001').value=parseFloat(nFl.value);
-  var nY=g('sa-ed-yeast');if(nY&&g('bprod-ing-ING002'))g('bprod-ing-ING002').value=parseFloat(nY.value);
-  var nS=g('sa-ed-salt');if(nS&&g('bprod-ing-ING003'))g('bprod-ing-ING003').value=parseFloat(nS.value);
-  var nB=g('sa-ed-bran');if(nB&&g('bprod-ing-ING004'))g('bprod-ing-ING004').value=parseFloat(nB.value);
+  // Total ingredients = farm + contractor (تخصم خامات المقاولين من المخزون)
+  var totalFlour=_p.fl||0;
+  var totalYeast=(_p.yeast||0)+(_p.cYeast||0);
+  var totalSalt=(_p.salt||0)+(_p.cSalt||0);
+  var totalBran=(_p.bran||0)+(_p.cBran||0);
+  if(g('bprod-ing-ING001'))g('bprod-ing-ING001').value=totalFlour;
+  if(g('bprod-ing-ING002'))g('bprod-ing-ING002').value=totalYeast;
+  if(g('bprod-ing-ING003'))g('bprod-ing-ING003').value=totalSalt;
+  if(g('bprod-ing-ING004'))g('bprod-ing-ING004').value=totalBran;
   var nD=g('sa-ed-diesel');if(nD&&g('bprod-ing-ING007')){
     var dv=parseFloat(nD.value);if(dv<=0||dv===33){
       var ttl=parseInt(g('sa-ed-kb').value)||0;var ctrInputs=document.querySelectorAll('[id^="sa-ed-ctr-"]:not([id*="name"])');
@@ -120,34 +126,20 @@ function saFill(){
     }
     g('bprod-ing-ING007').value=dv;
   }
-  var notes=[];var _p=window._saLastParse||{};
+  var notes=[];
   if(_p.kd>0)notes.push('تسليم مطبخ: '+_p.kd);
   if(_p.kr>0)notes.push('بالفرن احتياطي: '+_p.kr);
   if(_p.waste>0)notes.push('هالك: '+_p.waste);
+  if(_p.cb>0)notes.push('مقاولين: '+_p.cb+' رغيف');
   if(g('bprod-notes'))g('bprod-notes').value=notes.join(' | ');
-  // Auto-save production record directly
+  // Auto-save via saveBakeryProduction (تخصم من المخزون مع خامات المقاولين)
   try{
     var dt=g('sa-ed-dt')?g('sa-ed-dt').value:'';
     var bc=parseInt(g('bprod-count').value)||0;
-    if(dt&&bc>0&&typeof bakeryProductions!=='undefined'&&typeof getBakeryNextId==='function'){
+    if(dt&&bc>0&&typeof bakeryProductions!=='undefined'&&typeof saveBakeryProduction==='function'){
       var nrm=typeof normalizeDateStr==='function'?normalizeDateStr(dt):dt;
       var dup=typeof bakeryProductions.find==='function'?bakeryProductions.find(function(r){return (typeof normalizeDateStr==='function'?normalizeDateStr(r.date):r.date)===nrm;}):null;
-      if(!dup){
-        var opcost=0;var opEl=g('bprod-opcost');if(opEl)opcost=parseFloat(opEl.value)||0;
-        bakeryProductions.push({
-          id:getBakeryNextId('PROD',bakeryProductions),
-          date:nrm,breadCount:bc,
-          flourUsed:parseFloat(g('bprod-ing-ING001').value)||0,
-          yeastUsed:parseFloat(g('bprod-ing-ING002').value)||0,
-          saltUsed:parseFloat(g('bprod-ing-ING003').value)||0,
-          branUsed:parseFloat(g('bprod-ing-ING004').value)||0,
-          dieselUsed:parseFloat(g('bprod-ing-ING007').value)||0,
-          operatingCost:opcost,notes:notes.join(' | ')
-        });
-        if(typeof syncStorage==='function')syncStorage();
-        if(typeof renderBakeryProductions==='function')renderBakeryProductions();
-        var savedAuto=true;
-      }
+      if(!dup) saveBakeryProduction();
     }
   }catch(e){}
   var i=0;var saved=0;dt=g('sa-ed-dt')?g('sa-ed-dt').value:'';
