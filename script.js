@@ -7,7 +7,18 @@ function saGetQty(t,kw,def){
   if(t.indexOf(kw)>=0)return def;
   return 0;
 }
-function saParse(t){
+function saResolveName(n){
+  var map={م:'محمد',ا:'أحمد',ح:'حسن',ع:'علي',خ:'خالد',س:'سعيد',د:'درويش',عبد:'عبد',ابو:'أبو'};
+  try{
+    if(typeof contractors!=='undefined'&&contractors.length){
+      var parts=n.split(' ');var exp=parts.map(function(p){return map[p]||p;}).join(' ');
+      var m=contractors.find(function(c){return c.name===n||c.name===exp||c.name.indexOf(parts[parts.length-1])>=0;});
+      if(m)return m.name;
+      if(exp!==n){var m2=contractors.find(function(c){return c.name.indexOf(exp)>=0;});if(m2)return m2.name;}
+    }
+  }catch(e){}
+  return n;
+}
   t=saNorm(t);
   var dt='';var ds=t.match(/(\d{1,2})\s*[/-]\s*(\d{1,2})\s*[/-]\s*(\d{2,4})/);
   if(ds){var d=('0'+ds[1]).slice(-2),m=('0'+ds[2]).slice(-2),y=ds[3];if(y.length===2)y='20'+y;dt=y+'-'+m+'-'+d;}
@@ -61,7 +72,8 @@ function saAnalyze(){
     h+='<hr style="margin:6px 0;border:none;border-top:1px dashed #ccc;">';
     h+='<strong style="color:#e65100;">👷 المقاولين:</strong><div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 8px;margin-top:4px;">';
     p.ctrNames.forEach(function(c,i){
-      h+='<span style="font-size:12px;color:#555;">'+(i+1)+'. '+c.name+'</span><span><input type="number" id="sa-ed-ctr-'+i+'" data-name="'+c.name+'" value="'+c.count+'" style="width:80px;padding:2px 6px;border:1px solid #ccc;border-radius:4px;font-size:12px;font-family:Cairo;"></span>';
+      var rn=saResolveName(c.name);
+      h+='<span style="font-size:12px;color:#555;">'+(i+1)+'. '+(rn!==c.name?'<span style="color:#999;text-decoration:line-through;font-size:10px;">'+c.name+'</span> ':'')+rn+'</span><span><input type="number" id="sa-ed-ctr-'+i+'" data-name="'+rn+'" value="'+c.count+'" style="width:80px;padding:2px 6px;border:1px solid #ccc;border-radius:4px;font-size:12px;font-family:Cairo;"></span>';
     });
     h+='</div>';
   }
