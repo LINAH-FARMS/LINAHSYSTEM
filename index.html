@@ -8863,6 +8863,7 @@ function toggleEmployeeStatus(empId) {
     }
 
     function estimateBprodIngredients() {
+      if(window._saFilling)return;
       var breadCount = parseInt(document.getElementById('bprod-count').value) || 0;
       if (breadCount > 0) {
         var flourKg = breadCount / 21;
