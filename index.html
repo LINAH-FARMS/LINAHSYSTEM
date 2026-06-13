@@ -8668,8 +8668,9 @@ function toggleEmployeeStatus(empId) {
 
     function importBackupSystem(evt) {
       if (!requireAdmin()) return;
-      let file = evt.target.files[0]; if(!file) return;
+      let file = evt.target.files[0]; if(!file) { alert('لم يتم اختيار ملف'); return; }
       evt.target.value = '';
+      alert('جاري قراءة الملف... ' + file.name + ' (' + file.size + ' بايت)');
       let reader = new FileReader();
       reader.onload = function(e) {
         try {
