@@ -8413,22 +8413,51 @@ function toggleEmployeeStatus(empId) {
       if (!adminOvertime.length) { alert('⚠️ لا توجد بيانات إضافي للتصدير.'); return; }
       var year = ovViewDate.getFullYear();
       var month = ovViewDate.getMonth();
-      var monthName = ovMonthNames[month];
       var filtered = adminOvertime.filter(function(e) {
         return e.date && e.date.indexOf(year + '-' + String(month+1).padStart(2,'0')) === 0;
       });
       if (!filtered.length) { alert('⚠️ لا توجد بيانات إضافي في هذا الشهر.'); return; }
-      var data = [['تقرير الساعات الإضافية — ' + monthName + ' ' + year], []];
-      data.push(['م', 'التاريخ', 'كود الموظف', 'اسم الموظف', 'الساعات', 'ملاحظات']);
-      var total = 0;
-      filtered.forEach(function(e, i) {
-        data.push([i+1, e.date, e.empCode, stripEmoji(e.empName), Number(e.hours)||0, stripEmoji(e.notes)]);
-        total += Number(e.hours)||0;
+      var daysInMonth = new Date(year, month + 1, 0).getDate();
+      var empMap = {};
+      filtered.forEach(function(e) {
+        var day = parseInt(e.date.split('-')[2]) || 0;
+        if (!day || day > daysInMonth) return;
+        if (!empMap[e.empCode]) empMap[e.empCode] = { code: e.empCode, name: stripEmoji(e.empName), job: stripEmoji(e.notes), days: {} };
+        empMap[e.empCode].days[day] = (empMap[e.empCode].days[day] || 0) + (Number(e.hours) || 0);
+      });
+      var titleText = ovMonthNames[month] + ' ' + year;
+      var empList = Object.values(empMap);
+      empList.sort(function(a, b) { return (a.code||'').localeCompare(b.code||''); });
+      var dayHeaders = [];
+      for (var d = 1; d <= daysInMonth; d++) dayHeaders.push(d);
+      var data = [[null, null, null, null, titleText]];
+      data.push(['م', 'كود الموظف', 'الاسم', 'الوظيفة'].concat(dayHeaders).concat(['الإجمالي']));
+      empList.forEach(function(emp, i) {
+        var row = [i + 1, emp.code, emp.name, emp.job];
+        var empTotal = 0;
+        for (var d = 1; d <= daysInMonth; d++) {
+          var val = emp.days[d];
+          if (val) { row.push(val); empTotal += val; }
+          else row.push('');
+        }
+        row.push(empTotal);
+        data.push(row);
       });
       data.push([]);
-      data.push(['', '', '', 'الإجمالي', total, '']);
+      var dayTotals = [];
+      for (var d = 1; d <= daysInMonth; d++) {
+        var dt = 0;
+        empList.forEach(function(emp) { dt += emp.days[d] || 0; });
+        dayTotals.push(dt || '');
+      }
+      var grandTotal = empList.reduce(function(s, e) { var t = 0; for (var d = 1; d <= daysInMonth; d++) t += e.days[d] || 0; return s + t; }, 0);
+      if (empList.length > 0) data.push(['', '', '', 'الإجمالي'].concat(dayTotals).concat([grandTotal]));
       var ws = XLSX.utils.aoa_to_sheet(data);
-      ws['!cols'] = [{wch:4},{wch:12},{wch:12},{wch:22},{wch:10},{wch:20}];
+      if (data.length > 1) ws['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 3 + daysInMonth } }];
+      var colWidths = [{ wch: 4 }, { wch: 10 }, { wch: 22 }, { wch: 16 }];
+      for (var d = 1; d <= daysInMonth; d++) colWidths.push({ wch: 6 });
+      colWidths.push({ wch: 10 });
+      ws['!cols'] = colWidths;
       var wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, 'الإضافي');
       downloadWB(wb, 'إضافي_' + year + '-' + String(month+1).padStart(2,'0') + '.xlsx');
