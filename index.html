@@ -6583,7 +6583,7 @@ function toggleEmployeeStatus(empId) {
           var sd = new Date(v.start + 'T00:00:00');
           var ed = new Date(v.end + 'T00:00:00');
           v.days = Math.round((ed - sd) / 86400000) + 1;
-        }
+        });
         var empYear = parseInt(v.start ? v.start.substring(0, 4) : 0);
         var yearTotal = 0;
         if (empYear === currentYear) {
