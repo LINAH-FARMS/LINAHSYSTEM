@@ -6728,7 +6728,7 @@ function toggleEmployeeStatus(empId) {
             emp.vacationBalance += oldRec.days;
           }
         }
-        vacations.splice(idx, 1); syncStorage(); renderVacationsTable();
+        var v = vacations[idx]; vacations.splice(idx, 1); syncStorage(); renderVacationsTable(); if(v) logAction('delete','??????', v.name, v.code ? '????: ' + v.code : '');
         if (empCode) {
           var hasMore = vacations.some(function(v) { return v.code === empCode; });
           if (hasMore) { updateEmployeeVacationStatuses(); }
