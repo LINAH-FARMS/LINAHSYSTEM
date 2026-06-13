@@ -3973,7 +3973,7 @@
       if (deletedUsers.indexOf(d.name) !== -1) return;
       var existing = appUsers.find(function(u) { return u.name === d.name; });
       if (!existing) { appUsers.push(JSON.parse(JSON.stringify(d))); }
-      else { if (d.useEmpCode) existing.useEmpCode = true; if (d.role) existing.role = d.role; }
+      else { if (d.useEmpCode) existing.useEmpCode = true; if (d.role) existing.role = d.role; if (d.passHash) existing.passHash = d.passHash; }
     });
     // Filter out any deleted users still in appUsers
     if (deletedUsers.length > 0) appUsers = appUsers.filter(function(u) { return deletedUsers.indexOf(u.name) === -1; });
