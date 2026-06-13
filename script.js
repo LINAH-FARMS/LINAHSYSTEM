@@ -142,14 +142,15 @@ function saFill(){
       if(!dup) saveBakeryProduction();
     }
   }catch(e){}
-  var i=0;var saved=0;dt=g('sa-ed-dt')?g('sa-ed-dt').value:'';
+  var i=0;var saved=0;var totalCb=0;dt=g('sa-ed-dt')?g('sa-ed-dt').value:'';
+  var nrm=typeof normalizeDateStr==='function'?normalizeDateStr(dt):dt;
   while(g('sa-ed-ctr-'+i)){
     var cnt=parseInt(g('sa-ed-ctr-'+i).value);if(cnt>0){
+      totalCb+=cnt;
       var p=2;
       var nm='مقاول '+(i+1);var ni=g('sa-ed-ctr-name-'+i);
       if(ni&&ni.value.trim())nm=ni.value.trim();
       if(typeof bakeryContractorSupplies!=='undefined'){
-        var nrm=typeof normalizeDateStr==='function'?normalizeDateStr(dt):dt;
         var dup=typeof bakeryContractorSupplies.find==='function'?bakeryContractorSupplies.find(function(r){return r.date===nrm&&r.name===nm}):null;
         if(!dup&&typeof getBakeryNextId==='function'){
           bakeryContractorSupplies.push({id:getBakeryNextId('CTR',bakeryContractorSupplies),date:nrm,name:nm,count:cnt,price:p,paid:0,prodCost:0,revenue:cnt*p,profit:cnt*p,responsible:'',notes:'',ingredients:{}});saved++;
@@ -157,7 +158,37 @@ function saFill(){
       }
     }i++;
   }
-  if(saved>0&&typeof syncStorage==='function')syncStorage();
+  // حساب التكلفة الفعلية وتوزيعها على إجمالي الأرغفة
+  try{
+    if(typeof bakeryProductions!=='undefined'&&typeof bakeryIngredients!=='undefined'&&totalCb>0){
+      var prod=typeof bakeryProductions.find==='function'?bakeryProductions.find(function(r){return (typeof normalizeDateStr==='function'?normalizeDateStr(r.date):r.date)===nrm;}):null;
+      if(prod){
+        var ingCost=0;
+        var ingItems=[{id:'ING001',qty:prod.flourUsed},{id:'ING002',qty:prod.yeastUsed},{id:'ING003',qty:prod.saltUsed},{id:'ING004',qty:prod.branUsed},{id:'ING007',qty:prod.dieselUsed}];
+        ingItems.forEach(function(item){
+          if(item.qty<=0)return;
+          var ing=typeof bakeryIngredients.find==='function'?bakeryIngredients.find(function(i){return i.id===item.id;}):null;
+          if(ing)ingCost+=item.qty*(ing.pricePerUnit||0);
+        });
+        var totalCost=ingCost+(prod.operatingCost||0);
+        var totalLoaves=(prod.breadCount||0)+totalCb;
+        if(totalLoaves>0){
+          var costPerLoaf=totalCost/totalLoaves;
+          if(typeof bakeryContractorSupplies.forEach==='function'){
+            bakeryContractorSupplies.forEach(function(s){
+              if(s.date===nrm){
+                s.prodCost=Math.round(s.count*costPerLoaf*100)/100;
+                s.profit=Math.round((s.revenue-s.prodCost)*100)/100;
+              }
+            });
+          }
+          prod.totalIngredientCost=Math.round(ingCost*100)/100;
+          prod.costPerLoaf=Math.round(costPerLoaf*100)/100;
+        }
+      }
+    }
+  }catch(e){}
+  if(typeof syncStorage==='function')syncStorage();
   if(typeof renderBakeryContractorSupplies==='function')renderBakeryContractorSupplies();
   if(typeof updateBakeryStats==='function')updateBakeryStats();
   if(typeof updateBreadSupplyStats==='function')updateBreadSupplyStats();
