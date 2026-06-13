@@ -10797,19 +10797,61 @@ function toggleEmployeeStatus(empId) {
     };
 
     // Keyboard shortcuts for faster work
-    document.addEventListener('keydown', function(e) {
-      // Ctrl+F or Ctrl+/ to focus on the active tab's search field
-      if ((e.ctrlKey && e.key === '/') || (e.ctrlKey && e.key === 'ف')) {
+        document.addEventListener('keydown', function(e) {
+      // Ctrl+/ or Ctrl+? to focus search
+      if ((e.ctrlKey && e.key === '/') || (e.ctrlKey && e.key === '?')) {
         e.preventDefault();
         let activeTab = document.querySelector('.tab-content.active');
         if (activeTab) {
-          let searchInput = activeTab.querySelector('.search-input, input[type="text"][placeholder*="بحث"], input[type="search"]');
-          if (searchInput) searchInput.focus();
+          let si = activeTab.querySelector('.search-input, input[type="text"][placeholder*="بحث"], input[type="search"]');
+          if (si) si.focus();
         }
       }
       // Escape to close modals
       if (e.key === 'Escape') {
         document.querySelectorAll('.modal').forEach(m => m.classList.remove('open'));
+      }
+      // Arrow keys for row navigation
+      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+        let rows = document.querySelectorAll('.table-container tbody tr');
+        if (!rows.length) return;
+        e.preventDefault();
+        let sel = document.querySelector('.table-container tr.selected');
+        let idx = -1;
+        if (sel) { for (let i = 0; i < rows.length; i++) { if (rows[i] === sel) { idx = i; break; } } }
+        if (e.key === 'ArrowDown') idx = Math.min(idx + 1, rows.length - 1);
+        else idx = Math.max(idx - 1, 0);
+        rows.forEach(r => r.classList.remove('selected'));
+        rows[idx].classList.add('selected');
+        rows[idx].scrollIntoView({ block: 'nearest' });
+      }
+      // F2 - edit selected row
+      if (e.key === 'F2') {
+        e.preventDefault();
+        let sel = document.querySelector('.table-container tr.selected');
+        if (!sel) { let f = document.querySelector('.table-container tbody tr'); if (f) { f.classList.add('selected'); } return; }
+        let btns = sel.querySelectorAll('button');
+        for (let b of btns) {
+          let t = b.textContent || '';
+          if (t.indexOf('تعديل') >= 0 || t.indexOf('تسجيل') >= 0 || t.indexOf('حفظ') >= 0) { b.click(); break; }
+        }
+      }
+      // Delete key - click delete button
+      if (e.key === 'Delete' && !e.ctrlKey && !e.shiftKey) {
+        let sel = document.querySelector('.table-container tr.selected');
+        if (sel) {
+          let btns = sel.querySelectorAll('button');
+          for (let b of btns) {
+            let t = b.textContent || '';
+            if (t.indexOf('حذف') >= 0 || t.indexOf('مسح') >= 0 || t.indexOf('إزالة') >= 0) { b.click(); break; }
+          }
+        }
+      }
+      // Ctrl+N - open add modal
+      if (e.ctrlKey && e.key === 'n') {
+        e.preventDefault();
+        let addBtn = document.querySelector('.tab-content.active .btn-primary');
+        if (addBtn) addBtn.click();
       }
     });
 
