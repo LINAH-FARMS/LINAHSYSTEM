@@ -110,7 +110,7 @@ function saFill(){
   var _p=window._saLastParse||{};
   if(g('bprod-date')&&g('sa-ed-dt'))g('bprod-date').value=g('sa-ed-dt').value;
   if(g('bprod-count')&&g('sa-ed-kb'))g('bprod-count').value=parseInt(g('sa-ed-kb').value);
-  // Total ingredients = farm + contractor (تخصم خامات المقاولين من المخزون)
+  // Total ingredients (farm+contractor) in production form — تخصم مرة من المخزون
   var totalFlour=_p.fl||0;
   var totalYeast=(_p.yeast||0)+(_p.cYeast||0);
   var totalSalt=(_p.salt||0)+(_p.cSalt||0);
@@ -119,13 +119,12 @@ function saFill(){
   if(g('bprod-ing-ING002'))g('bprod-ing-ING002').value=totalYeast;
   if(g('bprod-ing-ING003'))g('bprod-ing-ING003').value=totalSalt;
   if(g('bprod-ing-ING004'))g('bprod-ing-ING004').value=totalBran;
-  var nD=g('sa-ed-diesel');if(nD&&g('bprod-ing-ING007')){
-    var dv=parseFloat(nD.value);if(dv<=0||dv===33){
-      var ttl=parseInt(g('sa-ed-kb').value)||0;var ctrInputs=document.querySelectorAll('[id^="sa-ed-ctr-"]:not([id*="name"])');
-      ctrInputs.forEach(function(x){ttl+=parseInt(x.value)||0;});
-      if(ttl>0)dv=Math.round(ttl*0.00979*100)/100;
-    }
-    g('bprod-ing-ING007').value=dv;
+  // Diesel on total bread
+  if(g('bprod-ing-ING007')){
+    var fB=parseInt(g('sa-ed-kb').value)||0;
+    var ctrInp=document.querySelectorAll('[id^="sa-ed-ctr-"]:not([id*="name"])');
+    ctrInp.forEach(function(x){fB+=parseInt(x.value)||0;});
+    g('bprod-ing-ING007').value=Math.round(fB*0.00979*100)/100;
   }
   var notes=[];
   if(_p.kd>0)notes.push('تسليم مطبخ: '+_p.kd);
@@ -133,7 +132,7 @@ function saFill(){
   if(_p.waste>0)notes.push('هالك: '+_p.waste);
   if(_p.cb>0)notes.push('مقاولين: '+_p.cb+' رغيف');
   if(g('bprod-notes'))g('bprod-notes').value=notes.join(' | ');
-  // Auto-save via saveBakeryProduction (تخصم من المخزون مع خامات المقاولين)
+  // Save production — تخصم كل الخامات من المخزون
   try{
     var dt=g('sa-ed-dt')?g('sa-ed-dt').value:'';
     var bc=parseInt(g('bprod-count').value)||0;
@@ -141,50 +140,49 @@ function saFill(){
       var nrm=typeof normalizeDateStr==='function'?normalizeDateStr(dt):dt;
       var dup=typeof bakeryProductions.find==='function'?bakeryProductions.find(function(r){return (typeof normalizeDateStr==='function'?normalizeDateStr(r.date):r.date)===nrm;}):null;
       if(!dup) saveBakeryProduction();
+      else nrm=(typeof normalizeDateStr==='function'?normalizeDateStr(dt):dt);
     }
   }catch(e){}
+  // Contractor supplies — بدون خصم (كل الخامات اتخصمت في الإنتاج)
   var i=0;var saved=0;var totalCb=0;dt=g('sa-ed-dt')?g('sa-ed-dt').value:'';
   var nrm=typeof normalizeDateStr==='function'?normalizeDateStr(dt):dt;
   var responsible=g('sa-ed-responsible')?g('sa-ed-responsible').value.trim():'';
   while(g('sa-ed-ctr-'+i)){
     var cnt=parseInt(g('sa-ed-ctr-'+i).value);if(cnt>0){
-      totalCb+=cnt;
-      var p=2;
+      totalCb+=cnt;var p=2;
       var nm='مقاول '+(i+1);var ni=g('sa-ed-ctr-name-'+i);
       if(ni&&ni.value.trim())nm=ni.value.trim();
       if(typeof bakeryContractorSupplies!=='undefined'){
         var dup=typeof bakeryContractorSupplies.find==='function'?bakeryContractorSupplies.find(function(r){return r.date===nrm&&r.name===nm}):null;
         if(!dup&&typeof getBakeryNextId==='function'){
-          bakeryContractorSupplies.push({id:getBakeryNextId('CTR',bakeryContractorSupplies),date:nrm,name:nm,count:cnt,price:p,paid:0,prodCost:0,revenue:cnt*p,profit:cnt*p,responsible:responsible,notes:'',ingredients:{}});saved++;
+          bakeryContractorSupplies.push({
+            id:getBakeryNextId('CTR',bakeryContractorSupplies),
+            date:nrm,name:nm,count:cnt,price:p,paid:0,
+            prodCost:0,revenue:cnt*p,profit:cnt*p,
+            responsible:responsible,notes:'',ingredients:{}
+          });saved++;
         }
       }
     }i++;
   }
-  // حساب التكلفة الفعلية وتوزيعها على إجمالي الأرغفة
+  // حساب التكلفة وتوزيعها بعد الخصم
   try{
     if(typeof bakeryProductions!=='undefined'&&typeof bakeryIngredients!=='undefined'&&totalCb>0){
       var prod=typeof bakeryProductions.find==='function'?bakeryProductions.find(function(r){return (typeof normalizeDateStr==='function'?normalizeDateStr(r.date):r.date)===nrm;}):null;
       if(prod){
         var ingCost=0;
-        var ingItems=[{id:'ING001',qty:prod.flourUsed},{id:'ING002',qty:prod.yeastUsed},{id:'ING003',qty:prod.saltUsed},{id:'ING004',qty:prod.branUsed},{id:'ING007',qty:prod.dieselUsed}];
-        ingItems.forEach(function(item){
+        [{id:'ING001',qty:prod.flourUsed},{id:'ING002',qty:prod.yeastUsed},{id:'ING003',qty:prod.saltUsed},{id:'ING004',qty:prod.branUsed},{id:'ING007',qty:prod.dieselUsed}].forEach(function(item){
           if(item.qty<=0)return;
           var ing=typeof bakeryIngredients.find==='function'?bakeryIngredients.find(function(i){return i.id===item.id;}):null;
           if(ing)ingCost+=item.qty*(ing.pricePerUnit||0);
         });
         var totalCost=ingCost+(prod.operatingCost||0);
         var totalLoaves=(prod.breadCount||0)+totalCb;
-        if(totalLoaves>0){
+        if(totalLoaves>0&&typeof bakeryContractorSupplies.forEach==='function'){
           var costPerLoaf=totalCost/totalLoaves;
-          if(typeof bakeryContractorSupplies.forEach==='function'){
-            bakeryContractorSupplies.forEach(function(s){
-              if(s.date===nrm){
-                s.prodCost=Math.round(s.count*costPerLoaf*100)/100;
-                s.profit=Math.round((s.revenue-s.prodCost)*100)/100;
-              }
-            });
-          }
-          prod.totalIngredientCost=Math.round(ingCost*100)/100;
+          bakeryContractorSupplies.forEach(function(s){
+            if(s.date===nrm){s.prodCost=Math.round(s.count*costPerLoaf*100)/100;s.profit=Math.round((s.revenue-s.prodCost)*100)/100;}
+          });
           prod.costPerLoaf=Math.round(costPerLoaf*100)/100;
         }
       }
