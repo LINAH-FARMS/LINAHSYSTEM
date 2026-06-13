@@ -10811,12 +10811,14 @@ function toggleEmployeeStatus(empId) {
       if (e.key === 'Escape') {
         document.querySelectorAll('.modal').forEach(m => m.classList.remove('open'));
       }
-      // Arrow keys for row navigation
+      // Arrow keys for row navigation (up/down)
       if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
-        let rows = document.querySelectorAll('.table-container tbody tr');
+        let table = document.querySelector('.tab-content.active table');
+        if (!table) return;
+        let rows = table.querySelectorAll('tbody tr');
         if (!rows.length) return;
         e.preventDefault();
-        let sel = document.querySelector('.table-container tr.selected');
+        let sel = table.querySelector('tr.selected');
         let idx = -1;
         if (sel) { for (let i = 0; i < rows.length; i++) { if (rows[i] === sel) { idx = i; break; } } }
         if (e.key === 'ArrowDown') idx = Math.min(idx + 1, rows.length - 1);
