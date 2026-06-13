@@ -99,6 +99,7 @@ function saAnalyze(){
         +'</span>';
     });
     h+='</div>';
+    h+='<div style="margin-top:6px;display:flex;align-items:center;gap:6px;"><span style="font-size:12px;color:#555;white-space:nowrap;">👤 المسئول:</span><input type="text" id="sa-ed-responsible" style="flex:1;padding:2px 6px;border:1px solid #ccc;border-radius:4px;font-size:12px;font-family:Cairo;"></div>';
   }
   h+='<div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;"><button onclick="saFill()" style="padding:6px 16px;background:#1b5e20;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;font-family:Cairo;">📋 تعبئة + توريد مقاولين</button><button onclick="saClear()" style="padding:6px 16px;background:#757575;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;font-family:Cairo;">✕ مسح</button></div>';
   h+='</div>';res.innerHTML=h;
@@ -144,6 +145,7 @@ function saFill(){
   }catch(e){}
   var i=0;var saved=0;var totalCb=0;dt=g('sa-ed-dt')?g('sa-ed-dt').value:'';
   var nrm=typeof normalizeDateStr==='function'?normalizeDateStr(dt):dt;
+  var responsible=g('sa-ed-responsible')?g('sa-ed-responsible').value.trim():'';
   while(g('sa-ed-ctr-'+i)){
     var cnt=parseInt(g('sa-ed-ctr-'+i).value);if(cnt>0){
       totalCb+=cnt;
@@ -153,7 +155,7 @@ function saFill(){
       if(typeof bakeryContractorSupplies!=='undefined'){
         var dup=typeof bakeryContractorSupplies.find==='function'?bakeryContractorSupplies.find(function(r){return r.date===nrm&&r.name===nm}):null;
         if(!dup&&typeof getBakeryNextId==='function'){
-          bakeryContractorSupplies.push({id:getBakeryNextId('CTR',bakeryContractorSupplies),date:nrm,name:nm,count:cnt,price:p,paid:0,prodCost:0,revenue:cnt*p,profit:cnt*p,responsible:'',notes:'',ingredients:{}});saved++;
+          bakeryContractorSupplies.push({id:getBakeryNextId('CTR',bakeryContractorSupplies),date:nrm,name:nm,count:cnt,price:p,paid:0,prodCost:0,revenue:cnt*p,profit:cnt*p,responsible:responsible,notes:'',ingredients:{}});saved++;
         }
       }
     }i++;
