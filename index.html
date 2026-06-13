@@ -1539,12 +1539,12 @@
         <label>نوع الصيانة <span style="color:red;">*</span></label>
         <select id="maint-category" style="width:100%;padding:6px;border:2px solid #e0e0e0;border-radius:6px;font-size:12px;">
           <option value="">-- اختر نوع الصيانة --</option>
-          <option value="🧹 نظافة عامة">🧹 نظافة عامة</option>
-          <option value="⚡ كهرباء">⚡ كهرباء</option>
-          <option value="💧 سباكة">💧 سباكة</option>
-          <option value="❄️ تكييف">❄️ تكييف</option>
-          <option value="🪚 نجارة">🪚 نجارة</option>
-          <option value="🏗️ إنشاءات">🏗️ إنشاءات</option>
+          <option value="نظافة عامة">نظافة عامة</option>
+          <option value="كهرباء">كهرباء</option>
+          <option value="سباكة">سباكة</option>
+          <option value="تكييف">تكييف</option>
+          <option value="نجارة">نجارة</option>
+          <option value="إنشاءات">إنشاءات</option>
         </select>
       </div>
       <div class="form-group">
@@ -6900,7 +6900,7 @@ function toggleEmployeeStatus(empId) {
       let rec = maintenanceRecords[idx];
       if (!rec) return;
       if (!canEditRecord(rec.date)) { alert('⛔ لا يمكن تعديل سجلات الأيام السابقة'); return; }
-      let cats = ['🧹 نظافة عامة','⚡ كهرباء','💧 سباكة','❄️ تكييف','🪚 نجارة','🏗️ إنشاءات'];
+      let cats = ['نظافة عامة','كهرباء','سباكة','تكييف','نجارة','إنشاءات'];
       let curCat = rec.category || '';
       let newCat = prompt("نوع الصيانة (" + cats.join(' / ') + "):", curCat);
       if (newCat === null) return;
@@ -7717,9 +7717,9 @@ function toggleEmployeeStatus(empId) {
 
     function exportEmployeesToExcel() {
       let data = employees.map(e => ({
-        "الكود": e.code || "", "اسم الموظف رباعي": e.name || "", "نوع التعاقد": e.contract || "دائم",
-        "رقم الموبايل": e.nationalId || "", "تاريخ التعيين": e.hireDate || "", "الإدارة": e.dept || "", "الوظيفة": e.title || "",
-        "المحافظة": e.gov || "", "المبنى السكني": e.sector || "", "رقم الغرفة": e.room || "", "الموقف (P/V)": e.status || "P",
+        "الكود": e.code || "", "اسم الموظف رباعي": stripEmoji(e.name), "نوع التعاقد": e.contract || "دائم",
+        "رقم الموبايل": e.nationalId || "", "تاريخ التعيين": e.hireDate || "", "الإدارة": stripEmoji(e.dept), "الوظيفة": stripEmoji(e.title),
+        "المحافظة": stripEmoji(e.gov), "المبنى السكني": e.sector || "", "رقم الغرفة": e.room || "", "الموقف (P/V)": e.status || "P",
         "الرصيد السنوي": typeof e.vacationBalance === 'number' ? e.vacationBalance : 30
       }));
       let ws = XLSX.utils.json_to_sheet(data); let wb = XLSX.utils.book_new();
@@ -7912,7 +7912,7 @@ function toggleEmployeeStatus(empId) {
     function exportTeaSugarToExcel() {
       let data = teaSugarDisbursements.map(t => {
         let emp = employees.find(e => (e.id || e.code) == t.empId || e.name === t.empName);
-        return { "كود الموظف": (emp && emp.code) ? emp.code : (t.empCode || ''), "اسم الموظف": emp ? emp.name : t.empName, "الإدارة": emp ? emp.dept : (t.empDept || ''), "الوظيفة": emp ? emp.title : (t.empTitle || ''), "الدورة": t.period, "الشاي (باكيت)": t.teaPacks, "السكر (كجم)": t.sugarKg, "تاريخ الصرف": t.date };
+        return { "كود الموظف": (emp && emp.code) ? emp.code : (t.empCode || ''), "اسم الموظف": stripEmoji(emp ? emp.name : t.empName), "الإدارة": stripEmoji(emp ? emp.dept : (t.empDept || '')), "الوظيفة": stripEmoji(emp ? emp.title : (t.empTitle || '')), "الدورة": t.period, "الشاي (باكيت)": t.teaPacks, "السكر (كجم)": t.sugarKg, "تاريخ الصرف": t.date };
       });
       let ws = XLSX.utils.json_to_sheet(data); let wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, "صرف الشاي والسكر"); XLSX.writeFile(wb, `تقرير_صرف_الشاي_والسكر_${new Date().toLocaleDateString('ar-EG').replace(/\//g,'-')}.xlsx`);
@@ -8040,9 +8040,14 @@ function toggleEmployeeStatus(empId) {
     }
 
     function exportVacationsToExcel() {
-      let data = vacations.map(v => ({ "كود الموظف": v.code || '', "اسم الموظف": v.name, "البيان": v.info || '', "تاريخ البداية": v.start || '', "عدد الأيام": v.days || '', "تاريخ النهاية": v.end || '', "تاريخ السفر": v.travelDate || '', "آخر يوم عمل": v.lastWorkDay || '', "تاريخ الرجوع": v.returnDate || '', "ملاحظات": v.notes || '' }));
+      let data = vacations.map(v => ({ "كود الموظف": v.code || '', "اسم الموظف": stripEmoji(v.name), "البيان": stripEmoji(v.info), "تاريخ البداية": v.start || '', "عدد الأيام": v.days || '', "تاريخ النهاية": v.end || '', "تاريخ السفر": v.travelDate || '', "آخر يوم عمل": v.lastWorkDay || '', "تاريخ الرجوع": v.returnDate || '', "ملاحظات": stripEmoji(v.notes) }));
       let ws = XLSX.utils.json_to_sheet(data); let wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, "الإجازات"); XLSX.writeFile(wb, `تقرير_الإجازات_${new Date().toLocaleDateString('ar-EG').replace(/\//g,'-')}.xlsx`);
+    }
+    function exportHospitalityToExcel() {
+      let data = hospitalities.map(h => ({ "اسم الضيف": stripEmoji(h.name), "نوع الزيارة": stripEmoji(h.type), "المسمى": stripEmoji(h.title), "عدد الضيوف": h.guests || 1, "تاريخ الوصول": h.arrival || '', "تاريخ المغادرة": h.departure || '', "الوجبات": (h.meals||[]).map(function(x){return stripEmoji(x);}).join(', ') }));
+      let ws = XLSX.utils.json_to_sheet(data); let wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "الضيافة"); XLSX.writeFile(wb, `تقرير_الضيافة_${new Date().toLocaleDateString('ar-EG').replace(/\//g,'-')}.xlsx`);
     }
 
     function exportHospitalityToExcel() {
@@ -8052,18 +8057,18 @@ function toggleEmployeeStatus(empId) {
     }
 
     function downloadTemplate_Maintenance() {
-      let data = [{ "النوع": "⚡ كهرباء", "المهمة": "صيانة مكيف", "الفني المسؤول": "أحمد علي", "الحالة": "مفتوحة", "الخامات": "مروحة × 1", "ملاحظات": "", "التاريخ": "2026-01-01" }];
+      let data = [{ "النوع": "كهرباء", "المهمة": "صيانة مكيف", "الفني المسؤول": "أحمد علي", "الحالة": "مفتوحة", "الخامات": "مروحة × 1", "ملاحظات": "", "التاريخ": "2026-01-01" }];
       let ws = XLSX.utils.json_to_sheet(data); let wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, "الصيانة"); XLSX.writeFile(wb, "نموذج_الصيانة_مزارع_لينه.xlsx");
     }
     function exportMaintenanceToExcel() {
       let data = maintenanceRecords.map(m => ({
-        "النوع": m.category || '',
-        "المهمة": m.task,
-        "الفني المسؤول": m.tech || '',
-        "الحالة": m.status || 'مفتوحة',
-        "الخامات": (m.materials && m.materials.length) ? m.materials.map(function(x){return x.name+' × '+x.qty+' '+x.unit;}).join('، ') : '',
-        "ملاحظات": m.notes || '',
+        "النوع": stripEmoji(m.category),
+        "المهمة": stripEmoji(m.task),
+        "الفني المسؤول": stripEmoji(m.tech),
+        "الحالة": stripEmoji(m.status),
+        "الخامات": (m.materials && m.materials.length) ? m.materials.map(function(x){return stripEmoji(x.name)+' × '+x.qty+' '+(x.unit||'');}).join('، ') : '',
+        "ملاحظات": stripEmoji(m.notes),
         "التاريخ": m.date || ''
       }));
       let ws = XLSX.utils.json_to_sheet(data); let wb = XLSX.utils.book_new();
@@ -8144,9 +8149,14 @@ function toggleEmployeeStatus(empId) {
     }
 
     function exportSepticToExcel() {
-      let data = septicRecords.map(s => ({ "اسم البيارة": s.name, "عدد النقلات": s.trips || 0, "الصرف (م³)": (s.trips || 0) * 5, "المشرف": s.supervisor || '', "التوقيت": s.time || '', "التاريخ": s.date || '' }));
+      let data = septicRecords.map(s => ({ "اسم البيارة": stripEmoji(s.name), "عدد النقلات": s.trips || 0, "الصرف (م³)": (s.trips || 0) * 5, "المشرف": stripEmoji(s.supervisor), "التوقيت": s.time || '', "التاريخ": s.date || '' }));
       let ws = XLSX.utils.json_to_sheet(data); let wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, "البيارات"); XLSX.writeFile(wb, `تقرير_البيارات_${new Date().toLocaleDateString('ar-EG').replace(/\//g,'-')}.xlsx`);
+    }
+    function exportPeriodicMaintToExcel() {
+      let data = periodicMaintenance.map(p => ({ "المهمة": stripEmoji(p.name), "الدورية": p.freq, "تاريخ البداية": p.startDate || '', "آخر تنفيذ": p.lastDone || '', "التالي": p.nextDue || '', "الحالة": stripEmoji(p.status) }));
+      let ws = XLSX.utils.json_to_sheet(data); let wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "الصيانة الدورية"); XLSX.writeFile(wb, `تقرير_الصيانة_الدورية_${new Date().toLocaleDateString('ar-EG').replace(/\//g,'-')}.xlsx`);
     }
 
     function exportPeriodicMaintToExcel() {
@@ -8156,9 +8166,14 @@ function toggleEmployeeStatus(empId) {
     }
 
     function exportMealLogToExcel() {
-      let data = mealLogs.map(m => { var g = calcHospGuestsForDate(m.date); return { "التاريخ": m.date, "الإفطار": m.breakfast || 0, "الغداء": m.lunch || 0, "العشاء": m.dinner || 0, "ضيوف الإفطار": g.gBf, "ضيوف الغداء": g.gLh, "ضيوف العشاء": g.gDn }; });
+      let data = mealLogs.map(m => ({ "التاريخ": m.date, "إفطار": m.breakfast||0, "غداء": m.lunch||0, "عشاء": m.dinner||0, "الشيف": stripEmoji(m.chef), "ملاحظات": stripEmoji(m.notes) }));
       let ws = XLSX.utils.json_to_sheet(data); let wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, "الوجبات"); XLSX.writeFile(wb, `تقرير_الوجبات_${new Date().toLocaleDateString('ar-EG').replace(/\//g,'-')}.xlsx`);
+    }
+    function exportContractorsToExcel() {
+      let data = contractors.map(c => ({ "الاسم": stripEmoji(c.name), "التليفون": c.phone||'', "التخصص": stripEmoji(c.specialty), "ملاحظات": stripEmoji(c.notes) }));
+      let ws = XLSX.utils.json_to_sheet(data); let wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "المقاولين"); XLSX.writeFile(wb, `تقرير_المقاولين_${new Date().toLocaleDateString('ar-EG').replace(/\//g,'-')}.xlsx`);
     }
 
     function exportContractorsToExcel() {
@@ -8220,19 +8235,19 @@ function toggleEmployeeStatus(empId) {
     function exportExcludedToExcel() {
       let data = excludedEmployees.map(e => ({
         "كود الموظف": e.code || '',
-        "اسم الموظف": e.name,
+        "اسم الموظف": stripEmoji(e.name),
         "نوع التعاقد": e.contract || '—',
         "رقم الموبايل": e.nationalId || '—',
         "تاريخ التعيين": e.hireDate || '—',
-        "الإدارة": e.dept || '',
-        "المسمى الوظيفي": e.title || '',
-        "المحافظة": e.gov || '—',
+        "الإدارة": stripEmoji(e.dept),
+        "المسمى الوظيفي": stripEmoji(e.title),
+        "المحافظة": stripEmoji(e.gov),
         "المبنى السكني": e.sector || '—',
         "رقم الغرفة": e.room || '—',
         "الموقف قبل الاستبعاد": e.status === 'P' ? 'تواجد' : 'إجازة',
-        "العهدة وقت المغادرة": e.assetsStr || e.assets || '—',
+        "العهدة وقت المغادرة": (e.assetsStr||e.assets||'').toString().replace(/[^\u0600-\u06FF\u0660-\u0669\u0020-\u007E\s]/g,'').trim() || '—',
         "تاريخ الاستبعاد": e.date || '',
-        "سبب الاستبعاد": e.reason || ''
+        "سبب الاستبعاد": stripEmoji(e.reason)
       }));
       let ws = XLSX.utils.json_to_sheet(data); let wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, "المستبعدين"); XLSX.writeFile(wb, `تقرير_المستبعدين_${new Date().toLocaleDateString('ar-EG').replace(/\//g,'-')}.xlsx`);
@@ -8426,7 +8441,7 @@ function toggleEmployeeStatus(empId) {
       data.push(['م', 'التاريخ', 'كود الموظف', 'اسم الموظف', 'الساعات', 'ملاحظات']);
       var total = 0;
       filtered.forEach(function(e, i) {
-        data.push([i+1, e.date, e.empCode, e.empName, Number(e.hours)||0, e.notes||'']);
+        data.push([i+1, e.date, e.empCode, stripEmoji(e.empName), Number(e.hours)||0, stripEmoji(e.notes)]);
         total += Number(e.hours)||0;
       });
       data.push([]);
@@ -8858,10 +8873,10 @@ function toggleEmployeeStatus(empId) {
       if (!from || !to) return alert('⚠️ اختر تاريخ البداية والنهاية.');
       let rows = [];
       bakeryContractorSupplies.filter(c => c.date >= from && c.date <= to).forEach(c => {
-        rows.push({ 'التاريخ': c.date, 'النوع': 'توريد مقاول', 'المقاول': c.name, 'عدد الأرغفة': c.count, 'سعر الوحدة': c.price, 'الإجمالي': ((c.count||0)*(c.price||0)).toFixed(2), 'المدفوع': (c.paid||0).toFixed(2) });
+        rows.push({ 'التاريخ': c.date, 'النوع': 'توريد مقاول', 'المقاول': stripEmoji(c.name), 'عدد الأرغفة': c.count, 'سعر الوحدة': c.price, 'الإجمالي': ((c.count||0)*(c.price||0)).toFixed(2), 'المدفوع': (c.paid||0).toFixed(2) });
       });
       bakeryInvoices.filter(i => i.date >= from && i.date <= to).forEach(i => {
-        rows.push({ 'التاريخ': i.date, 'النوع': 'فاتورة', 'العميل': i.customer, 'عدد الأرغفة': i.count, 'سعر الوحدة': i.unitPrice, 'الإجمالي': ((i.count||0)*(i.unitPrice||0)).toFixed(2), 'المدفوع': (i.paid||0).toFixed(2) });
+        rows.push({ 'التاريخ': i.date, 'النوع': 'فاتورة', 'العميل': stripEmoji(i.customer), 'عدد الأرغفة': i.count, 'سعر الوحدة': i.unitPrice, 'الإجمالي': ((i.count||0)*(i.unitPrice||0)).toFixed(2), 'المدفوع': (i.paid||0).toFixed(2) });
       });
       if (rows.length === 0) return alert('لا توجد بيانات.');
       let ws = XLSX.utils.json_to_sheet(rows);
@@ -9451,17 +9466,35 @@ function toggleEmployeeStatus(empId) {
     function exportBakeryInvoicesToExcel() {
       if (bakeryInvoices.length === 0) return alert('لا توجد فواتير للتصدير.');
       let rows = bakeryInvoices.map(i => ({
-        'رقم الفاتورة': i.number, 'التاريخ': i.date, 'العميل': i.customer,
+        'رقم الفاتورة': i.number, 'التاريخ': i.date, 'العميل': stripEmoji(i.customer),
         'عدد الأرغفة': i.count, 'سعر الوحدة': i.unitPrice,
         'الإجمالي': (i.count*i.unitPrice).toFixed(2),
         'المدفوع': parseFloat(i.paid).toFixed(2),
         'المتبقي': ((i.count*i.unitPrice)-parseFloat(i.paid)).toFixed(2),
-        'ملاحظات': i.notes||''
+        'ملاحظات': stripEmoji(i.notes)
       }));
       let ws = XLSX.utils.json_to_sheet(rows);
       let wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, 'فواتير الفرن');
       XLSX.writeFile(wb, 'فواتير_الفرن.xlsx');
+    }
+    function exportBakeryIngredientsToExcel() {
+      if (!bakeryIngredients.length) return alert('لا توجد خامات للتصدير.');
+      let rows = bakeryIngredients.map(i => ({ 'الكود': i.id, 'الاسم': stripEmoji(i.name), 'الوحدة': i.unit, 'الكمية الحالية': i.currentQty||0, 'الحد الأدنى': i.minQty||0, 'سعر الوحدة': i.pricePerUnit||0 }));
+      let ws = XLSX.utils.json_to_sheet(rows); let wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'خامات الفرن'); XLSX.writeFile(wb, 'خامات_الفرن.xlsx');
+    }
+    function exportBakeryProductionToExcel() {
+      if (!bakeryProductions.length) return alert('لا توجد بيانات إنتاج للتصدير.');
+      let rows = bakeryProductions.map(p => ({ 'التاريخ': p.date, 'عدد الأرغفة': p.breadCount, 'دقيق (كجم)': p.flourUsed||0, 'خميرة (كجم)': p.yeastUsed||0, 'ملح (كجم)': p.saltUsed||0, 'ردة (كجم)': p.branUsed||0, 'سولار (لتر)': p.dieselUsed||0, 'تكلفة التشغيل': p.operatingCost||0, 'ملاحظات': stripEmoji(p.notes) }));
+      let ws = XLSX.utils.json_to_sheet(rows); let wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'إنتاج الفرن'); XLSX.writeFile(wb, 'إنتاج_الفرن.xlsx');
+    }
+    function exportBakeryContractorSuppliesToExcel() {
+      if (!bakeryContractorSupplies.length) return alert('لا توجد توريدات للتصدير.');
+      let rows = bakeryContractorSupplies.map(c => ({ 'التاريخ': c.date, 'المقاول': stripEmoji(c.name), 'عدد الأرغفة': c.count, 'سعر الوحدة': c.price, 'الإجمالي': ((c.count||0)*(c.price||0)).toFixed(2), 'المدفوع': parseFloat(c.paid||0).toFixed(2), 'المتبقي': (((c.count||0)*(c.price||0))-parseFloat(c.paid||0)).toFixed(2), 'المسؤول': stripEmoji(c.responsible), 'ملاحظات': stripEmoji(c.notes) }));
+      let ws = XLSX.utils.json_to_sheet(rows); let wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'توريد مقاولين'); XLSX.writeFile(wb, 'توريد_مقاولين_الفرن.xlsx');
     }
 
     function exportBakeryIngredientsToExcel() {
@@ -10881,6 +10914,8 @@ function toggleEmployeeStatus(empId) {
       return buf;
     }
 
+    function stripEmoji(s) { return (s||'').replace(/[^\u0600-\u06FF\u0660-\u0669\u0020-\u007E\u066A-\u066D\u066E-\u06FF\s]/g,'').trim(); }
+
     function downloadWB(wb, filename) {
       var wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'binary' });
       var blob = new Blob([s2ab(wbout)], { type: 'application/octet-stream' });
@@ -10904,14 +10939,14 @@ function toggleEmployeeStatus(empId) {
         var headerRow = (tbl.querySelector('thead') ? tbl.querySelector('thead').querySelector('tr') : null) || tbl.querySelector('tr');
         if (headerRow) {
           var headers = [];
-          headerRow.querySelectorAll('th, td').forEach(function(cell) { if (!cell.classList.contains('no-print')) headers.push(cell.innerText.trim()); });
+          headerRow.querySelectorAll('th, td').forEach(function(cell) { if (!cell.classList.contains('no-print')) headers.push(stripEmoji(cell.innerText)); });
           if (headers.length) data.push(headers);
         }
         checked.forEach(function(cb) {
           var row = cb.closest('tr');
           if (!row) return;
           var rowData = [];
-          row.querySelectorAll('td').forEach(function(cell) { if (!cell.classList.contains('no-print')) rowData.push(cell.innerText.trim()); });
+          row.querySelectorAll('td').forEach(function(cell) { if (!cell.classList.contains('no-print')) rowData.push(stripEmoji(cell.innerText)); });
           if (rowData.length) data.push(rowData);
         });
         if (data.length > 1) { selectedData = data; break; }
@@ -11497,16 +11532,16 @@ function toggleEmployeeStatus(empId) {
           kpiDetail = e.tasks.map(function(t) { return t.name + ': ' + t.score + '/' + t.max; }).join(' | ');
         }
         return {
-          "الموظف": e.empName,
-          "المسمى الوظيفي": e.empTitle || '',
-          "الإدارة": e.empDept || '',
+          "الموظف": stripEmoji(e.empName),
+          "المسمى الوظيفي": stripEmoji(e.empTitle),
+          "الإدارة": stripEmoji(e.empDept),
           "الشهر": monthNames[parseInt(e.month)] || e.month,
           "السنة": e.year,
           "مجموع KPIs": (isPr ? e.totalScore : e.totalScore || '—') + ' / ' + (isPr ? e.maxScore : e.maxScore || '—'),
           "خصم سلوكي": isPr ? (e.deduction || 0) : '—',
           "Bonus": isPr ? (e.bonus || 0) : '—',
           "الدرجة النهائية": isPr ? e.adjustedScore : (e.percentage !== undefined ? e.percentage + '%' : '—'),
-          "التقدير": e.grade || '',
+          "التقدير": stripEmoji(e.grade),
           "تفاصيل KPIs": kpiDetail,
           "ملاحظات": e.notes || ''
         };
