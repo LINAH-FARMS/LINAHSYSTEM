@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8">
@@ -118,6 +118,42 @@
     .tab-content.active {
       display: block;
     }
+
+    .ov-day-cell {
+      min-height:64px;
+      padding:4px;
+      border:1px solid #e0e0e0;
+      border-radius:4px;
+      font-size:11px;
+      cursor:pointer;
+      transition:background .15s;
+      position:relative;
+    }
+    .ov-day-cell:hover { background:#fff3e0; }
+    .ov-day-cell.ov-today { border-color:#e65100; border-width:2px; }
+    .ov-day-cell.ov-other-month { opacity:0.35; }
+    .ov-day-cell .ov-day-num { font-weight:700; font-size:13px; margin-bottom:2px; }
+    .ov-day-cell .ov-entry { background:#e65100; color:#fff; border-radius:3px; padding:1px 3px; margin:1px 0; font-size:10px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; direction:ltr; }
+    .ov-day-cell .ov-add { position:absolute; bottom:2px; right:2px; color:#e65100; font-size:12px; font-weight:700; }
+    .ov-modal-overlay {
+      position:fixed;top:0;left:0;right:0;bottom:0;
+      background:rgba(0,0,0,.4);
+      display:flex;align-items:center;justify-content:center;
+      z-index:9999;
+    }
+    .ov-modal {
+      background:#fff;border-radius:10px;padding:18px;
+      width:340px;max-width:90vw;
+      box-shadow:0 4px 20px rgba(0,0,0,.2);
+      direction:rtl;
+    }
+    .ov-modal h4 { margin:0 0 10px; font-size:14px; color:#e65100; }
+    .ov-modal select, .ov-modal input { width:100%; padding:6px 8px; border:1px solid #ccc; border-radius:4px; font-size:13px; margin-bottom:8px; box-sizing:border-box; }
+    .ov-modal .ov-modal-actions { display:flex; gap:8px; justify-content:flex-start; }
+    .ov-modal .ov-modal-actions button { padding:6px 14px; border-radius:4px; border:1px solid #ccc; cursor:pointer; font-size:12px; }
+    .ov-entries-list { margin-top:6px; }
+    .ov-entries-list .ov-entry-row { display:flex; justify-content:space-between; align-items:center; padding:2px 4px; background:#f5f5f5; border-radius:3px; margin:1px 0; font-size:11px; }
+    .ov-entries-list .ov-entry-row button { border:none; background:transparent; color:#c62828; cursor:pointer; font-size:13px; }
 
     .stats-container {
       display: grid;
@@ -926,7 +962,7 @@
     <button class="tab-btn" onclick="switchTab('tab-employees')">👤 القوة <span class="tab-badge" id="badge-emp">0</span></button>
     <button class="tab-btn" onclick="switchTab('tab-housing')">🏠 السكن <span class="tab-badge blue" id="badge-housing">0</span></button>
     <button class="tab-btn" onclick="switchTab('tab-inventory')">📦 طلبات صرف المخزن <span class="tab-badge purple" id="badge-inv">0</span></button>
-    <button class="tab-btn" onclick="switchTab('tab-vacations')">📅 الإجازات <span class="tab-badge orange" id="badge-vac">0</span></button>
+    <button class="tab-btn" onclick="switchTab('tab-vacations')">📅 إجازات وإضافي الشئون الإدارية <span class="tab-badge orange" id="badge-vac">0</span></button>
     <button class="tab-btn" onclick="switchTab('tab-hospitality')">🛎️ الضيافة <span class="tab-badge" id="badge-hosp">0</span></button>
     <button class="tab-btn" onclick="switchTab('tab-maintenance')">🛠️ الصيانة <span class="tab-badge" id="badge-maint">0</span></button>
     <button class="tab-btn" onclick="switchTab('tab-septic')">🚛 البيارات <span class="tab-badge" id="badge-septic">0</span></button>
@@ -1397,7 +1433,27 @@
         <tbody id="vacations-table-body"></tbody>
       </table>
     </div>
-  </div>
+    <hr style="margin:20px 0;border:none;border-top:2px dashed #ff9800;">
+    <div style="background:#fff;border-radius:10px;box-shadow:0 1px 6px rgba(0,0,0,.08);overflow:hidden;">
+      <div style="background:#e65100;color:#fff;padding:8px 14px;font-size:14px;font-weight:700;display:flex;justify-content:space-between;align-items:center;">
+        <span>⏰ إضافي يومي — الشئون الإدارية</span>
+        <span style="font-size:12px;font-weight:400;">(ما عدا سائقين وممرضين)</span>
+      </div>
+      <div style="padding:10px;">
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;">
+          <button onclick="ovPrevMonth()" style="padding:4px 10px;border:1px solid #ccc;background:#fff;border-radius:4px;cursor:pointer;font-size:16px;">◀</button>
+          <span id="ov-month-label" style="font-size:15px;font-weight:700;color:#333;min-width:140px;text-align:center;"></span>
+          <button onclick="ovNextMonth()" style="padding:4px 10px;border:1px solid #ccc;background:#fff;border-radius:4px;cursor:pointer;font-size:16px;">▶</button>
+          <button onclick="renderOvertimeCalendar()" style="padding:4px 10px;border:1px solid #ccc;background:#fff;border-radius:4px;cursor:pointer;font-size:12px;">🗓️ اليوم</button>
+          <div style="flex:1;"></div>
+          <span style="font-size:11px;color:#888;">مجموع الساعات: <b id="ov-month-total">0</b></span>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;text-align:center;font-size:11px;color:#888;margin-bottom:4px;">
+          <div>أحد</div><div>إثنين</div><div>ثلاثاء</div><div>أربعاء</div><div>خميس</div><div>جمعة</div><div>سبت</div>
+        </div>
+        <div id="ov-calendar-grid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;"></div>
+      </div>
+    </div>
 
   <div id="tab-hospitality" class="tab-content">
     <div class="control-panel no-print" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; align-items: flex-end;">
@@ -3493,6 +3549,7 @@
     let bakeryContractorSupplies = JSON.parse(localStorage.getItem('linah_bakery_ctr_supplies')) || [];
     let bakeryInvoices = JSON.parse(localStorage.getItem('linah_bakery_invoices')) || [];
     let bakeryStockLog = JSON.parse(localStorage.getItem('linah_bakery_stock_log')) || [];
+    let adminOvertime = JSON.parse(localStorage.getItem('lineh_admin_overtime')) || [];
 
     let dynamicSectors = JSON.parse(localStorage.getItem('dyn_sectors')) || ["A", "B", "فاليو", "الورشة", "سكن إداري", "سكن البوابه", "سكن العمال 1", "سكن العمال 2", "سكن العمال 3", "سكن العمال 4", "كرفان", "سكن المهندسين"];
     let contractorSectors = JSON.parse(localStorage.getItem('ctr_sectors')) || ["قطاع 22", "قطاع 3", "فاليو", "خيمة"];
@@ -4137,6 +4194,7 @@
       localStorage.setItem('linah_bakery_ctr_supplies', JSON.stringify(bakeryContractorSupplies));
       localStorage.setItem('linah_bakery_invoices', JSON.stringify(bakeryInvoices));
       localStorage.setItem('linah_bakery_stock_log', JSON.stringify(bakeryStockLog));
+      localStorage.setItem('lineh_admin_overtime', JSON.stringify(adminOvertime));
       calculateSystemStats();
       if (!skipSync) syncToServer();
       if (!noTimestamp) localStorage.setItem('_localChangeTime', Date.now());
@@ -4422,7 +4480,7 @@
       document.querySelectorAll('.tab-btn').forEach(e => e.classList.remove('active'));
       document.getElementById(tabId).classList.add('active');
       if (el) el.classList.add('active');
-      var tabNames = { 'tab-dashboard':'الرئيسية','tab-employees':'القوة','tab-housing':'السكن','tab-inventory':'المخزن','tab-vacations':'الإجازات','tab-hospitality':'الضيافة','tab-maintenance':'الصيانة','tab-septic':'البيارات','tab-dynamic':'الإدارة المرنة','tab-excluded':'المستبعدين','tab-periodic-maint':'الصيانة الدورية','tab-tea-sugar':'شاي وسكر','tab-meal-log':'الوجبات','tab-contractors':'المقاولين','tab-bakery':'المخبز','tab-bread-supply':'توريد الخبز','tab-evaluations':'التقييمات','tab-data-exchange':'تبادل البيانات' };
+      var tabNames = { 'tab-dashboard':'الرئيسية','tab-employees':'القوة','tab-housing':'السكن','tab-inventory':'المخزن','tab-vacations':'إجازات وإضافي الشئون الإدارية','tab-hospitality':'الضيافة','tab-maintenance':'الصيانة','tab-septic':'البيارات','tab-dynamic':'الإدارة المرنة','tab-excluded':'المستبعدين','tab-periodic-maint':'الصيانة الدورية','tab-tea-sugar':'شاي وسكر','tab-meal-log':'الوجبات','tab-contractors':'المقاولين','tab-bakery':'المخبز','tab-bread-supply':'توريد الخبز','tab-evaluations':'التقييمات','tab-data-exchange':'تبادل البيانات' };
       setAction('🔍 ' + (tabNames[tabId] || tabId));
       if(tabId === 'tab-dashboard') { renderDashboard(); }
       if(tabId === 'tab-housing') { renderHousingLayout(); updateHousingStats(); }
@@ -4436,6 +4494,7 @@
       if(tabId === 'tab-bakery') { renderBakeryIngredients(); updateBakeryStats(); populateBakeryDropdowns(); }
       if(tabId === 'tab-bread-supply') { renderBakeryContractorSupplies(); renderBakeryInvoices(); updateBreadSupplyStats(); populateBakeryDropdowns(); }
       if(tabId === 'tab-maintenance') { searchMaintMaterial(); renderMaintMaterialsList(); }
+      if(tabId === 'tab-vacations') { renderOvertimeCalendar(); }
       if(tabId === 'tab-evaluations') { populateEvalEmployees(); renderEvaluations(); }
     }
 
@@ -8199,6 +8258,157 @@ function toggleEmployeeStatus(empId) {
       evt.target.value = '';
     }
 
+    // ─── إضافي يومي (الشئون الإدارية) ───
+    var ovViewDate = new Date();
+    var ovMonthNames = ['يناير','فبراير','مارس','إبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
+
+    function getAdminEmployees() {
+      return employees.filter(function(emp) {
+        var dd = (emp.dept||'').replace(/\s+/g,'').replace(/[يى]/g,'ي').replace(/[ةه]/g,'ة').replace(/[إأآ]/g,'ا').toLowerCase();
+        if (dd.indexOf('شئون') === -1 && dd.indexOf('شؤون') === -1) return false;
+        var t = (emp.title||'').trim();
+        if (t.indexOf('سائق') !== -1) return false;
+        if (t.indexOf('ممرض') !== -1) return false;
+        return true;
+      });
+    }
+
+    function renderOvertimeCalendar() {
+      var year = ovViewDate.getFullYear();
+      var month = ovViewDate.getMonth();
+      document.getElementById('ov-month-label').textContent = ovMonthNames[month] + ' ' + year;
+
+      var firstDay = new Date(year, month, 1).getDay();
+      var daysInMonth = new Date(year, month + 1, 0).getDate();
+      var today = new Date();
+      today.setHours(0,0,0,0);
+
+      var grid = document.getElementById('ov-calendar-grid');
+      grid.innerHTML = '';
+
+      var totalHours = 0;
+      var prevMonthDays = new Date(year, month, 0).getDate();
+
+      for (var i = firstDay - 1; i >= 0; i--) {
+        var cell = document.createElement('div');
+        cell.className = 'ov-day-cell ov-other-month';
+        cell.innerHTML = '<div class="ov-day-num">' + (prevMonthDays - i) + '</div>';
+        grid.appendChild(cell);
+      }
+
+      for (var day = 1; day <= daysInMonth; day++) {
+        var dateKey = year + '-' + String(month+1).padStart(2,'0') + '-' + String(day).padStart(2,'0');
+        var d = new Date(year, month, day);
+        var isToday = d.getTime() === today.getTime();
+
+        var cell = document.createElement('div');
+        cell.className = 'ov-day-cell' + (isToday ? ' ov-today' : '');
+        var entries = adminOvertime.filter(function(e) { return e.date === dateKey; });
+
+        var html = '<div class="ov-day-num">' + day + '</div>';
+        entries.forEach(function(e) {
+          html += '<div class="ov-entry" title="' + e.empName + ': ' + e.hours + ' ساعة' + (e.notes ? ' (' + e.notes + ')' : '') + '">' + e.empName + ' ' + e.hours + 'h</div>';
+          totalHours += Number(e.hours) || 0;
+        });
+        html += '<div class="ov-add">+</div>';
+        cell.innerHTML = html;
+        cell.onclick = (function(key) { return function() { openOvertimeModal(key); }; })(dateKey);
+        grid.appendChild(cell);
+      }
+
+      var totalCells = firstDay + daysInMonth;
+      var remaining = (7 - (totalCells % 7)) % 7;
+      for (var i = 1; i <= remaining; i++) {
+        var cell = document.createElement('div');
+        cell.className = 'ov-day-cell ov-other-month';
+        cell.innerHTML = '<div class="ov-day-num">' + i + '</div>';
+        grid.appendChild(cell);
+      }
+
+      document.getElementById('ov-month-total').textContent = totalHours.toFixed(1) + ' ساعة';
+      syncStorage();
+    }
+
+    function ovPrevMonth() { ovViewDate.setMonth(ovViewDate.getMonth() - 1); renderOvertimeCalendar(); }
+    function ovNextMonth() { ovViewDate.setMonth(ovViewDate.getMonth() + 1); renderOvertimeCalendar(); }
+
+    function openOvertimeModal(dateKey) {
+      closeOvertimeModal();
+      var overlay = document.createElement('div');
+      overlay.className = 'ov-modal-overlay';
+      overlay.id = 'ov-modal-overlay';
+
+      var adminEmps = getAdminEmployees();
+      var dayEntries = adminOvertime.filter(function(e) { return e.date === dateKey; });
+      var entriesHtml = '';
+      dayEntries.forEach(function(e) {
+        entriesHtml += '<div class="ov-entry-row"><span>' + e.empName + ' — ' + e.hours + ' ساعة' + (e.notes ? ' (' + e.notes + ')' : '') + '</span><button onclick="removeOvertimeEntry(\'' + dateKey + '\',\'' + e.empCode.replace(/'/g,"\\'") + '\')">✕</button></div>';
+      });
+
+      var empOptions = '<option value="">اختر الموظف...</option>';
+      adminEmps.forEach(function(emp) {
+        empOptions += '<option value="' + emp.code + '">' + emp.code + ' — ' + emp.name + ' (' + emp.title + ')</option>';
+      });
+
+      overlay.innerHTML =
+        '<div class="ov-modal">' +
+          '<h4>📅 ' + dateKey + ' — إضافة إضافي</h4>' +
+          '<div class="ov-entries-list">' + entriesHtml + '</div>' +
+          '<hr style="margin:8px 0;">' +
+          '<select id="ov-emp-select">' + empOptions + '</select>' +
+          '<input type="number" id="ov-hours" min="0.5" step="0.5" value="1" placeholder="عدد الساعات">' +
+          '<input type="text" id="ov-notes" placeholder="ملاحظات (اختياري)">' +
+          '<div class="ov-modal-actions">' +
+            '<button onclick="addOvertimeEntry(\'' + dateKey + '\')" style="background:#e65100;color:#fff;border-color:#e65100;">➕ إضافة</button>' +
+            '<button onclick="closeOvertimeModal()" style="background:#eee;">إغلاق</button>' +
+          '</div>' +
+        '</div>';
+
+      overlay.onclick = function(e) { if (e.target === overlay) closeOvertimeModal(); };
+      document.body.appendChild(overlay);
+    }
+
+    function closeOvertimeModal() {
+      var el = document.getElementById('ov-modal-overlay');
+      if (el) el.remove();
+    }
+
+    function addOvertimeEntry(dateKey) {
+      var empCode = document.getElementById('ov-emp-select').value;
+      var hours = parseFloat(document.getElementById('ov-hours').value) || 0;
+      var notes = document.getElementById('ov-notes').value.trim();
+      if (!empCode) return alert('اختر الموظف أولاً');
+      if (hours <= 0) return alert('عدد الساعات يجب أن يكون أكبر من صفر');
+
+      var emp = employees.find(function(e) { return e.code == empCode; });
+      if (!emp) return alert('الموظف غير موجود');
+
+      var existing = adminOvertime.find(function(e) { return e.date === dateKey && e.empCode == empCode; });
+      if (existing) {
+        if (!confirm('هذا الموظف لديه إضافي في هذا اليوم بالفعل (' + existing.hours + ' ساعة).\nهل تريد استبداله بـ ' + hours + ' ساعة؟')) return;
+        existing.hours = hours;
+        existing.notes = notes;
+      } else {
+        adminOvertime.push({ date: dateKey, empCode: emp.code.toString(), empName: emp.name, hours: hours, notes: notes });
+      }
+
+      syncStorage();
+      openOvertimeModal(dateKey);
+      renderOvertimeCalendar();
+    }
+
+    function removeOvertimeEntry(dateKey, empCode) {
+      if (!confirm('هل تريد حذف هذا الإضافي؟')) return;
+      var idx = null;
+      adminOvertime.forEach(function(e, i) { if (e.date === dateKey && e.empCode == empCode) idx = i; });
+      if (idx !== null) {
+        adminOvertime.splice(idx, 1);
+        syncStorage();
+        openOvertimeModal(dateKey);
+        renderOvertimeCalendar();
+      }
+    }
+
     function importHospitalityFromExcel(evt) {
       let file = evt.target.files[0]; if(!file) return;
       let reader = new FileReader();
@@ -8487,7 +8697,7 @@ function toggleEmployeeStatus(empId) {
         if (bakeryContractorSupplies.length > 0) bakeryContractorSupplies = dedupArray(bakeryContractorSupplies, function(cs) { return cs.date + '|' + (cs.name||'') + '|' + (cs.count||0) + '|' + (cs.price||0); });
         if (contractors.length > 0) contractors = dedupArray(contractors, function(c) { return c.id || JSON.stringify(c); });
 
-        syncStorage(); renderTable(); renderHousingLayout(); renderInventoryTable(); renderInventoryItems(); renderVacationsTable(); renderHospitalityTable(); renderMaintenanceTable(); renderSepticTable(); renderPeriodicMaintenance(); renderTeaSugarTable(); renderMealLogTable(); autoSaveTodayMeal(); populateContractorSectorDropdown(); renderContractorsTable(); rebuildAllDropdowns();
+        syncStorage(); renderTable(); renderHousingLayout(); renderInventoryTable(); renderInventoryItems(); renderVacationsTable(); renderOvertimeCalendar(); renderHospitalityTable(); renderMaintenanceTable(); renderSepticTable(); renderPeriodicMaintenance(); renderTeaSugarTable(); renderMealLogTable(); autoSaveTodayMeal(); populateContractorSectorDropdown(); renderContractorsTable(); rebuildAllDropdowns();
         renderBakeryIngredients(); renderBakeryProductions(); renderBakeryContractorSupplies(); renderBakeryInvoices();
         renderContractorRoomsList(); populateContractorRoomSectorDropdown();
         _dataChangedSinceBackup = false;
@@ -9425,7 +9635,7 @@ function toggleEmployeeStatus(empId) {
       // Re-render everything
       sortEmployeesAlphabetically(); rebuildAllDropdowns(); calculateSystemStats();
       renderTable(); renderHousingLayout(); renderInventoryTable(); renderInventoryItems();
-      renderVacationsTable(); renderHospitalityTable(); renderMaintenanceTable(); renderSepticTable();
+      renderVacationsTable(); renderOvertimeCalendar(); renderHospitalityTable(); renderMaintenanceTable(); renderSepticTable();
       renderPeriodicMaintenance(); renderTeaSugarTable(); renderMealLogTable(); autoSaveTodayMeal();
       populateContractorSectorDropdown(); renderContractorsTable();
       renderBakeryIngredients(); renderBakeryProductions();
@@ -9589,7 +9799,7 @@ function toggleEmployeeStatus(empId) {
 
     function getAllDataForSync() {
       var o = getAllDataObject();
-      return { employees: o.employees, roomsCapacity: o.roomsCapacity, vacations: o.vacations, inventoryVouchers: o.inventoryVouchers, excludedEmployees: o.excludedEmployees, contractors: o.contractors, mealLogs: o.mealLogs, inventoryItems: o.inventoryItems, hospitalities: o.hospitalities };
+      return { employees: o.employees, roomsCapacity: o.roomsCapacity, vacations: o.vacations, inventoryVouchers: o.inventoryVouchers, excludedEmployees: o.excludedEmployees, contractors: o.contractors, mealLogs: o.mealLogs, inventoryItems: o.inventoryItems, hospitalities: o.hospitalities, adminOvertime: o.adminOvertime };
     }
 
     function syncLog(msg) {
@@ -9645,7 +9855,7 @@ function toggleEmployeeStatus(empId) {
         if (changed) {
           syncLog('🔄 تم استقبال تحديثات');
           syncStorage(true, true);
-          renderTable(); renderHousingLayout(); renderInventoryTable(); renderInventoryItems(); renderVacationsTable(); renderHospitalityTable(); renderMaintenanceTable(); renderSepticTable(); renderPeriodicMaintenance(); renderTeaSugarTable(); renderMealLogTable(); renderDashboard(); renderContractorsTable(); renderBakeryIngredients(); renderBakeryProductions(); renderBakeryContractorSupplies(); renderBakeryInvoices(); updateBakeryStats(); updateBreadSupplyStats();
+          renderTable(); renderHousingLayout(); renderInventoryTable(); renderInventoryItems(); renderVacationsTable(); renderOvertimeCalendar(); renderHospitalityTable(); renderMaintenanceTable(); renderSepticTable(); renderPeriodicMaintenance(); renderTeaSugarTable(); renderMealLogTable(); renderDashboard(); renderContractorsTable(); renderBakeryIngredients(); renderBakeryProductions(); renderBakeryContractorSupplies(); renderBakeryInvoices(); updateBakeryStats(); updateBreadSupplyStats();
           updateLastSyncTime();
           showSyncToast('تم استلام تحديثات من جهاز آخر');
         }
@@ -9804,6 +10014,7 @@ function toggleEmployeeStatus(empId) {
       bakeryProductions = mergeArrays(bakeryProductions, d.bakeryProductions);
       bakeryContractorSupplies = mergeArrays(bakeryContractorSupplies, d.bakeryContractorSupplies);
       bakeryInvoices = mergeArrays(bakeryInvoices, d.bakeryInvoices);
+      if (d.adminOvertime) adminOvertime = mergeArrays(adminOvertime, d.adminOvertime);
       if (typeof d.manualTotalBeds === 'number') manualTotalBeds = d.manualTotalBeds;
       // منع ظهور المستبعدين في القوة بعد المزامنة
       if (excludedEmployees.length > 0) {
@@ -9813,7 +10024,7 @@ function toggleEmployeeStatus(empId) {
       }
       normalizeBakeryDates(true);
       syncStorage(true, true);
-      renderTable(); renderHousingLayout(); renderInventoryTable(); renderInventoryItems(); renderVacationsTable(); renderHospitalityTable(); renderMaintenanceTable(); renderSepticTable(); renderPeriodicMaintenance(); renderTeaSugarTable(); renderMealLogTable(); renderDashboard(); renderContractorsTable(); renderBakeryIngredients(); renderBakeryProductions(); renderBakeryContractorSupplies(); renderBakeryInvoices(); updateBakeryStats(); updateBreadSupplyStats(); showSyncToast('تم استلام تحديثات من جهاز آخر');
+      renderTable(); renderHousingLayout(); renderInventoryTable(); renderInventoryItems(); renderVacationsTable(); renderOvertimeCalendar(); renderHospitalityTable(); renderMaintenanceTable(); renderSepticTable(); renderPeriodicMaintenance(); renderTeaSugarTable(); renderMealLogTable(); renderDashboard(); renderContractorsTable(); renderBakeryIngredients(); renderBakeryProductions(); renderBakeryContractorSupplies(); renderBakeryInvoices(); updateBakeryStats(); updateBreadSupplyStats(); showSyncToast('تم استلام تحديثات من جهاز آخر');
       updateLastSyncTime();
     }
 
@@ -9869,7 +10080,7 @@ function toggleEmployeeStatus(empId) {
         var localTime = parseInt(localStorage.getItem('_localChangeTime')) || 0;
         var cloudTime = parseInt(localStorage.getItem('_cloudSyncTime')) || 0;
         if (localTime > cloudTime) {
-          renderTable(); renderHousingLayout(); renderInventoryTable(); renderInventoryItems(); renderVacationsTable(); renderHospitalityTable(); renderMaintenanceTable(); renderSepticTable(); renderPeriodicMaintenance(); renderTeaSugarTable(); renderMealLogTable(); renderDashboard(); renderContractorsTable(); renderBakeryIngredients(); renderBakeryProductions(); renderBakeryContractorSupplies(); renderBakeryInvoices();
+          renderTable(); renderHousingLayout(); renderInventoryTable(); renderInventoryItems(); renderVacationsTable(); renderOvertimeCalendar(); renderHospitalityTable(); renderMaintenanceTable(); renderSepticTable(); renderPeriodicMaintenance(); renderTeaSugarTable(); renderMealLogTable(); renderDashboard(); renderContractorsTable(); renderBakeryIngredients(); renderBakeryProductions(); renderBakeryContractorSupplies(); renderBakeryInvoices(); updateBakeryStats(); updateBreadSupplyStats();
           updateBakeryStats(); updateBreadSupplyStats();
           return;
         }
@@ -9919,7 +10130,7 @@ function toggleEmployeeStatus(empId) {
         if (bakeryContractorSupplies.length > 0) bakeryContractorSupplies = dedupArray(bakeryContractorSupplies, function(cs) { return cs.date + '|' + (cs.name||'') + '|' + (cs.count||0) + '|' + (cs.price||0); });
         if (contractors.length > 0) contractors = dedupArray(contractors, function(c) { return c.id || JSON.stringify(c); });
         syncStorage(true);
-        renderTable(); renderHousingLayout(); renderInventoryTable(); renderInventoryItems(); renderVacationsTable(); renderHospitalityTable(); renderMaintenanceTable(); renderSepticTable(); renderPeriodicMaintenance(); renderTeaSugarTable(); renderMealLogTable(); renderDashboard(); renderContractorsTable(); renderBakeryIngredients(); renderBakeryProductions(); renderBakeryContractorSupplies(); renderBakeryInvoices();
+        renderTable(); renderHousingLayout(); renderInventoryTable(); renderInventoryItems(); renderVacationsTable(); renderOvertimeCalendar(); renderHospitalityTable(); renderMaintenanceTable(); renderSepticTable(); renderPeriodicMaintenance(); renderTeaSugarTable(); renderMealLogTable(); renderDashboard(); renderContractorsTable(); renderBakeryIngredients(); renderBakeryProductions(); renderBakeryContractorSupplies(); renderBakeryInvoices(); updateBakeryStats(); updateBreadSupplyStats();
         updateBakeryStats(); updateBreadSupplyStats();
       } catch(e) {}
     }
@@ -9971,7 +10182,7 @@ function toggleEmployeeStatus(empId) {
         inventoryItems, contractors, dynamicSectors, contractorSectors, contractorRooms, dynamicRooms, dynamicSeptics, dynamicDepts, dynamicTitles,
         appUsers, currentUser, bakeryIngredients, bakeryProductions,
         bakeryContractorSupplies, bakeryInvoices,
-        manualTotalBeds
+        manualTotalBeds, adminOvertime
       };
     }
 
@@ -10297,7 +10508,7 @@ function toggleEmployeeStatus(empId) {
       syncStorage();
       sortEmployeesAlphabetically(); rebuildAllDropdowns();
       renderTable(); renderHousingLayout(); renderInventoryTable(); renderInventoryItems();
-      renderVacationsTable(); renderHospitalityTable(); renderMaintenanceTable(); renderSepticTable();
+      renderVacationsTable(); renderOvertimeCalendar(); renderHospitalityTable(); renderMaintenanceTable(); renderSepticTable();
       renderPeriodicMaintenance(); renderTeaSugarTable(); renderMealLogTable(); autoSaveTodayMeal();
       populateContractorSectorDropdown(); renderContractorsTable();
       alert('✅ تم استعادة النسخة بنجاح!');
@@ -10477,7 +10688,7 @@ function toggleEmployeeStatus(empId) {
       }
       // تهيئة الرصيد السنوي للموظفين
       employees.forEach(function(e) { if (typeof e.vacationBalance !== 'number') e.vacationBalance = 30; });
-      sortEmployeesAlphabetically(); rebuildDeptTitles(); rebuildAllDropdowns(); initEmployeeSearchInputs(); setupItemNameSearch(); setupNameAutocomplete(); populateRoomSectorDropdown(); populateContractorSectorDropdown(); renderTable(); renderInventoryTable(); renderInventoryItems(); renderVacationsTable(); renderHospitalityTable(); renderMaintenanceTable(); renderSepticTable(); renderPeriodicMaintenance(); renderTeaSugarTable(); renderMealLogTable(); autoSaveTodayMeal(); renderContractorsTable(); renderDashboard(); updateEmployeeVacationStatuses(); renderTable(); initAllSortableTables();
+      sortEmployeesAlphabetically(); rebuildDeptTitles(); rebuildAllDropdowns(); initEmployeeSearchInputs(); setupItemNameSearch(); setupNameAutocomplete(); populateRoomSectorDropdown(); populateContractorSectorDropdown(); renderTable(); renderInventoryTable(); renderInventoryItems(); renderVacationsTable(); renderOvertimeCalendar(); renderHospitalityTable(); renderMaintenanceTable(); renderSepticTable(); renderPeriodicMaintenance(); renderTeaSugarTable(); renderMealLogTable(); autoSaveTodayMeal(); renderContractorsTable(); renderDashboard(); updateEmployeeVacationStatuses(); renderTable(); renderOvertimeCalendar(); initAllSortableTables();
 
       // تحميل أولي من Google Drive (مرة واحدة)
       // loadFromCloud(); // Google Drive backup معطل
@@ -10540,7 +10751,7 @@ function toggleEmployeeStatus(empId) {
               syncStorage();
               sortEmployeesAlphabetically(); rebuildAllDropdowns();
               renderTable(); renderHousingLayout(); renderInventoryTable(); renderInventoryItems();
-              renderVacationsTable(); renderHospitalityTable(); renderMaintenanceTable(); renderSepticTable();
+              renderVacationsTable(); renderOvertimeCalendar(); renderHospitalityTable(); renderMaintenanceTable(); renderSepticTable();
               renderPeriodicMaintenance(); renderTeaSugarTable(); renderMealLogTable(); autoSaveTodayMeal(); renderContractorsTable();
               renderBakeryIngredients(); renderBakeryProductions(); renderDashboard(); initAllSortableTables();
             }
@@ -10567,7 +10778,7 @@ function toggleEmployeeStatus(empId) {
                     employees.forEach(function(e) { if (typeof e.vacationBalance !== 'number') e.vacationBalance = 30; });
                     sortEmployeesAlphabetically(); rebuildAllDropdowns();
                     renderTable(); renderHousingLayout(); renderInventoryTable(); renderInventoryItems();
-                    renderVacationsTable(); renderHospitalityTable(); renderMaintenanceTable(); renderSepticTable();
+                    renderVacationsTable(); renderOvertimeCalendar(); renderHospitalityTable(); renderMaintenanceTable(); renderSepticTable();
                     renderPeriodicMaintenance(); renderTeaSugarTable(); renderMealLogTable(); autoSaveTodayMeal(); renderContractorsTable();
                     renderBakeryIngredients(); renderBakeryProductions();
                     renderBakeryContractorSupplies();
