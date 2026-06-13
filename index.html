@@ -9035,7 +9035,7 @@ function toggleEmployeeStatus(empId) {
         var costFlour = f * pFlour, costYeast = y * pYeast, costSalt = s * pSalt, costBran = b * pBran, costDiesel = d * pDiesel;
         var cstFarm = costFlour + costYeast + costSalt + costBran + costDiesel + op;
         var cstCtr = ctrSameDay.reduce(function(s, cs) { return s + (parseFloat(cs.prodCost) || 0); }, 0);
-        var cst = cstFarm + cstCtr;
+        var cst = cstFarm;
         var costPerLoaf = totalBread > 0 ? (cst / totalBread) : 0;
         return `<tr>
           <td class="no-print"><input type="checkbox" class="row-check" data-table="table-bakery-production"></td>
