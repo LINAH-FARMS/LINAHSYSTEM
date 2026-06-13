@@ -86,6 +86,7 @@ function saAnalyze(){
   h+='</div>';res.innerHTML=h;
 }
 function saFill(){
+  window._saFilling=1;
   var g=function(id){return document.getElementById(id);};
   if(g('bprod-date')&&g('sa-ed-dt'))g('bprod-date').value=g('sa-ed-dt').value;
   if(g('bprod-count')&&g('sa-ed-kb'))g('bprod-count').value=parseInt(g('sa-ed-kb').value);
@@ -125,6 +126,7 @@ function saFill(){
   if(typeof renderBakeryContractorSupplies==='function')renderBakeryContractorSupplies();
   if(typeof updateBakeryStats==='function')updateBakeryStats();
   if(typeof updateBreadSupplyStats==='function')updateBreadSupplyStats();
+  window._saFilling=0;
   var msg='✅ تم تعبئة نموذج الإنتاج!';
   if(saved>0)msg+='<br>👷 تم إضافة '+saved+' توريد مقاولين (راجع تبويب التوريد).';
   msg+='<br><span style="font-size:12px;color:#888;">⚠️ الخامات بتتخصم عند الحفظ من نموذج الإنتاج.</span>';
