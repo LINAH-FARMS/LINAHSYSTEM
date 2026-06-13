@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8">
@@ -5964,7 +5964,7 @@
       let q = (document.getElementById('excluded-search')?.value || '').trim().toLowerCase();
       if (q) filtered = filtered.filter(e => (e.name && e.name.toLowerCase().includes(q)) || (e.code && e.code.toLowerCase().includes(q)));
       let st = sortState['table-excluded'];
-      if (!st || !st.key) filtered.reverse();
+      if (!st || !st.key) filtered = sortNewestFirst(filtered, 'date');
       if (st && st.key) filtered = sortData(filtered, st.key, st.dir);
       filtered.forEach((e) => {
         let realIdx = excludedEmployees.indexOf(e);
@@ -6320,7 +6320,7 @@ function toggleEmployeeStatus(empId) {
       });
 
       let st = sortState['table-inventory'];
-      if (!st || !st.key) filtered.reverse();
+      if (!st || !st.key) filtered = sortNewestFirst(filtered, 'date');
       if (st && st.key) filtered = sortData(filtered, st.key, st.dir);
 
       filtered.forEach((v) => {
@@ -6374,7 +6374,7 @@ function toggleEmployeeStatus(empId) {
         (item.store||'').toLowerCase().includes(q)
       );
       let st = sortState['table-items-registry'];
-      if (!st || !st.key) filtered.reverse();
+      if (!st || !st.key) filtered = sortNewestFirst(filtered, 'date');
       if (st && st.key) filtered = sortData(filtered, st.key, st.dir);
       filtered.forEach((item) => {
         let realIdx = inventoryItems.indexOf(item);
@@ -6577,11 +6577,9 @@ function toggleEmployeeStatus(empId) {
       var currentYear = new Date().getFullYear();
       let filtered = [...vacations];
       let st = sortState['table-vacations'];
-      if (!st || !st.key) filtered.reverse();
+      if (!st || !st.key) filtered = sortNewestFirst(filtered, 'start');
       if (st && st.key) filtered = sortData(filtered, st.key, st.dir);
       filtered.forEach((v) => {
-        let realIdx = vacations.indexOf(v);
-        if (!v.days) {
           var sd = new Date(v.start + 'T00:00:00');
           var ed = new Date(v.end + 'T00:00:00');
           v.days = Math.round((ed - sd) / 86400000) + 1;
@@ -6792,7 +6790,7 @@ function toggleEmployeeStatus(empId) {
       if(!tbody) return; tbody.innerHTML = '';
       let filtered = [...hospitalities];
       let st = sortState['table-hospitality'];
-      if (!st || !st.key) filtered.reverse();
+      if (!st || !st.key) filtered = sortNewestFirst(filtered, 'arrival');
       if (st && st.key) filtered = sortData(filtered, st.key, st.dir);
       filtered.forEach((h) => {
         let realIdx = hospitalities.indexOf(h);
@@ -6866,7 +6864,7 @@ function toggleEmployeeStatus(empId) {
       if(!tbody) return; tbody.innerHTML = '';
       let filtered = [...maintenanceRecords];
       let st = sortState['table-maintenance'];
-      if (!st || !st.key) filtered.reverse();
+      if (!st || !st.key) filtered = sortNewestFirst(filtered, 'date');
       if (st && st.key) filtered = sortData(filtered, st.key, st.dir);
       filtered.forEach((m) => {
         let realIdx = maintenanceRecords.indexOf(m);
@@ -7024,7 +7022,7 @@ function toggleEmployeeStatus(empId) {
       });
       let filtered = [...periodicMaintenance];
       let st = sortState['table-periodic-maint'];
-      if (!st || !st.key) filtered.reverse();
+      if (!st || !st.key) filtered = sortNewestFirst(filtered, 'startDate');
       if (st && st.key) filtered = sortData(filtered, st.key, st.dir);
       filtered.forEach((pm) => {
         let realIdx = periodicMaintenance.indexOf(pm);
@@ -7137,7 +7135,7 @@ function toggleEmployeeStatus(empId) {
       contractors.forEach(c => { totalDaily += c.dailyRate || 0; });
       let filtered = [...contractors];
       let st = sortState['table-contractors'];
-      if (!st || !st.key) filtered.reverse();
+      if (!st || !st.key) filtered = sortNewestFirst(filtered, 'startDate');
       if (st && st.key) filtered = sortData(filtered, st.key, st.dir);
       filtered.forEach((c) => {
         let realIdx = contractors.indexOf(c);
@@ -7247,7 +7245,7 @@ function toggleEmployeeStatus(empId) {
       tbody.innerHTML = '';
       let filtered = [...teaSugarDisbursements];
       let st = sortState['table-tea-sugar'];
-      if (!st || !st.key) filtered.reverse();
+      if (!st || !st.key) filtered = sortNewestFirst(filtered, 'date');
       if (st && st.key) filtered = sortData(filtered, st.key, st.dir);
       filtered.forEach((ts, idx) => {
         let realIdx = teaSugarDisbursements.indexOf(ts);
@@ -7694,7 +7692,7 @@ function toggleEmployeeStatus(empId) {
       if(!tbody) return; tbody.innerHTML = '';
       let filtered = [...septicRecords];
       let st = sortState['table-septic'];
-      if (!st || !st.key) filtered.reverse();
+      if (!st || !st.key) filtered = sortNewestFirst(filtered, 'date');
       if (st && st.key) filtered = sortData(filtered, st.key, st.dir);
       filtered.forEach((s) => {
         let realIdx = septicRecords.indexOf(s);
@@ -7716,7 +7714,7 @@ function toggleEmployeeStatus(empId) {
     function deleteSeptic(idx) { if (!requireAdmin()) return; septicRecords.splice(idx,1); syncStorage(); renderSepticTable(); }
 
     function exportEmployeesToExcel() {
-      let data = employees.map(e => ({
+      let data = sortNewestFirst(employees, 'hireDate').map(e => ({
         "الكود": e.code || "", "اسم الموظف رباعي": stripEmoji(e.name), "نوع التعاقد": e.contract || "دائم",
         "رقم الموبايل": e.nationalId || "", "تاريخ التعيين": e.hireDate || "", "الإدارة": stripEmoji(e.dept), "الوظيفة": stripEmoji(e.title),
         "المحافظة": stripEmoji(e.gov), "المبنى السكني": e.sector || "", "رقم الغرفة": e.room || "", "الموقف (P/V)": e.status || "P",
@@ -7910,7 +7908,7 @@ function toggleEmployeeStatus(empId) {
       XLSX.utils.book_append_sheet(wb, ws, "الشاي والسكر"); XLSX.writeFile(wb, "نموذج_صرف_الشاي_والسكر_مزارع_لينه.xlsx");
     }
     function exportTeaSugarToExcel() {
-      let data = teaSugarDisbursements.map(t => {
+      let data = sortNewestFirst(teaSugarDisbursements, 'date').map(t => {
         let emp = employees.find(e => (e.id || e.code) == t.empId || e.name === t.empName);
         return { "كود الموظف": (emp && emp.code) ? emp.code : (t.empCode || ''), "اسم الموظف": stripEmoji(emp ? emp.name : t.empName), "الإدارة": stripEmoji(emp ? emp.dept : (t.empDept || '')), "الوظيفة": stripEmoji(emp ? emp.title : (t.empTitle || '')), "الدورة": t.period, "الشاي (باكيت)": t.teaPacks, "السكر (كجم)": t.sugarKg, "تاريخ الصرف": t.date };
       });
@@ -8040,18 +8038,12 @@ function toggleEmployeeStatus(empId) {
     }
 
     function exportVacationsToExcel() {
-      let data = vacations.map(v => ({ "كود الموظف": v.code || '', "اسم الموظف": stripEmoji(v.name), "البيان": stripEmoji(v.info), "تاريخ البداية": v.start || '', "عدد الأيام": v.days || '', "تاريخ النهاية": v.end || '', "تاريخ السفر": v.travelDate || '', "آخر يوم عمل": v.lastWorkDay || '', "تاريخ الرجوع": v.returnDate || '', "ملاحظات": stripEmoji(v.notes) }));
+      let data = sortNewestFirst(vacations, 'start').map(v => ({ "كود الموظف": v.code || '', "اسم الموظف": stripEmoji(v.name), "البيان": stripEmoji(v.info), "تاريخ البداية": v.start || '', "عدد الأيام": v.days || '', "تاريخ النهاية": v.end || '', "تاريخ السفر": v.travelDate || '', "آخر يوم عمل": v.lastWorkDay || '', "تاريخ الرجوع": v.returnDate || '', "ملاحظات": stripEmoji(v.notes) }));
       let ws = XLSX.utils.json_to_sheet(data); let wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, "الإجازات"); XLSX.writeFile(wb, `تقرير_الإجازات_${new Date().toLocaleDateString('ar-EG').replace(/\//g,'-')}.xlsx`);
     }
     function exportHospitalityToExcel() {
-      let data = hospitalities.map(h => ({ "اسم الضيف": stripEmoji(h.name), "نوع الزيارة": stripEmoji(h.type), "المسمى": stripEmoji(h.title), "عدد الضيوف": h.guests || 1, "تاريخ الوصول": h.arrival || '', "تاريخ المغادرة": h.departure || '', "الوجبات": (h.meals||[]).map(function(x){return stripEmoji(x);}).join(', ') }));
-      let ws = XLSX.utils.json_to_sheet(data); let wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, "الضيافة"); XLSX.writeFile(wb, `تقرير_الضيافة_${new Date().toLocaleDateString('ar-EG').replace(/\//g,'-')}.xlsx`);
-    }
-
-    function exportHospitalityToExcel() {
-      let data = hospitalities.map(h => ({ "اسم الضيف": h.name, "نوع الزيارة": h.type || '', "المسمى": h.title || '', "عدد الضيوف": h.guests || 1, "تاريخ الوصول": h.arrival || '', "تاريخ المغادرة": h.departure || '', "الوجبات": (h.meals || []).join(', ') }));
+      let data = sortNewestFirst(hospitalities, 'arrival').map(h => ({ "اسم الضيف": stripEmoji(h.name), "نوع الزيارة": stripEmoji(h.type), "المسمى": stripEmoji(h.title), "عدد الضيوف": h.guests || 1, "تاريخ الوصول": h.arrival || '', "تاريخ المغادرة": h.departure || '', "الوجبات": (h.meals||[]).map(function(x){return stripEmoji(x);}).join(', ') }));
       let ws = XLSX.utils.json_to_sheet(data); let wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, "الضيافة"); XLSX.writeFile(wb, `تقرير_الضيافة_${new Date().toLocaleDateString('ar-EG').replace(/\//g,'-')}.xlsx`);
     }
@@ -8062,7 +8054,8 @@ function toggleEmployeeStatus(empId) {
       XLSX.utils.book_append_sheet(wb, ws, "الصيانة"); XLSX.writeFile(wb, "نموذج_الصيانة_مزارع_لينه.xlsx");
     }
     function exportMaintenanceToExcel() {
-      let data = maintenanceRecords.map(m => ({
+      let sorted = sortNewestFirst(maintenanceRecords, 'date');
+      let data = sorted.map(m => ({
         "النوع": stripEmoji(m.category),
         "المهمة": stripEmoji(m.task),
         "الفني المسؤول": stripEmoji(m.tech),
@@ -8149,35 +8142,23 @@ function toggleEmployeeStatus(empId) {
     }
 
     function exportSepticToExcel() {
-      let data = septicRecords.map(s => ({ "اسم البيارة": stripEmoji(s.name), "عدد النقلات": s.trips || 0, "الصرف (م³)": (s.trips || 0) * 5, "المشرف": stripEmoji(s.supervisor), "التوقيت": s.time || '', "التاريخ": s.date || '' }));
+      let data = sortNewestFirst(septicRecords, 'date').map(s => ({ "اسم البيارة": stripEmoji(s.name), "عدد النقلات": s.trips || 0, "الصرف (م³)": (s.trips || 0) * 5, "المشرف": stripEmoji(s.supervisor), "التوقيت": s.time || '', "التاريخ": s.date || '' }));
       let ws = XLSX.utils.json_to_sheet(data); let wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, "البيارات"); XLSX.writeFile(wb, `تقرير_البيارات_${new Date().toLocaleDateString('ar-EG').replace(/\//g,'-')}.xlsx`);
     }
     function exportPeriodicMaintToExcel() {
-      let data = periodicMaintenance.map(p => ({ "المهمة": stripEmoji(p.name), "الدورية": p.freq, "تاريخ البداية": p.startDate || '', "آخر تنفيذ": p.lastDone || '', "التالي": p.nextDue || '', "الحالة": stripEmoji(p.status) }));
-      let ws = XLSX.utils.json_to_sheet(data); let wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, "الصيانة الدورية"); XLSX.writeFile(wb, `تقرير_الصيانة_الدورية_${new Date().toLocaleDateString('ar-EG').replace(/\//g,'-')}.xlsx`);
-    }
-
-    function exportPeriodicMaintToExcel() {
-      let data = periodicMaintenance.map(p => ({ "المهمة": p.name, "الدورية": p.freq, "تاريخ البداية": p.startDate || '', "آخر تنفيذ": p.lastDone || '', "التالي": p.nextDue || '', "الحالة": p.status || '' }));
+      let data = sortNewestFirst(periodicMaintenance, 'startDate').map(p => ({ "المهمة": stripEmoji(p.name), "الدورية": p.freq, "تاريخ البداية": p.startDate || '', "آخر تنفيذ": p.lastDone || '', "التالي": p.nextDue || '', "الحالة": stripEmoji(p.status) }));
       let ws = XLSX.utils.json_to_sheet(data); let wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, "الصيانة الدورية"); XLSX.writeFile(wb, `تقرير_الصيانة_الدورية_${new Date().toLocaleDateString('ar-EG').replace(/\//g,'-')}.xlsx`);
     }
 
     function exportMealLogToExcel() {
-      let data = mealLogs.map(m => ({ "التاريخ": m.date, "إفطار": m.breakfast||0, "غداء": m.lunch||0, "عشاء": m.dinner||0, "الشيف": stripEmoji(m.chef), "ملاحظات": stripEmoji(m.notes) }));
+      let data = sortNewestFirst(mealLogs, 'date').map(m => ({ "التاريخ": m.date, "إفطار": m.breakfast||0, "غداء": m.lunch||0, "عشاء": m.dinner||0, "الشيف": stripEmoji(m.chef), "ملاحظات": stripEmoji(m.notes) }));
       let ws = XLSX.utils.json_to_sheet(data); let wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, "الوجبات"); XLSX.writeFile(wb, `تقرير_الوجبات_${new Date().toLocaleDateString('ar-EG').replace(/\//g,'-')}.xlsx`);
     }
     function exportContractorsToExcel() {
-      let data = contractors.map(c => ({ "الاسم": stripEmoji(c.name), "التليفون": c.phone||'', "التخصص": stripEmoji(c.specialty), "ملاحظات": stripEmoji(c.notes) }));
-      let ws = XLSX.utils.json_to_sheet(data); let wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, "المقاولين"); XLSX.writeFile(wb, `تقرير_المقاولين_${new Date().toLocaleDateString('ar-EG').replace(/\//g,'-')}.xlsx`);
-    }
-
-    function exportContractorsToExcel() {
-      let data = contractors.map(c => ({ "اسم المقاول": c.name, "رقم الهاتف": c.phone || '', "المبنى السكني": c.sector, "رقم الغرفة": c.room || '', "المدفوع اليومي": c.dailyRate, "تاريخ البداية": c.startDate || '', "تاريخ النهاية": c.endDate || '', "ملاحظات": c.notes || '' }));
+      let data = sortNewestFirst(contractors, 'startDate').map(c => ({ "اسم المقاول": stripEmoji(c.name), "رقم الهاتف": c.phone || '', "المبنى السكني": c.sector, "رقم الغرفة": c.room || '', "المدفوع اليومي": c.dailyRate, "تاريخ البداية": c.startDate || '', "تاريخ النهاية": c.endDate || '', "ملاحظات": stripEmoji(c.notes) }));
       let ws = XLSX.utils.json_to_sheet(data); let wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, "المقاولين"); XLSX.writeFile(wb, `تقرير_المقاولين_${new Date().toLocaleDateString('ar-EG').replace(/\//g,'-')}.xlsx`);
     }
@@ -8233,7 +8214,7 @@ function toggleEmployeeStatus(empId) {
     }
 
     function exportExcludedToExcel() {
-      let data = excludedEmployees.map(e => ({
+      let data = sortNewestFirst(excludedEmployees, 'date').map(e => ({
         "كود الموظف": e.code || '',
         "اسم الموظف": stripEmoji(e.name),
         "نوع التعاقد": e.contract || '—',
@@ -8879,6 +8860,7 @@ function toggleEmployeeStatus(empId) {
         rows.push({ 'التاريخ': i.date, 'النوع': 'فاتورة', 'العميل': stripEmoji(i.customer), 'عدد الأرغفة': i.count, 'سعر الوحدة': i.unitPrice, 'الإجمالي': ((i.count||0)*(i.unitPrice||0)).toFixed(2), 'المدفوع': (i.paid||0).toFixed(2) });
       });
       if (rows.length === 0) return alert('لا توجد بيانات.');
+      rows = sortNewestFirst(rows, 'date');
       let ws = XLSX.utils.json_to_sheet(rows);
       let wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, 'توريد الخبز');
@@ -8967,7 +8949,7 @@ function toggleEmployeeStatus(empId) {
       let search = (document.getElementById('search-bakery-ingredients')?.value||'').toLowerCase();
       let filtered = bakeryIngredients.filter(i => i.name.toLowerCase().includes(search) || i.id.toLowerCase().includes(search));
       let st = sortState['table-bakery-ingredients'];
-      if (!st || !st.key) filtered.reverse();
+      if (!st || !st.key) filtered = sortNewestFirst(filtered, 'date');
       if (st && st.key) filtered = sortData(filtered, st.key, st.dir);
       tbody.innerHTML = filtered.map((i, idx) => {
         let realIdx = bakeryIngredients.indexOf(i);
@@ -9059,7 +9041,7 @@ function toggleEmployeeStatus(empId) {
         return true;
       });
       let st = sortState['table-bakery-production'];
-      if (!st || !st.key) filtered.reverse();
+      if (!st || !st.key) filtered = sortNewestFirst(filtered, 'date');
       if (st && st.key) filtered = sortData(filtered, st.key, st.dir);
       tbody.innerHTML = filtered.map(p => {
         let realIdx = bakeryProductions.indexOf(p);
@@ -9323,7 +9305,7 @@ function toggleEmployeeStatus(empId) {
       if (toDate) data = data.filter(e => e.date <= toDate);
       if (matFilter) data = data.filter(e => e.materialId === matFilter);
       if (typeFilter) data = data.filter(e => e.type === typeFilter);
-      data.reverse();
+      data = sortNewestFirst(data, 'date');
       tbody.innerHTML = data.map(e =>
         `<tr>
           <td>${e.date}</td>
@@ -9350,7 +9332,7 @@ function toggleEmployeeStatus(empId) {
       if (toDate) data = data.filter(c => c.date <= toDate);
       if (nameFilter) data = data.filter(c => c.name === nameFilter);
       let st = sortState['table-bakery-ctr-supply'];
-      if (!st || !st.key) data.reverse();
+      if (!st || !st.key) data = sortNewestFirst(data, 'date');
       if (st && st.key) data = sortData(data, st.key, st.dir);
       tbody.innerHTML = data.map(c => {
         let realIdx = bakeryContractorSupplies.indexOf(c);
@@ -9380,7 +9362,7 @@ function toggleEmployeeStatus(empId) {
       if (fromDate) data = data.filter(inv => inv.date >= fromDate);
       if (toDate) data = data.filter(inv => inv.date <= toDate);
       let st = sortState['table-bakery-invoices'];
-      if (!st || !st.key) data.reverse();
+      if (!st || !st.key) data = sortNewestFirst(data, 'date');
       if (st && st.key) data = sortData(data, st.key, st.dir);
       tbody.innerHTML = data.map(inv => {
         let realIdx = bakeryInvoices.indexOf(inv);
@@ -9465,7 +9447,7 @@ function toggleEmployeeStatus(empId) {
 
     function exportBakeryInvoicesToExcel() {
       if (bakeryInvoices.length === 0) return alert('لا توجد فواتير للتصدير.');
-      let rows = bakeryInvoices.map(i => ({
+      let rows = sortNewestFirst(bakeryInvoices, 'date').map(i => ({
         'رقم الفاتورة': i.number, 'التاريخ': i.date, 'العميل': stripEmoji(i.customer),
         'عدد الأرغفة': i.count, 'سعر الوحدة': i.unitPrice,
         'الإجمالي': (i.count*i.unitPrice).toFixed(2),
@@ -9486,7 +9468,7 @@ function toggleEmployeeStatus(empId) {
     }
     function exportBakeryProductionToExcel() {
       if (!bakeryProductions.length) return alert('لا توجد بيانات إنتاج للتصدير.');
-      let rows = bakeryProductions.map(p => ({ 'التاريخ': p.date, 'عدد الأرغفة': p.breadCount, 'دقيق (كجم)': p.flourUsed||0, 'خميرة (كجم)': p.yeastUsed||0, 'ملح (كجم)': p.saltUsed||0, 'ردة (كجم)': p.branUsed||0, 'سولار (لتر)': p.dieselUsed||0, 'تكلفة التشغيل': p.operatingCost||0, 'ملاحظات': stripEmoji(p.notes) }));
+      let rows = sortNewestFirst(bakeryProductions, 'date').map(p => ({ 'التاريخ': p.date, 'عدد الأرغفة': p.breadCount, 'دقيق (كجم)': p.flourUsed||0, 'خميرة (كجم)': p.yeastUsed||0, 'ملح (كجم)': p.saltUsed||0, 'ردة (كجم)': p.branUsed||0, 'سولار (لتر)': p.dieselUsed||0, 'تكلفة التشغيل': p.operatingCost||0, 'ملاحظات': stripEmoji(p.notes) }));
       let ws = XLSX.utils.json_to_sheet(rows); let wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, 'إنتاج الفرن'); XLSX.writeFile(wb, 'إنتاج_الفرن.xlsx');
     }
@@ -9504,16 +9486,9 @@ function toggleEmployeeStatus(empId) {
       XLSX.utils.book_append_sheet(wb, ws, 'خامات الفرن'); XLSX.writeFile(wb, 'خامات_الفرن.xlsx');
     }
 
-    function exportBakeryProductionToExcel() {
-      if (!bakeryProductions.length) return alert('لا توجد بيانات إنتاج للتصدير.');
-      let rows = bakeryProductions.map(p => ({ 'التاريخ': p.date, 'عدد الأرغفة': p.breadCount, 'دقيق (كجم)': p.flourUsed||0, 'خميرة (كجم)': p.yeastUsed||0, 'ملح (كجم)': p.saltUsed||0, 'ردة (كجم)': p.branUsed||0, 'سولار (لتر)': p.dieselUsed||0, 'تكلفة التشغيل': p.operatingCost||0, 'ملاحظات': p.notes||'' }));
-      let ws = XLSX.utils.json_to_sheet(rows); let wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, 'إنتاج الفرن'); XLSX.writeFile(wb, 'إنتاج_الفرن.xlsx');
-    }
-
     function exportBakeryContractorSuppliesToExcel() {
       if (!bakeryContractorSupplies.length) return alert('لا توجد توريدات للتصدير.');
-      let rows = bakeryContractorSupplies.map(c => ({ 'التاريخ': c.date, 'المقاول': c.name, 'عدد الأرغفة': c.count, 'سعر الوحدة': c.price, 'الإجمالي': ((c.count||0)*(c.price||0)).toFixed(2), 'المدفوع': parseFloat(c.paid||0).toFixed(2), 'المتبقي': (((c.count||0)*(c.price||0))-parseFloat(c.paid||0)).toFixed(2), 'المسؤول': c.responsible||'', 'ملاحظات': c.notes||'' }));
+      let rows = sortNewestFirst(bakeryContractorSupplies, 'date').map(c => ({ 'التاريخ': c.date, 'المقاول': stripEmoji(c.name), 'عدد الأرغفة': c.count, 'سعر الوحدة': c.price, 'الإجمالي': ((c.count||0)*(c.price||0)).toFixed(2), 'المدفوع': parseFloat(c.paid||0).toFixed(2), 'المتبقي': (((c.count||0)*(c.price||0))-parseFloat(c.paid||0)).toFixed(2), 'المسؤول': stripEmoji(c.responsible), 'ملاحظات': stripEmoji(c.notes) }));
       let ws = XLSX.utils.json_to_sheet(rows); let wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, 'توريد مقاولين'); XLSX.writeFile(wb, 'توريد_مقاولين_الفرن.xlsx');
     }
@@ -10916,6 +10891,8 @@ function toggleEmployeeStatus(empId) {
 
     function stripEmoji(s) { return (s||'').replace(/[^\u0600-\u06FF\u0660-\u0669\u0020-\u007E\u066A-\u066D\u066E-\u06FF\s]/g,'').trim(); }
 
+    function sortNewestFirst(arr, field) { return [...arr].sort(function(a,b){ var da=a[field]||'', db=b[field]||''; if(da<db)return 1; if(da>db)return -1; return 0; }); }
+
     function downloadWB(wb, filename) {
       var wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'binary' });
       var blob = new Blob([s2ab(wbout)], { type: 'application/octet-stream' });
@@ -11485,7 +11462,7 @@ function toggleEmployeeStatus(empId) {
       tbody.innerHTML = '';
       var filtered = [].concat(evaluations);
       var st = sortState['table-evaluations'];
-      if (!st || !st.key) filtered.reverse();
+      if (!st || !st.key) filtered = sortNewestFirst(filtered, 'date');
       if (st && st.key) filtered = sortData(filtered, st.key, st.dir);
       filtered.forEach(function(e) {
         var realIdx = evaluations.indexOf(e);
@@ -11525,7 +11502,7 @@ function toggleEmployeeStatus(empId) {
     function exportEvaluationsToExcel() {
       if (!evaluations.length) return alert('لا توجد تقييمات للتصدير');
       var monthNames = ['', 'يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
-      var data = evaluations.map(function(e) {
+      var data = evaluations.slice().sort(function(a,b){ return (b.year||'').localeCompare(a.year||'') || (String(b.month).padStart(2,'0')).localeCompare(String(a.month).padStart(2,'0')); }).map(function(e) {
         var isPr = e.deduction !== undefined;
         var kpiDetail = '';
         if (isPr && e.tasks) {
