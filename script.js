@@ -67,7 +67,7 @@ function saParse(t){
 }
 function saAnalyze(){
   var inp=document.getElementById('sa-input');if(!inp)return;var txt=inp.value.trim();if(!txt)return;
-  var p=saParse(txt);var res=document.getElementById('sa-result');if(!res)return;
+  var p=saParse(txt);window._saLastParse=p;var res=document.getElementById('sa-result');if(!res)return;
   function row(label,id,val,step,unit){
     return '<span style="font-size:12px;color:#555;">'+label+'</span><span><input type="'+(id==='sa-ed-dt'?'date':'number')+'" id="'+id+'" value="'+val+'"'+(step?' step="'+step+'"':'')+' style="width:100%;padding:2px 6px;border:1px solid #ccc;border-radius:4px;font-size:12px;font-family:Cairo;">'+(unit||'')+'</span>';
   }
@@ -120,12 +120,37 @@ function saFill(){
     }
     g('bprod-ing-ING007').value=dv;
   }
-  var notes=[];
-  g('sa-ed-kd')&&parseInt(g('sa-ed-kd').value)>0?notes.push('تسليم مطبخ: '+parseInt(g('sa-ed-kd').value)):0;
-  g('sa-ed-kr')&&parseInt(g('sa-ed-kr').value)>0?notes.push('بالفرن احتياطي: '+parseInt(g('sa-ed-kr').value)):0;
-  g('sa-ed-waste')&&parseFloat(g('sa-ed-waste').value)>0?notes.push('هالك: '+parseFloat(g('sa-ed-waste').value)):0;
+  var notes=[];var _p=window._saLastParse||{};
+  if(_p.kd>0)notes.push('تسليم مطبخ: '+_p.kd);
+  if(_p.kr>0)notes.push('بالفرن احتياطي: '+_p.kr);
+  if(_p.waste>0)notes.push('هالك: '+_p.waste);
   if(g('bprod-notes'))g('bprod-notes').value=notes.join(' | ');
-  var i=0;var saved=0;var dt=g('sa-ed-dt')?g('sa-ed-dt').value:'';
+  // Auto-save production record directly
+  try{
+    var dt=g('sa-ed-dt')?g('sa-ed-dt').value:'';
+    var bc=parseInt(g('bprod-count').value)||0;
+    if(dt&&bc>0&&typeof bakeryProductions!=='undefined'&&typeof getBakeryNextId==='function'){
+      var nrm=typeof normalizeDateStr==='function'?normalizeDateStr(dt):dt;
+      var dup=typeof bakeryProductions.find==='function'?bakeryProductions.find(function(r){return (typeof normalizeDateStr==='function'?normalizeDateStr(r.date):r.date)===nrm;}):null;
+      if(!dup){
+        var opcost=0;var opEl=g('bprod-opcost');if(opEl)opcost=parseFloat(opEl.value)||0;
+        bakeryProductions.push({
+          id:getBakeryNextId('PROD',bakeryProductions),
+          date:nrm,breadCount:bc,
+          flourUsed:parseFloat(g('bprod-ing-ING001').value)||0,
+          yeastUsed:parseFloat(g('bprod-ing-ING002').value)||0,
+          saltUsed:parseFloat(g('bprod-ing-ING003').value)||0,
+          branUsed:parseFloat(g('bprod-ing-ING004').value)||0,
+          dieselUsed:parseFloat(g('bprod-ing-ING007').value)||0,
+          operatingCost:opcost,notes:notes.join(' | ')
+        });
+        if(typeof syncStorage==='function')syncStorage();
+        if(typeof renderBakeryProductions==='function')renderBakeryProductions();
+        var savedAuto=true;
+      }
+    }
+  }catch(e){}
+  var i=0;var saved=0;dt=g('sa-ed-dt')?g('sa-ed-dt').value:'';
   while(g('sa-ed-ctr-'+i)){
     var cnt=parseInt(g('sa-ed-ctr-'+i).value);if(cnt>0){
       var p=2;
@@ -145,9 +170,8 @@ function saFill(){
   if(typeof updateBakeryStats==='function')updateBakeryStats();
   if(typeof updateBreadSupplyStats==='function')updateBreadSupplyStats();
   window._saFilling=0;
-  var msg='✅ تم تعبئة نموذج الإنتاج!';
+  var msg='✅ تم تسجيل إنتاج المزرعة!';
   if(saved>0)msg+='<br>👷 تم إضافة '+saved+' توريد مقاولين (راجع تبويب التوريد).';
-  msg+='<br><span style="font-size:12px;color:#888;">⚠️ الخامات بتتخصم عند الحفظ من نموذج الإنتاج.</span>';
   var ra=document.getElementById('sa-result');if(ra)ra.innerHTML='<div style="background:#e8f5e9;padding:8px 12px;border-radius:8px;color:#1b5e20;font-size:13px;font-weight:600;">'+msg+'</div>';
   setTimeout(function(){if(document.getElementById('sa-result'))document.getElementById('sa-result').innerHTML='';},6000);
 }
