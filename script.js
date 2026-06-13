@@ -19,6 +19,7 @@ function saResolveName(n){
   }catch(e){}
   return n;
 }
+function saParse(t){
   t=saNorm(t);
   var dt='';var ds=t.match(/(\d{1,2})\s*[/-]\s*(\d{1,2})\s*[/-]\s*(\d{2,4})/);
   if(ds){var d=('0'+ds[1]).slice(-2),m=('0'+ds[2]).slice(-2),y=ds[3];if(y.length===2)y='20'+y;dt=y+'-'+m+'-'+d;}
