@@ -153,7 +153,7 @@ function saFill(){
     var cnt=parseInt(g('sa-ed-ctr-'+i).value);if(cnt>0){
       totalCb+=cnt;var p=2;
       var nm='مقاول '+(i+1);var ni=g('sa-ed-ctr-name-'+i);
-      if(ni&&ni.value.trim())nm=ni.value.trim();
+      if(ni&&ni.value.trim())nm=saResolveName(ni.value.trim());
       if(typeof bakeryContractorSupplies!=='undefined'&&typeof getBakeryNextId==='function'){
         bakeryContractorSupplies.push({
           id:getBakeryNextId('CTR',bakeryContractorSupplies),
