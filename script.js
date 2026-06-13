@@ -8,14 +8,32 @@ function saGetQty(t,kw,def){
   return 0;
 }
 function saResolveName(n){
+  if(typeof contractors==='undefined'||!contractors.length)return n;
   var map={م:'محمد',ا:'أحمد',ح:'حسن',ع:'علي',خ:'خالد',س:'سعيد',د:'درويش',عبد:'عبد',ابو:'أبو'};
   try{
-    if(typeof contractors!=='undefined'&&contractors.length){
-      var parts=n.split(' ');var exp=parts.map(function(p){return map[p]||p;}).join(' ');
-      var m=contractors.find(function(c){return c.name===n||c.name===exp||c.name.indexOf(parts[parts.length-1])>=0;});
-      if(m)return m.name;
-      if(exp!==n){var m2=contractors.find(function(c){return c.name.indexOf(exp)>=0;});if(m2)return m2.name;}
-    }
+    var parts=n.split(' ').filter(function(s){return s;});
+    var expanded=parts.map(function(p){return map[p]||p;}).join(' ');
+    function norm(s){return s.replace(/[يى]/g,'ي').replace(/[ةه]/g,'ة').replace(/[إأآ]/g,'ا').replace(/\s+/g,'').toLowerCase();}
+    var nn=norm(n),ne=norm(expanded);
+    // Exact match
+    var m=contractors.find(function(c){return c.name===n||c.name===expanded||norm(c.name)===nn||norm(c.name)===ne;});
+    if(m)return m.name;
+    // Score-based fuzzy match
+    var best=null,bestScore=0;
+    contractors.forEach(function(c){
+      var cn=norm(c.name);var score=0;
+      if(cn.indexOf(nn)>=0)score+=Math.max(10,nn.length*2);
+      if(nn.indexOf(cn)>=0)score+=Math.max(8,cn.length*2);
+      if(cn.indexOf(ne)>=0)score+=Math.max(10,ne.length*2);
+      if(ne.indexOf(cn)>=0)score+=Math.max(8,cn.length*2);
+      var lw=parts[parts.length-1];if(lw){
+        var nlw=norm(lw);
+        if(cn.indexOf(nlw)>=0)score+=5;
+        if(c.name.split(' ').some(function(w){return norm(w)===nlw;}))score+=8;
+      }
+      if(score>bestScore){bestScore=score;best=c;}
+    });
+    if(best&&bestScore>=5)return best.name;
   }catch(e){}
   return n;
 }
