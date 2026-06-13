@@ -8886,7 +8886,7 @@ function toggleEmployeeStatus(empId) {
       let totalBread = prodBread + ctrBread;
       let farmCost = todayProd.reduce((s,p) => s + calcBakeryProdCost(p), 0);
       let ctrCost = todayCtr.reduce((s,cs) => s + (parseFloat(cs.prodCost) || 0), 0);
-      let totalCost = farmCost + ctrCost;
+      let totalCost = farmCost;
       let loafCost = totalBread > 0 ? totalCost / totalBread : 0;
       let g = id => document.getElementById(id);
       if (g('bakery-stat-ingredients')) g('bakery-stat-ingredients').innerText = bakeryIngredients.length;
