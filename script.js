@@ -14,8 +14,8 @@ function saParse(t){
   if(!dt){var nd=new Date();dt=nd.getFullYear()+'-'+('0'+(nd.getMonth()+1)).slice(-2)+'-'+('0'+nd.getDate()).slice(-2);}
   var si=t.indexOf('للمقاولين');if(si<0)si=t.indexOf('المقاولين');var farm=si>=0?t.substring(0,si):t;var ctrPart=si>=0?t.substring(si):'';
   var kx=farm.match(/([\d.]+)\s*كيلو\s*.?\s*دقيق\s*[=:]\s*(\d+)/);var kf=kx?parseFloat(kx[1]):0;var kb=kx?parseInt(kx[2]):0;
-  var kdM=farm.match(/(?:تسليم|للمطبخ)\s*(\d+)/);var kd=kdM?parseInt(kdM[1]):0;
-  var krM=farm.match(/(?:داخل|الفرن|متبقي|باقي)\s*(\d+)/);var kr=krM?parseInt(krM[1]):0;
+  var kdM=farm.match(/(?:تسليم\s*المطبخ|تسليم|للمطبخ)\s*(\d+)/);var kd=kdM?parseInt(kdM[1]):0;
+  var krM=farm.match(/(?:داخل\s*الفرن|الفرن|متبقي|باقي)\s*(\d+)/);var kr=krM?parseInt(krM[1]):0;
   var yeast=saGetQty(farm,'خميره',1)||saGetQty(farm,'خميرة',1);
   var salt=saGetQty(farm,'ملح',1);
   var bran=saGetQty(farm,'رده',0)||saGetQty(farm,'ردة',0);
