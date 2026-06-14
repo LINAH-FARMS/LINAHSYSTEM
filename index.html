@@ -9321,7 +9321,7 @@ function toggleEmployeeStatus(empId) {
         if (localStorage.getItem('_localChangeTime')) { try { await pushToSupabase(); } catch(e) { syncLog('?? ??? ??? ?? Supabase'); } }
         await pullFromSupabase();
         // ???? ???? ?????? ?? Supabase ?? ??????? ???????
-        if ((!employees || employees.length === 0) && (!hospitalities || hospitalities.length === 0)) {
+        if ((!employees || employees.length === 0) || (!hospitalities || hospitalities.length === 0)) {
           var _rr = await fetch(_sbEndpoint + '?select=id,updated_at&limit=5', { method: 'GET', headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } });
           if (_rr.ok) {
             var _rrData = await _rr.json();
