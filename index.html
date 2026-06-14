@@ -9142,12 +9142,10 @@ function toggleEmployeeStatus(empId) {
     var _dataHashes = {};
     var _pulledAt = {};
     var _pulledAt = {};
-
-
-
-
-
+    async function pushToSupabase() {
       if (!supabaseConnected) return;
+      var ts = new Date().toISOString();
+      var entities = {
       var ts = new Date().toISOString();
       var entities = {
         employees: JSON.parse(JSON.stringify(employees)),
@@ -9207,7 +9205,6 @@ function toggleEmployeeStatus(empId) {
         syncLog('?? ?? ???? ??????? ?????');
       }
     }
-
     async function pullFromSupabase() {
       if (!supabaseConnected) return;
       try {
