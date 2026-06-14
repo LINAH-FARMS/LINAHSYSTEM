@@ -10075,66 +10075,11 @@ function toggleEmployeeStatus(empId) {
     // backward compat for old function refs
     var DATA_KEYS = ['employees','roomsCapacity','vacations','hospitalities','maintenanceRecords','septicRecords','inventoryVouchers','inventoryItems','excludedEmployees','periodicMaintenance','teaSugarDisbursements','teaSugarBatches','mealLogs','contractors','dynamicSectors','dynamicRooms','dynamicSeptics','dynamicDepts','dynamicTitles','deptTitles','appUsers','auditLog','bakeryIngredients','bakeryProductions','bakeryContractorSupplies','bakeryInvoices','currentUser','manualTotalBeds'];
 
-    // -- Presence tracking (multi-device) --
-    var _presencePollTimer = null;
+    // Presence removed — توفير النت
     var _lastAction = '';
-    function setAction(action) { _lastAction = action; updatePresence(action); }
-    function startPresence() {
-      if (!supabaseConnected) return;
-      updatePresence();
-      if (_presencePollTimer) clearInterval(_presencePollTimer);
-      _presencePollTimer = setInterval(function() {
-        updatePresence();
-        pollPresence();
-      }, 30000);
-    }
-    function stopPresence() {
-      if (_presencePollTimer) { clearInterval(_presencePollTimer); _presencePollTimer = null; }
-    }
-    function updatePresence(action) {
-      var deviceId = localStorage.getItem('lineh_device_id');
-      if (!deviceId) {
-        deviceId = 'device_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6);
-        localStorage.setItem('lineh_device_id', deviceId);
-      }
-      var user = currentUser || 'غير مسجل';
-      var act = (action !== undefined) ? action : _lastAction;
-      fetch(_sbEndpoint, {
-        method: 'POST',
-        headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/json', 'Prefer': 'resolution=merge-duplicates' },
-        body: JSON.stringify({ id: 'presence_' + deviceId, data: { user: user, lastAction: act, lastSeen: new Date().toISOString() } })
-      }).catch(function(){});
-    }
-    async function pollPresence() {
-      try {
-        var res = await fetch(_sbEndpoint + '?id=like.presence_*&select=*', {
-          method: 'GET',
-          headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
-        });
-        if (!res.ok) return;
-        var rows = await res.json();
-        if (!rows || !rows.length) { document.getElementById('presence-users').style.display = 'none'; return; }
-        var now = Date.now();
-        var active = rows.filter(function(r) {
-          if (!r.data || !r.data.lastSeen) return false;
-          return (now - new Date(r.data.lastSeen).getTime()) < 60000;
-        });
-        var el = document.getElementById('presence-users');
-        if (!el) return;
-        if (active.length <= 1) { el.style.display = 'none'; return; }
-        var myId = 'presence_' + (localStorage.getItem('lineh_device_id') || '');
-        var others = active.filter(function(r) { return r.id !== myId; });
-        if (!others.length) { el.style.display = 'none'; return; }
-        var html = others.map(function(r) {
-          var txt = r.data.user || 'غير معروف';
-          if (r.data.lastAction) txt += ': ' + r.data.lastAction;
-          return txt;
-        }).join(' | ');
-        el.innerHTML = '👥 ' + html;
-        el.style.display = 'inline';
-      } catch(e) {}
-    }
-
+    function setAction(action) { _lastAction = action; }
+    function startPresence() {}
+    function stopPresence() {}
     function mergeArrays(localArr, remoteArr, keyFn) {
       if (!remoteArr || !remoteArr.length) return localArr || [];
       if (!localArr || !localArr.length) return remoteArr;
