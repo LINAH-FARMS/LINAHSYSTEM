@@ -9320,6 +9320,8 @@ function toggleEmployeeStatus(empId) {
         startPresence();
         if (localStorage.getItem('_localChangeTime')) { try { await pushToSupabase(); } catch(e) { syncLog('?? ??? ??? ?? Supabase'); } }
         await pullFromSupabase();
+        // try D: drive backup
+        try { if (backupDirHandle) { var _bok = await verifyDirPermission(false); if (_bok) { if ((!employees || employees.length===0) || (!hospitalities || hospitalities.length===0)) { var _bl = await loadLatestBackup(); if (_bl) syncLog('restored from D: drive'); } } } } catch(e) {}
         // ???? ???? ?????? ?? Supabase ?? ??????? ???????
         if ((!employees || employees.length === 0) || (!hospitalities || hospitalities.length === 0)) {
           var _rr = await fetch(_sbEndpoint + '?select=id,updated_at&limit=5', { method: 'GET', headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } });
@@ -10131,9 +10133,9 @@ function toggleEmployeeStatus(empId) {
       sortEmployeesAlphabetically(); rebuildDeptTitles(); rebuildAllDropdowns(); initEmployeeSearchInputs(); setupItemNameSearch(); setupNameAutocomplete(); populateRoomSectorDropdown(); populateContractorSectorDropdown(); renderTable(); renderInventoryTable(); renderInventoryItems(); renderVacationsTable(); renderOvertimeCalendar(); renderHospitalityTable(); renderMaintenanceTable(); renderSepticTable(); renderPeriodicMaintenance(); renderTeaSugarTable(); renderMealLogTable(); autoSaveTodayMeal(); renderContractorsTable(); renderDashboard(); updateEmployeeVacationStatuses(); renderTable(); renderOvertimeCalendar(); initAllSortableTables();
 
       // تحميل أولي من Google Drive (مرة واحدة)
-      // loadFromCloud(); // Google Drive backup معطل
+      // try restore from D: drive backup
+      (async function(){try{if(backupDirHandle){var _dok=await verifyDirPermission(false);if(_dok&&((!employees||employees.length===0)||(!hospitalities||hospitalities.length===0))){var _dl=await loadLatestBackup();if(_dl)syncLog('restored from D:');}}}catch(e){}})();
 
-      // Live dashboard clock
       function updateDashClock() {
         let el = document.getElementById('dash-clock');
         if (el) el.innerText = '⏱️ ' + new Date().toLocaleString('ar-EG') + ' | لينه فارمز - منظومة الشئون الإدارية';
