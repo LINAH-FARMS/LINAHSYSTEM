@@ -9129,7 +9129,10 @@ function toggleEmployeeStatus(empId) {
 
     function getAllDataForSync() {
       var o = getAllDataObject();
-      return { employees: o.employees, roomsCapacity: o.roomsCapacity, vacations: o.vacations, inventoryVouchers: o.inventoryVouchers, excludedEmployees: o.excludedEmployees, contractors: o.contractors, mealLogs: o.mealLogs, inventoryItems: o.inventoryItems, hospitalities: o.hospitalities, adminOvertime: o.adminOvertime };
+      var keys = ['employees','roomsCapacity','vacations','inventoryVouchers','excludedEmployees','contractors','mealLogs','inventoryItems','hospitalities','adminOvertime','maintenanceRecords','septicRecords','periodicMaintenance','teaSugarDisbursements','teaSugarBatches','dynamicSectors','contractorSectors','contractorRooms','dynamicRooms','dynamicSeptics','dynamicDepts','dynamicTitles','evaluations','evalTemplates','appUsers','auditLog','bakeryIngredients','bakeryProductions','bakeryContractorSupplies','bakeryInvoices','bakeryStockLog'];
+      var result = {};
+      for (var ki = 0; ki < keys.length; ki++) { result[keys[ki]] = o[keys[ki]]; }
+      return result;
     }
 
     function syncLog(msg) {
@@ -9215,37 +9218,7 @@ function toggleEmployeeStatus(empId) {
             if (!resp.ok) { syncLog('?? ??? ??? ' + key + ' - ' + resp.status); continue; }
             _dataHashes[key] = str;
             // Update global variable to match merged data
-            if (key === 'employees') employees = entities[key];
-            else if (key === 'roomsCapacity') roomsCapacity = entities[key];
-            else if (key === 'vacations') vacations = entities[key];
-            else if (key === 'inventoryVouchers') inventoryVouchers = entities[key];
-            else if (key === 'excludedEmployees') excludedEmployees = entities[key];
-            else if (key === 'contractors') contractors = entities[key];
-            else if (key === 'mealLogs') mealLogs = entities[key];
-            else if (key === 'inventoryItems') inventoryItems = entities[key];
-            else if (key === 'hospitalities') hospitalities = entities[key];
-            else if (key === 'adminOvertime') adminOvertime = entities[key];
-            else if (key === 'maintenanceRecords') maintenanceRecords = entities[key];
-            else if (key === 'septicRecords') septicRecords = entities[key];
-            else if (key === 'periodicMaintenance') periodicMaintenance = entities[key];
-            else if (key === 'teaSugarDisbursements') teaSugarDisbursements = entities[key];
-            else if (key === 'teaSugarBatches') teaSugarBatches = entities[key];
-            else if (key === 'dynamicSectors') dynamicSectors = entities[key];
-            else if (key === 'contractorSectors') contractorSectors = entities[key];
-            else if (key === 'contractorRooms') contractorRooms = entities[key];
-            else if (key === 'dynamicRooms') dynamicRooms = entities[key];
-            else if (key === 'dynamicSeptics') dynamicSeptics = entities[key];
-            else if (key === 'dynamicDepts') dynamicDepts = entities[key];
-            else if (key === 'dynamicTitles') dynamicTitles = entities[key];
-            else if (key === 'evaluations') evaluations = entities[key];
-            else if (key === 'evalTemplates') evalTemplates = entities[key];
-            else if (key === 'appUsers') appUsers = entities[key];
-            else if (key === 'auditLog') auditLog = entities[key];
-            else if (key === 'bakeryIngredients') bakeryIngredients = entities[key];
-            else if (key === 'bakeryProductions') bakeryProductions = entities[key];
-            else if (key === 'bakeryContractorSupplies') bakeryContractorSupplies = entities[key];
-            else if (key === 'bakeryInvoices') bakeryInvoices = entities[key];
-            else if (key === 'bakeryStockLog') bakeryStockLog = entities[key];
+            setEntityVar(key, entities[key]);
           } catch(e) { syncLog('?? ??? ??? ' + key); continue; }
         }
       }
@@ -9308,70 +9281,10 @@ function toggleEmployeeStatus(empId) {
             var localArr = local[row.id] || [];
             if (!remoteData || !remoteData.length) continue;
             if (!localArr.length) {
-              if (row.id === 'employees') employees = JSON.parse(JSON.stringify(remoteData));
-              else if (row.id === 'roomsCapacity') roomsCapacity = JSON.parse(JSON.stringify(remoteData));
-              else if (row.id === 'vacations') vacations = JSON.parse(JSON.stringify(remoteData));
-              else if (row.id === 'inventoryVouchers') inventoryVouchers = JSON.parse(JSON.stringify(remoteData));
-              else if (row.id === 'excludedEmployees') excludedEmployees = JSON.parse(JSON.stringify(remoteData));
-              else if (row.id === 'contractors') contractors = JSON.parse(JSON.stringify(remoteData));
-              else if (row.id === 'mealLogs') mealLogs = JSON.parse(JSON.stringify(remoteData));
-              else if (row.id === 'inventoryItems') inventoryItems = JSON.parse(JSON.stringify(remoteData));
-              else if (row.id === 'hospitalities') hospitalities = JSON.parse(JSON.stringify(remoteData));
-              else if (row.id === 'adminOvertime') adminOvertime = JSON.parse(JSON.stringify(remoteData));
-              else if (row.id === 'maintenanceRecords') maintenanceRecords = JSON.parse(JSON.stringify(remoteData));
-              else if (row.id === 'septicRecords') septicRecords = JSON.parse(JSON.stringify(remoteData));
-              else if (row.id === 'periodicMaintenance') periodicMaintenance = JSON.parse(JSON.stringify(remoteData));
-              else if (row.id === 'teaSugarDisbursements') teaSugarDisbursements = JSON.parse(JSON.stringify(remoteData));
-              else if (row.id === 'teaSugarBatches') teaSugarBatches = JSON.parse(JSON.stringify(remoteData));
-              else if (row.id === 'dynamicSectors') dynamicSectors = JSON.parse(JSON.stringify(remoteData));
-              else if (row.id === 'contractorSectors') contractorSectors = JSON.parse(JSON.stringify(remoteData));
-              else if (row.id === 'contractorRooms') contractorRooms = JSON.parse(JSON.stringify(remoteData));
-              else if (row.id === 'dynamicRooms') dynamicRooms = JSON.parse(JSON.stringify(remoteData));
-              else if (row.id === 'dynamicSeptics') dynamicSeptics = JSON.parse(JSON.stringify(remoteData));
-              else if (row.id === 'dynamicDepts') dynamicDepts = JSON.parse(JSON.stringify(remoteData));
-              else if (row.id === 'dynamicTitles') dynamicTitles = JSON.parse(JSON.stringify(remoteData));
-              else if (row.id === 'evaluations') evaluations = JSON.parse(JSON.stringify(remoteData));
-              else if (row.id === 'evalTemplates') evalTemplates = JSON.parse(JSON.stringify(remoteData));
-              else if (row.id === 'appUsers') appUsers = JSON.parse(JSON.stringify(remoteData));
-              else if (row.id === 'auditLog') auditLog = JSON.parse(JSON.stringify(remoteData));
-              else if (row.id === 'bakeryIngredients') bakeryIngredients = JSON.parse(JSON.stringify(remoteData));
-              else if (row.id === 'bakeryProductions') bakeryProductions = JSON.parse(JSON.stringify(remoteData));
-              else if (row.id === 'bakeryContractorSupplies') bakeryContractorSupplies = JSON.parse(JSON.stringify(remoteData));
-              else if (row.id === 'bakeryInvoices') bakeryInvoices = JSON.parse(JSON.stringify(remoteData));
-              else if (row.id === 'bakeryStockLog') bakeryStockLog = JSON.parse(JSON.stringify(remoteData));
+              setEntityVar(row.id, JSON.parse(JSON.stringify(remoteData)));
             } else {
               var merged = mergeArraysUpdate(localArr, remoteData, getKey);
-              if (row.id === 'employees') employees = JSON.parse(JSON.stringify(merged));
-              else if (row.id === 'roomsCapacity') roomsCapacity = JSON.parse(JSON.stringify(merged));
-              else if (row.id === 'vacations') vacations = JSON.parse(JSON.stringify(merged));
-              else if (row.id === 'inventoryVouchers') inventoryVouchers = JSON.parse(JSON.stringify(merged));
-              else if (row.id === 'excludedEmployees') excludedEmployees = JSON.parse(JSON.stringify(merged));
-              else if (row.id === 'contractors') contractors = JSON.parse(JSON.stringify(merged));
-              else if (row.id === 'mealLogs') mealLogs = JSON.parse(JSON.stringify(merged));
-              else if (row.id === 'inventoryItems') inventoryItems = JSON.parse(JSON.stringify(merged));
-              else if (row.id === 'hospitalities') hospitalities = JSON.parse(JSON.stringify(merged));
-              else if (row.id === 'adminOvertime') adminOvertime = JSON.parse(JSON.stringify(merged));
-              else if (row.id === 'maintenanceRecords') maintenanceRecords = JSON.parse(JSON.stringify(merged));
-              else if (row.id === 'septicRecords') septicRecords = JSON.parse(JSON.stringify(merged));
-              else if (row.id === 'periodicMaintenance') periodicMaintenance = JSON.parse(JSON.stringify(merged));
-              else if (row.id === 'teaSugarDisbursements') teaSugarDisbursements = JSON.parse(JSON.stringify(merged));
-              else if (row.id === 'teaSugarBatches') teaSugarBatches = JSON.parse(JSON.stringify(merged));
-              else if (row.id === 'dynamicSectors') dynamicSectors = JSON.parse(JSON.stringify(merged));
-              else if (row.id === 'contractorSectors') contractorSectors = JSON.parse(JSON.stringify(merged));
-              else if (row.id === 'contractorRooms') contractorRooms = JSON.parse(JSON.stringify(merged));
-              else if (row.id === 'dynamicRooms') dynamicRooms = JSON.parse(JSON.stringify(merged));
-              else if (row.id === 'dynamicSeptics') dynamicSeptics = JSON.parse(JSON.stringify(merged));
-              else if (row.id === 'dynamicDepts') dynamicDepts = JSON.parse(JSON.stringify(merged));
-              else if (row.id === 'dynamicTitles') dynamicTitles = JSON.parse(JSON.stringify(merged));
-              else if (row.id === 'evaluations') evaluations = JSON.parse(JSON.stringify(merged));
-              else if (row.id === 'evalTemplates') evalTemplates = JSON.parse(JSON.stringify(merged));
-              else if (row.id === 'appUsers') appUsers = JSON.parse(JSON.stringify(merged));
-              else if (row.id === 'auditLog') auditLog = JSON.parse(JSON.stringify(merged));
-              else if (row.id === 'bakeryIngredients') bakeryIngredients = JSON.parse(JSON.stringify(merged));
-              else if (row.id === 'bakeryProductions') bakeryProductions = JSON.parse(JSON.stringify(merged));
-              else if (row.id === 'bakeryContractorSupplies') bakeryContractorSupplies = JSON.parse(JSON.stringify(merged));
-              else if (row.id === 'bakeryInvoices') bakeryInvoices = JSON.parse(JSON.stringify(merged));
-              else if (row.id === 'bakeryStockLog') bakeryStockLog = JSON.parse(JSON.stringify(merged));
+              setEntityVar(row.id, JSON.parse(JSON.stringify(merged)));
             }
             changed = true;
           }
@@ -9438,6 +9351,39 @@ function toggleEmployeeStatus(empId) {
     function setAction(action) { _lastAction = action; }
     function startPresence() {}
     function stopPresence() {}
+    function setEntityVar(key, val) {
+      if (key === 'employees') employees = val;
+      else if (key === 'roomsCapacity') roomsCapacity = val;
+      else if (key === 'vacations') vacations = val;
+      else if (key === 'inventoryVouchers') inventoryVouchers = val;
+      else if (key === 'excludedEmployees') excludedEmployees = val;
+      else if (key === 'contractors') contractors = val;
+      else if (key === 'mealLogs') mealLogs = val;
+      else if (key === 'inventoryItems') inventoryItems = val;
+      else if (key === 'hospitalities') hospitalities = val;
+      else if (key === 'adminOvertime') adminOvertime = val;
+      else if (key === 'maintenanceRecords') maintenanceRecords = val;
+      else if (key === 'septicRecords') septicRecords = val;
+      else if (key === 'periodicMaintenance') periodicMaintenance = val;
+      else if (key === 'teaSugarDisbursements') teaSugarDisbursements = val;
+      else if (key === 'teaSugarBatches') teaSugarBatches = val;
+      else if (key === 'dynamicSectors') dynamicSectors = val;
+      else if (key === 'contractorSectors') contractorSectors = val;
+      else if (key === 'contractorRooms') contractorRooms = val;
+      else if (key === 'dynamicRooms') dynamicRooms = val;
+      else if (key === 'dynamicSeptics') dynamicSeptics = val;
+      else if (key === 'dynamicDepts') dynamicDepts = val;
+      else if (key === 'dynamicTitles') dynamicTitles = val;
+      else if (key === 'evaluations') evaluations = val;
+      else if (key === 'evalTemplates') evalTemplates = val;
+      else if (key === 'appUsers') appUsers = val;
+      else if (key === 'auditLog') auditLog = val;
+      else if (key === 'bakeryIngredients') bakeryIngredients = val;
+      else if (key === 'bakeryProductions') bakeryProductions = val;
+      else if (key === 'bakeryContractorSupplies') bakeryContractorSupplies = val;
+      else if (key === 'bakeryInvoices') bakeryInvoices = val;
+      else if (key === 'bakeryStockLog') bakeryStockLog = val;
+    }
     function mergeArrays(localArr, remoteArr, keyFn) {
       if (!remoteArr || !remoteArr.length) return localArr || [];
       if (!localArr || !localArr.length) return remoteArr;
@@ -9682,7 +9628,8 @@ function toggleEmployeeStatus(empId) {
         inventoryItems, contractors, dynamicSectors, contractorSectors, contractorRooms, dynamicRooms, dynamicSeptics, dynamicDepts, dynamicTitles,
         appUsers, currentUser, bakeryIngredients, bakeryProductions,
         bakeryContractorSupplies, bakeryInvoices,
-        manualTotalBeds, adminOvertime
+        manualTotalBeds, adminOvertime,
+        evaluations, evalTemplates, auditLog, bakeryStockLog, deptTitles
       };
     }
 
