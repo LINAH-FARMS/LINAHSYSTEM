@@ -2772,7 +2772,7 @@
     let employees = JSON.parse(localStorage.getItem('lineh_employees')) || JSON.parse(localStorage.getItem('employees_db')) || (typeof SEED_EMPLOYEES !== 'undefined' && SEED_EMPLOYEES.length > 0 ? SEED_EMPLOYEES : []);
     let roomsCapacity = JSON.parse(localStorage.getItem('lineh_rooms_capacity')) || JSON.parse(localStorage.getItem('rooms_db')) || [];
     let vacations = JSON.parse(localStorage.getItem('lineh_vacations')) || [];
-    let hospitalities = JSON.parse(localStorage.getItem('lineh_hospitality')) || [];
+    let hospitalities = JSON.parse(localStorage.getItem('lineh_hospitality')) || JSON.parse(localStorage.getItem('lineh_hospitality_bak')) || [];
     let maintenanceRecords = JSON.parse(localStorage.getItem('lineh_maintenance')) || [];
     let septicRecords = JSON.parse(localStorage.getItem('lineh_septic')) || JSON.parse(localStorage.getItem('septic_db')) || [];
     let excludedEmployees = JSON.parse(localStorage.getItem('excludedEmployees')) || [];
