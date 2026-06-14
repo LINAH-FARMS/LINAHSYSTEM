@@ -9143,9 +9143,9 @@ function toggleEmployeeStatus(empId) {
 
     var _lastUpdatedAt = '';
     var _dataHashes;
-    try { _dataHashes = JSON.parse(localStorage.getItem('_dataHashes')) || {}; } catch(e) { _dataHashes = {}; }
+    try { _dataHashes = JSON.parse(localStorage.getItem('_dataHashes')) || {}; } catch(e) { _dataHashes = {}; localStorage.removeItem('_dataHashes'); }
     var _pulledAt;
-    try { _pulledAt = JSON.parse(localStorage.getItem('_pulledAt')) || {}; } catch(e) { _pulledAt = {}; }
+    try { _pulledAt = JSON.parse(localStorage.getItem('_pulledAt')) || {}; } catch(e) { _pulledAt = {}; localStorage.removeItem('_pulledAt'); }
 
     async function pushToSupabase() {
       if (!supabaseConnected) return;
