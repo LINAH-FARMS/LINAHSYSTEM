@@ -4251,7 +4251,6 @@
       calculateSystemStats();
       if (!skipSync) syncToServer();
       if (!noTimestamp) localStorage.setItem('_localChangeTime', Date.now());
-      if (!skipSync) { pushToSupabase(); }
       setAction('💾 حفظ');
       _dataChangedSinceBackup = true;
       var bakBtn = document.querySelector('button[onclick*="exportBackupSystem"]');
@@ -9935,46 +9934,105 @@ function toggleEmployeeStatus(empId) {
     }
 
     var _lastUpdatedAt = '';
+    var _dataHashes = {};
+    var _pulledAt = {};
     async function pushToSupabase() {
       if (!supabaseConnected) return;
-      var data = getAllDataForSync();
       var ts = new Date().toISOString();
-      data._t = Date.now();
-      _lastUpdatedAt = ts;
-      try {
-        await fetch(_sbEndpoint, {
-          method: 'POST',
-          headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/json', 'Prefer': 'resolution=merge-duplicates' },
-          body: JSON.stringify({ id: 'alldata', data: data, updated_at: ts })
-        });
-      } catch(e) {}
+      var entities = {
+        employees: JSON.parse(JSON.stringify(employees)),
+        roomsCapacity: JSON.parse(JSON.stringify(roomsCapacity)),
+        vacations: JSON.parse(JSON.stringify(vacations)),
+        inventoryVouchers: JSON.parse(JSON.stringify(inventoryVouchers)),
+        excludedEmployees: JSON.parse(JSON.stringify(excludedEmployees)),
+        contractors: JSON.parse(JSON.stringify(contractors)),
+        mealLogs: JSON.parse(JSON.stringify(mealLogs)),
+        inventoryItems: JSON.parse(JSON.stringify(inventoryItems)),
+        hospitalities: JSON.parse(JSON.stringify(hospitalities)),
+        adminOvertime: JSON.parse(JSON.stringify(adminOvertime))
+      };
+      var changed = [];
+      for (var key in entities) {
+        var str = JSON.stringify(entities[key]);
+        if (_dataHashes[key] !== str) {
+          changed.push(key);
+          try {
+            await fetch(_sbEndpoint, {
+              method: 'POST',
+              headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/json', 'Prefer': 'resolution=merge-duplicates' },
+              body: JSON.stringify({ id: key, data: entities[key], updated_at: ts })
+            });
+            _dataHashes[key] = str;
+          } catch(e) { syncLog('⚠️ فشل رفع ' + key); return; }
+        }
+      }
+      if (changed.length > 0) {
+        _lastUpdatedAt = ts;
+        changed.forEach(function(k) { _pulledAt[k] = ts; });
+        syncLog('☁️ تم رفع ' + changed.join(', '));
+        updateLastSyncTime();
+      } else {
+        syncLog('☁️ لا توجد تغييرات جديدة');
+      }
     }
 
     async function pullFromSupabase() {
       if (!supabaseConnected) return;
       try {
-        var r1 = await fetch(_sbEndpoint + '?id=eq.alldata&select=updated_at', { method: 'GET', headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } });
-        if (!r1.ok) return;
-        var rows1 = await r1.json();
-        if (!rows1 || !rows1.length || !rows1[0].updated_at) return;
-        if (rows1[0].updated_at === _lastUpdatedAt) return;
-        _lastUpdatedAt = rows1[0].updated_at;
-        var r2 = await fetch(_sbEndpoint + '?id=eq.alldata&select=data', { method: 'GET', headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } });
-        if (!r2.ok) return;
-        var rows2 = await r2.json();
-        if (!rows2 || !rows2.length || !rows2[0].data) return;
-        var remote = rows2[0].data;
+        var entityKeys = ['employees','roomsCapacity','vacations','inventoryVouchers','excludedEmployees','contractors','mealLogs','inventoryItems','hospitalities','adminOvertime'];
+        var resp = await fetch(_sbEndpoint + '?select=id,updated_at', { method: 'GET', headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } });
+        if (!resp.ok) return;
+        var rows = await resp.json();
+        if (!rows || !rows.length) return;
+        // تحويل البيانات القديمة (alldata) إلى النظام الجديد
+        var oldRow = null;
+        for (var ri = 0; ri < rows.length; ri++) { if (rows[ri].id === 'alldata') { oldRow = rows[ri]; break; } }
+        if (oldRow && oldRow.updated_at !== _lastUpdatedAt) {
+          var oldResp = await fetch(_sbEndpoint + '?id=eq.alldata&select=data', { method: 'GET', headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } });
+          if (oldResp.ok) {
+            var oldRows = await oldResp.json();
+            if (oldRows && oldRows.length && oldRows[0].data) {
+              var old = oldRows[0].data;
+              for (var k in old) { if (entityKeys.indexOf(k) !== -1 && old[k]) {
+                await fetch(_sbEndpoint, {
+                  method: 'POST',
+                  headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/json', 'Prefer': 'resolution=merge-duplicates' },
+                  body: JSON.stringify({ id: k, data: old[k], updated_at: oldRow.updated_at })
+                });
+              }}
+              await fetch(_sbEndpoint + '?id=eq.alldata', { method: 'DELETE', headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } });
+              _lastUpdatedAt = oldRow.updated_at;
+              syncLog('🔄 تم تحويل البيانات القديمة');
+              return;
+            }
+          }
+        }
         var local = getAllDataForSync();
         var changed = false;
-        if (remote.employees && JSON.stringify(remote.employees) !== JSON.stringify(local.employees)) { employees = JSON.parse(JSON.stringify(remote.employees)); changed = true; }
-        if (remote.roomsCapacity && JSON.stringify(remote.roomsCapacity) !== JSON.stringify(local.roomsCapacity)) { roomsCapacity = JSON.parse(JSON.stringify(remote.roomsCapacity)); changed = true; }
-        if (remote.vacations && JSON.stringify(remote.vacations) !== JSON.stringify(local.vacations)) { vacations = JSON.parse(JSON.stringify(remote.vacations)); changed = true; }
-        if (remote.inventoryVouchers && JSON.stringify(remote.inventoryVouchers) !== JSON.stringify(local.inventoryVouchers)) { inventoryVouchers = JSON.parse(JSON.stringify(remote.inventoryVouchers)); changed = true; }
-        if (remote.excludedEmployees && JSON.stringify(remote.excludedEmployees) !== JSON.stringify(local.excludedEmployees)) { excludedEmployees = JSON.parse(JSON.stringify(remote.excludedEmployees)); changed = true; }
-        if (remote.mealLogs && JSON.stringify(remote.mealLogs) !== JSON.stringify(local.mealLogs)) { mealLogs = JSON.parse(JSON.stringify(remote.mealLogs)); changed = true; }
-        if (remote.inventoryItems && JSON.stringify(remote.inventoryItems) !== JSON.stringify(local.inventoryItems)) { inventoryItems = JSON.parse(JSON.stringify(remote.inventoryItems)); changed = true; }
-        if (remote.contractors && JSON.stringify(remote.contractors) !== JSON.stringify(local.contractors)) { contractors = JSON.parse(JSON.stringify(remote.contractors)); changed = true; }
-        if (remote.hospitalities && JSON.stringify(remote.hospitalities) !== JSON.stringify(local.hospitalities)) { hospitalities = JSON.parse(JSON.stringify(remote.hospitalities)); changed = true; }
+        for (var i = 0; i < rows.length; i++) {
+          var row = rows[i];
+          if (row.id === 'alldata') continue;
+          if (row.updated_at === _pulledAt[row.id]) continue;
+          var dataResp = await fetch(_sbEndpoint + '?id=eq.' + row.id + '&select=data', { method: 'GET', headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } });
+          if (!dataResp.ok) continue;
+          var dataRows = await dataResp.json();
+          if (!dataRows || !dataRows.length || !dataRows[0].data) continue;
+          var remoteData = dataRows[0].data;
+          if (JSON.stringify(remoteData) !== JSON.stringify(local[row.id])) {
+            if (row.id === 'employees') employees = JSON.parse(JSON.stringify(remoteData));
+            else if (row.id === 'roomsCapacity') roomsCapacity = JSON.parse(JSON.stringify(remoteData));
+            else if (row.id === 'vacations') vacations = JSON.parse(JSON.stringify(remoteData));
+            else if (row.id === 'inventoryVouchers') inventoryVouchers = JSON.parse(JSON.stringify(remoteData));
+            else if (row.id === 'excludedEmployees') excludedEmployees = JSON.parse(JSON.stringify(remoteData));
+            else if (row.id === 'contractors') contractors = JSON.parse(JSON.stringify(remoteData));
+            else if (row.id === 'mealLogs') mealLogs = JSON.parse(JSON.stringify(remoteData));
+            else if (row.id === 'inventoryItems') inventoryItems = JSON.parse(JSON.stringify(remoteData));
+            else if (row.id === 'hospitalities') hospitalities = JSON.parse(JSON.stringify(remoteData));
+            else if (row.id === 'adminOvertime') adminOvertime = JSON.parse(JSON.stringify(remoteData));
+            changed = true;
+          }
+          _pulledAt[row.id] = row.updated_at;
+        }
         if (changed) {
           syncLog('🔄 تم استقبال تحديثات');
           syncStorage(true, true);
@@ -9994,7 +10052,7 @@ function toggleEmployeeStatus(empId) {
 
     async function connectSupabase() {
       try {
-        var r = await fetch(_sbEndpoint + '?id=eq.alldata&select=id', { method: 'GET', headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } });
+        var r = await fetch(_sbEndpoint + '?select=id&limit=1', { method: 'GET', headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } });
         if (!r.ok) { syncLog('⚠️ اتصال Supabase فشل ' + r.status + ' — يعيد المحاولة'); setTimeout(connectSupabase, 3000); return; }
         supabaseConnected = true;
         syncLog('✅ متصل بـ Supabase');
@@ -10002,9 +10060,8 @@ function toggleEmployeeStatus(empId) {
         updateLastSyncTime();
         startPresence();
         await pullFromSupabase();
-        await pushToSupabase();
         if (_syncTimer) clearInterval(_syncTimer);
-        _syncTimer = setInterval(pullFromSupabase, 15000);
+        _syncTimer = setInterval(pullFromSupabase, 30000);
         document.getElementById('cloud-status').textContent = '☁️ متصل';
       } catch(e) { console.log('⚠️ Supabase connect error — retry 3s'); setTimeout(connectSupabase, 3000); }
     }
