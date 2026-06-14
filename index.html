@@ -9188,11 +9188,12 @@ function toggleEmployeeStatus(empId) {
         if (_dataHashes[key] !== str) {
           changed.push(key);
           try {
-            await fetch(_sbEndpoint, {
+            var resp = await fetch(_sbEndpoint, {
               method: 'POST',
               headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/json', 'Prefer': 'resolution=merge-duplicates' },
               body: JSON.stringify({ id: key, data: entities[key], updated_at: ts })
             });
+            if (!resp.ok) { syncLog('?? ??? ??? ' + key + ' - ' + resp.status); continue; }
             _dataHashes[key] = str;
           } catch(e) { syncLog('⚠️ فشل رفع ' + key); return; }
         }
