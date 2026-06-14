@@ -9146,6 +9146,11 @@ function toggleEmployeeStatus(empId) {
     try { _dataHashes = JSON.parse(localStorage.getItem('_dataHashes')) || {}; } catch(e) { _dataHashes = {}; localStorage.removeItem('_dataHashes'); }
     var _pulledAt;
     try { _pulledAt = JSON.parse(localStorage.getItem('_pulledAt')) || {}; } catch(e) { _pulledAt = {}; localStorage.removeItem('_pulledAt'); }
+    // Initialize hashes from current data to prevent unnecessary first-time push
+    if (Object.keys(_dataHashes).length === 0) {
+      var initData = { employees: employees, roomsCapacity: roomsCapacity, vacations: vacations, inventoryVouchers: inventoryVouchers, excludedEmployees: excludedEmployees, contractors: contractors, mealLogs: mealLogs, inventoryItems: inventoryItems, hospitalities: hospitalities, adminOvertime: adminOvertime, maintenanceRecords: maintenanceRecords, septicRecords: septicRecords, periodicMaintenance: periodicMaintenance, teaSugarDisbursements: teaSugarDisbursements, teaSugarBatches: teaSugarBatches, dynamicSectors: dynamicSectors, contractorSectors: contractorSectors, contractorRooms: contractorRooms, dynamicRooms: dynamicRooms, dynamicSeptics: dynamicSeptics, dynamicDepts: dynamicDepts, dynamicTitles: dynamicTitles, evaluations: evaluations, evalTemplates: evalTemplates, appUsers: appUsers, auditLog: auditLog, bakeryIngredients: bakeryIngredients, bakeryProductions: bakeryProductions, bakeryContractorSupplies: bakeryContractorSupplies, bakeryInvoices: bakeryInvoices, bakeryStockLog: bakeryStockLog };
+      for (var ik in initData) { if (initData[ik] !== undefined) _dataHashes[ik] = JSON.stringify(initData[ik]); }
+    }
 
     async function pushToSupabase() {
       if (!supabaseConnected) return;
