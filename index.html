@@ -8933,7 +8933,7 @@ function toggleEmployeeStatus(empId) {
       employees = JSON.parse(localStorage.getItem('lineh_employees')) || JSON.parse(localStorage.getItem('employees_db')) || [];
       roomsCapacity = JSON.parse(localStorage.getItem('lineh_rooms_capacity')) || JSON.parse(localStorage.getItem('rooms_db')) || [];
       vacations = JSON.parse(localStorage.getItem('lineh_vacations')) || [];
-      hospitalities = JSON.parse(localStorage.getItem('lineh_hospitality')) || [];
+      hospitalities = JSON.parse(localStorage.getItem('lineh_hospitality')) || JSON.parse(localStorage.getItem('lineh_hospitality_bak')) || [];
       maintenanceRecords = JSON.parse(localStorage.getItem('lineh_maintenance')) || [];
       septicRecords = JSON.parse(localStorage.getItem('lineh_septic')) || JSON.parse(localStorage.getItem('septic_db')) || [];
       excludedEmployees = JSON.parse(localStorage.getItem('excludedEmployees')) || [];
