@@ -9141,7 +9141,7 @@ function toggleEmployeeStatus(empId) {
     var _lastUpdatedAt = '';
     var _dataHashes = {};
     var _pulledAt = {};
-    var _pulledAt = {};
+
     async function pushToSupabase() {
       if (!supabaseConnected) return;
       var ts = new Date().toISOString();
