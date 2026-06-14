@@ -5743,21 +5743,20 @@
       document.getElementById('print-step-1').style.display = 'block';
       document.getElementById('print-step-2').style.display = 'none';
     }
-    function generateEmployeeCode() {
+        function generateEmployeeCode() {
       let contract = document.getElementById('form-emp-contract').value;
       let codeField = document.getElementById('form-emp-code');
       let editId = document.getElementById('edit-emp-id').value;
       if (editId) return;
+      // كاجول: editable, not required
+      codeField.readOnly = false;
+      codeField.style.background = '#fff';
+      codeField.style.cursor = 'text';
       if (contract === 'دائم') {
-        codeField.readOnly = false;
-        codeField.style.background = '#fff';
-        codeField.style.cursor = 'text';
         codeField.value = '';
         codeField.focus();
       } else {
-        codeField.readOnly = true;
-        codeField.style.background = '#f0f0f0';
-        codeField.style.cursor = 'not-allowed';
+        codeField.value = '';
       let sameType = employees.filter(e => e.contract === contract);
       let allCodes = sameType.map(function(e){ return parseInt(e.code); });
       excludedEmployees.forEach(function(e){
@@ -5767,7 +5766,6 @@
       codeField.value = maxCode + 1;
       }
     }
-
     function setupNameAutocomplete() {
       let inp = document.getElementById('form-emp-name');
       let sug = document.getElementById('emp-name-suggestions');
@@ -5920,7 +5918,7 @@
       let editId = document.getElementById('edit-emp-id').value;
 
       if(!name) return alert("اسم الموظف رباعي مطلوب إجبارياً");
-      if(!code) return alert("⚠️ لم يتم توليد الكود — تأكد من اختيار نوع التعاقد");
+      if(!code && contract !== 'كاجول') return alert("⚔️ لم يتم توليد الكود — تأكد من اختيار نوع التعاقد");
 
       if(!editId) {
         let allPeople = [...employees, ...excludedEmployees];
@@ -5967,45 +5965,7 @@
       document.getElementById('form-emp-contract').value = emp.contract || 'دائم';
       // حالة الكود أثناء التعديل
       var cf = document.getElementById('form-emp-code');
-      if (emp.contract === 'دائم') {
-        cf.readOnly = false; cf.style.background = '#fff'; cf.style.cursor = 'text';
-      } else {
-        cf.readOnly = true; cf.style.background = '#f0f0f0'; cf.style.cursor = 'not-allowed';
-      }
-      document.getElementById('form-emp-national-id').value = emp.nationalId || '';
-      document.getElementById('form-emp-hire-date').value = emp.hireDate || '';
-      
-      rebuildAllDropdowns();
-      document.getElementById('form-emp-dept').value = emp.dept || '';
-      filterTitlesByDept();
-      if (emp.title) {
-        let titleSelect = document.getElementById('form-emp-title-select');
-        let exists = Array.from(titleSelect.options).some(o => o.value === emp.title);
-        if (!exists) {
-          let opt = document.createElement('option');
-          opt.value = emp.title; opt.textContent = emp.title;
-          titleSelect.appendChild(opt);
-        }
-        titleSelect.value = emp.title;
-      }
-      document.getElementById('form-emp-gov').value = emp.gov || '';
-      document.getElementById('form-emp-status').value = emp.status || 'P';
-      document.getElementById('form-emp-sector').value = emp.sector || '';
-      updateEmpRoomBySector();
-      document.getElementById('form-emp-room').value = emp.room || '';
-      document.getElementById('form-emp-vacation-balance').value = typeof emp.vacationBalance === 'number' ? emp.vacationBalance : 30;
-
-      document.querySelectorAll('.default-asset').forEach(input => input.value = 0);
-      document.getElementById('assets-form-container').innerHTML = '';
-
-      if(emp.assets && Array.isArray(emp.assets)) {
-        emp.assets.forEach(as => {
-          let defInput = document.querySelector(`.default-asset[data-item="${as.item}"]`);
-          if(defInput) { defInput.value = as.qty; } 
-          else { addAssetRowField(as.item, as.qty); }
-        });
-      }
-      openModal('modal-add-emp');
+      cf.readOnly = false; cf.style.background = '#fff'; cf.style.cursor = 'text';
     }
 
     // --- دالات الاستقالة والاستبعاد السليمة 100% من داخل شاشة الاستبعاد المخصصة ---
