@@ -9194,6 +9194,19 @@ function toggleEmployeeStatus(empId) {
               body: JSON.stringify({ id: key, data: entities[key], updated_at: ts })
             });
             if (!resp.ok) { syncLog('?? ??? ??? ' + key + ' - ' + resp.status); continue; }
+            _dataHashes[key] = str;
+          } catch(e) { syncLog('?? ??? ??? ' + key); continue; }
+        }
+      }
+      if (changed.length > 0) {
+        _lastUpdatedAt = ts;
+        changed.forEach(function(k) { _pulledAt[k] = ts; });
+        syncLog('?? ?? ??? ' + changed.join(', '));
+        updateLastSyncTime();
+      } else {
+        syncLog('?? ?? ???? ??????? ?????');
+      }
+    }
 
     async function pullFromSupabase() {
       if (!supabaseConnected) return;
