@@ -2514,7 +2514,6 @@
       </div>
     </div>
 
-
   </div>
 
   <!-- ====== Data Exchange Tab ====== -->
@@ -3234,7 +3233,6 @@
       employees = employees.filter(function(e) { return !exclMap[e.code || e.id || e.name]; });
     }
     let auditLog = JSON.parse(localStorage.getItem('linah_audit_log')) || [];
-
     function logAction(action, targetType, targetName, details) {
       auditLog.push({
         id: Date.now().toString(36) + Math.random().toString(36).slice(2,6),
@@ -3258,7 +3256,6 @@
       const now = new Date();
       document.getElementById('live-clock').innerText = "⏱️ التوقيت الحالي: " + now.toLocaleString('ar-EG');
     }, 1000);
-
 
     function sortEmployeesAlphabetically() {
       employees.sort((a, b) => (a.name || "").localeCompare(b.name || "ar"));
@@ -3736,7 +3733,6 @@
       }
     }
 
-
     function populateAuditTypeFilter() {
       var sel = document.getElementById('filter-audit-type');
       if (!sel) return;
@@ -3746,7 +3742,6 @@
       sel.innerHTML = '<option value="">كل الأنواع</option>' + Object.keys(types).sort().map(function(t) { return '<option value="' + t + '">' + t + '</option>'; }).join('');
       sel.value = val;
     }
-
     function renderAuditLog() {
       var tbody = document.getElementById('audit-log-body');
       if (!tbody) return;
@@ -9148,7 +9143,14 @@ function toggleEmployeeStatus(empId) {
     var _pulledAt = {};
     async function pushToSupabase() {
       if (!supabaseConnected) return;
+      if (!supabaseConnected) return;
       var ts = new Date().toISOString();
+      // ??? ?????? ??????? ?? Supabase ????? ?? ??????
+      var _remoteTimestamps = null;
+      try {
+        var _tmResp = await fetch(_sbEndpoint + "?select=id,updated_at", { method: "GET", headers: { "apikey": SUPABASE_KEY, "Authorization": "Bearer " + SUPABASE_KEY } });
+        if (_tmResp.ok) { var _tmRows = await _tmResp.json(); if (_tmRows && _tmRows.length) { _remoteTimestamps = {}; _tmRows.forEach(function(r) { _remoteTimestamps[r.id] = r.updated_at; }); } }
+      } catch(e) {}
       var entities = {
         employees: JSON.parse(JSON.stringify(employees)),
         roomsCapacity: JSON.parse(JSON.stringify(roomsCapacity)),
@@ -9185,7 +9187,16 @@ function toggleEmployeeStatus(empId) {
       var changed = [];
       for (var key in entities) {
         var str = JSON.stringify(entities[key]);
+        var str = JSON.stringify(entities[key]);
         if (_dataHashes[key] !== str) {
+          // ????? ??????: ?? ??? ????? ?????? ?? ???? ?? ??? ???
+          if (_remoteTimestamps && _remoteTimestamps[key]) {
+            var _conflictT = new Date(_remoteTimestamps[key]).getTime();
+            var _lastPullT = _pulledAt && _pulledAt[key] ? new Date(_pulledAt[key]).getTime() : 0;
+            if (_conflictT > _lastPullT) {
+              syncLog("?? ?????? ?? " + key + " - ?? ??? ?? ??????"); continue;
+            }
+          }
           changed.push(key);
           try {
             var resp = await fetch(_sbEndpoint, {
@@ -10135,7 +10146,6 @@ function toggleEmployeeStatus(empId) {
       // تحميل أولي من Google Drive (مرة واحدة)
       // try restore from D: drive backup
       (async function(){try{if(backupDirHandle){var _dok=await verifyDirPermission(false);if(_dok&&((!employees||employees.length===0)||(!hospitalities||hospitalities.length===0))){var _dl=await loadLatestBackup();if(_dl)syncLog('restored from D:');}}}catch(e){}})();
-
       function updateDashClock() {
         let el = document.getElementById('dash-clock');
         if (el) el.innerText = '⏱️ ' + new Date().toLocaleString('ar-EG') + ' | لينه فارمز - منظومة الشئون الإدارية';
@@ -11114,4 +11124,4 @@ function toggleEmployeeStatus(empId) {
 
 </body>
 </html>
-
+
