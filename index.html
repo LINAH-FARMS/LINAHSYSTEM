@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8">
@@ -905,6 +905,7 @@
       <div style="font-size:48px;margin-bottom:10px;">🔐</div>
       <h1>لينه فارمز</h1>
       <p>منظومة الشئون الإدارية المتكاملة</p>
+      <form onsubmit="doLogin();return false">
       <div class="form-group">
         <label>اختر المستخدم</label>
         <select id="login-user" onchange="document.getElementById('login-error').innerText='';document.getElementById('login-pass').value=''"></select>
@@ -914,6 +915,7 @@
         <input type="password" id="login-pass" placeholder="أدخل كلمة المرور" onkeydown="if(event.key==='Enter')doLogin()">
       </div>
       <button class="btn-login" onclick="doLogin()">دخول</button>
+      </form>
       <div id="login-error"></div>
     </div>
   </div>
