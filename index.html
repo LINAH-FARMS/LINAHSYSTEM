@@ -9333,7 +9333,7 @@ function toggleEmployeeStatus(empId) {
               else if (row.id === 'bakeryInvoices') bakeryInvoices = JSON.parse(JSON.stringify(remoteData));
               else if (row.id === 'bakeryStockLog') bakeryStockLog = JSON.parse(JSON.stringify(remoteData));
             } else {
-              var merged = mergeArrays(localArr, remoteData, getKey);
+              var merged = mergeArraysUpdate(localArr, remoteData, getKey);
               if (row.id === 'employees') employees = JSON.parse(JSON.stringify(merged));
               else if (row.id === 'roomsCapacity') roomsCapacity = JSON.parse(JSON.stringify(merged));
               else if (row.id === 'vacations') vacations = JSON.parse(JSON.stringify(merged));
@@ -9442,11 +9442,27 @@ function toggleEmployeeStatus(empId) {
       });
       remoteArr.forEach(function(item) {
         var k = keyFn ? keyFn(item) : JSON.stringify(item);
-        if (!keys[k]) { result.push(item); keys[k] = true; }
+      if (!keys[k]) { result.push(item); keys[k] = true; }
       });
       return result;
     }
-
+    function mergeArraysUpdate(localArr, remoteArr, keyFn) {
+      if (!remoteArr || !remoteArr.length) return localArr || [];
+      if (!localArr || !localArr.length) return remoteArr;
+      var remoteKeyed = {};
+      remoteArr.forEach(function(item) { remoteKeyed[keyFn ? keyFn(item) : JSON.stringify(item)] = item; });
+      var result = localArr.map(function(item) {
+        var k = keyFn ? keyFn(item) : JSON.stringify(item);
+        return remoteKeyed[k] || item;
+      });
+      var localKeys = {};
+      localArr.forEach(function(item) { localKeys[keyFn ? keyFn(item) : JSON.stringify(item)] = true; });
+      remoteArr.forEach(function(item) {
+        var k = keyFn ? keyFn(item) : JSON.stringify(item);
+        if (!localKeys[k]) { result.push(item); localKeys[k] = true; }
+      });
+      return result;
+    }
     function dedupArray(arr, keyFn) {
       if (!arr || !arr.length) return arr || [];
       var seen = {}, result = [];
