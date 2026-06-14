@@ -9236,7 +9236,7 @@ function toggleEmployeeStatus(empId) {
               await fetch(_sbEndpoint + '?id=eq.alldata', { method: 'DELETE', headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } });
               _lastUpdatedAt = oldRow.updated_at;
               syncLog('🔄 تم تحويل البيانات القديمة');
-              return;
+              
             }
           }
         }
@@ -9313,7 +9313,7 @@ function toggleEmployeeStatus(empId) {
         updateSupabaseStatus('connected');
         updateLastSyncTime();
         startPresence();
-      await pushToSupabase();
+        if (localStorage.getItem('_localChangeTime')) { await pushToSupabase(); }
         await pullFromSupabase();
         if (_syncTimer) clearInterval(_syncTimer);
         _syncTimer = setInterval(pullFromSupabase, 30000);
