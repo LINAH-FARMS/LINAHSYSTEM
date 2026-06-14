@@ -9318,7 +9318,7 @@ function toggleEmployeeStatus(empId) {
         updateSupabaseStatus('connected');
         updateLastSyncTime();
         startPresence();
-        try { await pushToSupabase(); } catch(e) {}
+        if (localStorage.getItem('_localChangeTime')) { try { await pushToSupabase(); } catch(e) { syncLog('?? ??? ??? ?? Supabase'); } }
         await pullFromSupabase();
         // ???? ???? ?????? ?? Supabase ?? ??????? ???????
         if ((!employees || employees.length === 0) && (!hospitalities || hospitalities.length === 0)) {
@@ -9327,7 +9327,7 @@ function toggleEmployeeStatus(empId) {
             var _rrData = await _rr.json();
             if (_rrData && _rrData.length > 0) {
               syncLog('?? ?? ??????? ?? ??????? ?? Supabase');
-              supabaseConnected = true; await pushToSupabase(); await pullFromSupabase(); supabaseConnected = true;
+              await pullFromSupabase();
             }
           }
         }
