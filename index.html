@@ -9146,8 +9146,6 @@ function toggleEmployeeStatus(empId) {
       if (!supabaseConnected) return;
       var ts = new Date().toISOString();
       var entities = {
-      var ts = new Date().toISOString();
-      var entities = {
         employees: JSON.parse(JSON.stringify(employees)),
         roomsCapacity: JSON.parse(JSON.stringify(roomsCapacity)),
         vacations: JSON.parse(JSON.stringify(vacations)),
