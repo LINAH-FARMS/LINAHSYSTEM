@@ -3459,6 +3459,7 @@
       localStorage.setItem('lineh_admin_overtime', JSON.stringify(adminOvertime));
       calculateSystemStats();
       if (!skipSync) syncToServer();
+      if (!skipSync) { pushToSupabase(); }
       if (!noTimestamp) localStorage.setItem('_localChangeTime', Date.now());
       setAction('💾 حفظ');
       _dataChangedSinceBackup = true;
