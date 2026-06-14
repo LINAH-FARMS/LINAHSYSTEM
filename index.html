@@ -8017,7 +8017,7 @@ function toggleEmployeeStatus(empId) {
         if (bakeryContractorSupplies.length > 0) bakeryContractorSupplies = dedupArray(bakeryContractorSupplies, function(cs) { return cs.date + '|' + (cs.name||'') + '|' + (cs.count||0) + '|' + (cs.price||0); });
         if (contractors.length > 0) contractors = dedupArray(contractors, function(c) { return c.id || JSON.stringify(c); });
 
-        syncStorage(); renderTable(); renderHousingLayout(); renderInventoryTable(); renderInventoryItems(); renderVacationsTable(); renderOvertimeCalendar(); renderHospitalityTable(); renderMaintenanceTable(); renderSepticTable(); renderPeriodicMaintenance(); renderTeaSugarTable(); renderMealLogTable(); autoSaveTodayMeal(); populateContractorSectorDropdown(); renderContractorsTable(); rebuildAllDropdowns();
+        syncStorage(); renderTable(); renderHousingLayout(); renderInventoryTable(); renderInventoryItems(); renderVacationsTable(); renderOvertimeCalendar(); renderHospitalityTable(); renderMaintenanceTable(); renderSepticTable(); renderPeriodicMaintenance(); renderTeaSugarTable(); renderMealLogTable(); autoSaveTodayMeal(); populateContractorSectorDropdown(); renderContractorsTable(); rebuildAllDropdowns(); renderBakeryIngredients(); renderBakeryProductions(); renderBakeryContractorSupplies(); renderBakeryInvoices(); updateBakeryStats(); updateBreadSupplyStats();
         renderBakeryIngredients(); renderBakeryProductions(); renderBakeryContractorSupplies(); renderBakeryInvoices();
         renderContractorRoomsList(); populateContractorRoomSectorDropdown(); renderEvaluations();
         _dataChangedSinceBackup = false;
@@ -9159,7 +9159,28 @@ function toggleEmployeeStatus(empId) {
         mealLogs: JSON.parse(JSON.stringify(mealLogs)),
         inventoryItems: JSON.parse(JSON.stringify(inventoryItems)),
         hospitalities: JSON.parse(JSON.stringify(hospitalities)),
-        adminOvertime: JSON.parse(JSON.stringify(adminOvertime))
+        adminOvertime: JSON.parse(JSON.stringify(adminOvertime)),
+        maintenanceRecords: JSON.parse(JSON.stringify(maintenanceRecords)),
+        septicRecords: JSON.parse(JSON.stringify(septicRecords)),
+        periodicMaintenance: JSON.parse(JSON.stringify(periodicMaintenance)),
+        teaSugarDisbursements: JSON.parse(JSON.stringify(teaSugarDisbursements)),
+        teaSugarBatches: JSON.parse(JSON.stringify(teaSugarBatches)),
+        dynamicSectors: JSON.parse(JSON.stringify(dynamicSectors)),
+        contractorSectors: JSON.parse(JSON.stringify(contractorSectors)),
+        contractorRooms: JSON.parse(JSON.stringify(contractorRooms)),
+        dynamicRooms: JSON.parse(JSON.stringify(dynamicRooms)),
+        dynamicSeptics: JSON.parse(JSON.stringify(dynamicSeptics)),
+        dynamicDepts: JSON.parse(JSON.stringify(dynamicDepts)),
+        dynamicTitles: JSON.parse(JSON.stringify(dynamicTitles)),
+        evaluations: JSON.parse(JSON.stringify(evaluations)),
+        evalTemplates: JSON.parse(JSON.stringify(evalTemplates)),
+        appUsers: JSON.parse(JSON.stringify(appUsers)),
+        auditLog: JSON.parse(JSON.stringify(auditLog)),
+        bakeryIngredients: JSON.parse(JSON.stringify(bakeryIngredients)),
+        bakeryProductions: JSON.parse(JSON.stringify(bakeryProductions)),
+        bakeryContractorSupplies: JSON.parse(JSON.stringify(bakeryContractorSupplies)),
+        bakeryInvoices: JSON.parse(JSON.stringify(bakeryInvoices)),
+        bakeryStockLog: JSON.parse(JSON.stringify(bakeryStockLog))
       };
       var changed = [];
       for (var key in entities) {
@@ -9189,7 +9210,7 @@ function toggleEmployeeStatus(empId) {
     async function pullFromSupabase() {
       if (!supabaseConnected) return;
       try {
-        var entityKeys = ['employees','roomsCapacity','vacations','inventoryVouchers','excludedEmployees','contractors','mealLogs','inventoryItems','hospitalities','adminOvertime'];
+        var entityKeys = ['employees','roomsCapacity','vacations','inventoryVouchers','excludedEmployees','contractors','mealLogs','inventoryItems','hospitalities','adminOvertime','maintenanceRecords','septicRecords','periodicMaintenance','teaSugarDisbursements','teaSugarBatches','dynamicSectors','contractorSectors','contractorRooms','dynamicRooms','dynamicSeptics','dynamicDepts','dynamicTitles','evaluations','evalTemplates','appUsers','auditLog','bakeryIngredients','bakeryProductions','bakeryContractorSupplies','bakeryInvoices','bakeryStockLog'];
         var resp = await fetch(_sbEndpoint + '?select=id,updated_at', { method: 'GET', headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } });
         if (!resp.ok) return;
         var rows = await resp.json();
@@ -9241,6 +9262,27 @@ function toggleEmployeeStatus(empId) {
             else if (row.id === 'inventoryItems') inventoryItems = JSON.parse(JSON.stringify(remoteData));
             else if (row.id === 'hospitalities') hospitalities = JSON.parse(JSON.stringify(remoteData));
             else if (row.id === 'adminOvertime') adminOvertime = JSON.parse(JSON.stringify(remoteData));
+            else if (row.id === 'maintenanceRecords') maintenanceRecords = JSON.parse(JSON.stringify(remoteData));
+            else if (row.id === 'septicRecords') septicRecords = JSON.parse(JSON.stringify(remoteData));
+            else if (row.id === 'periodicMaintenance') periodicMaintenance = JSON.parse(JSON.stringify(remoteData));
+            else if (row.id === 'teaSugarDisbursements') teaSugarDisbursements = JSON.parse(JSON.stringify(remoteData));
+            else if (row.id === 'teaSugarBatches') teaSugarBatches = JSON.parse(JSON.stringify(remoteData));
+            else if (row.id === 'dynamicSectors') dynamicSectors = JSON.parse(JSON.stringify(remoteData));
+            else if (row.id === 'contractorSectors') contractorSectors = JSON.parse(JSON.stringify(remoteData));
+            else if (row.id === 'contractorRooms') contractorRooms = JSON.parse(JSON.stringify(remoteData));
+            else if (row.id === 'dynamicRooms') dynamicRooms = JSON.parse(JSON.stringify(remoteData));
+            else if (row.id === 'dynamicSeptics') dynamicSeptics = JSON.parse(JSON.stringify(remoteData));
+            else if (row.id === 'dynamicDepts') dynamicDepts = JSON.parse(JSON.stringify(remoteData));
+            else if (row.id === 'dynamicTitles') dynamicTitles = JSON.parse(JSON.stringify(remoteData));
+            else if (row.id === 'evaluations') evaluations = JSON.parse(JSON.stringify(remoteData));
+            else if (row.id === 'evalTemplates') evalTemplates = JSON.parse(JSON.stringify(remoteData));
+            else if (row.id === 'appUsers') appUsers = JSON.parse(JSON.stringify(remoteData));
+            else if (row.id === 'auditLog') auditLog = JSON.parse(JSON.stringify(remoteData));
+            else if (row.id === 'bakeryIngredients') bakeryIngredients = JSON.parse(JSON.stringify(remoteData));
+            else if (row.id === 'bakeryProductions') bakeryProductions = JSON.parse(JSON.stringify(remoteData));
+            else if (row.id === 'bakeryContractorSupplies') bakeryContractorSupplies = JSON.parse(JSON.stringify(remoteData));
+            else if (row.id === 'bakeryInvoices') bakeryInvoices = JSON.parse(JSON.stringify(remoteData));
+            else if (row.id === 'bakeryStockLog') bakeryStockLog = JSON.parse(JSON.stringify(remoteData));
             changed = true;
           }
           _pulledAt[row.id] = row.updated_at;
