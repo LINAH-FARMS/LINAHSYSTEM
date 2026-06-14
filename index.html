@@ -9142,8 +9142,10 @@ function toggleEmployeeStatus(empId) {
     }
 
     var _lastUpdatedAt = '';
-    var _dataHashes = JSON.parse(localStorage.getItem('_dataHashes') || 'null') || {};
-    var _pulledAt = JSON.parse(localStorage.getItem('_pulledAt') || 'null') || {};
+    var _dataHashes;
+    try { _dataHashes = JSON.parse(localStorage.getItem('_dataHashes')) || {}; } catch(e) { _dataHashes = {}; }
+    var _pulledAt;
+    try { _pulledAt = JSON.parse(localStorage.getItem('_pulledAt')) || {}; } catch(e) { _pulledAt = {}; }
 
     async function pushToSupabase() {
       if (!supabaseConnected) return;
