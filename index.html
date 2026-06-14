@@ -912,8 +912,7 @@
       </div>
       <div class="form-group">
         <label>كلمة المرور</label>
-        <input type="text" id="login-username-helper" autocomplete="username" style="display:none" value="">
-<input type="password" id="login-pass" placeholder="أدخل كلمة المرور" autocomplete="new-password" onkeydown="if(event.key==='Enter')doLogin()">
+        <input type="password" id="login-pass" placeholder="أدخل كلمة المرور" autocomplete="new-password" onkeydown="if(event.key==='Enter')doLogin()">
       </div>
       <button class="btn-login" onclick="doLogin()">دخول</button>
       </form>
@@ -3204,8 +3203,8 @@
       { name: 'سالم مجدي', role: 'admin', passHash: 'hvo5c' },
       { name: 'سامح محمد عبد السلام الملاحى', role: 'admin', passHash: 'hwznk' },
       { name: 'عماد عبد الحميد عيد عبد الحميد', role: 'admin', passHash: 'hxneo' },
-      { name: 'هشام محمد حسن محمود عرب', role: 'admin', passHash: 'hwh8l' },
-      { name: 'عميد / محمد شعيره', role: 'admin', passHash: 'hyb5s' }
+      { name: 'هشام محمد حسن محمود عرب', role: 'admin', passHash: 'hwgg9' },
+      { name: 'العميد محمد شعيرة', role: 'admin', passHash: 'hyb5s' }
     ];
     let appUsers = JSON.parse(localStorage.getItem('lineh_users')) || JSON.parse(JSON.stringify(defaultUsers));
     var deletedUsers = JSON.parse(localStorage.getItem('lineh_deleted_users') || '[]');
@@ -9250,42 +9249,76 @@ function toggleEmployeeStatus(empId) {
           if (!dataRows || !dataRows.length || !dataRows[0].data) continue;
           var remoteData = dataRows[0].data;
           if (JSON.stringify(remoteData) !== JSON.stringify(local[row.id])) {
-            var _localTs = parseInt(localStorage.getItem('_localChangeTime')) || 0;
-            var _remoteTs = new Date(row.updated_at).getTime();
-            if (!_localTs || _remoteTs > _localTs) {
-            if (row.id === 'employees') employees = JSON.parse(JSON.stringify(remoteData));
-            else if (row.id === 'roomsCapacity') roomsCapacity = JSON.parse(JSON.stringify(remoteData));
-            else if (row.id === 'vacations') vacations = JSON.parse(JSON.stringify(remoteData));
-            else if (row.id === 'inventoryVouchers') inventoryVouchers = JSON.parse(JSON.stringify(remoteData));
-            else if (row.id === 'excludedEmployees') excludedEmployees = JSON.parse(JSON.stringify(remoteData));
-            else if (row.id === 'contractors') contractors = JSON.parse(JSON.stringify(remoteData));
-            else if (row.id === 'mealLogs') mealLogs = JSON.parse(JSON.stringify(remoteData));
-            else if (row.id === 'inventoryItems') inventoryItems = JSON.parse(JSON.stringify(remoteData));
-            else if (row.id === 'hospitalities') hospitalities = JSON.parse(JSON.stringify(remoteData));
-            else if (row.id === 'adminOvertime') adminOvertime = JSON.parse(JSON.stringify(remoteData));
-            else if (row.id === 'maintenanceRecords') maintenanceRecords = JSON.parse(JSON.stringify(remoteData));
-            else if (row.id === 'septicRecords') septicRecords = JSON.parse(JSON.stringify(remoteData));
-            else if (row.id === 'periodicMaintenance') periodicMaintenance = JSON.parse(JSON.stringify(remoteData));
-            else if (row.id === 'teaSugarDisbursements') teaSugarDisbursements = JSON.parse(JSON.stringify(remoteData));
-            else if (row.id === 'teaSugarBatches') teaSugarBatches = JSON.parse(JSON.stringify(remoteData));
-            else if (row.id === 'dynamicSectors') dynamicSectors = JSON.parse(JSON.stringify(remoteData));
-            else if (row.id === 'contractorSectors') contractorSectors = JSON.parse(JSON.stringify(remoteData));
-            else if (row.id === 'contractorRooms') contractorRooms = JSON.parse(JSON.stringify(remoteData));
-            else if (row.id === 'dynamicRooms') dynamicRooms = JSON.parse(JSON.stringify(remoteData));
-            else if (row.id === 'dynamicSeptics') dynamicSeptics = JSON.parse(JSON.stringify(remoteData));
-            else if (row.id === 'dynamicDepts') dynamicDepts = JSON.parse(JSON.stringify(remoteData));
-            else if (row.id === 'dynamicTitles') dynamicTitles = JSON.parse(JSON.stringify(remoteData));
-            else if (row.id === 'evaluations') evaluations = JSON.parse(JSON.stringify(remoteData));
-            else if (row.id === 'evalTemplates') evalTemplates = JSON.parse(JSON.stringify(remoteData));
-            else if (row.id === 'appUsers') appUsers = JSON.parse(JSON.stringify(remoteData));
-            else if (row.id === 'auditLog') auditLog = JSON.parse(JSON.stringify(remoteData));
-            else if (row.id === 'bakeryIngredients') bakeryIngredients = JSON.parse(JSON.stringify(remoteData));
-            else if (row.id === 'bakeryProductions') bakeryProductions = JSON.parse(JSON.stringify(remoteData));
-            else if (row.id === 'bakeryContractorSupplies') bakeryContractorSupplies = JSON.parse(JSON.stringify(remoteData));
-            else if (row.id === 'bakeryInvoices') bakeryInvoices = JSON.parse(JSON.stringify(remoteData));
-            else if (row.id === 'bakeryStockLog') bakeryStockLog = JSON.parse(JSON.stringify(remoteData));
-            changed = true;
+            var getKey = function(e) { return e.code || e.name || e.id || e.employeeCode || JSON.stringify(e); };
+            var localArr = local[row.id] || [];
+            if (!remoteData || !remoteData.length) continue;
+            if (!localArr.length) {
+              if (row.id === 'employees') employees = JSON.parse(JSON.stringify(remoteData));
+              else if (row.id === 'roomsCapacity') roomsCapacity = JSON.parse(JSON.stringify(remoteData));
+              else if (row.id === 'vacations') vacations = JSON.parse(JSON.stringify(remoteData));
+              else if (row.id === 'inventoryVouchers') inventoryVouchers = JSON.parse(JSON.stringify(remoteData));
+              else if (row.id === 'excludedEmployees') excludedEmployees = JSON.parse(JSON.stringify(remoteData));
+              else if (row.id === 'contractors') contractors = JSON.parse(JSON.stringify(remoteData));
+              else if (row.id === 'mealLogs') mealLogs = JSON.parse(JSON.stringify(remoteData));
+              else if (row.id === 'inventoryItems') inventoryItems = JSON.parse(JSON.stringify(remoteData));
+              else if (row.id === 'hospitalities') hospitalities = JSON.parse(JSON.stringify(remoteData));
+              else if (row.id === 'adminOvertime') adminOvertime = JSON.parse(JSON.stringify(remoteData));
+              else if (row.id === 'maintenanceRecords') maintenanceRecords = JSON.parse(JSON.stringify(remoteData));
+              else if (row.id === 'septicRecords') septicRecords = JSON.parse(JSON.stringify(remoteData));
+              else if (row.id === 'periodicMaintenance') periodicMaintenance = JSON.parse(JSON.stringify(remoteData));
+              else if (row.id === 'teaSugarDisbursements') teaSugarDisbursements = JSON.parse(JSON.stringify(remoteData));
+              else if (row.id === 'teaSugarBatches') teaSugarBatches = JSON.parse(JSON.stringify(remoteData));
+              else if (row.id === 'dynamicSectors') dynamicSectors = JSON.parse(JSON.stringify(remoteData));
+              else if (row.id === 'contractorSectors') contractorSectors = JSON.parse(JSON.stringify(remoteData));
+              else if (row.id === 'contractorRooms') contractorRooms = JSON.parse(JSON.stringify(remoteData));
+              else if (row.id === 'dynamicRooms') dynamicRooms = JSON.parse(JSON.stringify(remoteData));
+              else if (row.id === 'dynamicSeptics') dynamicSeptics = JSON.parse(JSON.stringify(remoteData));
+              else if (row.id === 'dynamicDepts') dynamicDepts = JSON.parse(JSON.stringify(remoteData));
+              else if (row.id === 'dynamicTitles') dynamicTitles = JSON.parse(JSON.stringify(remoteData));
+              else if (row.id === 'evaluations') evaluations = JSON.parse(JSON.stringify(remoteData));
+              else if (row.id === 'evalTemplates') evalTemplates = JSON.parse(JSON.stringify(remoteData));
+              else if (row.id === 'appUsers') appUsers = JSON.parse(JSON.stringify(remoteData));
+              else if (row.id === 'auditLog') auditLog = JSON.parse(JSON.stringify(remoteData));
+              else if (row.id === 'bakeryIngredients') bakeryIngredients = JSON.parse(JSON.stringify(remoteData));
+              else if (row.id === 'bakeryProductions') bakeryProductions = JSON.parse(JSON.stringify(remoteData));
+              else if (row.id === 'bakeryContractorSupplies') bakeryContractorSupplies = JSON.parse(JSON.stringify(remoteData));
+              else if (row.id === 'bakeryInvoices') bakeryInvoices = JSON.parse(JSON.stringify(remoteData));
+              else if (row.id === 'bakeryStockLog') bakeryStockLog = JSON.parse(JSON.stringify(remoteData));
+            } else {
+              var merged = mergeArrays(localArr, remoteData, getKey);
+              if (row.id === 'employees') employees = JSON.parse(JSON.stringify(merged));
+              else if (row.id === 'roomsCapacity') roomsCapacity = JSON.parse(JSON.stringify(merged));
+              else if (row.id === 'vacations') vacations = JSON.parse(JSON.stringify(merged));
+              else if (row.id === 'inventoryVouchers') inventoryVouchers = JSON.parse(JSON.stringify(merged));
+              else if (row.id === 'excludedEmployees') excludedEmployees = JSON.parse(JSON.stringify(merged));
+              else if (row.id === 'contractors') contractors = JSON.parse(JSON.stringify(merged));
+              else if (row.id === 'mealLogs') mealLogs = JSON.parse(JSON.stringify(merged));
+              else if (row.id === 'inventoryItems') inventoryItems = JSON.parse(JSON.stringify(merged));
+              else if (row.id === 'hospitalities') hospitalities = JSON.parse(JSON.stringify(merged));
+              else if (row.id === 'adminOvertime') adminOvertime = JSON.parse(JSON.stringify(merged));
+              else if (row.id === 'maintenanceRecords') maintenanceRecords = JSON.parse(JSON.stringify(merged));
+              else if (row.id === 'septicRecords') septicRecords = JSON.parse(JSON.stringify(merged));
+              else if (row.id === 'periodicMaintenance') periodicMaintenance = JSON.parse(JSON.stringify(merged));
+              else if (row.id === 'teaSugarDisbursements') teaSugarDisbursements = JSON.parse(JSON.stringify(merged));
+              else if (row.id === 'teaSugarBatches') teaSugarBatches = JSON.parse(JSON.stringify(merged));
+              else if (row.id === 'dynamicSectors') dynamicSectors = JSON.parse(JSON.stringify(merged));
+              else if (row.id === 'contractorSectors') contractorSectors = JSON.parse(JSON.stringify(merged));
+              else if (row.id === 'contractorRooms') contractorRooms = JSON.parse(JSON.stringify(merged));
+              else if (row.id === 'dynamicRooms') dynamicRooms = JSON.parse(JSON.stringify(merged));
+              else if (row.id === 'dynamicSeptics') dynamicSeptics = JSON.parse(JSON.stringify(merged));
+              else if (row.id === 'dynamicDepts') dynamicDepts = JSON.parse(JSON.stringify(merged));
+              else if (row.id === 'dynamicTitles') dynamicTitles = JSON.parse(JSON.stringify(merged));
+              else if (row.id === 'evaluations') evaluations = JSON.parse(JSON.stringify(merged));
+              else if (row.id === 'evalTemplates') evalTemplates = JSON.parse(JSON.stringify(merged));
+              else if (row.id === 'appUsers') appUsers = JSON.parse(JSON.stringify(merged));
+              else if (row.id === 'auditLog') auditLog = JSON.parse(JSON.stringify(merged));
+              else if (row.id === 'bakeryIngredients') bakeryIngredients = JSON.parse(JSON.stringify(merged));
+              else if (row.id === 'bakeryProductions') bakeryProductions = JSON.parse(JSON.stringify(merged));
+              else if (row.id === 'bakeryContractorSupplies') bakeryContractorSupplies = JSON.parse(JSON.stringify(merged));
+              else if (row.id === 'bakeryInvoices') bakeryInvoices = JSON.parse(JSON.stringify(merged));
+              else if (row.id === 'bakeryStockLog') bakeryStockLog = JSON.parse(JSON.stringify(merged));
             }
+            changed = true;
           }
           _pulledAt[row.id] = row.updated_at;
         }
