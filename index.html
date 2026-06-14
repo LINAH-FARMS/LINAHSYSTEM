@@ -9203,7 +9203,9 @@ function toggleEmployeeStatus(empId) {
             var oldRows = await oldResp.json();
             if (oldRows && oldRows.length && oldRows[0].data) {
               var old = oldRows[0].data;
-              for (var k in old) { if (entityKeys.indexOf(k) !== -1 && old[k]) {
+              var existingIds = {};
+              for (var ri = 0; ri < rows.length; ri++) { if (rows[ri].id !== 'alldata') existingIds[rows[ri].id] = true; }
+              for (var k in old) { if (entityKeys.indexOf(k) !== -1 && old[k] && !existingIds[k]) {
                 await fetch(_sbEndpoint, {
                   method: 'POST',
                   headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/json', 'Prefer': 'resolution=merge-duplicates' },
