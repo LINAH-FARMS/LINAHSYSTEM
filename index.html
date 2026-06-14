@@ -9181,10 +9181,23 @@ function toggleEmployeeStatus(empId) {
         bakeryInvoices: JSON.parse(JSON.stringify(bakeryInvoices)),
         bakeryStockLog: JSON.parse(JSON.stringify(bakeryStockLog))
       };
+      // Fetch remote data to merge before push (prevents overwriting other users' data)
+      var remoteMap = {};
+      try {
+        var rr = await fetch(_sbEndpoint + '?select=id,data', { method: 'GET', headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } });
+        if (rr.ok) { var rrRows = await rr.json(); for (var ri = 0; ri < rrRows.length; ri++) remoteMap[rrRows[ri].id] = rrRows[ri].data; }
+      } catch(e) {}
+      function pMergeKey(e) { return e.code || e.name || e.id || e.employeeCode || JSON.stringify(e); }
       var changed = [];
       for (var key in entities) {
         var str = JSON.stringify(entities[key]);
         if (_dataHashes[key] !== str) {
+          // Merge remote data into local before pushing to avoid overwriting
+          if (remoteMap[key] && remoteMap[key].length) {
+            var merged = mergeArrays(entities[key], remoteMap[key], pMergeKey);
+            entities[key] = JSON.parse(JSON.stringify(merged));
+            str = JSON.stringify(entities[key]);
+          }
           changed.push(key);
           try {
             var resp = await fetch(_sbEndpoint, {
@@ -9194,12 +9207,45 @@ function toggleEmployeeStatus(empId) {
             });
             if (!resp.ok) { syncLog('?? ??? ??? ' + key + ' - ' + resp.status); continue; }
             _dataHashes[key] = str;
+            // Update global variable to match merged data
+            if (key === 'employees') employees = entities[key];
+            else if (key === 'roomsCapacity') roomsCapacity = entities[key];
+            else if (key === 'vacations') vacations = entities[key];
+            else if (key === 'inventoryVouchers') inventoryVouchers = entities[key];
+            else if (key === 'excludedEmployees') excludedEmployees = entities[key];
+            else if (key === 'contractors') contractors = entities[key];
+            else if (key === 'mealLogs') mealLogs = entities[key];
+            else if (key === 'inventoryItems') inventoryItems = entities[key];
+            else if (key === 'hospitalities') hospitalities = entities[key];
+            else if (key === 'adminOvertime') adminOvertime = entities[key];
+            else if (key === 'maintenanceRecords') maintenanceRecords = entities[key];
+            else if (key === 'septicRecords') septicRecords = entities[key];
+            else if (key === 'periodicMaintenance') periodicMaintenance = entities[key];
+            else if (key === 'teaSugarDisbursements') teaSugarDisbursements = entities[key];
+            else if (key === 'teaSugarBatches') teaSugarBatches = entities[key];
+            else if (key === 'dynamicSectors') dynamicSectors = entities[key];
+            else if (key === 'contractorSectors') contractorSectors = entities[key];
+            else if (key === 'contractorRooms') contractorRooms = entities[key];
+            else if (key === 'dynamicRooms') dynamicRooms = entities[key];
+            else if (key === 'dynamicSeptics') dynamicSeptics = entities[key];
+            else if (key === 'dynamicDepts') dynamicDepts = entities[key];
+            else if (key === 'dynamicTitles') dynamicTitles = entities[key];
+            else if (key === 'evaluations') evaluations = entities[key];
+            else if (key === 'evalTemplates') evalTemplates = entities[key];
+            else if (key === 'appUsers') appUsers = entities[key];
+            else if (key === 'auditLog') auditLog = entities[key];
+            else if (key === 'bakeryIngredients') bakeryIngredients = entities[key];
+            else if (key === 'bakeryProductions') bakeryProductions = entities[key];
+            else if (key === 'bakeryContractorSupplies') bakeryContractorSupplies = entities[key];
+            else if (key === 'bakeryInvoices') bakeryInvoices = entities[key];
+            else if (key === 'bakeryStockLog') bakeryStockLog = entities[key];
           } catch(e) { syncLog('?? ??? ??? ' + key); continue; }
         }
       }
       if (changed.length > 0) {
         _lastUpdatedAt = ts;
         changed.forEach(function(k) { _pulledAt[k] = ts; });
+        syncStorage(true, true);
         syncLog('?? ?? ??? ' + changed.join(', '));
         updateLastSyncTime();
       } else {
