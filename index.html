@@ -9195,7 +9195,7 @@ function toggleEmployeeStatus(empId) {
             });
             if (!resp.ok) { syncLog('?? ??? ??? ' + key + ' - ' + resp.status); continue; }
             _dataHashes[key] = str;
-          } catch(e) { syncLog('⚠️ فشل رفع ' + key); return; }
+          } catch(e) { syncLog('⚠️ فشل رفع ' + key); continue; }
         }
       }
       if (changed.length > 0) {
@@ -9253,6 +9253,9 @@ function toggleEmployeeStatus(empId) {
           if (!dataRows || !dataRows.length || !dataRows[0].data) continue;
           var remoteData = dataRows[0].data;
           if (JSON.stringify(remoteData) !== JSON.stringify(local[row.id])) {
+            var _localTs = parseInt(localStorage.getItem('_localChangeTime')) || 0;
+            var _remoteTs = new Date(row.updated_at).getTime();
+            if (!_localTs || _remoteTs > _localTs) {
             if (row.id === 'employees') employees = JSON.parse(JSON.stringify(remoteData));
             else if (row.id === 'roomsCapacity') roomsCapacity = JSON.parse(JSON.stringify(remoteData));
             else if (row.id === 'vacations') vacations = JSON.parse(JSON.stringify(remoteData));
@@ -9285,6 +9288,7 @@ function toggleEmployeeStatus(empId) {
             else if (row.id === 'bakeryInvoices') bakeryInvoices = JSON.parse(JSON.stringify(remoteData));
             else if (row.id === 'bakeryStockLog') bakeryStockLog = JSON.parse(JSON.stringify(remoteData));
             changed = true;
+            }
           }
           _pulledAt[row.id] = row.updated_at;
         }
