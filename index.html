@@ -9146,6 +9146,9 @@ function toggleEmployeeStatus(empId) {
       if (!supabaseConnected) return;
       var ts = new Date().toISOString();
       // ??? ?????? ??????? ?? Supabase ????? ?? ??????
+    async function pushToSupabase() {
+      if (!supabaseConnected) return;
+      var ts = new Date().toISOString();
       var _remoteTimestamps = null;
       try {
         var _tmResp = await fetch(_sbEndpoint + "?select=id,updated_at", { method: "GET", headers: { "apikey": SUPABASE_KEY, "Authorization": "Bearer " + SUPABASE_KEY } });
@@ -9187,7 +9190,7 @@ function toggleEmployeeStatus(empId) {
       var changed = [];
       for (var key in entities) {
         var str = JSON.stringify(entities[key]);
-        var str = JSON.stringify(entities[key]);
+
         if (_dataHashes[key] !== str) {
           // ????? ??????: ?? ??? ????? ?????? ?? ???? ?? ??? ???
           if (_remoteTimestamps && _remoteTimestamps[key]) {
