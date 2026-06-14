@@ -3949,7 +3949,8 @@
         
         rebuildDeptTitles();
         syncStorage(); renderTable(); rebuildAllDropdowns(); loadEmployeeCurrentDetails();
-        alert(`🚀 تم التحويل الإداري بنجاح!\nالموظف: ${employees[empIndex].name}\nمن إدارة [${oldDept}] إلى [${targetDept}]\nوتغيير الوظيفة من [${oldTitle}] إلى [${targetTitle}].`);
+        logAction('تحويل', 'موظف', employees[empIndex].name, 'إدارة: ' + oldDept + ' → ' + targetDept + ' | وظيفة: ' + oldTitle + ' → ' + targetTitle);
+        alert(`🚀 تم التحويل الإداري بنجاح!`);
       }
     }
 
