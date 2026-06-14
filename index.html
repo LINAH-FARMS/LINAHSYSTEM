@@ -9269,6 +9269,7 @@ function toggleEmployeeStatus(empId) {
         updateSupabaseStatus('connected');
         updateLastSyncTime();
         startPresence();
+      await pushToSupabase();
         await pullFromSupabase();
         if (_syncTimer) clearInterval(_syncTimer);
         _syncTimer = setInterval(pullFromSupabase, 30000);
