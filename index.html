@@ -3233,6 +3233,20 @@
       excludedEmployees.forEach(function(e) { exclMap[e.code || e.id || e.name] = true; });
       employees = employees.filter(function(e) { return !exclMap[e.code || e.id || e.name]; });
     }
+    let auditLog = JSON.parse(localStorage.getItem('linah_audit_log')) || [];
+
+    function logAction(action, targetType, targetName, details) {
+      auditLog.push({
+        id: Date.now().toString(36) + Math.random().toString(36).slice(2,6),
+        time: new Date().toISOString(),
+        user: currentUser,
+        action: action,
+        targetType: targetType,
+        targetName: targetName || '',
+        details: details || ''
+      });
+      localStorage.setItem('linah_audit_log', JSON.stringify(auditLog));
+    }
     normalizeBakeryDates();
     // إزالة التكرارات من بيانات المخبز إن وجدت
     if (bakeryProductions.length > 0) bakeryProductions = dedupArray(bakeryProductions, function(p) { return p.date + '|' + (p.breadCount||0) + '|' + (p.flourUsed||0); });
