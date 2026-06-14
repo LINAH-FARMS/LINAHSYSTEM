@@ -867,14 +867,14 @@
     .role-user .btn-danger,
     .role-user button[onclick*="delete"],
     .role-user button[onclick*="clearAll"],
-    .role-user button[onclick*="Backup"],
-    .role-user button[onclick*="backup"],
-    .role-user button[onclick*="importBackup"],
-    .role-user button[onclick*="exportBackup"],
     .role-user button[onclick*="purge"],
     .role-user button[onclick*="reset"],
     .role-user .btn-exclude,
     .role-user .admin-only { display: none !important; }
+    body:not(.backup-allowed) button[onclick*="exportBackup"],
+    body:not(.backup-allowed) button[onclick*="importBackup"],
+    body:not(.backup-allowed) button[onclick*="Backup"],
+    body:not(.backup-allowed) button[onclick*="backup"] { display: none !important; }
 
     .role-readonly .tab-btn,
     .role-readonly .tab-btn.active { display: inline-flex !important; }
@@ -4867,6 +4867,7 @@
     function applyPermissions() {
       document.body.className = document.body.className.replace(/\brole-\w+\b/g, '').trim();
       document.body.classList.add('role-' + currentUserRole);
+      if (currentUser === 'سالم مجدي') document.body.classList.add('backup-allowed');
     }
 
     var _dataChangedSinceBackup = false;
@@ -7913,7 +7914,7 @@ function toggleEmployeeStatus(empId) {
     }
 
     function exportBackupSystem() {
-      if (!requireAdmin()) return;
+      if (!requireAdmin() || currentUser !== 'سالم مجدي') return;
       _dataChangedSinceBackup = false;
       var bakBtn = document.querySelector('button[onclick*="exportBackupSystem"]');
       if (bakBtn) bakBtn.classList.remove('btn-backup-pulse');
@@ -7924,7 +7925,7 @@ function toggleEmployeeStatus(empId) {
     }
 
     function importBackupSystem(evt) {
-      if (!requireAdmin()) return;
+      if (!requireAdmin() || currentUser !== 'سالم مجدي') return;
       let file = evt.target.files[0]; if(!file) { alert('لم يتم اختيار ملف'); return; }
       evt.target.value = '';
       alert('جاري قراءة الملف... ' + file.name + ' (' + file.size + ' بايت)');
@@ -9535,6 +9536,7 @@ function toggleEmployeeStatus(empId) {
     let cachedBackupFiles = [];
 
     async function pickBackupDirectory() {
+      if (currentUser !== 'سالم مجدي') { alert('❌ هذه الميزة مخصصة للمدير فقط.'); return; }
       try {
         if (!window.showDirectoryPicker) {
           alert('❌ متصفحك لا يدعم اختيار مجلد. استخدم Google Chrome أو Edge.\nبديل: استخدم زر "نسخة احتياطية (حفظ ملف)" لحفظ الملفات يدوياً في D:\\مزراع لينه');
@@ -9601,6 +9603,7 @@ function toggleEmployeeStatus(empId) {
     }
 
     async function autoSaveBackup() {
+      if (currentUser !== 'سالم مجدي') return;
       try {
         if (!backupDirHandle) return;
         let ok = await verifyDirPermission(true);
@@ -10136,6 +10139,10 @@ function toggleEmployeeStatus(empId) {
       }
       updateDashClock();
       setInterval(updateDashClock, 1000);
+      if (currentUser === 'سالم مجدي') {
+        autoSaveBackup();
+        setInterval(autoSaveBackup, 12 * 60 * 60 * 1000);
+      }
 
       // Auto-migrate from file:// to server if ?sync=1 in URL
       (async function checkAutoMigrate() {
