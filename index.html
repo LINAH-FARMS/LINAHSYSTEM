@@ -5564,7 +5564,7 @@ function toggleEmployeeStatus(empId) {
       let empObj = employees.find(e => (e.id || e.code) == empId);
       let empName = empObj ? empObj.name : "غير معروف";
 
-      let voucher = { voucherId, dept, empId, empName, itemName, itemCode, unit, qty: parseInt(qty), date: new Date().toLocaleDateString('ar-EG'), notes };
+      let voucher = { voucherId, dept, empId, empName, itemName, itemCode, unit, qty: parseInt(qty), date: new Date().toISOString().split('T')[0], notes };
       inventoryVouchers.push(voucher); syncStorage(); renderInventoryTable();
       
       document.getElementById('inv-item-name').value = '';
@@ -6096,7 +6096,7 @@ function toggleEmployeeStatus(empId) {
       if(!task) { document.getElementById('maint-task').focus(); return alert("⚠️ وصف العطل أو التفاصيل مطلوب."); }
       if(!tech) { document.getElementById('maint-tech').focus(); return alert("⚠️ اسم الفني المسؤول مطلوب."); }
 
-      let record = { category, task, tech, status, notes, materials: materials.length ? [...materials] : [], imgBefore: '', imgAfter: '', date: new Date().toLocaleDateString('ar-EG') };
+      let record = { category, task, tech, status, notes, materials: materials.length ? [...materials] : [], imgBefore: '', imgAfter: '', date: new Date().toISOString().split('T')[0] };
 
       let proceedSave = () => {
         maintenanceRecords.push(record); syncStorage(); renderMaintenanceTable();
@@ -6148,7 +6148,7 @@ function toggleEmployeeStatus(empId) {
           <td style="font-size:11px;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${(m.notes||'').replace(/"/g,'&quot;')}">${m.notes || '—'}</td>
           <td>${m.imgBefore?`<img src="${m.imgBefore}" class="img-preview" onclick="viewFullImage('${m.imgBefore}')">`:'—'}</td>
           <td>${m.imgAfter?`<img src="${m.imgAfter}" class="img-preview" onclick="viewFullImage('${m.imgAfter}')">`:'—'}</td>
-          <td>${m.date}</td>
+          <td>${m.date ? (m.date.match(/^\d{4}-/) ? m.date.split('-').reverse().join('/') : m.date) : '-'}</td>
           <td class="no-print"><button class="btn btn-primary" style="padding:2px 6px;font-size:11px;" onclick="editMaint(${realIdx})">✏️</button> <button class="btn btn-danger" style="padding:2px 6px; font-size:11px;" onclick="deleteMaint(${realIdx})">🗑️</button></td>
         `;
         tbody.appendChild(tr);
@@ -6700,7 +6700,7 @@ function toggleEmployeeStatus(empId) {
         empName: emp ? emp.name : 'غير معروف',
         empDept: emp ? emp.dept : '',
         empTitle: emp ? emp.title : '',
-        period, date: new Date().toLocaleDateString('ar-EG'),
+        period, date: new Date().toISOString().split('T')[0],
         teaPacks, sugarKg
       });
       syncStorage(); renderTeaSugarTable(); renderTeaSugarBatchSummary();
