@@ -5666,37 +5666,7 @@
     }
 
     var _dataChangedSinceBackup = false;
-    function showLoginAlert(name) {
-      setTimeout(function() {
-        var msg = '👋 مرحباً يا ' + (currentUserRole === 'admin' ? 'مدير' : name) + '\n\n';
-        msg += '✅ برجاء لا تنسي تحميل اخر نسخة احتياطيه بمجرد فتح البرنامج.\n';
-        msg += '📂 لو معملتش كده شغلك هيكون راح هدر ومفيش طريقه ترجعه\n\n';
-        msg += '⚠️ اوعي تنسي: قبل إغلاق المتصفح، قم بتصدير نسخة احتياطية\n';
-        alert(msg);
-        // removed auto-open AI — now only opens on button click
-
-        // Highlight restore button for 60s after login
-        var restoreBtn = document.querySelector('button[onclick*="header-import-backup"]');
-        if (restoreBtn) {
-          restoreBtn.classList.add('btn-restore-pulse');
-          setTimeout(function() { restoreBtn.classList.remove('btn-restore-pulse'); }, 60000);
-        }
-      }, 300);
-    }
-
-
-
-    window.addEventListener('beforeunload', function(e) {
-      if (_dataChangedSinceBackup) {
-        e.preventDefault();
-        e.returnValue = '⚠️ اوعي تنسي: لم يتم تصدير نسخة احتياطية بعد آخر تعديل!\nقم بتصدير نسخة احتياطية قبل الإغلاق.';
-      }
-    });
-
-    // Save default users immediately so they persist
-    localStorage.setItem('lineh_users', JSON.stringify(appUsers));
-    localStorage.setItem('lineh_current_user', currentUser);
-
+    function showLoginAlert(name) { /* removed per user request */ }
     function updateHousingStats() {
       let totalBeds = manualTotalBeds > 0 ? manualTotalBeds : roomsCapacity.reduce((s, rc) => s + (parseInt(rc.beds) || 0), 0);
       let occupiedBeds = employees.filter(e => e.status === 'P' && e.room).length;
