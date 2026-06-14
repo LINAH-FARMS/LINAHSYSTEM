@@ -3246,20 +3246,6 @@
     }, 1000);
 
 
-    let auditLog = JSON.parse(localStorage.getItem('linah_audit_log')) || [];
-
-    function logAction(action, targetType, targetName, details) {
-      auditLog.push({
-        id: Date.now().toString(36) + Math.random().toString(36).slice(2,6),
-        time: new Date().toISOString(),
-        user: currentUser,
-        action: action,
-        targetType: targetType,
-        targetName: targetName || '',
-        details: details || ''
-      });
-      localStorage.setItem('linah_audit_log', JSON.stringify(auditLog));
-    }
     function sortEmployeesAlphabetically() {
       employees.sort((a, b) => (a.name || "").localeCompare(b.name || "ar"));
     }
