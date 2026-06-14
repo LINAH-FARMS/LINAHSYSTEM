@@ -3454,6 +3454,8 @@
       localStorage.setItem('linah_bakery_invoices', JSON.stringify(bakeryInvoices));
       localStorage.setItem('linah_bakery_stock_log', JSON.stringify(bakeryStockLog));
       localStorage.setItem('lineh_admin_overtime', JSON.stringify(adminOvertime));
+      localStorage.setItem('_dataHashes', JSON.stringify(_dataHashes));
+      localStorage.setItem('_pulledAt', JSON.stringify(_pulledAt));
       calculateSystemStats();
       if (!skipSync) syncToServer();
       if (!skipSync) { pushToSupabase(); }
@@ -9140,8 +9142,8 @@ function toggleEmployeeStatus(empId) {
     }
 
     var _lastUpdatedAt = '';
-    var _dataHashes = {};
-    var _pulledAt = {};
+    var _dataHashes = JSON.parse(localStorage.getItem('_dataHashes') || 'null') || {};
+    var _pulledAt = JSON.parse(localStorage.getItem('_pulledAt') || 'null') || {};
 
     async function pushToSupabase() {
       if (!supabaseConnected) return;
@@ -9348,8 +9350,8 @@ function toggleEmployeeStatus(empId) {
         updateSupabaseStatus('connected');
         updateLastSyncTime();
         startPresence();
-        if (localStorage.getItem('_localChangeTime')) { try { await pushToSupabase(); } catch(e) { syncLog('?? ??? ??? ?? Supabase'); } }
         await pullFromSupabase();
+        try { await pushToSupabase(); } catch(e) { syncLog('⚠️ فشل دفع إلى Supabase'); }
         // try D: drive backup
         try { if (backupDirHandle) { var _bok = await verifyDirPermission(false); if (_bok) { if ((!employees || employees.length===0) || (!hospitalities || hospitalities.length===0)) { var _bl = await loadLatestBackup(); if (_bl) syncLog('restored from D: drive'); } } } } catch(e) {}
         // ???? ???? ?????? ?? Supabase ?? ??????? ???????
