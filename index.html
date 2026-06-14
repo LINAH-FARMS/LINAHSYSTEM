@@ -3597,15 +3597,14 @@
 
       // ====== RECENT ACTIVITY ======
       if (g('dash-activity')) {
-        let items = [];
-        employees.slice(-5).reverse().forEach(e => items.push({dot:'green',text:`👤 ${e.name}`,time:e.hireDate||''}));
-        inventoryVouchers.slice(-5).reverse().forEach(v => items.push({dot:'blue',text:`📦 ${v.itemName} - ${v.empName}`,time:v.date||''}));
-        teaSugarDisbursements.slice(-5).reverse().forEach(t => items.push({dot:'orange',text:`🍵 ${t.empName}`,time:t.date||''}));
-        vacations.slice(-5).reverse().forEach(v => items.push({dot:'purple',text:`🌴 ${v.name}`,time:v.start||''}));
-        items = items.slice(0,12);
-        g('dash-activity').innerHTML = items.length ? items.map(i =>
-          `<div class="activity-item"><span class="activity-dot ${i.dot}"></span><span>${i.text}</span>${i.time?`<span style="font-size:9px;color:#90a4ae;margin-right:auto;">${i.time}</span>`:''}</div>`
-        ).join('') : '<div style="text-align:center;color:#90a4ae;padding:10px;">لا توجد نشاطات</div>';
+        var actItems = auditLog.slice(-15).reverse().map(function(e) {
+          var dot = 'green';
+          if (e.action === 'تعديل' || e.action === 'تسجيل') dot = 'blue';
+          if (e.action === 'حذف' || e.action === 'استبعاد') dot = 'red';
+          var t = e.time ? new Date(e.time).toLocaleString('ar-EG', {hour:'2-digit',minute:'2-digit'}) : '';
+          return '<div class="activity-item"><span class="activity-dot ' + dot + '"></span><span><b>' + e.user + '</b> ' + (e.details || e.action) + '</span><span style="font-size:9px;color:#90a4ae;margin-right:auto;">' + t + '</span></div>';
+        });
+        g('dash-activity').innerHTML = actItems.length ? actItems.join('') : '<div style="text-align:center;color:#90a4ae;padding:10px;">لا توجد نشاطات</div>';
       }
 
       // ====== CONTRACT TYPE DISTRIBUTION CHART ======
