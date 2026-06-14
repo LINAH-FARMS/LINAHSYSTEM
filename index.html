@@ -9149,11 +9149,6 @@ function toggleEmployeeStatus(empId) {
     async function pushToSupabase() {
       if (!supabaseConnected) return;
       var ts = new Date().toISOString();
-      var _remoteTimestamps = null;
-      try {
-        var _tmResp = await fetch(_sbEndpoint + "?select=id,updated_at", { method: "GET", headers: { "apikey": SUPABASE_KEY, "Authorization": "Bearer " + SUPABASE_KEY } });
-        if (_tmResp.ok) { var _tmRows = await _tmResp.json(); if (_tmRows && _tmRows.length) { _remoteTimestamps = {}; _tmRows.forEach(function(r) { _remoteTimestamps[r.id] = r.updated_at; }); } }
-      } catch(e) {}
       var entities = {
         employees: JSON.parse(JSON.stringify(employees)),
         roomsCapacity: JSON.parse(JSON.stringify(roomsCapacity)),
@@ -9190,16 +9185,7 @@ function toggleEmployeeStatus(empId) {
       var changed = [];
       for (var key in entities) {
         var str = JSON.stringify(entities[key]);
-
         if (_dataHashes[key] !== str) {
-          // ????? ??????: ?? ??? ????? ?????? ?? ???? ?? ??? ???
-          if (_remoteTimestamps && _remoteTimestamps[key]) {
-            var _conflictT = new Date(_remoteTimestamps[key]).getTime();
-            var _lastPullT = _pulledAt && _pulledAt[key] ? new Date(_pulledAt[key]).getTime() : 0;
-            if (_conflictT > _lastPullT) {
-              syncLog("?? ?????? ?? " + key + " - ?? ??? ?? ??????"); continue;
-            }
-          }
           changed.push(key);
           try {
             var resp = await fetch(_sbEndpoint, {
@@ -9208,6 +9194,20 @@ function toggleEmployeeStatus(empId) {
               body: JSON.stringify({ id: key, data: entities[key], updated_at: ts })
             });
             if (!resp.ok) { syncLog('?? ??? ??? ' + key + ' - ' + resp.status); continue; }
+            _dataHashes[key] = str;
+          } catch(e) { syncLog('?? ??? ??? ' + key); continue; }
+        }
+      }
+      if (changed.length > 0) {
+        _lastUpdatedAt = ts;
+        changed.forEach(function(k) { _pulledAt[k] = ts; });
+        syncLog('?? ?? ??? ' + changed.join(', '));
+        updateLastSyncTime();
+      } else {
+        syncLog('?? ?? ???? ??????? ?????');
+      }
+    }
+
             _dataHashes[key] = str;
           } catch(e) { syncLog('⚠️ فشل رفع ' + key); continue; }
         }
