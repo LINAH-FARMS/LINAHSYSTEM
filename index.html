@@ -5221,6 +5221,58 @@
       rebuildDeptTitles();
     }
 
+    function saveEmployeeData() {
+      let code = document.getElementById('form-emp-code').value.trim();
+      let name = document.getElementById('form-emp-name').value.trim();
+      let contract = document.getElementById('form-emp-contract').value;
+      let nationalId = document.getElementById('form-emp-national-id').value.trim();
+      let dept = document.getElementById('form-emp-dept').value;
+      let title = document.getElementById('form-emp-title-select').value;
+      let gov = document.getElementById('form-emp-gov').value;
+      let status = document.getElementById('form-emp-status').value;
+      let sector = document.getElementById('form-emp-sector').value;
+      let room = document.getElementById('form-emp-room').value;
+      let hireDate = document.getElementById('form-emp-hire-date').value;
+      let vacationBalance = parseInt(document.getElementById('form-emp-vacation-balance').value) || 30;
+      let editId = document.getElementById('edit-emp-id').value;
+
+      if(!name) return alert("اسم الموظف رباعي مطلوب إجبارياً");
+
+      if(!editId) {
+        let dupCode = employees.find(e => e.code && e.code.toLowerCase() === code.toLowerCase());
+        if(dupCode) return alert("الكود [" + code + "] موجود مسبقاً للموظف [" + dupCode.name + "]!");
+        let similarName = employees.find(e => e.name && e.name.trim().toLowerCase() === name.toLowerCase());
+        if(similarName) {
+          if(!confirm("يوجد موظف بنفس الاسم بالضبط: [" + similarName.name + "] كود " + (similarName.code || 'بدون') + ".\nهل تريد إضافة الموظف رغم التشابه؟")) return;
+        }
+      }
+
+      let assetsList = [];
+      document.querySelectorAll('.default-asset').forEach(input => {
+        let q = parseInt(input.value) || 0;
+        if(q > 0) { assetsList.push({ item: input.getAttribute('data-item'), qty: q }); }
+      });
+      document.querySelectorAll('.extra-asset-row').forEach(row => {
+        let n = row.querySelector('.extra-asset-name').value.trim();
+        let q = parseInt(row.querySelector('.extra-asset-qty').value) || 0;
+        if(n && q > 0) { assetsList.push({ item: n, qty: q }); }
+      });
+
+      if(editId) {
+        let index = employees.findIndex(e => e.id == editId);
+        if(index !== -1) {
+          employees[index] = { id: editId, code, name, contract, nationalId, dept, title, gov, status, sector, room, hireDate, assets: assetsList, vacationBalance };
+        }
+      } else {
+        let newEmp = { id: Date.now().toString(), code, name, contract, nationalId, dept, title, gov, status, sector, room, hireDate, assets: assetsList, vacationBalance };
+        employees.push(newEmp);
+      }
+
+      sortEmployeesAlphabetically(); syncStorage(); renderTable(); renderHousingLayout(); rebuildAllDropdowns(); closeModal('modal-add-emp');
+      document.getElementById('edit-emp-id').value = '';
+      document.getElementById('modal-emp-title').innerText = "إضافة موظف جديد للقوة";
+    }
+
     function editEmployee(id) {
       let emp = employees.find(e => e.id == id);
       if(!emp) return;
