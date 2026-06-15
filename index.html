@@ -934,6 +934,7 @@
       <span id="server-status" style="font-size:11px;font-weight:600;display:none;">🔴</span>
       <span id="cloud-status" style="font-size:11px;font-weight:600;">☁️ غير متصل</span>
       <span style="font-size:11px;font-weight:600;color:rgba(255,255,255,0.85);">Supabase ☁️ </span><span id="supabase-status" style="font-size:11px;font-weight:600;">🔄 قيد الاتصال...</span>
+      <button onclick="manualSync()" style="background:rgba(255,255,255,0.12);color:white;border:1px solid rgba(255,255,255,0.25);padding:3px 10px;border-radius:50px;font-size:11px;cursor:pointer;font-family:'Cairo',sans-serif;" title="سحب أحدث البيانات من السحاب ودفع المحلي">🔄 مزامنة</button>
       <span id="presence-users" style="font-size:11px;font-weight:600;display:none;"></span>
       <span id="last-sync-time" style="font-size:10px;color:rgba(255,255,255,0.6);display:none;"></span>
       <span id="backup-status" style="font-size:10px;display:none;"></span>
@@ -9853,6 +9854,21 @@ function toggleEmployeeStatus(empId) {
     }
 
     function initSupabaseSync() { connectSupabase(); }
+    async function manualSync() {
+      var btn = document.querySelector('button[onclick="manualSync()"]');
+      var orig = btn.textContent;
+      btn.textContent = '⏳ جاري...';
+      btn.disabled = true;
+      try {
+        await pullFromSupabase();
+        await pushToSupabase();
+        showSyncToast('✅ تمت المزامنة بنجاح');
+      } catch(e) {
+        showSyncToast('❌ فشلت المزامنة');
+      }
+      btn.textContent = orig;
+      btn.disabled = false;
+    }
 
     async function syncToCloud() {
       try {
