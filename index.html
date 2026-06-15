@@ -9634,29 +9634,6 @@ function toggleEmployeeStatus(empId) {
         updateSupabaseStatus('connected');
         updateLastSyncTime();
         startPresence();
-        // إجبار سحب كامل: امسح _pulledAt عشان السحب يجيب كل حاجة
-        _pulledAt = {};
-        localStorage.setItem('_pulledAt', JSON.stringify({}));
-        if (localStorage.getItem('_pendingChanges') === 'true') {
-          var pushOk = false;
-          try { pushOk = await pushToSupabase(); } catch(e) { syncLog('⚠️ فشل دفع للتعديلات المحلية'); }
-          if (pushOk) await pullFromSupabase();
-        } else {
-          await pullFromSupabase();
-        }
-        // حاول تجيب من D: drive backup كخيار احتياطي
-        try { if (backupDirHandle) { var _bok = await verifyDirPermission(false); if (_bok) { if ((!employees || employees.length===0) || (!hospitalities || hospitalities.length===0)) { var _bl = await loadLatestBackup(); if (_bl) syncLog('restored from D: drive backup'); } } } } catch(e) {}
-        // Supabase دايماً له الأولوية — اسحب حتى لو الـ backup رجع حاجة
-        var _rr = await fetch(_sbEndpoint + '?select=id,updated_at&limit=5', { method: 'GET', headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } });
-        if (_rr.ok) {
-          var _rrData = await _rr.json();
-          if (_rrData && _rrData.length > 0) {
-            syncLog('🔄 سحب كامل من Supabase (الأولوية القصوى)');
-            _pulledAt = {};
-            localStorage.setItem('_pulledAt', JSON.stringify({}));
-            await pullFromSupabase();
-          }
-        }
         document.getElementById('cloud-status').textContent = '☁️ متصل';
       } catch(e) { console.log('⚠️ Supabase connect error — retry 3s'); setTimeout(connectSupabase, 3000); }
     }
@@ -9873,8 +9850,7 @@ function toggleEmployeeStatus(empId) {
         await connectSupabase();
         if (!supabaseConnected) { showSyncToast('❌ فشل الاتصال بـ Supabase'); btn.textContent = orig; btn.disabled = false; return; }
         await pushToSupabase();
-        await pullFromSupabase();
-        showSyncToast('✅ تمت المزامنة بنجاح');
+        showSyncToast('✅ تم الحفظ في Supabase');
       } catch(e) {
         showSyncToast('❌ فشلت المزامنة');
       }
