@@ -5219,9 +5219,7 @@
         titleSelect.appendChild(opt); return;
       }
       rebuildDeptTitles();
-      logAction(editId ? 'تعديل' : 'إضافة', 'موظف', name, 'كود: ' + code + ' | ' + (editId ? 'تعديل' : 'جديد'));
-      sortEmployeesAlphabetically(); syncStorage(); renderTable(); renderHousingLayout(); rebuildAllDropdowns(); closeModal('modal-add-emp');
-    }
+      ;
 
     function editEmployee(id) {
       let emp = employees.find(e => e.id == id);
