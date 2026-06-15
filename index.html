@@ -1129,15 +1129,15 @@
     <div class="dash-chart-row">
       <div class="dash-chart-panel" style="grid-column:1/-1;">
         <div class="dash-chart-title" style="display:flex;justify-content:space-between;align-items:center;">
-          <span>الإحصائية الرقمية اليومية</span>
-          <button class="btn btn-primary" style="padding:4px 14px;font-size:12px;" onclick="captureDailyStats()">حفظ إحصائية اليوم</button>
+          <span>Daily Statistics</span>
+          <button class="btn btn-primary" style="padding:4px 14px;font-size:12px;" onclick="captureDailyStats()">Save Today</button>
         </div>
         <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:8px 0;">
           <label style="font-size:12px;font-weight:600;">من:</label>
           <input type="date" id="dailyStatsFrom" style="padding:4px 8px;border:1px solid #ccc;border-radius:6px;font-size:12px;">
           <label style="font-size:12px;font-weight:600;">إلى:</label>
           <input type="date" id="dailyStatsTo" style="padding:4px 8px;border:1px solid #ccc;border-radius:6px;font-size:12px;">
-          <button class="btn btn-primary" style="padding:4px 12px;font-size:11px;" onclick="renderDailyStatsTable()">عرض</button>
+          <button class="btn btn-primary" style="padding:4px 12px;font-size:11px;" onclick="renderDailyStatsTable()">Show</button>
         </div>
         <div style="overflow-x:auto;">
           <table id="daily-stats-table" style="width:100%;border-collapse:collapse;font-size:12px;text-align:center;">
@@ -1146,8 +1146,8 @@
           </table>
         </div>
         <div style="margin-top:6px;display:flex;gap:6px;">
-          <button class="btn btn-excel" style="padding:3px 10px;font-size:11px;" onclick="exportDailyStatsToExcel()">تصدير</button>
-          <button class="btn btn-danger" style="padding:3px 10px;font-size:11px;" onclick="if(confirm('مسح كل الإحصائيات اليومية؟')){dailyStats=[];syncStorage();renderDailyStatsTable();}">مسح السجل</button>
+          <button class="btn btn-excel" style="padding:3px 10px;font-size:11px;" onclick="exportDailyStatsToExcel()">Export</button>
+          <button class="btn btn-danger" style="padding:3px 10px;font-size:11px;" onclick="if(confirm('Clear all history?')){dailyStats=[];syncStorage();renderDailyStatsTable();}">Clear History</button>
         </div>
       </div>
     </div>
@@ -5159,7 +5159,7 @@
       dailyStats.sort(function(a, b) { return b.date.localeCompare(a.date); });
       syncStorage();
       renderDailyStatsTable();
-      alert('تم حفظ إحصائية ' + today);
+      alert('Saved: ' + today);
     }
 
     function renderDailyStatsTable() {
