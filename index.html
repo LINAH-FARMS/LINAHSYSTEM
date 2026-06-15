@@ -10537,14 +10537,6 @@ function toggleEmployeeStatus(empId) {
           { sector: "فاليو", number: "V1", beds: 8 }
         ];
       }
-      // تنظيف بيانات الضيافة المشوشة
-      hospitalities = hospitalities.filter(function(h) { return h.name && h.name.length < 50 && !/[\[{}]/.test(h.name); });
-      hospitalities.forEach(function(h) {
-        if (typeof h.meals === 'string') h.meals = [h.meals];
-        if (typeof h.guests !== 'number' || h.guests < 1) h.guests = 1;
-        if (h.guests > 50) h.guests = 1;
-        if (!h._id) h._id = Date.now().toString() + '_' + Math.random().toString(36).slice(2, 6);
-      });
       if (!localStorage.getItem('_roomsCleaned')) {
         var oldSectors = ['A','B','سكن إداري'];
         roomsCapacity = roomsCapacity.filter(function(r) { return oldSectors.indexOf(r.sector) === -1; });
