@@ -9435,6 +9435,7 @@ function toggleEmployeeStatus(empId) {
     var supabaseConnected = false;
     var _sbEndpoint = SUPABASE_URL + '/rest/v1/sync_data';
     var _syncTimer = null;
+    var _pulledAt = {};
 
 
     function updateSupabaseStatus(status) {
