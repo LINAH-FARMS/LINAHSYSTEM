@@ -9642,7 +9642,10 @@ function toggleEmployeeStatus(empId) {
           }
         }
         if (_syncTimer) clearInterval(_syncTimer);
-        _syncTimer = setInterval(pullFromSupabase, 30000);
+        _syncTimer = setInterval(function() {
+          if (localStorage.getItem('_pendingChanges') === 'true') return;
+          pullFromSupabase();
+        }, 30000);
         document.getElementById('cloud-status').textContent = '☁️ متصل';
       } catch(e) { console.log('⚠️ Supabase connect error — retry 3s'); setTimeout(connectSupabase, 3000); }
     }
