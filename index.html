@@ -9651,17 +9651,17 @@ function toggleEmployeeStatus(empId) {
         } else {
           await pullFromSupabase();
         }
-        // try D: drive backup
-        try { if (backupDirHandle) { var _bok = await verifyDirPermission(false); if (_bok) { if ((!employees || employees.length===0) || (!hospitalities || hospitalities.length===0)) { var _bl = await loadLatestBackup(); if (_bl) syncLog('restored from D: drive'); } } } } catch(e) {}
-        // ???? ???? ?????? ?? Supabase ?? ??????? ???????
-        if ((!employees || employees.length === 0) || (!hospitalities || hospitalities.length === 0)) {
-          var _rr = await fetch(_sbEndpoint + '?select=id,updated_at&limit=5', { method: 'GET', headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } });
-          if (_rr.ok) {
-            var _rrData = await _rr.json();
-            if (_rrData && _rrData.length > 0) {
-              syncLog('?? ?? ??????? ?? ??????? ?? Supabase');
-              await pullFromSupabase();
-            }
+        // حاول تجيب من D: drive backup كخيار احتياطي
+        try { if (backupDirHandle) { var _bok = await verifyDirPermission(false); if (_bok) { if ((!employees || employees.length===0) || (!hospitalities || hospitalities.length===0)) { var _bl = await loadLatestBackup(); if (_bl) syncLog('restored from D: drive backup'); } } } } catch(e) {}
+        // Supabase دايماً له الأولوية — اسحب حتى لو الـ backup رجع حاجة
+        var _rr = await fetch(_sbEndpoint + '?select=id,updated_at&limit=5', { method: 'GET', headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } });
+        if (_rr.ok) {
+          var _rrData = await _rr.json();
+          if (_rrData && _rrData.length > 0) {
+            syncLog('🔄 سحب كامل من Supabase (الأولوية القصوى)');
+            _pulledAt = {};
+            localStorage.setItem('_pulledAt', JSON.stringify({}));
+            await pullFromSupabase();
           }
         }
         if (_syncTimer) clearInterval(_syncTimer);
