@@ -5214,11 +5214,16 @@
       let dept = document.getElementById('form-emp-dept').value;
       let titleSelect = document.getElementById('form-emp-title-select');
       titleSelect.innerHTML = '';
-      if (!dept) {
-        let opt = document.createElement('option'); opt.value = ''; opt.textContent = '-- اختر إدارة أولاً --';
-        titleSelect.appendChild(opt); return;
-      }
+      let opt0 = document.createElement('option'); opt0.value = ''; opt0.textContent = '-- اختر وظيفة --';
+      titleSelect.appendChild(opt0);
+      if (!dept) return;
       rebuildDeptTitles();
+      let titles = deptTitles[dept] || [];
+      if (!titles.length && dynamicTitles && dynamicTitles.length) titles = dynamicTitles;
+      titles.forEach(function(t) {
+        let opt = document.createElement('option'); opt.value = t; opt.textContent = t;
+        titleSelect.appendChild(opt);
+      });
     }
 
     function addAssetRowField(itemName, itemQty) {
