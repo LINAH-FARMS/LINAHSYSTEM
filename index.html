@@ -3339,11 +3339,16 @@
     // Filter out any deleted users still in appUsers
     if (deletedUsers.length > 0) appUsers = appUsers.filter(function(u) { return deletedUsers.indexOf(u.name) === -1; });
     // ØªÙ†Ø¸ÙŠÙ Ø£ÙŠ Ù…Ø³ØªØ®Ø¯Ù…ÙŠÙ† Ø¨Ø£Ø­Ø±Ù Ù„Ø§ØªÙŠÙ†ÙŠØ© (ØªØ®Ø±ÙŠØ¨)
-    appUsers = appUsers.filter(function(u) { return /^[\u0621-\u064A\s]+$/.test(u.name); });
+    function filterLatinUsers(arr) {
+      return arr.filter(function(u) { return /^[\u0621-\u064A\s]+$/.test(u.name); });
+    }
+    appUsers = filterLatinUsers(appUsers);
     let currentUser = localStorage.getItem('lineh_current_user') || 'Ù…Ø¯ÙŠØ± Ø§Ù„Ù†Ø¸Ø§Ù…';
     let currentUserRole = 'user';
     var u = appUsers.find(function(u) { return u.name === currentUser; });
     if (u && u.role) currentUserRole = u.role;
+    // Ù„Ùˆ Ø§Ù„Ù…Ø³ØªØ®Ø¯Ù… Ø§Ù„Ø­Ø§Ù„ÙŠ Ù…Ø´ Ù…ÙˆØ¬ÙˆØ¯ (Ù…Ø«Ù„Ø§Ù‹ Ø§Ø³Ù…Ù‡ Ù„Ø§ØªÙŠÙ†ÙŠ ÙˆØ§ØªÙ…Ø³Ø­) â†’ Ø£ÙˆÙ„ ÙˆØ§Ø­Ø¯ ÙÙŠ Ø§Ù„Ù‚Ø§Ø¦Ù…Ø©
+    if (!u && appUsers.length > 0) { currentUser = appUsers[0].name; u = appUsers[0]; currentUserRole = u.role || 'user'; localStorage.setItem('lineh_current_user', currentUser); }
     function isAdmin() { return true; }
     function requireAdmin() { if (!isAdmin()) { alert('â›” Ù‡Ø°Ù‡ Ø§Ù„Ù…ÙŠØ²Ø© Ù…ØªØ§Ø­Ø© Ù„Ù„Ù…Ø¯ÙŠØ± ÙÙ‚Ø·'); return false; } return true; }
     const defaultGovs = ["Ø§Ù„Ù‚Ø§Ù‡Ø±Ø©", "Ø§Ù„Ø¬ÙŠØ²Ø©", "Ø§Ù„Ø¥Ø³ÙƒÙ†Ø¯Ø±ÙŠØ©", "Ø§Ù„Ø¯Ù‚Ù‡Ù„ÙŠØ©", "Ø§Ù„Ø´Ø±Ù‚ÙŠØ©", "Ø§Ù„Ù‚Ù„ÙŠÙˆØ¨ÙŠØ©", "Ø§Ù„ØºØ±Ø¨ÙŠØ©", "Ø§Ù„Ù…Ù†ÙˆÙÙŠØ©", "Ø§Ù„Ø¨Ø­ÙŠØ±Ø©", "ÙƒÙØ± Ø§Ù„Ø´ÙŠØ®", "Ø¯Ù…ÙŠØ§Ø·", "Ø¨ÙˆØ±Ø³Ø¹ÙŠØ¯", "Ø§Ù„Ø³ÙˆÙŠØ³", "Ø§Ù„Ø¥Ø³Ù…Ø§Ø¹ÙŠÙ„ÙŠØ©", "Ø§Ù„ÙÙŠÙˆÙ…", "Ø¨Ù†ÙŠ Ø³ÙˆÙŠÙ", "Ø§Ù„Ù…Ù†ÙŠØ§", "Ø£Ø³ÙŠÙˆØ·", "Ø³ÙˆÙ‡Ø§Ø¬", "Ù‚Ù†Ø§", "Ø§Ù„Ø£Ù‚ØµØ±", "Ø£Ø³ÙˆØ§Ù†", "Ø§Ù„Ø¨Ø­Ø± Ø§Ù„Ø£Ø­Ù…Ø±", "Ø§Ù„ÙˆØ§Ø¯ÙŠ Ø§Ù„Ø¬Ø¯ÙŠØ¯", "Ù…Ø·Ø±ÙˆØ­", "Ø´Ù…Ø§Ù„ Ø³ÙŠÙ†Ø§Ø¡", "Ø¬Ù†ÙˆØ¨ Ø³ÙŠÙ†Ø§Ø¡"];
@@ -4473,6 +4478,7 @@
       var name = document.getElementById('new-user-name').value.trim();
       var role = document.getElementById('new-user-role').value;
       if (!name) { alert('âš ï¸ Ø£Ø¯Ø®Ù„ Ø§Ø³Ù… Ø§Ù„Ù…Ø³ØªØ®Ø¯Ù…'); return; }
+      if (!/^[\u0621-\u064A\s]+$/.test(name)) { alert('âš ï¸ Ø§Ø³Ù… Ø§Ù„Ù…Ø³ØªØ®Ø¯Ù… ÙŠØ¬Ø¨ Ø£Ù† ÙŠÙƒÙˆÙ† Ø¨Ø§Ù„Ø¹Ø±Ø¨ÙŠØ© ÙÙ‚Ø·'); return; }
       if (appUsers.find(function(u) { return u.name === name; })) { alert('âš ï¸ Ù‡Ø°Ø§ Ø§Ù„Ù…Ø³ØªØ®Ø¯Ù… Ù…ÙˆØ¬ÙˆØ¯ Ø¨Ø§Ù„ÙØ¹Ù„'); return; }
       var userObj = { name: name, role: role };
       var pass = prompt('Ø£Ø¯Ø®Ù„ ÙƒÙ„Ù…Ø© Ù…Ø±ÙˆØ± Ù„Ù„Ù…Ø³ØªØ®Ø¯Ù… "' + name + '" (Ø§ØªØ±ÙƒÙ‡Ø§ ÙØ§Ø±ØºØ© Ø¨Ø¯ÙˆÙ† Ø¨Ø§Ø³ÙˆØ±Ø¯):');
@@ -8307,7 +8313,7 @@ function toggleEmployeeStatus(empId) {
         if(data.dynamicDepts) dynamicDepts = data.dynamicDepts;
         if(data.dynamicTitles) dynamicTitles = data.dynamicTitles;
         if(data.deptTitles) deptTitles = data.deptTitles;
-        if(data.appUsers) appUsers = data.appUsers;
+        if(data.appUsers) appUsers = filterLatinUsers(data.appUsers);
         if(data.currentUser) currentUser = data.currentUser;
         if(data.manualTotalBeds) manualTotalBeds = data.manualTotalBeds;
         if(data.adminOvertime) adminOvertime = data.adminOvertime;
@@ -9262,7 +9268,7 @@ function toggleEmployeeStatus(empId) {
       dynamicSeptics = JSON.parse(localStorage.getItem('dyn_septics')) || dynamicSeptics;
       dynamicDepts = JSON.parse(localStorage.getItem('dyn_depts')) || dynamicDepts;
       dynamicTitles = JSON.parse(localStorage.getItem('dyn_titles')) || dynamicTitles;
-      appUsers = JSON.parse(localStorage.getItem('lineh_users')) || appUsers;
+      appUsers = filterLatinUsers(JSON.parse(localStorage.getItem('lineh_users')) || appUsers);
       currentUser = localStorage.getItem('lineh_current_user') || currentUser;
 
       // Reset all form fields
@@ -9732,7 +9738,7 @@ function toggleEmployeeStatus(empId) {
       else if (key === 'dynamicTitles') dynamicTitles = val;
       else if (key === 'evaluations') evaluations = val;
       else if (key === 'evalTemplates') evalTemplates = val;
-      else if (key === 'appUsers') appUsers = val;
+      else if (key === 'appUsers') appUsers = filterLatinUsers(val);
       else if (key === 'auditLog') auditLog = val;
       else if (key === 'bakeryIngredients') bakeryIngredients = val;
       else if (key === 'bakeryProductions') bakeryProductions = val;
@@ -9946,7 +9952,7 @@ function toggleEmployeeStatus(empId) {
         if (data.dynamicDepts) dynamicDepts = data.dynamicDepts;
         if (data.dynamicTitles) dynamicTitles = data.dynamicTitles;
         if (data.deptTitles) deptTitles = data.deptTitles;
-        if (data.appUsers) appUsers = data.appUsers;
+        if (data.appUsers) appUsers = filterLatinUsers(data.appUsers);
         if (data.currentUser) currentUser = data.currentUser;
         if (data.bakeryIngredients) {
           var localQty = {}; bakeryIngredients.forEach(function(ing) { localQty[ing.id] = ing.currentQty || 0; });
@@ -10163,7 +10169,7 @@ function toggleEmployeeStatus(empId) {
         if (data.dynamicDepts) dynamicDepts = data.dynamicDepts;
         if (data.dynamicTitles) dynamicTitles = data.dynamicTitles;
         if (data.deptTitles) deptTitles = data.deptTitles;
-        if (data.appUsers) appUsers = data.appUsers;
+        if (data.appUsers) appUsers = filterLatinUsers(data.appUsers);
         if (data.currentUser) currentUser = data.currentUser;
         if (data.bakeryIngredients) {
           var localQty2 = {}; bakeryIngredients.forEach(function(ing) { localQty2[ing.id] = ing.currentQty || 0; });
@@ -10348,7 +10354,7 @@ function toggleEmployeeStatus(empId) {
         if (data.dynamicDepts) dynamicDepts = data.dynamicDepts;
         if (data.dynamicTitles) dynamicTitles = data.dynamicTitles;
         if (data.deptTitles) deptTitles = data.deptTitles;
-        if (data.appUsers) appUsers = data.appUsers;
+        if (data.appUsers) appUsers = filterLatinUsers(data.appUsers);
         if (data.currentUser) currentUser = data.currentUser;
 
       syncStorage();
