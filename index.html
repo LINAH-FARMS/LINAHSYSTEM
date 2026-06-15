@@ -3999,7 +3999,7 @@
       if(tabId === 'tab-tea-sugar') { renderTeaSugarTable(); }
       if(tabId === 'tab-meal-log') { renderMealLogTable(); if(!document.getElementById('meal-date').value) document.getElementById('meal-date').value = new Date().toISOString().split('T')[0]; }
       if(tabId === 'tab-contractors') { populateContractorSectorDropdown(); renderContractorsTable(); }
-      if(tabId === 'tab-bakery') { renderBakeryIngredients(); updateBakeryStats(); populateBakeryDropdowns(); }
+      if(tabId === 'tab-bakery') { renderBakeryProductions(); renderBakeryIngredients(); updateBakeryStats(); populateBakeryDropdowns(); updateBakeryProductionIngredientStocks(); }
       if(tabId === 'tab-bread-supply') { renderBakeryContractorSupplies(); renderBakeryInvoices(); updateBreadSupplyStats(); populateBakeryDropdowns(); }
       if(tabId === 'tab-maintenance') { searchMaintMaterial(); renderMaintMaterialsList(); }
       if(tabId === 'tab-vacations') { renderOvertimeCalendar(); }
