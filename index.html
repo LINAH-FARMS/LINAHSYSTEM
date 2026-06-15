@@ -9593,11 +9593,16 @@ function toggleEmployeeStatus(empId) {
           var row = rows[i];
           if (row.id === 'alldata') continue;
           if (row.updated_at === _pulledAt[row.id]) continue;
-          var dataResp = await fetch(_sbEndpoint + '?id=eq.' + row.id + '&select=data&order=updated_at.desc&limit=1', { method: 'GET', headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } });
+          var dataResp = await fetch(_sbEndpoint + '?id=eq.' + row.id + '&select=data,updated_at&order=updated_at.desc', { method: 'GET', headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } });
           if (!dataResp.ok) continue;
           var dataRows = await dataResp.json();
-          if (!dataRows || !dataRows.length || !dataRows[0].data) continue;
-          var remoteData = dataRows[0].data;
+          if (!dataRows || !dataRows.length) continue;
+          // لو فيه rows مكررة، خذ أحدث واحد
+          var bestRow = dataRows[0];
+          for (var di = 1; di < dataRows.length; di++) {
+            if ((dataRows[di].updated_at || '') > (bestRow.updated_at || '')) bestRow = dataRows[di];
+          }
+          var remoteData = bestRow.data;
           if (JSON.stringify(remoteData) !== JSON.stringify(local[row.id])) {
             setEntityVar(row.id, JSON.parse(JSON.stringify(remoteData)));
             changed = true;
