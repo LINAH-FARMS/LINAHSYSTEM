@@ -5221,6 +5221,16 @@
       rebuildDeptTitles();
     }
 
+    function addAssetRowField(itemName, itemQty) {
+      itemName = itemName || '';
+      itemQty = itemQty || 1;
+      let container = document.getElementById('assets-form-container');
+      let row = document.createElement('div');
+      row.className = 'asset-row extra-asset-row';
+      row.innerHTML = '<input type="text" placeholder="اسم الصنف الأخر" class="extra-asset-name" value="' + itemName + '" style="flex:2;"><input type="number" min="1" class="extra-asset-qty" value="' + itemQty + '" style="flex:1;"><button type="button" class="btn btn-danger" onclick="this.parentElement.remove()">🗑️</button>';
+      container.appendChild(row);
+    }
+
     function saveEmployeeData() {
       let code = document.getElementById('form-emp-code').value.trim();
       let name = document.getElementById('form-emp-name').value.trim();
