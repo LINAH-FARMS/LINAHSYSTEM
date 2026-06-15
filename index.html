@@ -3595,7 +3595,7 @@
       localStorage.setItem('_pulledAt', JSON.stringify(_pulledAt));
       calculateSystemStats();
       if (!skipSync) syncToServer();
-      if (!skipSync) {
+      if (!skipSync && supabaseConnected) {
         pushToSupabase().then(function(ok) {
           if (ok === false) showSyncToast('⚠️ فشل رفع التعديل — استخدم زر المزامنة لاحقاً');
         }).catch(function() {
