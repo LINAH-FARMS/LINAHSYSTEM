@@ -9612,10 +9612,13 @@ function toggleEmployeeStatus(empId) {
         if (changed) {
           syncLog('🔄 تم استقبال تحديثات');
           _takeSnapshot();
+          localStorage.setItem('_pulledAt', JSON.stringify(_pulledAt));
           syncStorage(true, true);
           renderTable(); renderHousingLayout(); renderInventoryTable(); renderInventoryItems(); renderVacationsTable(); renderOvertimeCalendar(); renderHospitalityTable(); renderMaintenanceTable(); renderSepticTable(); renderPeriodicMaintenance(); renderTeaSugarTable(); renderMealLogTable(); renderDashboard(); renderQuickActions(); renderContractorsTable(); renderBakeryIngredients(); renderBakeryProductions(); renderBakeryContractorSupplies(); renderBakeryInvoices(); updateBakeryStats(); updateBreadSupplyStats();
           updateLastSyncTime();
           showSyncToast('تم استلام تحديثات من جهاز آخر');
+        } else {
+          localStorage.setItem('_pulledAt', JSON.stringify(_pulledAt));
         }
       } catch(e) {}
       if (!_snapshotKeys || !Object.keys(_snapshotKeys).length) _takeSnapshot();
