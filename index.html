@@ -9483,7 +9483,7 @@ function toggleEmployeeStatus(empId) {
         if (_dataHashes[key] !== str) {
           // Merge remote data into local before pushing to avoid overwriting
           if (remoteMap[key] && remoteMap[key].length) {
-            var merged = mergeArrays(entities[key], remoteMap[key], pMergeKey);
+            var merged = mergeArraysPush(entities[key], remoteMap[key], pMergeKey);
             entities[key] = JSON.parse(JSON.stringify(merged));
             str = JSON.stringify(entities[key]);
           }
@@ -9680,6 +9680,18 @@ function toggleEmployeeStatus(empId) {
       if (!keys[k]) { result.push(item); keys[k] = true; }
       });
       return result;
+    }
+    function mergeArraysPush(localArr, remoteArr, keyFn) {
+      // For push: start with local items only (respects deletes).
+      // For each local item, apply remote field values (local wins on conflict).
+      if (!remoteArr || !remoteArr.length) return localArr || [];
+      if (!localArr || !localArr.length) return [];
+      var remoteKeyed = {};
+      remoteArr.forEach(function(item) { remoteKeyed[keyFn ? keyFn(item) : JSON.stringify(item)] = item; });
+      return localArr.map(function(item) {
+        var k = keyFn ? keyFn(item) : JSON.stringify(item);
+        return remoteKeyed[k] ? Object.assign({}, remoteKeyed[k], item) : item;
+      });
     }
     function mergeArraysUpdate(localArr, remoteArr, keyFn) {
       if (!remoteArr || !remoteArr.length) return localArr || [];
