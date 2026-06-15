@@ -3552,7 +3552,7 @@
     }
 
     function syncStorage(noTimestamp, skipSync) {
-      localStorage.setItem('_pendingChanges', 'true');
+      if (!skipSync) localStorage.setItem('_pendingChanges', 'true');
       localStorage.setItem('lineh_employees', JSON.stringify(employees));
       localStorage.setItem('employees_db', JSON.stringify(employees));
       localStorage.setItem('lineh_rooms_capacity', JSON.stringify(roomsCapacity));
@@ -9552,6 +9552,7 @@ function toggleEmployeeStatus(empId) {
         updateLastSyncTime();
       } else {
         syncLog('✅ لا توجد تغييرات جديدة للدفع');
+        localStorage.removeItem('_pendingChanges');
       }
       return !hasError;
     }
