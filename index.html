@@ -10930,7 +10930,7 @@ function toggleEmployeeStatus(empId) {
         var saltQty = getBakedField(p, 'saltUsed', 'saltQty');
         var branQty = getBakedField(p, 'branUsed', 'branQty');
         var dieselQty = getBakedField(p, 'dieselUsed', 'dieselQty');
-        var opCost = parseFloat(getBakedField(p, 'operatingCost', 'opCost')) || 1200;
+        var opCost = getBakedOpCost(p);
         var costFlour = Math.round(flourQty * pFlour * 100) / 100;
         var costYeast = Math.round(yeastQty * pYeast * 100) / 100;
         var costSalt = Math.round(saltQty * pSalt * 100) / 100;
@@ -10938,7 +10938,7 @@ function toggleEmployeeStatus(empId) {
         var costDiesel = Math.round(dieselQty * pDiesel * 100) / 100;
         var cstFarm = costFlour + costYeast + costSalt + costBran + costDiesel + opCost;
         var cstCtr = ctrSameDay.reduce(function(s, cs) { return s + (parseFloat(cs.prodCost) || 0); }, 0);
-        var totalCost = cstFarm + cstCtr;
+        var totalCost = cstFarm;
         var costPerLoaf = bread > 0 ? Math.round((totalCost / bread) * 1000) / 1000 : 0;
         wsData.push([i+1, p.date, bread, flourQty, pFlour, costFlour, yeastQty, pYeast, costYeast, saltQty, pSalt, costSalt, branQty, pBran, costBran, dieselQty, pDiesel, costDiesel, opCost, cstCtr, Math.round(totalCost*100)/100, costPerLoaf]);
         previewRows.push([p.date, bread, flourQty, pFlour, costFlour, yeastQty, pYeast, costYeast, saltQty, pSalt, costSalt, branQty, pBran, costBran, dieselQty, pDiesel, costDiesel, opCost, cstCtr, Math.round(totalCost*100)/100, costPerLoaf]);
