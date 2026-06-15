@@ -3335,6 +3335,8 @@
     });
     // Filter out any deleted users still in appUsers
     if (deletedUsers.length > 0) appUsers = appUsers.filter(function(u) { return deletedUsers.indexOf(u.name) === -1; });
+    // تنظيف أي مستخدمين بأحرف لاتينية (تخريب)
+    appUsers = appUsers.filter(function(u) { return /^[\u0621-\u064A\s]+$/.test(u.name); });
     let currentUser = localStorage.getItem('lineh_current_user') || 'مدير النظام';
     let currentUserRole = 'user';
     var u = appUsers.find(function(u) { return u.name === currentUser; });
@@ -3361,6 +3363,11 @@
         targetName: targetName || '',
         details: details || ''
       });
+      // auto-prune: امسح اللي أقدم من شهر كل ما تدخل جديد عشان ما يتمليش
+      var cutoff = Date.now() - 30 * 24 * 60 * 60 * 1000;
+      if (auditLog.length > 0 && new Date(auditLog[0].time).getTime() < cutoff) {
+        auditLog = auditLog.filter(function(e) { return new Date(e.time).getTime() > cutoff; });
+      }
       localStorage.setItem('linah_audit_log', JSON.stringify(auditLog));
     }
     normalizeBakeryDates();
@@ -3536,6 +3543,7 @@
     }
 
     function syncStorage(noTimestamp, skipSync) {
+      localStorage.setItem('_pendingChanges', 'true');
       localStorage.setItem('lineh_employees', JSON.stringify(employees));
       localStorage.setItem('employees_db', JSON.stringify(employees));
       localStorage.setItem('lineh_rooms_capacity', JSON.stringify(roomsCapacity));
@@ -3575,7 +3583,6 @@
       localStorage.setItem('lineh_room_assets', JSON.stringify(roomAssets));
       localStorage.setItem('lineh_archive_data', JSON.stringify(archiveData));
       localStorage.setItem('lineh_quick_actions', JSON.stringify(quickActions));
-      localStorage.setItem('_dataHashes', JSON.stringify(_dataHashes));
       localStorage.setItem('_pulledAt', JSON.stringify(_pulledAt));
       calculateSystemStats();
       if (!skipSync) syncToServer();
@@ -5389,8 +5396,9 @@ function playChangeSound() {
         gain.gain.setValueAtTime(0.2, _beepCtx.currentTime);
         gain.gain.exponentialRampToValueAtTime(0.001, _beepCtx.currentTime + 0.2);
         osc.start(); osc.stop(_beepCtx.currentTime + 0.2);
-    } catch(e) {}
-}
+      } catch(e) {}
+      if (!_snapshotKeys || !Object.keys(_snapshotKeys).length) _takeSnapshot();
+    }
 
 // دالة تبديل الحالة الذكية مع تسجيل وقت المغادرة تلقائي
 function toggleEmployeeStatus(empId) {
@@ -9440,14 +9448,14 @@ function toggleEmployeeStatus(empId) {
 
     var _lastUpdatedAt = '';
     var _dataHashes;
-    try { _dataHashes = JSON.parse(localStorage.getItem('_dataHashes')) || {}; } catch(e) { _dataHashes = {}; localStorage.removeItem('_dataHashes'); }
+    // load from _pushedHashes (new), otherwise leave empty
+    try { _dataHashes = JSON.parse(localStorage.getItem('_pushedHashes')); } catch(e) {}
+    if (!_dataHashes || typeof _dataHashes !== 'object') _dataHashes = {};
+    // نمسح القديم نهائي — عشان ما يسببش مطابقة خطأ
+    localStorage.removeItem('_dataHashes');
+    // ملاحظة: ما نعيدش تهيئة الهاش من البيانات الحالية — عشان لو فيه تعديل محلي لسه ما وصلش للسحاب، الهاش يفضل قديم ويشتغل Push
     var _pulledAt;
     try { _pulledAt = JSON.parse(localStorage.getItem('_pulledAt')) || {}; } catch(e) { _pulledAt = {}; localStorage.removeItem('_pulledAt'); }
-    // Initialize hashes from current data to prevent unnecessary first-time push
-    if (Object.keys(_dataHashes).length === 0) {
-      var initData = { employees: employees, roomsCapacity: roomsCapacity, vacations: vacations, inventoryVouchers: inventoryVouchers, excludedEmployees: excludedEmployees, contractors: contractors, mealLogs: mealLogs, inventoryItems: inventoryItems, hospitalities: hospitalities, adminOvertime: adminOvertime, maintenanceRecords: maintenanceRecords, septicRecords: septicRecords, periodicMaintenance: periodicMaintenance, teaSugarDisbursements: teaSugarDisbursements, teaSugarBatches: teaSugarBatches, dynamicSectors: dynamicSectors, contractorSectors: contractorSectors, contractorRooms: contractorRooms, dynamicRooms: dynamicRooms, dynamicSeptics: dynamicSeptics, dynamicDepts: dynamicDepts, dynamicTitles: dynamicTitles, evaluations: evaluations, evalTemplates: evalTemplates, appUsers: appUsers, auditLog: auditLog, bakeryIngredients: bakeryIngredients, bakeryProductions: bakeryProductions, bakeryContractorSupplies: bakeryContractorSupplies, bakeryInvoices: bakeryInvoices, bakeryStockLog: bakeryStockLog, roomAssets: roomAssets, archiveData: archiveData, quickActions: quickActions };
-      for (var ik in initData) { if (initData[ik] !== undefined) _dataHashes[ik] = JSON.stringify(initData[ik]); }
-    }
 
     async function pushToSupabase() {
       if (!supabaseConnected) return;
@@ -9498,7 +9506,7 @@ function toggleEmployeeStatus(empId) {
         if (_dataHashes[key] !== str) {
           // Merge remote data into local before pushing to avoid overwriting
           if (remoteMap[key] && remoteMap[key].length) {
-            var merged = mergeArraysPush(entities[key], remoteMap[key], pMergeKey);
+            var merged = mergeArraysPush(entities[key], remoteMap[key], pMergeKey, _getDeletedSinceSnapshot(key, entities[key], pMergeKey));
             entities[key] = JSON.parse(JSON.stringify(merged));
             str = JSON.stringify(entities[key]);
           }
@@ -9519,7 +9527,10 @@ function toggleEmployeeStatus(empId) {
       if (changed.length > 0) {
         _lastUpdatedAt = ts;
         changed.forEach(function(k) { _pulledAt[k] = ts; });
+        _takeSnapshot();
+        localStorage.setItem('_pushedHashes', JSON.stringify(_dataHashes));
         syncStorage(true, true);
+        localStorage.removeItem('_pendingChanges');
         syncLog('?? ?? ??? ' + changed.join(', '));
         updateLastSyncTime();
       } else {
@@ -9586,14 +9597,16 @@ function toggleEmployeeStatus(empId) {
         }
         if (changed) {
           syncLog('🔄 تم استقبال تحديثات');
+          _takeSnapshot();
           syncStorage(true, true);
           renderTable(); renderHousingLayout(); renderInventoryTable(); renderInventoryItems(); renderVacationsTable(); renderOvertimeCalendar(); renderHospitalityTable(); renderMaintenanceTable(); renderSepticTable(); renderPeriodicMaintenance(); renderTeaSugarTable(); renderMealLogTable(); renderDashboard(); renderQuickActions(); renderContractorsTable(); renderBakeryIngredients(); renderBakeryProductions(); renderBakeryContractorSupplies(); renderBakeryInvoices(); updateBakeryStats(); updateBreadSupplyStats();
           updateLastSyncTime();
           showSyncToast('تم استلام تحديثات من جهاز آخر');
         }
       } catch(e) {}
+      if (!_snapshotKeys || !Object.keys(_snapshotKeys).length) _takeSnapshot();
     }
-
+    
     function updateLastSyncTime() {
       var el = document.getElementById('last-sync-time');
       if (!el) return;
@@ -9611,6 +9624,10 @@ function toggleEmployeeStatus(empId) {
         updateLastSyncTime();
         startPresence();
         try { await pushToSupabase(); } catch(e) { syncLog('⚠️ فشل دفع إلى Supabase'); }
+        if (localStorage.getItem('_pendingChanges') === 'true') {
+          syncLog('⚠️ في تغييرات محلية لم تزامن — إعادة دفع');
+          try { await pushToSupabase(); } catch(e) {}
+        }
         await pullFromSupabase();
         // try D: drive backup
         try { if (backupDirHandle) { var _bok = await verifyDirPermission(false); if (_bok) { if ((!employees || employees.length===0) || (!hospitalities || hospitalities.length===0)) { var _bl = await loadLatestBackup(); if (_bl) syncLog('restored from D: drive'); } } } } catch(e) {}
@@ -9639,6 +9656,38 @@ function toggleEmployeeStatus(empId) {
 
     // backward compat for old function refs
     var DATA_KEYS = ['employees','roomsCapacity','vacations','hospitalities','maintenanceRecords','septicRecords','inventoryVouchers','inventoryItems','excludedEmployees','periodicMaintenance','teaSugarDisbursements','teaSugarBatches','mealLogs','contractors','dynamicSectors','dynamicRooms','dynamicSeptics','dynamicDepts','dynamicTitles','deptTitles','appUsers','auditLog','bakeryIngredients','bakeryProductions','bakeryContractorSupplies','bakeryInvoices','currentUser','manualTotalBeds','roomAssets','archiveData','quickActions'];
+
+    // Snapshot after pull — نعرف إيه اللي اتشال عشان push ما يضيفوش تاني
+    var _snapshotKeys = {};
+    var _editSnapshot = null;
+    function _getKey(item, keyFn) { return keyFn ? keyFn(item) : (item.id || item.code || item.name || JSON.stringify(item)); }
+    function _takeSnapshot() {
+      _snapshotKeys = {};
+      DATA_KEYS.forEach(function(k) { var a = _getEntityArray(k); if (a && a.length) { _snapshotKeys[k] = {}; a.forEach(function(item) { _snapshotKeys[k][_getKey(item)] = true; }); } });
+    }
+    function _getEntityArray(key) {
+      if (key==='employees') return employees; if (key==='roomsCapacity') return roomsCapacity; if (key==='vacations') return vacations;
+      if (key==='hospitalities') return hospitalities; if (key==='maintenanceRecords') return maintenanceRecords; if (key==='septicRecords') return septicRecords;
+      if (key==='inventoryVouchers') return inventoryVouchers; if (key==='inventoryItems') return inventoryItems; if (key==='excludedEmployees') return excludedEmployees;
+      if (key==='periodicMaintenance') return periodicMaintenance; if (key==='teaSugarDisbursements') return teaSugarDisbursements; if (key==='teaSugarBatches') return teaSugarBatches;
+      if (key==='mealLogs') return mealLogs; if (key==='contractors') return contractors; if (key==='dynamicSectors') return dynamicSectors; if (key==='dynamicRooms') return dynamicRooms;
+      if (key==='dynamicSeptics') return dynamicSeptics; if (key==='dynamicDepts') return dynamicDepts; if (key==='dynamicTitles') return dynamicTitles; if (key==='deptTitles') return deptTitles;
+      if (key==='appUsers') return appUsers; if (key==='auditLog') return auditLog; if (key==='bakeryIngredients') return bakeryIngredients; if (key==='bakeryProductions') return bakeryProductions;
+      if (key==='bakeryContractorSupplies') return bakeryContractorSupplies; if (key==='bakeryInvoices') return bakeryInvoices; if (key==='roomAssets') return roomAssets;
+      if (key==='archiveData') return archiveData; if (key==='quickActions') return quickActions;
+      if (key==='adminOvertime') return adminOvertime; if (key==='contractorSectors') return contractorSectors; if (key==='contractorRooms') return contractorRooms;
+      if (key==='evaluations') return evaluations; if (key==='evalTemplates') return evalTemplates; if (key==='bakeryStockLog') return bakeryStockLog;
+      return null;
+    }
+    function _getDeletedSinceSnapshot(key, items, keyFn) {
+      var snap = _snapshotKeys[key];
+      if (!snap) return {};
+      var current = {};
+      (items || []).forEach(function(item) { current[_getKey(item, keyFn)] = true; });
+      var del = {};
+      for (var k in snap) { if (!current[k]) del[k] = true; }
+      return del;
+    }
 
     // Presence removed — توفير النت
     var _lastAction = '';
@@ -9696,17 +9745,25 @@ function toggleEmployeeStatus(empId) {
       });
       return result;
     }
-    function mergeArraysPush(localArr, remoteArr, keyFn) {
-      // For push: start with local items only (respects deletes).
-      // For each local item, apply remote field values (local wins on conflict).
+    function mergeArraysPush(localArr, remoteArr, keyFn, deletedKeys) {
+      // For push: local items first (respects deletes), apply remote field updates,
+      // and add remote items not in local UNLESS explicitly deleted.
       if (!remoteArr || !remoteArr.length) return localArr || [];
       if (!localArr || !localArr.length) return [];
       var remoteKeyed = {};
-      remoteArr.forEach(function(item) { remoteKeyed[keyFn ? keyFn(item) : JSON.stringify(item)] = item; });
-      return localArr.map(function(item) {
-        var k = keyFn ? keyFn(item) : JSON.stringify(item);
+      remoteArr.forEach(function(item) { remoteKeyed[_getKey(item, keyFn)] = item; });
+      var merged = localArr.map(function(item) {
+        var k = _getKey(item, keyFn);
         return remoteKeyed[k] ? Object.assign({}, remoteKeyed[k], item) : item;
       });
+      var localKeys = {};
+      localArr.forEach(function(item) { localKeys[_getKey(item, keyFn)] = true; });
+      var del = deletedKeys || {};
+      remoteArr.forEach(function(item) {
+        var k = _getKey(item, keyFn);
+        if (!localKeys[k] && !del[k]) { merged.push(item); localKeys[k] = true; }
+      });
+      return merged;
     }
     function mergeArraysUpdate(localArr, remoteArr, keyFn) {
       if (!remoteArr || !remoteArr.length) return localArr || [];
@@ -9763,6 +9820,7 @@ function toggleEmployeeStatus(empId) {
         });
       }
       if (d.appUsers) appUsers = mergeArrays(appUsers, d.appUsers, function(u) { return u.name; });
+      appUsers = appUsers.filter(function(u) { return /^[\u0621-\u064A\s]+$/.test(u.name); });
       if (d.currentUser) currentUser = d.currentUser;
       bakeryIngredients = mergeArrays(bakeryIngredients, d.bakeryIngredients, function(b) { return b.name || JSON.stringify(b); });
       bakeryProductions = mergeArrays(bakeryProductions, d.bakeryProductions);
@@ -10470,6 +10528,7 @@ function toggleEmployeeStatus(empId) {
 
     // Initialize backup system on load
     window.onload = function() {
+      _takeSnapshot();
       requireLogin();
       if(roomsCapacity.length === 0) {
         roomsCapacity = [
