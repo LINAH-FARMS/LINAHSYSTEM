@@ -9610,8 +9610,8 @@ function toggleEmployeeStatus(empId) {
         updateSupabaseStatus('connected');
         updateLastSyncTime();
         startPresence();
-        await pullFromSupabase();
         try { await pushToSupabase(); } catch(e) { syncLog('⚠️ فشل دفع إلى Supabase'); }
+        await pullFromSupabase();
         // try D: drive backup
         try { if (backupDirHandle) { var _bok = await verifyDirPermission(false); if (_bok) { if ((!employees || employees.length===0) || (!hospitalities || hospitalities.length===0)) { var _bl = await loadLatestBackup(); if (_bl) syncLog('restored from D: drive'); } } } } catch(e) {}
         // ???? ???? ?????? ?? Supabase ?? ??????? ???????
