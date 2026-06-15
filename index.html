@@ -9601,6 +9601,7 @@ function toggleEmployeeStatus(empId) {
           syncLog('🔄 تم استقبال تحديثات');
           _takeSnapshot();
           syncStorage(true, true);
+          localStorage.removeItem('_pendingChanges');
           renderTable(); renderHousingLayout(); renderInventoryTable(); renderInventoryItems(); renderVacationsTable(); renderOvertimeCalendar(); renderHospitalityTable(); renderMaintenanceTable(); renderSepticTable(); renderPeriodicMaintenance(); renderTeaSugarTable(); renderMealLogTable(); renderDashboard(); renderQuickActions(); renderContractorsTable(); renderBakeryIngredients(); renderBakeryProductions(); renderBakeryContractorSupplies(); renderBakeryInvoices(); updateBakeryStats(); updateBreadSupplyStats();
           updateLastSyncTime();
           showSyncToast('تم استلام تحديثات من جهاز آخر');
