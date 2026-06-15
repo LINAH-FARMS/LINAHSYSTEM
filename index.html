@@ -9625,10 +9625,8 @@ function toggleEmployeeStatus(empId) {
         updateSupabaseStatus('connected');
         updateLastSyncTime();
         startPresence();
-        try { await pushToSupabase(); } catch(e) { syncLog('⚠️ فشل دفع إلى Supabase'); }
         if (localStorage.getItem('_pendingChanges') === 'true') {
-          syncLog('⚠️ في تغييرات محلية لم تزامن — إعادة دفع');
-          try { await pushToSupabase(); } catch(e) {}
+          try { await pushToSupabase(); } catch(e) { syncLog('⚠️ فشل دفع إلى Supabase'); }
         }
         await pullFromSupabase();
         // try D: drive backup
