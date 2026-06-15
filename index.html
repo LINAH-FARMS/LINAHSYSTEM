@@ -933,7 +933,7 @@
       <span id="current-user-display" style="background:rgba(255,255,255,0.12);padding:2px 10px;border-radius:50px;font-size:12px;font-weight:600;white-space:nowrap;" onclick="logout()" title="اضغط لتسجيل الخروج">👤 <span id="current-user-name">...</span></span>
       <span id="server-status" style="font-size:11px;font-weight:600;display:none;">🔴</span>
       <span id="cloud-status" style="font-size:11px;font-weight:600;">☁️ غير متصل</span>
-      <span style="font-size:11px;font-weight:600;color:rgba(255,255,255,0.85);">Supabase ☁️ </span><span id="supabase-status" style="font-size:11px;font-weight:600;">🔄 قيد الاتصال...</span>
+      <span style="font-size:11px;font-weight:600;color:rgba(255,255,255,0.85);">Supabase 🔴 </span><span id="supabase-status" style="font-size:11px;font-weight:600;">غير متصل</span>
       <button onclick="manualSync()" style="background:rgba(255,255,255,0.12);color:white;border:1px solid rgba(255,255,255,0.25);padding:3px 10px;border-radius:50px;font-size:11px;cursor:pointer;font-family:'Cairo',sans-serif;" title="سحب أحدث البيانات من السحاب ودفع المحلي">🔄 مزامنة</button>
       <span id="presence-users" style="font-size:11px;font-weight:600;display:none;"></span>
       <span id="last-sync-time" style="font-size:10px;color:rgba(255,255,255,0.6);display:none;"></span>
@@ -3594,14 +3594,6 @@
       localStorage.setItem('lineh_quick_actions', JSON.stringify(quickActions));
       localStorage.setItem('_pulledAt', JSON.stringify(_pulledAt));
       calculateSystemStats();
-      if (!skipSync) syncToServer();
-      if (!skipSync && supabaseConnected) {
-        pushToSupabase().then(function(ok) {
-          if (ok === false) showSyncToast('⚠️ فشل رفع التعديل — استخدم زر المزامنة لاحقاً');
-        }).catch(function() {
-          showSyncToast('⚠️ فشل الاتصال — استخدم زر المزامنة لاحقاً');
-        });
-      }
       if (!noTimestamp) localStorage.setItem('_localChangeTime', Date.now());
       setAction('💾 حفظ');
       _dataChangedSinceBackup = true;
@@ -9665,15 +9657,9 @@ function toggleEmployeeStatus(empId) {
             await pullFromSupabase();
           }
         }
-        if (_syncTimer) clearInterval(_syncTimer);
-        _syncTimer = setInterval(function() {
-          if (localStorage.getItem('_pendingChanges') === 'true') return;
-          pullFromSupabase();
-        }, 30000);
         document.getElementById('cloud-status').textContent = '☁️ متصل';
       } catch(e) { console.log('⚠️ Supabase connect error — retry 3s'); setTimeout(connectSupabase, 3000); }
     }
-    setTimeout(connectSupabase, 2000);
     // backward compatibility for old code references
     var _lastSyncHashes = {}, _lastRemoteTimestamps = {}, _supabasePollTimer = null, _reconnectTimer = null, _migratedFromSingleton = false;
     function syncToSupabase() { pushToSupabase(); }
@@ -9881,6 +9867,11 @@ function toggleEmployeeStatus(empId) {
       btn.textContent = '⏳ جاري...';
       btn.disabled = true;
       try {
+        supabaseConnected = false;
+        document.getElementById('supabase-status').textContent = '🔄 قيد الاتصال...';
+        document.getElementById('cloud-status').textContent = '☁️ قيد الاتصال...';
+        await connectSupabase();
+        if (!supabaseConnected) { showSyncToast('❌ فشل الاتصال بـ Supabase'); btn.textContent = orig; btn.disabled = false; return; }
         await pushToSupabase();
         await pullFromSupabase();
         showSyncToast('✅ تمت المزامنة بنجاح');
