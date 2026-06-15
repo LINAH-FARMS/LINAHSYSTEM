@@ -1376,6 +1376,63 @@
         </table>
       </div>
     </div>
+
+    <div class="no-print" style="margin-top:30px;border-top:2px solid var(--primary);padding-top:15px;">
+      <h3 style="margin-bottom:15px;">🏛️ أرشيف المخازن — الشئون الإدارية</h3>
+      <div class="control-panel no-print" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;align-items:flex-end;">
+        <div class="form-group">
+          <label>اسم العهدة</label>
+          <input type="text" id="arc-item" placeholder="اسم العهدة">
+        </div>
+        <div class="form-group">
+          <label>البيان</label>
+          <input type="text" id="arc-desc" placeholder="وصف العهدة">
+        </div>
+        <div class="form-group">
+          <label>العدد</label>
+          <input type="number" id="arc-qty" value="1" min="1">
+        </div>
+        <div class="form-group">
+          <label>الموقع</label>
+          <input type="text" id="arc-location" placeholder="مثال: مخزن العمد">
+        </div>
+        <div class="form-group">
+          <label>الحالة</label>
+          <select id="arc-condition">
+            <option value="جديدة">جديدة</option>
+            <option value="مستعملة">مستعملة</option>
+            <option value="تالفة">تالفة</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>تاريخ الإيداع</label>
+          <input type="date" id="arc-date">
+        </div>
+        <button class="btn btn-primary" id="btn-save-archive" onclick="saveArchiveRecord()" style="justify-content:center;height:42px;">➕ إضافة عهدة</button>
+      </div>
+      <div class="control-panel no-print" style="margin-top:10px;">
+        <input type="text" id="search-archive" class="search-input" placeholder="بحث في أرشيف المخازن..." oninput="renderArchiveTable()">
+        <button class="btn btn-excel" onclick="document.getElementById('arc-excel-file').click()" style="background-color:#1565c0;">📥 استيراد (Excel)</button>
+        <input type="file" id="arc-excel-file" style="display:none;" accept=".xlsx, .xls" onchange="importArchiveExcel(event)">
+        <button class="btn btn-excel" onclick="exportArchiveExcel()" style="background-color:#2e7d32;">📤 تصدير (Excel)</button>
+      </div>
+      <div class="table-container" style="margin-top:10px;">
+        <table id="table-archive">
+          <thead>
+            <tr>
+              <th>اسم العهدة</th>
+              <th>البيان</th>
+              <th>العدد</th>
+              <th>الموقع</th>
+              <th>الحالة</th>
+              <th>تاريخ الإيداع</th>
+              <th class="no-print">إجراءات</th>
+            </tr>
+          </thead>
+          <tbody id="archive-table-body"></tbody>
+        </table>
+      </div>
+    </div>
   </div>
 
   <div id="tab-vacations" class="tab-content">
@@ -2666,66 +2723,10 @@
         <select id="filter-audit-type" onchange="renderAuditLog()" style="flex:1;min-width:100px;">
           <option value="">كل الأنواع</option>
         </select>
+        <button class="btn btn-excel" onclick="exportAuditLog()" style="background:#2e7d32;color:#fff;padding:4px 10px;font-size:12px;">📤 تصدير Excel</button>
         <button class="btn btn-danger" style="padding:4px 10px;font-size:12px;" onclick="if(confirm('هل تمسح بالفعل كل سجل التعديلات؟ لا يمكن التراجع')){auditLog=[];localStorage.setItem('linah_audit_log','[]');renderAuditLog();}">مسح السجل</button>
     </div>
 
-    <div class="no-print" style="margin-top:30px;border-top:2px solid var(--primary);padding-top:15px;">
-      <h3 style="margin-bottom:15px;">🏛️ أرشيف المخازن — الشئون الإدارية</h3>
-      <div class="control-panel no-print" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;align-items:flex-end;">
-        <div class="form-group">
-          <label>اسم العهدة</label>
-          <input type="text" id="arc-item" placeholder="اسم العهدة">
-        </div>
-        <div class="form-group">
-          <label>البيان</label>
-          <input type="text" id="arc-desc" placeholder="وصف العهدة">
-        </div>
-        <div class="form-group">
-          <label>العدد</label>
-          <input type="number" id="arc-qty" value="1" min="1">
-        </div>
-        <div class="form-group">
-          <label>الموقع</label>
-          <input type="text" id="arc-location" placeholder="مثال: مخزن العمد">
-        </div>
-        <div class="form-group">
-          <label>الحالة</label>
-          <select id="arc-condition">
-            <option value="جديدة">جديدة</option>
-            <option value="مستعملة">مستعملة</option>
-            <option value="تالفة">تالفة</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label>تاريخ الإيداع</label>
-          <input type="date" id="arc-date">
-        </div>
-        <button class="btn btn-primary" id="btn-save-archive" onclick="saveArchiveRecord()" style="justify-content:center;height:42px;">➕ إضافة عهدة</button>
-      </div>
-      <div class="control-panel no-print" style="margin-top:10px;">
-        <input type="text" id="search-archive" class="search-input" placeholder="بحث في أرشيف المخازن..." oninput="renderArchiveTable()">
-        <button class="btn btn-excel" onclick="document.getElementById('arc-excel-file').click()" style="background-color:#1565c0;">📥 استيراد (Excel)</button>
-        <input type="file" id="arc-excel-file" style="display:none;" accept=".xlsx, .xls" onchange="importArchiveExcel(event)">
-        <button class="btn btn-excel" onclick="exportArchiveExcel()" style="background-color:#2e7d32;">📤 تصدير (Excel)</button>
-      </div>
-      <div class="table-container" style="margin-top:10px;">
-        <table id="table-archive">
-          <thead>
-            <tr>
-              <th>اسم العهدة</th>
-              <th>البيان</th>
-              <th>العدد</th>
-              <th>الموقع</th>
-              <th>الحالة</th>
-              <th>تاريخ الإيداع</th>
-              <th class="no-print">إجراءات</th>
-            </tr>
-          </thead>
-          <tbody id="archive-table-body"></tbody>
-        </table>
-      </div>
-    </div>
-  </div>
     <div class="table-container">
       <table id="table-audit-log">
         <thead><tr>
@@ -3952,6 +3953,20 @@
         tr.innerHTML = '<td style="white-space:nowrap;font-size:11px;">' + timeStr + '</td><td><b>' + (e.user||'') + '</b></td><td><span style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;color:white;background:' + (actionColors[e.action]||'#888') + ';">' + (actionLabels[e.action]||e.action) + '</span></td><td>' + (e.targetType||'') + '</td><td>' + (e.targetName||'') + '</td><td style="font-size:11px;color:#555;">' + (e.details||'') + '</td>';
         tbody.appendChild(tr);
       });
+    }
+    function exportAuditLog() {
+      if (!auditLog.length) return alert('لا توجد سجلات للتصدير');
+      var rows = [['التاريخ والوقت', 'المستخدم', 'الإجراء', 'نوع الكيان', 'الاسم', 'تفاصيل']];
+      var labels = { add:'إضافة', edit:'تعديل', delete:'حذف' };
+      auditLog.forEach(function(e) {
+        var d = new Date(e.time);
+        var timeStr = d.toLocaleDateString('ar-EG') + ' ' + d.toLocaleTimeString('ar-EG', {hour:'2-digit',minute:'2-digit'});
+        rows.push([timeStr, e.user || '', labels[e.action] || e.action, e.targetType || '', e.targetName || '', e.details || '']);
+      });
+      var ws = XLSX.utils.aoa_to_sheet(rows);
+      var wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'سجل التعديلات');
+      XLSX.writeFile(wb, 'سجل_التعديلات_' + new Date().toISOString().split('T')[0] + '.xlsx');
     }
     function switchTab(tabId, el) {
       if (!el) el = document.querySelector(`.tab-btn[onclick*="'${tabId}'"]`) || document.querySelector(`.tab-btn[onclick*='"${tabId}"']`);
