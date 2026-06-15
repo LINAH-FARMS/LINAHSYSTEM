@@ -5158,6 +5158,10 @@
       if (existing >= 0) dailyStats[existing] = snap; else dailyStats.push(snap);
       dailyStats.sort(function(a, b) { return b.date.localeCompare(a.date); });
       syncStorage();
+      var fromEl = document.getElementById('dailyStatsFrom');
+      var toEl = document.getElementById('dailyStatsTo');
+      if (fromEl && !fromEl.value) fromEl.value = today;
+      if (toEl && !toEl.value) toEl.value = today;
       renderDailyStatsTable();
       alert('Saved: ' + today);
     }
@@ -5237,6 +5241,9 @@
       var range = (fromDate || 'all') + '_to_' + (toDate || 'all');
       XLSX.writeFile(wb, 'DailyStats_' + range.replace(/-/g, '') + '_' + new Date().toISOString().split('T')[0].replace(/-/g, '') + '.xlsx');
     }
+    window.captureDailyStats = captureDailyStats;
+    window.renderDailyStatsTable = renderDailyStatsTable;
+    window.exportDailyStatsToExcel = exportDailyStatsToExcel;
 
     function calculateSystemStats() {
       document.getElementById('stat-total-emp').innerText = employees.length;
