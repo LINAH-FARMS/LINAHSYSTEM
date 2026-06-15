@@ -9529,6 +9529,8 @@ function toggleEmployeeStatus(empId) {
           }
           changed.push(key);
           try {
+            // احذف القديم أولاً عشان مايتراكمش نسخ مكررة
+            await fetch(_sbEndpoint + '?id=eq.' + encodeURIComponent(key), { method: 'DELETE', headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } });
             var resp = await fetch(_sbEndpoint, {
               method: 'POST',
               headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/json', 'Prefer': 'resolution=merge-duplicates' },
