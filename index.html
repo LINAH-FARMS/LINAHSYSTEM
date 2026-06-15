@@ -9517,7 +9517,9 @@ function toggleEmployeeStatus(empId) {
       var changed = [];
       var hasError = false;
       for (var key in entities) {
-        var str = JSON.stringify(entities[key]);
+        var arr = entities[key];
+        if (!arr || !arr.length) continue;
+        var str = JSON.stringify(arr);
         if (_dataHashes[key] !== str) {
           changed.push(key);
           try {
@@ -9639,6 +9641,9 @@ function toggleEmployeeStatus(empId) {
         updateSupabaseStatus('connected');
         updateLastSyncTime();
         startPresence();
+        // إجبار سحب كامل: امسح _pulledAt عشان السحب يجيب كل حاجة
+        _pulledAt = {};
+        localStorage.setItem('_pulledAt', JSON.stringify({}));
         if (localStorage.getItem('_pendingChanges') === 'true') {
           var pushOk = false;
           try { pushOk = await pushToSupabase(); } catch(e) { syncLog('⚠️ فشل دفع للتعديلات المحلية'); }
