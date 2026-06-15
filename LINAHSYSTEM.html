@@ -1132,6 +1132,13 @@
           <span>الإحصائية الرقمية اليومية</span>
           <button class="btn btn-primary" style="padding:4px 14px;font-size:12px;" onclick="captureDailyStats()">حفظ إحصائية اليوم</button>
         </div>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:8px 0;">
+          <label style="font-size:12px;font-weight:600;">من:</label>
+          <input type="date" id="dailyStatsFrom" style="padding:4px 8px;border:1px solid #ccc;border-radius:6px;font-size:12px;">
+          <label style="font-size:12px;font-weight:600;">إلى:</label>
+          <input type="date" id="dailyStatsTo" style="padding:4px 8px;border:1px solid #ccc;border-radius:6px;font-size:12px;">
+          <button class="btn btn-primary" style="padding:4px 12px;font-size:11px;" onclick="renderDailyStatsTable()">عرض</button>
+        </div>
         <div style="overflow-x:auto;">
           <table id="daily-stats-table" style="width:100%;border-collapse:collapse;font-size:12px;text-align:center;">
             <thead id="daily-stats-thead"></thead>
@@ -5159,12 +5166,25 @@
       var thead = document.getElementById('daily-stats-thead');
       var tbody = document.getElementById('daily-stats-tbody');
       if (!thead || !tbody) return;
-      var cols = ['التاريخ','إجمالي القوة','دائمة متواجد','دائمة إجازة','كاجوال متواجد','كاجوال إجازة','ضيافة','ضيوف','إنتاج الخبز','صيانة مفتوحة','بيارات اليوم','وجبات اليوم'];
-      thead.innerHTML = '<tr>' + cols.map(function(c) { return '<th style="padding:6px;background:#1b5e20;color:white;border:1px solid #ddd;font-size:11px;white-space:nowrap;">' + c + '</th>'; }).join('') + '</tr>';
+      var fromEl = document.getElementById('dailyStatsFrom');
+      var toEl = document.getElementById('dailyStatsTo');
+      var fromDate = fromEl ? fromEl.value : '';
+      var toDate = toEl ? toEl.value : '';
+      var cols = ['Date', 'Total', 'Perm Present', 'Perm Leave', 'Casual Present', 'Casual Leave', 'Hospitality', 'Guests', 'Bakery', 'Maintenance', 'Septic', 'Meals'];
+      thead.innerHTML = '<tr>' + cols.map(function(c, i) {
+        var bg = i === 0 ? '#263238' : (i <= 1 ? '#1b5e20' : '#37474f');
+        return '<th style="padding:6px;background:' + bg + ';color:white;border:1px solid #ddd;font-size:11px;white-space:nowrap;">' + c + '</th>';
+      }).join('') + '</tr>';
       tbody.innerHTML = '';
-      if (!dailyStats.length) { tbody.innerHTML = '<tr><td colspan="' + cols.length + '" style="padding:15px;color:#888;">لا توجد إحصائيات بعد — اضغط "حفظ إحصائية اليوم"</td></tr>'; return; }
-      dailyStats.slice(0, 90).forEach(function(s) {
-        var row = '<td style="padding:5px;border:1px solid #ddd;font-weight:700;">' + s.date + '</td>';
+      var filtered = dailyStats.filter(function(s) {
+        if (fromDate && s.date < fromDate) return false;
+        if (toDate && s.date > toDate) return false;
+        return true;
+      }).sort(function(a, b) { return b.date.localeCompare(a.date); });
+      if (!filtered.length) { tbody.innerHTML = '<tr><td colspan="' + cols.length + '" style="padding:15px;color:#888;">No data in selected range</td></tr>'; return; }
+      var sumTotal = 0, sumPP = 0, sumPV = 0, sumCP = 0, sumCV = 0, sumHosp = 0, sumGuests = 0, sumBread = 0, sumMaint = 0, sumSeptic = 0, sumMeals = 0;
+      filtered.forEach(function(s) {
+        var row = '<td style="padding:5px;border:1px solid #ddd;font-weight:700;font-family:monospace;">' + s.date + '</td>';
         row += '<td style="padding:5px;border:1px solid #ddd;font-weight:700;">' + s.total + '</td>';
         row += '<td style="padding:5px;border:1px solid #ddd;">' + s.permP + ' <span style="color:#888;font-size:10px;">(' + s.permPPct + '%)</span></td>';
         row += '<td style="padding:5px;border:1px solid #ddd;">' + s.permV + ' <span style="color:#888;font-size:10px;">(' + s.permVPct + '%)</span></td>';
@@ -5177,17 +5197,45 @@
         row += '<td style="padding:5px;border:1px solid #ddd;">' + s.septicToday + '</td>';
         row += '<td style="padding:5px;border:1px solid #ddd;">' + s.mealsToday + '</td>';
         tbody.innerHTML += '<tr>' + row + '</tr>';
+        sumTotal += s.total; sumPP += s.permP; sumPV += s.permV; sumCP += s.casP; sumCV += s.casV;
+        sumHosp += s.hospCount; sumGuests += s.hospGuests; sumBread += s.bakeryProd; sumMaint += s.maintenanceOpen; sumSeptic += s.septicToday; sumMeals += s.mealsToday;
       });
+      if (filtered.length > 1) {
+        var avgRow = '<td style="padding:5px;border:2px solid #1b5e20;font-weight:900;background:#e8f5e9;">AVG (' + filtered.length + ')</td>';
+        avgRow += '<td style="padding:5px;border:2px solid #1b5e20;font-weight:900;background:#e8f5e9;">' + Math.round(sumTotal / filtered.length) + '</td>';
+        avgRow += '<td style="padding:5px;border:2px solid #1b5e20;background:#e8f5e9;">' + Math.round(sumPP / filtered.length) + '</td>';
+        avgRow += '<td style="padding:5px;border:2px solid #1b5e20;background:#e8f5e9;">' + Math.round(sumPV / filtered.length) + '</td>';
+        avgRow += '<td style="padding:5px;border:2px solid #1b5e20;background:#e8f5e9;">' + Math.round(sumCP / filtered.length) + '</td>';
+        avgRow += '<td style="padding:5px;border:2px solid #1b5e20;background:#e8f5e9;">' + Math.round(sumCV / filtered.length) + '</td>';
+        avgRow += '<td style="padding:5px;border:2px solid #1b5e20;background:#e8f5e9;">' + Math.round(sumHosp / filtered.length) + '</td>';
+        avgRow += '<td style="padding:5px;border:2px solid #1b5e20;background:#e8f5e9;">' + Math.round(sumGuests / filtered.length) + '</td>';
+        avgRow += '<td style="padding:5px;border:2px solid #1b5e20;font-weight:900;background:#e8f5e9;">' + sumBread + '</td>';
+        avgRow += '<td style="padding:5px;border:2px solid #1b5e20;font-weight:900;background:#e8f5e9;">' + sumMaint + '</td>';
+        avgRow += '<td style="padding:5px;border:2px solid #1b5e20;font-weight:900;background:#e8f5e9;">' + sumSeptic + '</td>';
+        avgRow += '<td style="padding:5px;border:2px solid #1b5e20;font-weight:900;background:#e8f5e9;">' + sumMeals + '</td>';
+        tbody.innerHTML += '<tr>' + avgRow + '</tr>';
+      }
     }
 
     function exportDailyStatsToExcel() {
-      if (!dailyStats.length) return alert('لا توجد إحصائيات');
-      var data = dailyStats.map(function(s) {
-        return { 'التاريخ': s.date, 'إجمالي القوة': s.total, 'دائمة متواجد': s.permP, 'نسبة متواجد دائمة': s.permPPct + '%', 'دائمة إجازة': s.permV, 'نسبة إجازة دائمة': s.permVPct + '%', 'كاجوال متواجد': s.casP, 'نسبة متواجد كاجوال': s.casPPct + '%', 'كاجوال إجازة': s.casV, 'نسبة إجازة كاجوال': s.casVPct + '%', 'ضيافة': s.hospCount, 'ضيوف': s.hospGuests, 'إنتاج الخبز': s.bakeryProd, 'صيانة مفتوحة': s.maintenanceOpen, 'بيارات': s.septicToday, 'وجبات': s.mealsToday };
+      if (!dailyStats.length) return alert('No data');
+      var fromEl = document.getElementById('dailyStatsFrom');
+      var toEl = document.getElementById('dailyStatsTo');
+      var fromDate = fromEl ? fromEl.value : '';
+      var toDate = toEl ? toEl.value : '';
+      var filtered = dailyStats.filter(function(s) {
+        if (fromDate && s.date < fromDate) return false;
+        if (toDate && s.date > toDate) return false;
+        return true;
+      }).sort(function(a, b) { return b.date.localeCompare(a.date); });
+      if (!filtered.length) return alert('No data in range');
+      var data = filtered.map(function(s) {
+        return { 'Date': s.date, 'Total': s.total, 'Perm Present': s.permP, 'Perm Present %': s.permPPct + '%', 'Perm Leave': s.permV, 'Perm Leave %': s.permVPct + '%', 'Casual Present': s.casP, 'Casual Present %': s.casPPct + '%', 'Casual Leave': s.casV, 'Casual Leave %': s.casVPct + '%', 'Hospitality': s.hospCount, 'Guests': s.hospGuests, 'Bakery': s.bakeryProd, 'Maintenance': s.maintenanceOpen, 'Septic': s.septicToday, 'Meals': s.mealsToday };
       });
       var ws = XLSX.utils.json_to_sheet(data); var wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, 'إحصائية يومية');
-      XLSX.writeFile(wb, 'إحصائية_يومية_' + new Date().toISOString().split('T')[0].replace(/-/g, '') + '.xlsx');
+      XLSX.utils.book_append_sheet(wb, ws, 'Daily Stats');
+      var range = (fromDate || 'all') + '_to_' + (toDate || 'all');
+      XLSX.writeFile(wb, 'DailyStats_' + range.replace(/-/g, '') + '_' + new Date().toISOString().split('T')[0].replace(/-/g, '') + '.xlsx');
     }
 
     function calculateSystemStats() {
@@ -10815,7 +10863,8 @@ function toggleEmployeeStatus(empId) {
       }
       // تهيئة الرصيد السنوي للموظفين
       employees.forEach(function(e) { if (typeof e.vacationBalance !== 'number') e.vacationBalance = 30; });
-      sortEmployeesAlphabetically(); rebuildDeptTitles(); rebuildAllDropdowns(); initEmployeeSearchInputs(); setupItemNameSearch(); setupNameAutocomplete(); populateRoomSectorDropdown(); populateContractorSectorDropdown();       renderTable(); renderInventoryTable(); renderInventoryItems(); renderArchiveTable(); renderVacationsTable(); renderOvertimeCalendar(); renderHospitalityTable(); renderMaintenanceTable(); renderSepticTable(); renderPeriodicMaintenance(); renderTeaSugarTable(); renderMealLogTable(); autoSaveTodayMeal(); renderContractorsTable(); renderDashboard(); renderQuickActions(); updateEmployeeVacationStatuses(); renderTable(); renderOvertimeCalendar(); renderDailyStatsTable(); initAllSortableTables();
+      sortEmployeesAlphabetically(); rebuildDeptTitles(); rebuildAllDropdowns(); initEmployeeSearchInputs(); setupItemNameSearch(); setupNameAutocomplete(); populateRoomSectorDropdown(); populateContractorSectorDropdown();       renderTable(); renderInventoryTable(); renderInventoryItems(); renderArchiveTable(); renderVacationsTable(); renderOvertimeCalendar(); renderHospitalityTable(); renderMaintenanceTable(); renderSepticTable(); renderPeriodicMaintenance(); renderTeaSugarTable(); renderMealLogTable(); autoSaveTodayMeal(); renderContractorsTable(); renderDashboard(); renderQuickActions(); updateEmployeeVacationStatuses(); renderTable(); renderOvertimeCalendar();
+      (function(){ var from=document.getElementById('dailyStatsFrom'); var to=document.getElementById('dailyStatsTo'); if(dailyStats.length){var dates=dailyStats.map(function(s){return s.date}).sort();if(from)from.value=dates[0];if(to)to.value=dates[dates.length-1];}else{var t=new Date().toISOString().split('T')[0];if(from)from.value=t;if(to)to.value=t;} renderDailyStatsTable(); })(); initAllSortableTables();
 
       // تحميل أولي من Google Drive (مرة واحدة)
       // try restore from D: drive backup
