@@ -9467,14 +9467,12 @@ function toggleEmployeeStatus(empId) {
     // load from _pushedHashes (new), otherwise leave empty
     try { _dataHashes = JSON.parse(localStorage.getItem('_pushedHashes')); } catch(e) {}
     if (!_dataHashes || typeof _dataHashes !== 'object') _dataHashes = {};
-    // نمسح القديم نهائي — عشان ما يسببش مطابقة خطأ
-    localStorage.removeItem('_dataHashes');
-    // ملاحظة: ما نعيدش تهيئة الهاش من البيانات الحالية — عشان لو فيه تعديل محلي لسه ما وصلش للسحاب، الهاش يفضل قديم ويشتغل Push
-    var _pulledAt;
-    try { _pulledAt = JSON.parse(localStorage.getItem('_pulledAt')) || {}; } catch(e) { _pulledAt = {}; localStorage.removeItem('_pulledAt'); }
+    var _pushInProgress = false;
 
     async function pushToSupabase() {
       if (!supabaseConnected) return false;
+      if (_pushInProgress) return true;
+      _pushInProgress = true;
       var ts = new Date().toISOString();
       var entities = {
         employees: JSON.parse(JSON.stringify(employees)),
@@ -9552,6 +9550,7 @@ function toggleEmployeeStatus(empId) {
         syncLog('✅ لا توجد تغييرات جديدة للدفع');
         localStorage.removeItem('_pendingChanges');
       }
+      _pushInProgress = false;
       return !hasError;
     }
     async function pullFromSupabase() {
