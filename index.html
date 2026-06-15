@@ -3722,7 +3722,7 @@
           if (e.action === 'تعديل' || e.action === 'تسجيل') dot = 'blue';
           if (e.action === 'حذف' || e.action === 'استبعاد') dot = 'red';
           var t = e.time ? new Date(e.time).toLocaleString('ar-EG', {hour:'2-digit',minute:'2-digit'}) : '';
-          return '<div class="activity-item"><span class="activity-dot ' + dot + '"></span><span><b>' + e.user + '</b> ' + (e.details || e.action) + '</span><span style="font-size:9px;color:#90a4ae;margin-right:auto;">' + t + '</span></div>';
+          return '<div class="activity-item"><span class="activity-dot ' + dot + '"></span><span><b>' + e.user + '</b> ← ' + (e.targetName ? e.targetName + ' | ' : '') + (e.details || e.action) + '</span><span style="font-size:9px;color:#90a4ae;margin-right:auto;">' + t + '</span></div>';
         });
         g('dash-activity').innerHTML = actItems.length ? actItems.join('') : '<div style="text-align:center;color:#90a4ae;padding:10px;">لا توجد نشاطات</div>';
       }
