@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8">
@@ -1122,6 +1122,25 @@
         <div class="dash-chart-title">🕐 آخر النشاطات</div>
         <div class="activity-list" id="dash-activity" style="max-height:200px;">
           <div style="text-align:center;color:#90a4ae;padding:10px;">جاري التحميل...</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="dash-chart-row">
+      <div class="dash-chart-panel" style="grid-column:1/-1;">
+        <div class="dash-chart-title" style="display:flex;justify-content:space-between;align-items:center;">
+          <span>الإحصائية الرقمية اليومية</span>
+          <button class="btn btn-primary" style="padding:4px 14px;font-size:12px;" onclick="captureDailyStats()">حفظ إحصائية اليوم</button>
+        </div>
+        <div style="overflow-x:auto;">
+          <table id="daily-stats-table" style="width:100%;border-collapse:collapse;font-size:12px;text-align:center;">
+            <thead id="daily-stats-thead"></thead>
+            <tbody id="daily-stats-tbody"></tbody>
+          </table>
+        </div>
+        <div style="margin-top:6px;display:flex;gap:6px;">
+          <button class="btn btn-excel" style="padding:3px 10px;font-size:11px;" onclick="exportDailyStatsToExcel()">تصدير</button>
+          <button class="btn btn-danger" style="padding:3px 10px;font-size:11px;" onclick="if(confirm('مسح كل الإحصائيات اليومية؟')){dailyStats=[];syncStorage();renderDailyStatsTable();}">مسح السجل</button>
         </div>
       </div>
     </div>
@@ -2931,6 +2950,7 @@
       { icon: '💾', label: 'نسخة احتياطية', action: 'exportBackupSystem()' },
       { icon: '📊', label: 'تقرير Excel', action: 'exportDashboardToExcel()' }
     ];
+    let dailyStats = JSON.parse(localStorage.getItem('lineh_daily_stats')) || [];
     // Add any sectors from roomsCapacity that are missing from dynamicSectors
     (function() {
       var sectorSet = {};
@@ -3593,6 +3613,7 @@
       localStorage.setItem('lineh_room_assets', JSON.stringify(roomAssets));
       localStorage.setItem('lineh_archive_data', JSON.stringify(archiveData));
       localStorage.setItem('lineh_quick_actions', JSON.stringify(quickActions));
+      localStorage.setItem('lineh_daily_stats', JSON.stringify(dailyStats));
       localStorage.setItem('_pulledAt', JSON.stringify(_pulledAt));
       calculateSystemStats();
       if (!skipSync && supabaseConnected && !_pushInProgress) {
@@ -5100,6 +5121,73 @@
       manualTotalBeds = parseInt(val) || 0;
       localStorage.setItem('lineh_manual_total_beds', manualTotalBeds);
       syncStorage(); updateHousingStats(); renderDashboard(); renderQuickActions();
+    }
+
+    function captureDailyStats() {
+      var today = new Date().toISOString().split('T')[0];
+      var total = employees.length;
+      var perm = employees.filter(function(e) { return (e.contract || 'دائم') === 'دائم'; });
+      var casual = employees.filter(function(e) { return (e.contract || 'دائم') === 'كاجول'; });
+      var permP = perm.filter(function(e) { return e.status === 'P'; }).length;
+      var permV = perm.filter(function(e) { return e.status === 'V'; }).length;
+      var casP = casual.filter(function(e) { return e.status === 'P'; }).length;
+      var casV = casual.filter(function(e) { return e.status === 'V'; }).length;
+      var activeHosp = hospitalities.filter(function(h) { return h.arrival && h.arrival <= today && (h.departure || '2099-12-31') >= today; });
+      var hospTotal = activeHosp.reduce(function(s, h) { return s + (h.guests || 1); }, 0);
+      var p = function(n) { return total > 0 ? Math.round(n / total * 100) : 0; };
+      var snap = {
+        date: today,
+        permTotal: perm.length, permP: permP, permV: permV, permPPct: p(permP), permVPct: p(permV),
+        casTotal: casual.length, casP: casP, casV: casV, casPPct: p(casP), casVPct: p(casV),
+        total: total, totalP: permP + casP, totalV: permV + casV,
+        totalPPct: p(permP + casP), totalVPct: p(permV + casV),
+        hospCount: activeHosp.length, hospGuests: hospTotal,
+        bakeryProd: bakeryProductions.length > 0 ? (bakeryProductions[bakeryProductions.length - 1].breadCount || 0) : 0,
+        maintenanceOpen: maintenanceRecords.filter(function(m) { return m.status !== 'مغلق'; }).length,
+        septicToday: septicRecords.filter(function(s) { return s.date === today; }).length,
+        mealsToday: mealLogs.filter(function(m) { return m.date === today; }).length
+      };
+      var existing = dailyStats.findIndex(function(s) { return s.date === today; });
+      if (existing >= 0) dailyStats[existing] = snap; else dailyStats.push(snap);
+      dailyStats.sort(function(a, b) { return b.date.localeCompare(a.date); });
+      syncStorage();
+      renderDailyStatsTable();
+      alert('تم حفظ إحصائية ' + today);
+    }
+
+    function renderDailyStatsTable() {
+      var thead = document.getElementById('daily-stats-thead');
+      var tbody = document.getElementById('daily-stats-tbody');
+      if (!thead || !tbody) return;
+      var cols = ['التاريخ','إجمالي القوة','دائمة متواجد','دائمة إجازة','كاجوال متواجد','كاجوال إجازة','ضيافة','ضيوف','إنتاج الخبز','صيانة مفتوحة','بيارات اليوم','وجبات اليوم'];
+      thead.innerHTML = '<tr>' + cols.map(function(c) { return '<th style="padding:6px;background:#1b5e20;color:white;border:1px solid #ddd;font-size:11px;white-space:nowrap;">' + c + '</th>'; }).join('') + '</tr>';
+      tbody.innerHTML = '';
+      if (!dailyStats.length) { tbody.innerHTML = '<tr><td colspan="' + cols.length + '" style="padding:15px;color:#888;">لا توجد إحصائيات بعد — اضغط "حفظ إحصائية اليوم"</td></tr>'; return; }
+      dailyStats.slice(0, 90).forEach(function(s) {
+        var row = '<td style="padding:5px;border:1px solid #ddd;font-weight:700;">' + s.date + '</td>';
+        row += '<td style="padding:5px;border:1px solid #ddd;font-weight:700;">' + s.total + '</td>';
+        row += '<td style="padding:5px;border:1px solid #ddd;">' + s.permP + ' <span style="color:#888;font-size:10px;">(' + s.permPPct + '%)</span></td>';
+        row += '<td style="padding:5px;border:1px solid #ddd;">' + s.permV + ' <span style="color:#888;font-size:10px;">(' + s.permVPct + '%)</span></td>';
+        row += '<td style="padding:5px;border:1px solid #ddd;">' + s.casP + ' <span style="color:#888;font-size:10px;">(' + s.casPPct + '%)</span></td>';
+        row += '<td style="padding:5px;border:1px solid #ddd;">' + s.casV + ' <span style="color:#888;font-size:10px;">(' + s.casVPct + '%)</span></td>';
+        row += '<td style="padding:5px;border:1px solid #ddd;">' + s.hospCount + '</td>';
+        row += '<td style="padding:5px;border:1px solid #ddd;">' + s.hospGuests + '</td>';
+        row += '<td style="padding:5px;border:1px solid #ddd;">' + s.bakeryProd + '</td>';
+        row += '<td style="padding:5px;border:1px solid #ddd;">' + s.maintenanceOpen + '</td>';
+        row += '<td style="padding:5px;border:1px solid #ddd;">' + s.septicToday + '</td>';
+        row += '<td style="padding:5px;border:1px solid #ddd;">' + s.mealsToday + '</td>';
+        tbody.innerHTML += '<tr>' + row + '</tr>';
+      });
+    }
+
+    function exportDailyStatsToExcel() {
+      if (!dailyStats.length) return alert('لا توجد إحصائيات');
+      var data = dailyStats.map(function(s) {
+        return { 'التاريخ': s.date, 'إجمالي القوة': s.total, 'دائمة متواجد': s.permP, 'نسبة متواجد دائمة': s.permPPct + '%', 'دائمة إجازة': s.permV, 'نسبة إجازة دائمة': s.permVPct + '%', 'كاجوال متواجد': s.casP, 'نسبة متواجد كاجوال': s.casPPct + '%', 'كاجوال إجازة': s.casV, 'نسبة إجازة كاجوال': s.casVPct + '%', 'ضيافة': s.hospCount, 'ضيوف': s.hospGuests, 'إنتاج الخبز': s.bakeryProd, 'صيانة مفتوحة': s.maintenanceOpen, 'بيارات': s.septicToday, 'وجبات': s.mealsToday };
+      });
+      var ws = XLSX.utils.json_to_sheet(data); var wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'إحصائية يومية');
+      XLSX.writeFile(wb, 'إحصائية_يومية_' + new Date().toISOString().split('T')[0].replace(/-/g, '') + '.xlsx');
     }
 
     function calculateSystemStats() {
@@ -10727,7 +10815,7 @@ function toggleEmployeeStatus(empId) {
       }
       // تهيئة الرصيد السنوي للموظفين
       employees.forEach(function(e) { if (typeof e.vacationBalance !== 'number') e.vacationBalance = 30; });
-      sortEmployeesAlphabetically(); rebuildDeptTitles(); rebuildAllDropdowns(); initEmployeeSearchInputs(); setupItemNameSearch(); setupNameAutocomplete(); populateRoomSectorDropdown(); populateContractorSectorDropdown(); renderTable(); renderInventoryTable(); renderInventoryItems(); renderArchiveTable(); renderVacationsTable(); renderOvertimeCalendar(); renderHospitalityTable(); renderMaintenanceTable(); renderSepticTable(); renderPeriodicMaintenance(); renderTeaSugarTable(); renderMealLogTable(); autoSaveTodayMeal(); renderContractorsTable(); renderDashboard(); renderQuickActions(); updateEmployeeVacationStatuses(); renderTable(); renderOvertimeCalendar(); initAllSortableTables();
+      sortEmployeesAlphabetically(); rebuildDeptTitles(); rebuildAllDropdowns(); initEmployeeSearchInputs(); setupItemNameSearch(); setupNameAutocomplete(); populateRoomSectorDropdown(); populateContractorSectorDropdown();       renderTable(); renderInventoryTable(); renderInventoryItems(); renderArchiveTable(); renderVacationsTable(); renderOvertimeCalendar(); renderHospitalityTable(); renderMaintenanceTable(); renderSepticTable(); renderPeriodicMaintenance(); renderTeaSugarTable(); renderMealLogTable(); autoSaveTodayMeal(); renderContractorsTable(); renderDashboard(); renderQuickActions(); updateEmployeeVacationStatuses(); renderTable(); renderOvertimeCalendar(); renderDailyStatsTable(); initAllSortableTables();
 
       // تحميل أولي من Google Drive (مرة واحدة)
       // try restore from D: drive backup
