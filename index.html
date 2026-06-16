@@ -2805,6 +2805,7 @@
       </div>
 
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;width:100%;">
+        <button class="btn btn-excel" onclick="exportDXWorkforce()" style="font-size:14px;padding:14px;">احصاء القوة اليومي</button>
         <button class="btn btn-excel" onclick="exportDXMeals()" style="font-size:14px;padding:14px;">تقرير الوجبات</button>
         <button class="btn btn-excel" onclick="exportDXTea()" style="font-size:14px;padding:14px;">تقرير شاي وسكر</button>
         <button class="btn btn-excel" onclick="exportDXSeptic()" style="font-size:14px;padding:14px;">تقرير الصرف الصحي</button>
@@ -7738,7 +7739,7 @@ function toggleEmployeeStatus(empId) {
         rows.push([]);
       }
 
-      addSection('力量 دائمة - متواجد (' + permP.length + ')', permP);
+      addSection('قوة دائمة - متواجد (' + permP.length + ')', permP);
       addSection('قوة دائمة - إجازة (' + permV.length + ')', permV);
       addSection('قوة كاجوال - متواجد (' + casP.length + ')', casP);
       addSection('قوة كاجوال - إجازة (' + casV.length + ')', casV);
@@ -11496,7 +11497,7 @@ function toggleEmployeeStatus(empId) {
       var titleEl = document.getElementById('dx-report-title');
       var wrapper = document.getElementById('dx-report-table-wrapper');
       if (!container || !titleEl || !wrapper) return;
-      titleEl.textContent = '📊 ' + title;
+      titleEl.textContent = title;
       var html = '<table class="dx-preview-table"><thead><tr><th>م</th>';
       headers.forEach(function(h) { html += '<th>' + h + '</th>'; });
       html += '</tr></thead><tbody>';
@@ -11668,6 +11669,140 @@ function toggleEmployeeStatus(empId) {
       html += '</tbody></table>';
       wrapper.innerHTML = html;
       container.style.display = 'block';
+    }
+
+    function exportDXWorkforce() {
+      var filename = 'tqreport_workforce_' + new Date().toISOString().slice(0,10) + '.xlsx';
+      var wb = XLSX.utils.book_new();
+      var totalEmp = employees.length;
+      var pCount = employees.filter(function(e) { return e.status === 'P'; }).length;
+      var vCount = employees.filter(function(e) { return e.status === 'V'; }).length;
+      var pPct = totalEmp > 0 ? Math.round(pCount / totalEmp * 100) : 0;
+      var vPct = totalEmp > 0 ? Math.round(vCount / totalEmp * 100) : 0;
+      var totalBeds = 0;
+      roomsCapacity.forEach(function(r) { totalBeds += parseInt(r.beds) || 0; });
+      var occupiedBeds = employees.filter(function(e) { return e.status === 'P' && e.room; }).length;
+      var vacantBeds = totalBeds - occupiedBeds;
+      var s1Data = [
+        ['احصاء القوة اليومية - لينه فارمز', '', '', '', ''],
+        ['التاريخ: ' + new Date().toLocaleDateString('ar-EG'), '', '', '', ''],
+        [],
+        ['البيان', 'العدد', 'النسبة', '', ''],
+        ['اجمالي القوة المقيدة', totalEmp, '100%', '', ''],
+        ['المتواجدين بالموقع (P)', pCount, pPct + '%', '', ''],
+        ['في الإجازات (V)', vCount, vPct + '%', '', ''],
+        [],
+        ['اجمالي الاسرة', totalBeds, '', '', ''],
+        ['الاسرة المشغولة', occupiedBeds, '', '', ''],
+        ['الاسرة الشاغرة', vacantBeds, '', '', ''],
+        []
+      ];
+      var ws1 = XLSX.utils.aoa_to_sheet(s1Data);
+      ws1['!merges'] = [{s:{r:0,c:0},e:{r:0,c:4}}];
+      _dxFinishSheet(ws1, 5, 2);
+      XLSX.utils.book_append_sheet(wb, ws1, 'ملخص القوة');
+      var sectorMap = {};
+      employees.forEach(function(e) {
+        var s = e.sector || 'غير محدد';
+        if (!sectorMap[s]) sectorMap[s] = { total: 0, p: 0, v: 0 };
+        sectorMap[s].total++;
+        if (e.status === 'P') sectorMap[s].p++;
+        if (e.status === 'V') sectorMap[s].v++;
+      });
+      var s2Data = [
+        ['توزيع القوة حسب القطاع', '', '', '', ''],
+        ['التاريخ: ' + new Date().toLocaleDateString('ar-EG'), '', '', '', ''],
+        [],
+        ['القطاع', 'اجمالي', 'متواجد', 'اجازة', 'نسبة الحضور']
+      ];
+      var sectors = Object.keys(sectorMap).sort();
+      sectors.forEach(function(s) {
+        var d = sectorMap[s];
+        var pct = d.total > 0 ? Math.round(d.p / d.total * 100) + '%' : '0%';
+        s2Data.push([s, d.total, d.p, d.v, pct]);
+      });
+      s2Data.push([]);
+      s2Data.push(['الاجمالي', totalEmp, pCount, vCount, pPct + '%']);
+      var ws2 = XLSX.utils.aoa_to_sheet(s2Data);
+      ws2['!merges'] = [{s:{r:0,c:0},e:{r:0,c:4}}];
+      _dxFinishSheet(ws2, 5, 2);
+      XLSX.utils.book_append_sheet(wb, ws2, 'توزيع القطاعات');
+      var deptMap = {};
+      employees.forEach(function(e) {
+        var d = e.department || 'غير محدد';
+        if (!deptMap[d]) deptMap[d] = 0;
+        deptMap[d]++;
+      });
+      var s3Data = [
+        ['توزيع القوة حسب الادارة', '', ''],
+        ['التاريخ: ' + new Date().toLocaleDateString('ar-EG'), '', ''],
+        [],
+        ['الادارة', 'العدد', 'النسبة']
+      ];
+      var depts = Object.keys(deptMap).sort();
+      depts.forEach(function(d) {
+        var pct = totalEmp > 0 ? Math.round(deptMap[d] / totalEmp * 100) + '%' : '0%';
+        s3Data.push([d, deptMap[d], pct]);
+      });
+      s3Data.push([]);
+      s3Data.push(['الاجمالي', totalEmp, '100%']);
+      var ws3 = XLSX.utils.aoa_to_sheet(s3Data);
+      ws3['!merges'] = [{s:{r:0,c:0},e:{r:0,c:2}}];
+      _dxFinishSheet(ws3, 3, 2);
+      XLSX.utils.book_append_sheet(wb, ws3, 'توزيع الادارات');
+      var govMap = {};
+      employees.forEach(function(e) {
+        var g = e.gov || 'غير محدد';
+        if (!govMap[g]) govMap[g] = 0;
+        govMap[g]++;
+      });
+      var s4Data = [
+        ['توزيع القوة حسب المحافظة', '', ''],
+        ['التاريخ: ' + new Date().toLocaleDateString('ar-EG'), '', ''],
+        [],
+        ['المحافظة', 'العدد', 'النسبة']
+      ];
+      var govs = Object.keys(govMap).sort();
+      govs.forEach(function(g) {
+        var pct = totalEmp > 0 ? Math.round(govMap[g] / totalEmp * 100) + '%' : '0%';
+        s4Data.push([g, govMap[g], pct]);
+      });
+      s4Data.push([]);
+      s4Data.push(['الاجمالي', totalEmp, '100%']);
+      var ws4 = XLSX.utils.aoa_to_sheet(s4Data);
+      ws4['!merges'] = [{s:{r:0,c:0},e:{r:0,c:2}}];
+      _dxFinishSheet(ws4, 3, 2);
+      XLSX.utils.book_append_sheet(wb, ws4, 'توزيع المحافظات');
+      var contractMap = {};
+      employees.forEach(function(e) {
+        var c = e.contractType || 'غير محدد';
+        if (!contractMap[c]) contractMap[c] = 0;
+        contractMap[c]++;
+      });
+      var s5Data = [
+        ['توزيع نوع التعاقد', '', ''],
+        ['التاريخ: ' + new Date().toLocaleDateString('ar-EG'), '', ''],
+        [],
+        ['نوع التعاقد', 'العدد', 'النسبة']
+      ];
+      var ctypes = Object.keys(contractMap).sort();
+      ctypes.forEach(function(c) {
+        var pct = totalEmp > 0 ? Math.round(contractMap[c] / totalEmp * 100) + '%' : '0%';
+        s5Data.push([c, contractMap[c], pct]);
+      });
+      s5Data.push([]);
+      s5Data.push(['الاجمالي', totalEmp, '100%']);
+      var ws5 = XLSX.utils.aoa_to_sheet(s5Data);
+      ws5['!merges'] = [{s:{r:0,c:0},e:{r:0,c:2}}];
+      _dxFinishSheet(ws5, 3, 2);
+      XLSX.utils.book_append_sheet(wb, ws5, 'نوع التعاقد');
+      var previewRows = [
+        [totalEmp, pCount, pPct + '%', vCount, vPct + '%'],
+        [totalBeds, occupiedBeds, vacantBeds, '', '']
+      ];
+      _dxPreview('احصاء القوة اليومية - ' + new Date().toLocaleDateString('ar-EG'), ['اجمالي القوة', 'متواجد', 'نسبة الحضور', 'اجازة', 'نسبة الاجازة'], previewRows);
+      downloadWB(wb, filename);
+      document.getElementById('dx-export-log').innerText = 'تم تصدير احصاء القوة - ' + new Date().toLocaleTimeString('ar-EG');
     }
 
     function exportDXMeals() {
