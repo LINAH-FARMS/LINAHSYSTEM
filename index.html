@@ -3632,6 +3632,7 @@
       localStorage.setItem('lineh_archive_data', JSON.stringify(archiveData));
       localStorage.setItem('lineh_quick_actions', JSON.stringify(quickActions));
       localStorage.setItem('lineh_daily_stats', JSON.stringify(dailyStats));
+      localStorage.setItem('lineh_sync_deletions', JSON.stringify(syncDeletions));
       localStorage.setItem('_pulledAt', JSON.stringify(_pulledAt));
       calculateSystemStats();
       if (!skipSync && supabaseConnected && !_pushInProgress) {
@@ -3962,6 +3963,7 @@
     }
     function deleteQuickAction(idx) {
       if (!requireAdmin()) return;
+      _logDeletion('quickActions', quickActions[idx].label);
       quickActions.splice(idx, 1);
       syncStorage();
       renderQuickActions();
@@ -4161,6 +4163,7 @@
     function removeDeptTitle(dept, title) {
       if (!confirm(`إزالة "${title}" من إدارة "${dept}"؟`)) return;
       if (deptTitles[dept]) {
+        _logDeletion('deptTitles', dept + '|' + title);
         deptTitles[dept] = deptTitles[dept].filter(t => t !== title);
         if (deptTitles[dept].length === 0) delete deptTitles[dept];
       }
@@ -4301,6 +4304,7 @@
       let lists = { sector: dynamicSectors, room: dynamicRooms, septic: dynamicSeptics, dept: dynamicDepts, title: dynamicTitles, 'ctr-sector': contractorSectors };
       let arr = lists[listId];
       if (!arr || idx >= arr.length) return;
+      _logDeletion(listId, arr[idx]);
       arr.splice(idx, 1);
       syncStorage(); rebuildAllDropdowns(); renderDynamicLists();
     }
@@ -4546,6 +4550,7 @@
       if (!confirm('⚠️ هل أنت متأكد من حذف المستخدم "' + name + '"؟')) return;
       if (name === currentUser) { alert('⛔ لا يمكن حذف المستخدم الحالي'); return; }
       appUsers = appUsers.filter(function(u) { return u.name !== name; });
+      _logDeletion('appUsers', name);
       var deleted = _safeJsonParse(localStorage.getItem('lineh_deleted_users'), []);
       if (deleted.indexOf(name) === -1) deleted.push(name);
       localStorage.setItem('lineh_deleted_users', JSON.stringify(deleted));
@@ -5430,11 +5435,11 @@
       if(editId) {
         let index = employees.findIndex(e => e.id == editId);
         if(index !== -1) {
-          employees[index] = { id: editId, code, name, contract, nationalId, dept, title, gov, status, sector, room, hireDate, assets: assetsList, vacationBalance };
+          employees[index] = _ts({ id: editId, code, name, contract, nationalId, dept, title, gov, status, sector, room, hireDate, assets: assetsList, vacationBalance });
         }
       } else {
         let newEmp = { id: Date.now().toString(), code, name, contract, nationalId, dept, title, gov, status, sector, room, hireDate, assets: assetsList, vacationBalance };
-        employees.push(newEmp);
+        employees.push(_ts(newEmp));
       }
 
       sortEmployeesAlphabetically(); syncStorage(); renderTable(); renderHousingLayout(); rebuildAllDropdowns(); closeModal('modal-add-emp');
@@ -5518,6 +5523,7 @@
       excludedRecord.assetsStr = (emp.assets && emp.assets.length > 0) ? emp.assets.map(a => `${a.item} (${a.qty})`).join('، ') : "لا يوجد";
 
       excludedEmployees.push(excludedRecord);
+      _logDeletion('employees', excludedRecord.code || excludedRecord.name);
       employees.splice(idx, 1);
 
       rebuildDeptTitles();
@@ -5566,6 +5572,7 @@
 
     function permanentlyDeleteExcluded(idx) { if (!requireAdmin()) return;
       if(confirm("هل تريد مسح هذا السجل التابع للمستبعد تماماً حتى من الأرشيف القانوني؟")) {
+        _logDeletion('excludedEmployees', excludedEmployees[idx].code || excludedEmployees[idx].name);
         excludedEmployees.splice(idx, 1); syncStorage(); renderExcludedTable();
       }
     }
@@ -5594,7 +5601,7 @@
         hireDate: rec.hireDate || '',
         assets: assetsVal
       };
-      employees.push(emp);
+      employees.push(_ts(emp));
       excludedEmployees.splice(idx, 1);
       sortEmployeesAlphabetically();
       rebuildDeptTitles();
@@ -5852,6 +5859,7 @@ function toggleEmployeeStatus(empId) {
       if (!requireAdmin()) return;
       var a = roomAssets[idx];
       if (!a) return;
+      _logDeletion('roomAssets', (a.room || '') + '|' + (a.item || '') + '|' + (a.id || ''));
       roomAssets.splice(idx, 1);
       syncStorage();
       logAction('حذف', 'أصل غرفة', a.item, 'مبنى: ' + a.sector + ' | غرفة: ' + a.room);
@@ -5987,7 +5995,7 @@ function toggleEmployeeStatus(empId) {
       let empName = empObj ? empObj.name : "غير معروف";
 
       let voucher = { voucherId, dept, empId, empName, itemName, itemCode, unit, qty: parseInt(qty), date: new Date().toISOString().split('T')[0], notes };
-      inventoryVouchers.push(voucher); syncStorage(); renderInventoryTable();
+      inventoryVouchers.push(_ts(voucher)); syncStorage(); renderInventoryTable();
       logAction('إضافة', 'صرف مخزن', itemName, 'بون: ' + voucherId + ' | إدارة: ' + dept + ' | مستلم: ' + empName + ' | كمية: ' + qty);
       
       document.getElementById('inv-item-name').value = '';
@@ -6030,6 +6038,7 @@ function toggleEmployeeStatus(empId) {
 
     function deleteInventoryVoucher(idx) { if (!requireAdmin()) return;
       if(confirm("هل تريد حذف هذا البون من حركة المخزن؟")) {
+        _logDeletion('inventoryVouchers', inventoryVouchers[idx].id || inventoryVouchers[idx]._id);
         inventoryVouchers.splice(idx, 1); syncStorage(); renderInventoryTable();
       }
     }
@@ -6106,6 +6115,7 @@ function toggleEmployeeStatus(empId) {
 
     function deleteInventoryItem(idx) { if (!requireAdmin()) return;
       if(confirm("حذف الصنف من السجل؟")) {
+        _logDeletion('inventoryItems', inventoryItems[idx].id || inventoryItems[idx].name);
         inventoryItems.splice(idx, 1);
         syncStorage(); renderInventoryItems();
       }
@@ -6160,6 +6170,7 @@ function toggleEmployeeStatus(empId) {
       if (!requireAdmin()) return;
       var a = archiveData[idx];
       if (!a) return;
+      _logDeletion('archiveData', a.id || a.date);
       archiveData.splice(idx, 1);
       syncStorage();
       logAction('حذف', 'عهدة', a.item, 'كمية: ' + a.qty);
@@ -6352,7 +6363,7 @@ function toggleEmployeeStatus(empId) {
         notes
       };
 
-      vacations.push(vRecord); syncStorage(); updateEmployeeVacationStatuses(); renderTable(); renderVacationsTable();
+      vacations.push(_ts(vRecord)); syncStorage(); updateEmployeeVacationStatuses(); renderTable(); renderVacationsTable();
       document.getElementById('vacation-notes').value = '';
       document.getElementById('vacation-days').value = '';
       document.getElementById('vacation-start-date').value = '';
@@ -6418,6 +6429,7 @@ function toggleEmployeeStatus(empId) {
       if(confirm("حذف الإجازة من الأرشيف؟")) {
         var oldRec = vacations[idx];
         var empCode = oldRec?.code;
+        _logDeletion('vacations', (oldRec?.employeeCode || oldRec?.employeeName || empCode || '') + '|' + (oldRec?.startDate || oldRec?.dateFrom || '') + '|' + (oldRec?.endDate || oldRec?.dateTo || ''));
         // استعادة الرصيد السنوي
         if (oldRec) {
           var emp = employees.find(function(e) { return (e.code || e.id) === empCode; });
@@ -6537,7 +6549,7 @@ function toggleEmployeeStatus(empId) {
       } else {
         var dupHosp = hospitalities.find(function(h) { return h.name === name && h.arrival === arrival; });
         if (dupHosp) return alert('⚠️ توجد زيارة مكررة لنفس الزائر في نفس التاريخ (' + name + ' - ' + arrival + ').');
-        hospitalities.push({ _id: Date.now().toString(), name, type, title, arrival, departure, guests, meals: meals.slice() });
+        hospitalities.push(_ts({ _id: Date.now().toString(), name, type, title, arrival, departure, guests, meals: meals.slice() }));
       }
       updateMealLogFromHospitality(arrival);
       syncStorage(); renderHospitalityTable(); renderMealLogTable();
@@ -6606,6 +6618,7 @@ function toggleEmployeeStatus(empId) {
 
     function deleteHospitality(idx) { if (!requireAdmin()) return;
       var rec = hospitalities[idx];
+      _logDeletion('hospitalities', (rec.name || '') + '|' + (rec.arrival || '') + '|' + (rec.type || ''));
       hospitalities.splice(idx, 1);
       if (rec && rec.arrival) updateMealLogFromHospitality(rec.arrival);
       syncStorage(); renderHospitalityTable(); renderMealLogTable();
@@ -6702,6 +6715,7 @@ function toggleEmployeeStatus(empId) {
     function deleteDupHospitality(idx) {
       if (!requireAdmin()) return;
       var rec = hospitalities[idx];
+      _logDeletion('hospitalities', (rec.name || '') + '|' + (rec.arrival || '') + '|' + (rec.type || ''));
       hospitalities.splice(idx, 1);
       if (rec && rec.arrival) updateMealLogFromHospitality(rec.arrival);
       syncStorage(); renderHospitalityTable(); renderMealLogTable();
@@ -6710,6 +6724,7 @@ function toggleEmployeeStatus(empId) {
 
     function deleteDupProduction(idx) {
       if (!requireAdmin()) return;
+      _logDeletion('bakeryProductions', normalizeDateStr(bakeryProductions[idx].date) + '|' + (bakeryProductions[idx].breadCount || ''));
       bakeryProductions.splice(idx, 1);
       syncStorage(); renderBakeryProductions(); updateBakeryProductionIngredientStocks();
       scanAndShowDuplicates();
@@ -6717,6 +6732,7 @@ function toggleEmployeeStatus(empId) {
 
     function deleteDupContractor(idx) {
       if (!requireAdmin()) return;
+      _logDeletion('bakeryContractorSupplies', (bakeryContractorSupplies[idx].name || '') + '|' + normalizeDateStr(bakeryContractorSupplies[idx].date) + '|' + (bakeryContractorSupplies[idx].count || ''));
       bakeryContractorSupplies.splice(idx, 1);
       syncStorage(); renderBakeryContractorSupplies(); updateBakeryStats(); updateBreadSupplyStats();
       scanAndShowDuplicates();
@@ -6771,7 +6787,7 @@ function toggleEmployeeStatus(empId) {
       let record = { category, task, tech, status, notes, materials: materials.length ? [...materials] : [], imgBefore: '', imgAfter: '', date: new Date().toISOString().split('T')[0] };
 
       let proceedSave = () => {
-        maintenanceRecords.push(record); syncStorage(); renderMaintenanceTable();
+        maintenanceRecords.push(_ts(record)); syncStorage(); renderMaintenanceTable();
         logAction('إضافة', 'صيانة', task, 'نوع: ' + category + ' | فني: ' + tech + ' | حالة: ' + status);
         document.getElementById('maint-category').value = ''; document.getElementById('maint-task').value = '';
         document.getElementById('maint-tech').value = '';
@@ -6828,7 +6844,7 @@ function toggleEmployeeStatus(empId) {
       });
     }
 
-    function deleteMaint(idx) { if (!requireAdmin()) return; maintenanceRecords.splice(idx,1); syncStorage(); renderMaintenanceTable(); }
+    function deleteMaint(idx) { if (!requireAdmin()) return; _logDeletion('maintenanceRecords', (maintenanceRecords[idx].category||'') + '|' + (maintenanceRecords[idx].task||'') + '|' + (maintenanceRecords[idx].date||'')); maintenanceRecords.splice(idx,1); syncStorage(); renderMaintenanceTable(); }
     function editMaint(idx) {
       let rec = maintenanceRecords[idx];
       if (!rec) return;
@@ -7001,6 +7017,7 @@ function toggleEmployeeStatus(empId) {
 
     function deletePM(idx) { if (!requireAdmin()) return;
       if(confirm("حذف مهمة الصيانة الدورية؟")) {
+        _logDeletion('periodicMaintenance', (periodicMaintenance[idx].task||'') + '|' + (periodicMaintenance[idx].sector||'') + '|' + (periodicMaintenance[idx].frequency||''));
         periodicMaintenance.splice(idx, 1);
         syncStorage(); renderPeriodicMaintenance();
       }
@@ -7053,7 +7070,7 @@ function toggleEmployeeStatus(empId) {
       let roomData = contractorRooms.find(r => r.sector === sector && r.number === room);
       let beds = roomData ? roomData.beds : 1;
 
-      contractors.push({ id: 'ctr_' + Date.now(), name, phone, sector, room, dailyRate, startDate, endDate, beds, notes });
+      contractors.push(_ts({ id: 'ctr_' + Date.now(), name, phone, sector, room, dailyRate, startDate, endDate, beds, notes }));
       syncStorage(); renderContractorsTable();
       document.getElementById('ctr-name').value = ''; document.getElementById('ctr-phone').value = '';
       document.getElementById('ctr-sector').value = ''; document.getElementById('ctr-room').innerHTML = '<option value="">-- اختر المبنى أولاً --</option>';
@@ -7105,6 +7122,7 @@ function toggleEmployeeStatus(empId) {
 
     function deleteContractor(idx) { if (!requireAdmin()) return;
       if(confirm("حذف المقاول؟")) {
+        _logDeletion('contractors', contractors[idx].name || contractors[idx].id);
         contractors.splice(idx, 1);
         syncStorage(); renderContractorsTable();
       }
@@ -7169,6 +7187,7 @@ function toggleEmployeeStatus(empId) {
     }
     function deleteContractorRoom(idx) { if (!requireAdmin()) return;
       if (!confirm('حذف الغرفة؟')) return;
+      _logDeletion('contractorRooms', (contractorRooms[idx].sector||'') + '|' + (contractorRooms[idx].number||''));
       contractorRooms.splice(idx, 1);
       syncStorage(); renderContractorRoomsList();
     }
@@ -7210,6 +7229,7 @@ function toggleEmployeeStatus(empId) {
 
     function deleteTS(idx) { if (!requireAdmin()) return;
       if(confirm("حذف سجل صرف الشاي والسكر؟")) {
+        _logDeletion('teaSugarDisbursements', (teaSugarDisbursements[idx].date||'') + '|' + (teaSugarDisbursements[idx].type||'') + '|' + (teaSugarDisbursements[idx].quantity||''));
         teaSugarDisbursements.splice(idx, 1);
       syncStorage(); renderTeaSugarTable(); renderTeaSugarBatchSummary();
       logAction('إضافة', 'صرف شاي وسكر', emp ? emp.name : '', 'دورة: ' + period + ' | شاي: ' + teaPacks + ' باكيت | سكر: ' + sugarKg + ' كجم');
@@ -7329,6 +7349,7 @@ function toggleEmployeeStatus(empId) {
       let b = teaSugarBatches[idx];
       if (!b) return;
       if (confirm("حذف دفعة التموين؟")) {
+        _logDeletion('teaSugarBatches', b.id || b._id);
         teaSugarBatches.splice(idx, 1);
         syncStorage(); renderTeaSugarBatchSummary(); renderTeaSugarTable();
       }
@@ -7369,7 +7390,7 @@ function toggleEmployeeStatus(empId) {
 
       let emp = employees.find(e => e.id == empId || e.code == empId);
       if (!emp) emp = employees.find(e => searchVal && e.name.includes(searchVal.replace(/^\[\w*\]\s*/, '')));
-      teaSugarDisbursements.push({
+      teaSugarDisbursements.push(_ts({
         id: 'ts_' + Date.now(), empId,
         empCode: emp ? emp.code : '',
         empName: emp ? emp.name : 'غير معروف',
@@ -7593,6 +7614,7 @@ function toggleEmployeeStatus(empId) {
 
     function deleteMealLog(idx) { if (!requireAdmin()) return;
       if(confirm("حذف سجل الوجبات؟")) {
+        _logDeletion('mealLogs', mealLogs[idx].date);
         mealLogs.splice(idx, 1);
         syncStorage(); renderMealLogTable();
       }
@@ -7619,7 +7641,7 @@ function toggleEmployeeStatus(empId) {
 
       if(!name || !trips) return alert("البيارة وعدد النقلات حقول إجبارية");
       let dateInput = document.getElementById('septic-date').value;
-      septicRecords.push({ name, trips: parseInt(trips), time: time || '—', supervisor: superv || '—', date: dateInput || '—' });
+      septicRecords.push(_ts({ name, trips: parseInt(trips), time: time || '—', supervisor: superv || '—', date: dateInput || '—' }));
       syncStorage(); renderSepticTable();
       logAction('إضافة', 'كسح بيارة', name, 'نقلات: ' + trips + ' | مشرف: ' + superv + ' | تاريخ: ' + dateInput);
       document.getElementById('septic-supervisor').value = '';
@@ -7651,7 +7673,7 @@ function toggleEmployeeStatus(empId) {
       });
     }
 
-    function deleteSeptic(idx) { if (!requireAdmin()) return; septicRecords.splice(idx,1); syncStorage(); renderSepticTable(); }
+    function deleteSeptic(idx) { if (!requireAdmin()) return; _logDeletion('septicRecords', (septicRecords[idx].date||'') + '|' + (septicRecords[idx].sector||'') + '|' + (septicRecords[idx].quantity||'')); septicRecords.splice(idx,1); syncStorage(); renderSepticTable(); }
 
     function exportEmployeesToExcel() {
       var today = new Date().toISOString().split('T')[0];
@@ -8454,6 +8476,7 @@ function toggleEmployeeStatus(empId) {
       var idx = null;
       adminOvertime.forEach(function(e, i) { if (e.date === dateKey && e.empCode == empCode) idx = i; });
       if (idx !== null) {
+        _logDeletion('adminOvertime', dateKey + '|' + empCode);
         adminOvertime.splice(idx, 1);
         syncStorage();
         openOvertimeModal(dateKey);
@@ -8822,6 +8845,7 @@ function toggleEmployeeStatus(empId) {
     function clearAllEmployeesData() {
       if (!requireAdmin()) return;
       if(confirm("💥 تحذير خطير جداً: هل أنت متأكد من مسح كافة بيانات القوة من قاعدة البيانات؟ لا يمكن التراجع!")) {
+        employees.forEach(function(e) { _logDeletion('employees', e.code || e.name); });
         employees = []; syncStorage(); renderTable(); renderHousingLayout(); renderDashboard(); renderQuickActions(); rebuildAllDropdowns(); alert("تم تصفير القوة بالكامل.");
       }
     }
@@ -9101,7 +9125,7 @@ function toggleEmployeeStatus(empId) {
         let found = bakeryIngredients.find(i => i.id === id);
         if (found) { found.name = name; found.unit = unit; found.currentQty = qty; found.minQty = min; found.pricePerUnit = price; found.notes = notes; }
       } else {
-        bakeryIngredients.push({ id: getBakeryNextId('ING', bakeryIngredients), name, unit, currentQty: qty, minQty: min, pricePerUnit: price, notes });
+        bakeryIngredients.push(_ts({ id: getBakeryNextId('ING', bakeryIngredients), name, unit, currentQty: qty, minQty: min, pricePerUnit: price, notes }));
       }
       syncStorage(); renderBakeryIngredients(); populateBakeryDropdowns(); updateBakeryStats();
       clearBakeryIngredientForm();
@@ -9109,6 +9133,7 @@ function toggleEmployeeStatus(empId) {
 
     function deleteBakeryIngredient(idx) { if (!requireAdmin()) return;
       if (!confirm('حذف المكون؟')) return;
+      _logDeletion('bakeryIngredients', bakeryIngredients[idx].name);
       bakeryIngredients.splice(idx, 1);
       syncStorage(); renderBakeryIngredients(); populateBakeryDropdowns(); updateBakeryStats();
     }
@@ -9235,7 +9260,7 @@ function toggleEmployeeStatus(empId) {
           }
           ing.currentQty = before - qty;
         });
-        bakeryProductions.push({
+        bakeryProductions.push(_ts({
           id: getBakeryNextId('PROD', bakeryProductions),
           date: prodDate,
           breadCount: breadCount,
@@ -9256,7 +9281,8 @@ function toggleEmployeeStatus(empId) {
     }
 
     function deleteBakeryProduction(idx) { if (!requireAdmin()) return;
-      if (!confirm('حذف الإنتاج؟')) return;
+      if (! confirm('حذف الإنتاج؟')) return;
+      _logDeletion('bakeryProductions', normalizeDateStr(bakeryProductions[idx].date) + '|' + (bakeryProductions[idx].breadCount || ''));
       bakeryProductions.splice(idx, 1);
       syncStorage(); renderBakeryProductions();
     }
@@ -9343,7 +9369,7 @@ function toggleEmployeeStatus(empId) {
         let prodCost = deductedCost;
         let revenue = count * price;
         let profit = revenue - prodCost;
-        bakeryContractorSupplies.push({ id: getBakeryNextId('CTR', bakeryContractorSupplies), date: normDate, name, count, price, paid, prodCost, revenue, profit, responsible, notes, ingredients: deducted });
+        bakeryContractorSupplies.push(_ts({ id: getBakeryNextId('CTR', bakeryContractorSupplies), date: normDate, name, count, price, paid, prodCost, revenue, profit, responsible, notes, ingredients: deducted }));
         syncStorage(); renderBakeryContractorSupplies(); updateBakeryStats(); updateBreadSupplyStats(); updateBctrIngredientStocks(); updateBakeryProductionIngredientStocks();
         document.getElementById('bctr-count').value = '0'; document.getElementById('bctr-paid').value = '0';
         document.getElementById('bctr-responsible').value = ''; document.getElementById('bctr-notes').value = '';
@@ -9353,6 +9379,7 @@ function toggleEmployeeStatus(empId) {
 
     function deleteBakeryContractorSupply(idx) { if (!requireAdmin()) return;
       if (!confirm('حذف التوريد؟')) return;
+      _logDeletion('bakeryContractorSupplies', (bakeryContractorSupplies[idx].name||'') + '|' + normalizeDateStr(bakeryContractorSupplies[idx].date) + '|' + (bakeryContractorSupplies[idx].count||''));
       bakeryContractorSupplies.splice(idx, 1);
       syncStorage(); renderBakeryContractorSupplies(); updateBakeryStats(); updateBreadSupplyStats();
     }
@@ -9506,7 +9533,7 @@ function toggleEmployeeStatus(empId) {
       let paid = parseFloat(document.getElementById('binv-paid').value) || 0;
       let notes = document.getElementById('binv-notes').value.trim();
       let loafCost = getAverageLoafCost();
-      bakeryInvoices.push({ id: getBakeryNextId('INV', bakeryInvoices), number, date: normalizeDateStr(date), customer, count, unitPrice, paid, prodCost: count * loafCost, notes });
+      bakeryInvoices.push(_ts({ id: getBakeryNextId('INV', bakeryInvoices), number, date: normalizeDateStr(date), customer, count, unitPrice, paid, prodCost: count * loafCost, notes }));
       syncStorage(); renderBakeryInvoices(); updateBakeryStats(); updateBreadSupplyStats();
       document.getElementById('binv-number').value = '';
       document.getElementById('binv-count').value = '0'; document.getElementById('binv-paid').value = '0'; document.getElementById('binv-notes').value = '';
@@ -9514,6 +9541,7 @@ function toggleEmployeeStatus(empId) {
 
     function deleteBakeryInvoice(idx) { if (!requireAdmin()) return;
       if (!confirm('حذف الفاتورة؟')) return;
+      _logDeletion('bakeryInvoices', bakeryInvoices[idx].id || bakeryInvoices[idx]._id);
       bakeryInvoices.splice(idx, 1);
       syncStorage(); renderBakeryInvoices(); updateBakeryStats(); updateBreadSupplyStats();
     }
@@ -9966,6 +9994,85 @@ function toggleEmployeeStatus(empId) {
     if (!_dataHashes || typeof _dataHashes !== 'object') _dataHashes = {};
     var _pushInProgress = false;
 
+    // Deletion + Update sync: tracks what was deleted/modified across devices
+    var syncDeletions = _safeJsonParse(localStorage.getItem('lineh_sync_deletions'), []);
+    function _logDeletion(entity, key) {
+      syncDeletions.push({ entity: entity, key: key, deletedAt: new Date().toISOString() });
+      // keep last 90 days only
+      var cutoff = new Date(Date.now() - 90 * 86400000).toISOString();
+      syncDeletions = syncDeletions.filter(function(d) { return d.deletedAt > cutoff; });
+      localStorage.setItem('lineh_sync_deletions', JSON.stringify(syncDeletions));
+    }
+    function _ts(item) { if (item && typeof item === 'object') item.modifiedAt = new Date().toISOString(); return item; }
+    function _isDeleted(entity, key) {
+      return syncDeletions.some(function(d) { return d.entity === entity && d.key === key; });
+    }
+    function _smartMerge(localArr, remoteArr, keyFn, entityName) {
+      if (!remoteArr || !remoteArr.length) return (localArr || []).filter(function(item) { return !_isDeleted(entityName, keyFn(item)); });
+      if (!localArr || !localArr.length) return (remoteArr || []).filter(function(item) { return !_isDeleted(entityName, keyFn(item)); });
+      var remoteKeyed = {};
+      remoteArr.forEach(function(item) { remoteKeyed[keyFn(item)] = item; });
+      var localKeyed = {};
+      localArr.forEach(function(item) { localKeyed[keyFn(item)] = item; });
+      // Start with local items, update from remote if remote is newer
+      var result = localArr.map(function(item) {
+        var k = keyFn(item);
+        var remoteItem = remoteKeyed[k];
+        if (!remoteItem) return item;
+        var lt = item.modifiedAt || '';
+        var rt = remoteItem.modifiedAt || '';
+        return (rt > lt) ? remoteItem : item;
+      });
+      // Add remote items not in local (unless deleted locally)
+      var resultKeys = {};
+      result.forEach(function(item) { resultKeys[keyFn(item)] = true; });
+      remoteArr.forEach(function(item) {
+        var k = keyFn(item);
+        if (!resultKeys[k] && !_isDeleted(entityName, k)) { result.push(item); resultKeys[k] = true; }
+      });
+      // Filter out deleted items
+      return result.filter(function(item) { return !_isDeleted(entityName, keyFn(item)); });
+    }
+    function _getItemKey(item, entity) {
+      var keyFns = {
+        employees: function(e) { return e.code || e.name; },
+        roomsCapacity: function(r) { return r.sector + '|' + r.number; },
+        vacations: function(v) { return (v.employeeCode || v.employeeName || '') + '|' + (v.startDate || v.dateFrom || '') + '|' + (v.endDate || v.dateTo || ''); },
+        inventoryVouchers: function(v) { return v.id || v._id; },
+        excludedEmployees: function(e) { return e.code || e.name; },
+        contractors: function(c) { return c.name || c.id; },
+        mealLogs: function(m) { return m.date; },
+        inventoryItems: function(i) { return i.id || i.name; },
+        hospitalities: function(h) { return (h.name || '') + '|' + (h.arrival || '') + '|' + (h.type || ''); },
+        adminOvertime: function(o) { return (o.date || '') + '|' + (o.name || '') + '|' + (o.hours || ''); },
+        maintenanceRecords: function(m) { return (m.category || '') + '|' + (m.task || '') + '|' + (m.date || m.createdAt || ''); },
+        septicRecords: function(s) { return (s.date || '') + '|' + (s.sector || '') + '|' + (s.quantity || ''); },
+        periodicMaintenance: function(p) { return (p.task || '') + '|' + (p.sector || '') + '|' + (p.frequency || ''); },
+        teaSugarDisbursements: function(t) { return (t.date || '') + '|' + (t.type || '') + '|' + (t.quantity || ''); },
+        teaSugarBatches: function(t) { return t.id || t._id; },
+        evaluations: function(e) { return (e.employeeCode || '') + '|' + (e.date || '') + '|' + (e.type || ''); },
+        appUsers: function(u) { return u.name; },
+        auditLog: function(a) { return a.id; },
+        bakeryIngredients: function(b) { return b.name; },
+        bakeryProductions: function(p) { return normalizeDateStr(p.date) + '|' + (p.breadCount || ''); },
+        bakeryContractorSupplies: function(s) { return (s.name || '') + '|' + normalizeDateStr(s.date) + '|' + (s.count || ''); },
+        bakeryInvoices: function(inv) { return inv.id || inv._id; },
+        bakeryStockLog: function(s) { return (s.date || '') + '|' + (s.ingredient || '') + '|' + (s.type || ''); },
+        roomAssets: function(a) { return (a.room || '') + '|' + (a.item || '') + '|' + (a.id || ''); },
+        archiveData: function(a) { return a.id || a.date; },
+        quickActions: function(q) { return q.label; },
+        dailyStats: function(d) { return d.date; },
+        contractorSectors: function(s) { return s.name || s; },
+        contractorRooms: function(r) { return (r.sector || '') + '|' + (r.number || ''); },
+        dynamicSectors: function(s) { return s.name || s; },
+        dynamicRooms: function(r) { return r.name || r; },
+        dynamicSeptics: function(s) { return s.name || s; },
+        dynamicDepts: function(d) { return d.name || d; },
+        dynamicTitles: function(t) { return t.name || t; }
+      };
+      return keyFns[entity] ? keyFns[entity](item) : JSON.stringify(item);
+    }
+
     async function pushToSupabase() {
       if (!supabaseConnected) return false;
       if (_pushInProgress) return true;
@@ -10009,7 +10116,8 @@ function toggleEmployeeStatus(empId) {
         deptTitles: JSON.parse(JSON.stringify(deptTitles)),
         currentUser: currentUser || '',
         manualTotalBeds: typeof manualTotalBeds === 'number' ? manualTotalBeds : 0,
-        dailyStats: JSON.parse(JSON.stringify(dailyStats))
+        dailyStats: JSON.parse(JSON.stringify(dailyStats)),
+        syncDeletions: JSON.parse(JSON.stringify(syncDeletions))
       };
       // Fetch remote data to merge before push (prevents overwriting other users' data)
       var remoteMap = {};
@@ -10060,12 +10168,27 @@ function toggleEmployeeStatus(empId) {
           continue;
         }
         if (Array.isArray(localArr) && Array.isArray(remoteArr) && _arrayKeyFns[mk]) {
+          var remoteKeyed = {};
+          remoteArr.forEach(function(item) { remoteKeyed[_arrayKeyFns[mk](item)] = item; });
+          // Merge: local wins on conflict (newer modifiedAt wins)
+          var mergedArr = localArr.map(function(item) {
+            var k = _arrayKeyFns[mk](item);
+            var remoteItem = remoteKeyed[k];
+            if (!remoteItem) return item;
+            var localTime = item.modifiedAt || '';
+            var remoteTime = remoteItem.modifiedAt || '';
+            return (remoteTime > localTime) ? remoteItem : item;
+          });
+          // Add remote items not in local (unless locally deleted)
           var localKeys = {};
-          localArr.forEach(function(item) { localKeys[_arrayKeyFns[mk](item)] = true; });
-          var mergedArr = [].concat(localArr);
+          mergedArr.forEach(function(item) { localKeys[_arrayKeyFns[mk](item)] = true; });
           remoteArr.forEach(function(item) {
             var k = _arrayKeyFns[mk](item);
-            if (!localKeys[k]) { mergedArr.push(item); localKeys[k] = true; }
+            if (!localKeys[k] && !_isDeleted(mk, k)) { mergedArr.push(item); localKeys[k] = true; }
+          });
+          // Remove items that are in deletion log
+          mergedArr = mergedArr.filter(function(item) {
+            return !_isDeleted(mk, _arrayKeyFns[mk](item));
           });
           entities[mk] = mergedArr;
         }
@@ -10118,7 +10241,7 @@ function toggleEmployeeStatus(empId) {
     async function pullFromSupabase() {
       if (!supabaseConnected) return;
       try {
-        var entityKeys = ['employees','roomsCapacity','vacations','inventoryVouchers','excludedEmployees','contractors','mealLogs','inventoryItems','hospitalities','adminOvertime','maintenanceRecords','septicRecords','periodicMaintenance','teaSugarDisbursements','teaSugarBatches','dynamicSectors','contractorSectors','contractorRooms','dynamicRooms','dynamicSeptics','dynamicDepts','dynamicTitles','evaluations','evalTemplates','appUsers','auditLog','bakeryIngredients','bakeryProductions','bakeryContractorSupplies','bakeryInvoices','bakeryStockLog','roomAssets','archiveData','quickActions','deptTitles','currentUser','manualTotalBeds','dailyStats'];
+        var entityKeys = ['employees','roomsCapacity','vacations','inventoryVouchers','excludedEmployees','contractors','mealLogs','inventoryItems','hospitalities','adminOvertime','maintenanceRecords','septicRecords','periodicMaintenance','teaSugarDisbursements','teaSugarBatches','dynamicSectors','contractorSectors','contractorRooms','dynamicRooms','dynamicSeptics','dynamicDepts','dynamicTitles','evaluations','evalTemplates','appUsers','auditLog','bakeryIngredients','bakeryProductions','bakeryContractorSupplies','bakeryInvoices','bakeryStockLog','roomAssets','archiveData','quickActions','deptTitles','currentUser','manualTotalBeds','dailyStats','syncDeletions'];
         var resp = await fetch(_sbEndpoint + '?select=id,updated_at', { method: 'GET', headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } });
         if (!resp.ok) return;
         var rows = await resp.json();
@@ -10294,6 +10417,8 @@ function toggleEmployeeStatus(empId) {
       else if (key === 'roomAssets') roomAssets = val;
       else if (key === 'archiveData') archiveData = val;
       else if (key === 'quickActions') quickActions = val;
+      else if (key === 'dailyStats') dailyStats = val;
+      else if (key === 'syncDeletions') syncDeletions = val;
     }
     function mergeArrays(localArr, remoteArr, keyFn) {
       if (!remoteArr || !remoteArr.length) return localArr || [];
@@ -10360,50 +10485,61 @@ function toggleEmployeeStatus(empId) {
 
     function applyRemoteData(d, srcId) {
       if (srcId && srcId === _deviceId) return;
-      if (d.employees) employees = mergeArrays(employees, d.employees, function(e) { return e.code || e.name || JSON.stringify(e); });
-      if (d.roomsCapacity) roomsCapacity = mergeArrays(roomsCapacity, d.roomsCapacity, function(r) { return r.sector + '|' + r.number; });
-      if (d.vacations) vacations = mergeArrays(vacations, d.vacations, function(v) { return (v.employeeCode || v.employeeName || '') + '|' + (v.startDate || v.dateFrom || '') + '|' + (v.endDate || v.dateTo || ''); });
-      if (d.hospitalities) hospitalities = mergeArrays(hospitalities, d.hospitalities, function(h) { return (h.name || '') + '|' + (h.arrival || '') + '|' + (h.type || ''); });
-      if (d.maintenanceRecords) maintenanceRecords = mergeArrays(maintenanceRecords, d.maintenanceRecords, function(m) { return (m.category || '') + '|' + (m.task || '') + '|' + (m.date || m.createdAt || ''); });
-      if (d.septicRecords) septicRecords = mergeArrays(septicRecords, d.septicRecords, function(s) { return (s.date || '') + '|' + (s.sector || '') + '|' + (s.quantity || ''); });
-      if (d.inventoryVouchers) inventoryVouchers = mergeArrays(inventoryVouchers, d.inventoryVouchers, function(v) { return v.id || v._id || JSON.stringify(v); });
-      if (d.excludedEmployees) excludedEmployees = mergeArrays(excludedEmployees, d.excludedEmployees, function(e) { return e.code || e.name || JSON.stringify(e); });
-      if (d.periodicMaintenance) periodicMaintenance = mergeArrays(periodicMaintenance, d.periodicMaintenance, function(p) { return (p.task || '') + '|' + (p.sector || '') + '|' + (p.frequency || ''); });
-      if (d.teaSugarDisbursements) teaSugarDisbursements = mergeArrays(teaSugarDisbursements, d.teaSugarDisbursements, function(t) { return (t.date || '') + '|' + (t.type || '') + '|' + (t.quantity || ''); });
-      if (d.teaSugarBatches) teaSugarBatches = mergeArrays(teaSugarBatches, d.teaSugarBatches, function(t) { return t.id || t._id || JSON.stringify(t); });
-      if (d.mealLogs) mealLogs = mergeArrays(mealLogs, d.mealLogs, function(m) { return m.date || JSON.stringify(m); });
-      if (d.inventoryItems) inventoryItems = mergeArrays(inventoryItems, d.inventoryItems, function(i) { return i.id || i.name || JSON.stringify(i); });
-      if (d.contractors) contractors = mergeArrays(contractors, d.contractors, function(c) { return c.name || c.id || JSON.stringify(c); });
-      if (d.dynamicSectors) dynamicSectors = mergeArrays(dynamicSectors, d.dynamicSectors, function(s) { return s.name || JSON.stringify(s); });
-      if (d.dynamicRooms) dynamicRooms = mergeArrays(dynamicRooms, d.dynamicRooms, function(r) { return (r.sector || '') + '|' + (r.number || ''); });
-      if (d.dynamicSeptics) dynamicSeptics = mergeArrays(dynamicSeptics, d.dynamicSeptics, function(s) { return (s.sector || '') + '|' + (s.name || ''); });
-      if (d.dynamicDepts) dynamicDepts = mergeArrays(dynamicDepts, d.dynamicDepts, function(d2) { return d2.name || JSON.stringify(d2); });
-      if (d.dynamicTitles) dynamicTitles = mergeArrays(dynamicTitles, d.dynamicTitles, function(t) { return t.name || JSON.stringify(t); });
+      // Merge syncDeletions first (combine both devices' deletion logs)
+      if (d.syncDeletions) {
+        var existingKeys = {};
+        syncDeletions.forEach(function(dl) { existingKeys[dl.entity + '|' + dl.key + '|' + dl.deletedAt] = true; });
+        d.syncDeletions.forEach(function(dl) {
+          if (!existingKeys[dl.entity + '|' + dl.key + '|' + dl.deletedAt]) syncDeletions.push(dl);
+        });
+        var cutoff = new Date(Date.now() - 90 * 86400000).toISOString();
+        syncDeletions = syncDeletions.filter(function(d) { return d.deletedAt > cutoff; });
+        localStorage.setItem('lineh_sync_deletions', JSON.stringify(syncDeletions));
+      }
+      if (d.employees) employees = _smartMerge(employees, d.employees, function(e) { return e.code || e.name || JSON.stringify(e); }, 'employees');
+      if (d.roomsCapacity) roomsCapacity = _smartMerge(roomsCapacity, d.roomsCapacity, function(r) { return r.sector + '|' + r.number; }, 'roomsCapacity');
+      if (d.vacations) vacations = _smartMerge(vacations, d.vacations, function(v) { return (v.employeeCode || v.employeeName || '') + '|' + (v.startDate || v.dateFrom || '') + '|' + (v.endDate || v.dateTo || ''); }, 'vacations');
+      if (d.hospitalities) hospitalities = _smartMerge(hospitalities, d.hospitalities, function(h) { return (h.name || '') + '|' + (h.arrival || '') + '|' + (h.type || ''); }, 'hospitalities');
+      if (d.maintenanceRecords) maintenanceRecords = _smartMerge(maintenanceRecords, d.maintenanceRecords, function(m) { return (m.category || '') + '|' + (m.task || '') + '|' + (m.date || m.createdAt || ''); }, 'maintenanceRecords');
+      if (d.septicRecords) septicRecords = _smartMerge(septicRecords, d.septicRecords, function(s) { return (s.date || '') + '|' + (s.sector || '') + '|' + (s.quantity || ''); }, 'septicRecords');
+      if (d.inventoryVouchers) inventoryVouchers = _smartMerge(inventoryVouchers, d.inventoryVouchers, function(v) { return v.id || v._id || JSON.stringify(v); }, 'inventoryVouchers');
+      if (d.excludedEmployees) excludedEmployees = _smartMerge(excludedEmployees, d.excludedEmployees, function(e) { return e.code || e.name || JSON.stringify(e); }, 'excludedEmployees');
+      if (d.periodicMaintenance) periodicMaintenance = _smartMerge(periodicMaintenance, d.periodicMaintenance, function(p) { return (p.task || '') + '|' + (p.sector || '') + '|' + (p.frequency || ''); }, 'periodicMaintenance');
+      if (d.teaSugarDisbursements) teaSugarDisbursements = _smartMerge(teaSugarDisbursements, d.teaSugarDisbursements, function(t) { return (t.date || '') + '|' + (t.type || '') + '|' + (t.quantity || ''); }, 'teaSugarDisbursements');
+      if (d.teaSugarBatches) teaSugarBatches = _smartMerge(teaSugarBatches, d.teaSugarBatches, function(t) { return t.id || t._id || JSON.stringify(t); }, 'teaSugarBatches');
+      if (d.mealLogs) mealLogs = _smartMerge(mealLogs, d.mealLogs, function(m) { return m.date || JSON.stringify(m); }, 'mealLogs');
+      if (d.inventoryItems) inventoryItems = _smartMerge(inventoryItems, d.inventoryItems, function(i) { return i.id || i.name || JSON.stringify(i); }, 'inventoryItems');
+      if (d.contractors) contractors = _smartMerge(contractors, d.contractors, function(c) { return c.name || c.id || JSON.stringify(c); }, 'contractors');
+      if (d.dynamicSectors) dynamicSectors = _smartMerge(dynamicSectors, d.dynamicSectors, function(s) { return s.name || JSON.stringify(s); }, 'dynamicSectors');
+      if (d.dynamicRooms) dynamicRooms = _smartMerge(dynamicRooms, d.dynamicRooms, function(r) { return (r.sector || '') + '|' + (r.number || ''); }, 'dynamicRooms');
+      if (d.dynamicSeptics) dynamicSeptics = _smartMerge(dynamicSeptics, d.dynamicSeptics, function(s) { return (s.sector || '') + '|' + (s.name || ''); }, 'dynamicSeptics');
+      if (d.dynamicDepts) dynamicDepts = _smartMerge(dynamicDepts, d.dynamicDepts, function(d2) { return d2.name || JSON.stringify(d2); }, 'dynamicDepts');
+      if (d.dynamicTitles) dynamicTitles = _smartMerge(dynamicTitles, d.dynamicTitles, function(t) { return t.name || JSON.stringify(t); }, 'dynamicTitles');
       if (d.deptTitles) {
         Object.keys(d.deptTitles).forEach(dept => {
           if (!deptTitles[dept]) deptTitles[dept] = [];
           d.deptTitles[dept].forEach(t => { if (!deptTitles[dept].includes(t)) deptTitles[dept].push(t); });
         });
       }
-      if (d.appUsers) appUsers = mergeArrays(appUsers, d.appUsers, function(u) { return u.name; });
+      if (d.appUsers) appUsers = _smartMerge(appUsers, d.appUsers, function(u) { return u.name; }, 'appUsers');
       appUsers = appUsers.filter(function(u) { return /^[\u0621-\u064A\s]+$/.test(u.name); });
       if (d.currentUser) currentUser = d.currentUser;
-      if (d.bakeryIngredients) bakeryIngredients = mergeArrays(bakeryIngredients, d.bakeryIngredients, function(b) { return b.name || JSON.stringify(b); });
-      if (d.bakeryProductions) bakeryProductions = mergeArrays(bakeryProductions, d.bakeryProductions, function(p) { return normalizeDateStr(p.date) + '|' + (p.breadCount || ''); });
-      if (d.bakeryContractorSupplies) bakeryContractorSupplies = mergeArrays(bakeryContractorSupplies, d.bakeryContractorSupplies, function(s) { return (s.name || '') + '|' + normalizeDateStr(s.date) + '|' + (s.count || ''); });
-      if (d.bakeryInvoices) bakeryInvoices = mergeArrays(bakeryInvoices, d.bakeryInvoices, function(inv) { return inv.id || inv._id || JSON.stringify(inv); });
-      if (d.adminOvertime) adminOvertime = mergeArrays(adminOvertime, d.adminOvertime, function(o) { return (o.date || '') + '|' + (o.name || '') + '|' + (o.hours || ''); });
+      if (d.bakeryIngredients) bakeryIngredients = _smartMerge(bakeryIngredients, d.bakeryIngredients, function(b) { return b.name || JSON.stringify(b); }, 'bakeryIngredients');
+      if (d.bakeryProductions) bakeryProductions = _smartMerge(bakeryProductions, d.bakeryProductions, function(p) { return normalizeDateStr(p.date) + '|' + (p.breadCount || ''); }, 'bakeryProductions');
+      if (d.bakeryContractorSupplies) bakeryContractorSupplies = _smartMerge(bakeryContractorSupplies, d.bakeryContractorSupplies, function(s) { return (s.name || '') + '|' + normalizeDateStr(s.date) + '|' + (s.count || ''); }, 'bakeryContractorSupplies');
+      if (d.bakeryInvoices) bakeryInvoices = _smartMerge(bakeryInvoices, d.bakeryInvoices, function(inv) { return inv.id || inv._id || JSON.stringify(inv); }, 'bakeryInvoices');
+      if (d.adminOvertime) adminOvertime = _smartMerge(adminOvertime, d.adminOvertime, function(o) { return (o.date || '') + '|' + (o.name || '') + '|' + (o.hours || ''); }, 'adminOvertime');
       if (typeof d.manualTotalBeds === 'number') manualTotalBeds = d.manualTotalBeds;
-      if (d.roomAssets) roomAssets = mergeArrays(roomAssets, d.roomAssets, function(a) { return (a.room || '') + '|' + (a.item || '') + '|' + (a.id || JSON.stringify(a)); });
-      if (d.archiveData) archiveData = mergeArrays(archiveData, d.archiveData, function(a) { return a.id || a.date || JSON.stringify(a); });
-      if (d.quickActions) quickActions = mergeArrays(quickActions, d.quickActions, function(q) { return q.label || JSON.stringify(q); });
-      if (d.dailyStats) dailyStats = mergeArrays(dailyStats, d.dailyStats, function(s) { return s.date || JSON.stringify(s); });
-      if (d.contractorSectors) contractorSectors = mergeArrays(contractorSectors, d.contractorSectors, function(s) { return s.name || JSON.stringify(s); });
-      if (d.contractorRooms) contractorRooms = mergeArrays(contractorRooms, d.contractorRooms, function(r) { return (r.sector || '') + '|' + (r.number || '') + '|' + (r.beds || ''); });
-      if (d.evaluations) evaluations = mergeArrays(evaluations, d.evaluations, function(e) { return (e.employeeCode || '') + '|' + (e.date || '') + '|' + (e.type || ''); });
+      if (d.roomAssets) roomAssets = _smartMerge(roomAssets, d.roomAssets, function(a) { return (a.room || '') + '|' + (a.item || '') + '|' + (a.id || JSON.stringify(a)); }, 'roomAssets');
+      if (d.archiveData) archiveData = _smartMerge(archiveData, d.archiveData, function(a) { return a.id || a.date || JSON.stringify(a); }, 'archiveData');
+      if (d.quickActions) quickActions = _smartMerge(quickActions, d.quickActions, function(q) { return q.label || JSON.stringify(q); }, 'quickActions');
+      if (d.dailyStats) dailyStats = _smartMerge(dailyStats, d.dailyStats, function(s) { return s.date || JSON.stringify(s); }, 'dailyStats');
+      if (d.contractorSectors) contractorSectors = _smartMerge(contractorSectors, d.contractorSectors, function(s) { return s.name || JSON.stringify(s); }, 'contractorSectors');
+      if (d.contractorRooms) contractorRooms = _smartMerge(contractorRooms, d.contractorRooms, function(r) { return (r.sector || '') + '|' + (r.number || '') + '|' + (r.beds || ''); }, 'contractorRooms');
+      if (d.evaluations) evaluations = _smartMerge(evaluations, d.evaluations, function(e) { return (e.employeeCode || '') + '|' + (e.date || '') + '|' + (e.type || ''); }, 'evaluations');
       if (d.evalTemplates) evalTemplates = d.evalTemplates;
-      if (d.auditLog) auditLog = mergeArrays(auditLog, d.auditLog, function(a) { return a.id || JSON.stringify(a); });
-      if (d.bakeryStockLog) bakeryStockLog = mergeArrays(bakeryStockLog, d.bakeryStockLog, function(s) { return (s.date || '') + '|' + (s.ingredient || '') + '|' + (s.type || ''); });
+      if (d.auditLog) auditLog = _smartMerge(auditLog, d.auditLog, function(a) { return a.id || JSON.stringify(a); }, 'auditLog');
+      if (d.bakeryStockLog) bakeryStockLog = _smartMerge(bakeryStockLog, d.bakeryStockLog, function(s) { return (s.date || '') + '|' + (s.ingredient || '') + '|' + (s.type || ''); }, 'bakeryStockLog');
       if (excludedEmployees.length > 0) {
         var exclMap = {};
         excludedEmployees.forEach(function(e) { exclMap[e.code || e.id || e.name] = true; });
@@ -11892,7 +12028,7 @@ function toggleEmployeeStatus(empId) {
         return e.empId === empId && e.month === month && e.year === year;
       });
       if (dup && !confirm('هذا الموظف لديه تقييم سابق لنفس الشهر والسنة. هل تريد إضافة تقييم جديد؟')) return;
-      evaluations.push({
+      evaluations.push(_ts({
         id: Date.now().toString(),
         empId: empId,
         empCode: emp.code || '',
@@ -11957,6 +12093,7 @@ function toggleEmployeeStatus(empId) {
 
     function deleteEvaluation(idx) { if (!requireAdmin()) return;
       if (!confirm('هل أنت متأكد من حذف هذا التقييم؟')) return;
+      _logDeletion('evaluations', (evaluations[idx].employeeCode||'') + '|' + (evaluations[idx].date||'') + '|' + (evaluations[idx].type||''));
       evaluations.splice(idx, 1);
       syncStorage();
       renderEvaluations();
@@ -12084,6 +12221,7 @@ function toggleEmployeeStatus(empId) {
       var t = evalTemplates[title][idx];
       var tName = t.name || t;
       if (!confirm('حذف "' + tName + '" ؟')) return;
+      _logDeletion('evalTemplates', title + '|' + tName);
       evalTemplates[title].splice(idx, 1);
       if (!evalTemplates[title].length) delete evalTemplates[title];
       syncStorage();
