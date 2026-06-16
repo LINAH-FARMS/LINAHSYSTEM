@@ -2915,6 +2915,26 @@
 
     function _safeJsonParse(val, fallback) { try { var r = JSON.parse(val); return (r !== null && r !== undefined) ? r : fallback; } catch(e) { return fallback; } }
 
+    (function _cleanCorruptedLocalStorage() {
+      if (localStorage.getItem('_corruptionCleaned_v2')) return;
+      var keys = ['lineh_employees','employees_db','lineh_rooms_capacity','rooms_db','lineh_vacations','lineh_hospitality','lineh_hospitality_bak','lineh_maintenance','lineh_septic','septic_db','lineh_inventory','excludedEmployees','lineh_periodic_maintenance','lineh_tea_sugar','lineh_tea_sugar_batches','lineh_meal_logs','lineh_inventory_items','lineh_contractors','dyn_sectors','ctr_sectors','ctr_rooms','dyn_rooms','dyn_septics','dyn_depts','dyn_titles','lineh_evaluations','lineh_eval_templates','lineh_users','linah_audit_log','linah_bakery_ingredients','linah_bakery_productions','linah_bakery_ctr_supplies','linah_bakery_invoices','linah_bakery_stock_log','lineh_admin_overtime','lineh_room_assets','lineh_archive_data','lineh_quick_actions','lineh_daily_stats'];
+      keys.forEach(function(k) {
+        try {
+          var raw = localStorage.getItem(k);
+          if (!raw || !/\?{2,}/.test(raw)) return;
+          var arr = JSON.parse(raw);
+          if (!Array.isArray(arr)) return;
+          var before = arr.length;
+          arr = arr.filter(function(item) {
+            if (!item || typeof item !== 'object') return true;
+            return !/\?{2,}/.test(JSON.stringify(item));
+          });
+          if (arr.length < before) localStorage.setItem(k, JSON.stringify(arr));
+        } catch(e) {}
+      });
+      localStorage.setItem('_corruptionCleaned_v2', '1');
+    })();
+
     let employees = _safeJsonParse(localStorage.getItem('lineh_employees'), _safeJsonParse(localStorage.getItem('employees_db'), (typeof SEED_EMPLOYEES !== 'undefined' && SEED_EMPLOYEES.length > 0 ? SEED_EMPLOYEES : [])));
     let roomsCapacity = _safeJsonParse(localStorage.getItem('lineh_rooms_capacity'), _safeJsonParse(localStorage.getItem('rooms_db'), []));
     let vacations = _safeJsonParse(localStorage.getItem('lineh_vacations'), []);
@@ -3590,33 +3610,6 @@
       document.getElementById('housing-emp-search').addEventListener('change', showHousingEmployeeResult);
     }
 
-    function _cleanCorruptedLocalStorage() {
-      if (localStorage.getItem('_corruptionCleaned_v2')) return;
-      var keys = ['lineh_employees','employees_db','lineh_rooms_capacity','rooms_db','lineh_vacations','lineh_hospitality','lineh_hospitality_bak','lineh_maintenance','lineh_septic','septic_db','lineh_inventory','excludedEmployees','lineh_periodic_maintenance','lineh_tea_sugar','lineh_tea_sugar_batches','lineh_meal_logs','lineh_inventory_items','lineh_contractors','dyn_sectors','ctr_sectors','ctr_rooms','dyn_rooms','dyn_septics','dyn_depts','dyn_titles','lineh_evaluations','lineh_eval_templates','lineh_users','linah_audit_log','linah_bakery_ingredients','linah_bakery_productions','linah_bakery_ctr_supplies','linah_bakery_invoices','linah_bakery_stock_log','lineh_admin_overtime','lineh_room_assets','lineh_archive_data','lineh_quick_actions','lineh_daily_stats'];
-      var cleaned = 0;
-      keys.forEach(function(k) {
-        try {
-          var raw = localStorage.getItem(k);
-          if (!raw) return;
-          if (/\?{2,}/.test(raw)) {
-            var arr = JSON.parse(raw);
-            if (Array.isArray(arr)) {
-              var before = arr.length;
-              arr = arr.filter(function(item) {
-                if (!item || typeof item !== 'object') return true;
-                return !/\?{2,}/.test(JSON.stringify(item));
-              });
-              if (arr.length < before) {
-                localStorage.setItem(k, JSON.stringify(arr));
-                cleaned += (before - arr.length);
-              }
-            }
-          }
-        } catch(e) {}
-      });
-      localStorage.setItem('_corruptionCleaned_v2', '1');
-    }
-    _cleanCorruptedLocalStorage();
     function syncStorage(noTimestamp, skipSync) {
       if (!skipSync) localStorage.setItem('_pendingChanges', 'true');
       localStorage.setItem('lineh_employees', JSON.stringify(employees));
