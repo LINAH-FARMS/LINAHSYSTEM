@@ -10537,7 +10537,7 @@ function toggleEmployeeStatus(empId) {
       if (d.contractors) contractors = _smartMerge(contractors, d.contractors, function(c) { return c.name || c.id || JSON.stringify(c); }, 'contractors');
       if (d.dynamicSectors) dynamicSectors = _smartMerge(dynamicSectors, d.dynamicSectors, function(s) { return s.name || JSON.stringify(s); }, 'dynamicSectors');
       if (d.dynamicRooms) dynamicRooms = _smartMerge(dynamicRooms, d.dynamicRooms, function(r) { return (r.sector || '') + '|' + (r.number || ''); }, 'dynamicRooms');
-      if (d.dynamicSeptics) dynamicSeptics = _smartMerge(dynamicSeptics, d.dynamicSeptics, function(s) { return (s.sector || '') + '|' + (s.name || ''); }, 'dynamicSeptics');
+      if (d.dynamicSeptics) dynamicSeptics = _smartMerge(dynamicSeptics, d.dynamicSeptics, function(s) { return typeof s === 'string' ? s : ((s.sector || '') + '|' + (s.name || '')); }, 'dynamicSeptics');
       if (d.dynamicDepts) dynamicDepts = _smartMerge(dynamicDepts, d.dynamicDepts, function(d2) { return d2.name || JSON.stringify(d2); }, 'dynamicDepts');
       if (d.dynamicTitles) dynamicTitles = _smartMerge(dynamicTitles, d.dynamicTitles, function(t) { return t.name || JSON.stringify(t); }, 'dynamicTitles');
       if (d.deptTitles) {
