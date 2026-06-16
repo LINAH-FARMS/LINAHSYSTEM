@@ -906,6 +906,7 @@
       <h1>لينه فارمز</h1>
       <p>منظومة الشئون الإدارية المتكاملة</p>
       <form onsubmit="doLogin();return false">
+      <input type="text" id="login-username" name="username" autocomplete="username" style="position:absolute;left:-9999px;opacity:0;" tabindex="-1" aria-hidden="true">
       <div class="form-group">
         <label>اختر المستخدم</label>
         <select id="login-user" onchange="document.getElementById('login-error').innerText='';document.getElementById('login-pass').value=''"></select>
@@ -11350,7 +11351,7 @@ function toggleEmployeeStatus(empId) {
       }
       // تهيئة الرصيد السنوي للموظفين
       employees.forEach(function(e) { if (typeof e.vacationBalance !== 'number') e.vacationBalance = 30; });
-      sortEmployeesAlphabetically(); rebuildDeptTitles(); rebuildAllDropdowns(); initEmployeeSearchInputs(); setupItemNameSearch(); setupNameAutocomplete(); populateRoomSectorDropdown(); populateContractorSectorDropdown();       renderTable(); renderInventoryTable(); renderInventoryItems(); renderArchiveTable(); renderVacationsTable(); renderOvertimeCalendar(); renderHospitalityTable(); renderMaintenanceTable(); renderSepticTable(); renderPeriodicMaintenance(); renderTeaSugarTable(); renderMealLogTable(); autoSaveTodayMeal(); renderContractorsTable(); renderDashboard(); renderQuickActions(); updateEmployeeVacationStatuses(); renderTable(); renderOvertimeCalendar();
+      sortEmployeesAlphabetically(); rebuildDeptTitles(); rebuildAllDropdowns(); initEmployeeSearchInputs(); setupItemNameSearch(); setupNameAutocomplete(); populateRoomSectorDropdown(); populateContractorSectorDropdown();       renderTable(); renderInventoryTable(); renderInventoryItems(); renderArchiveTable(); renderVacationsTable(); renderOvertimeCalendar(); renderHospitalityTable(); renderMaintenanceTable(); renderSepticTable(); renderPeriodicMaintenance(); renderTeaSugarTable(); renderMealLogTable(); autoSaveTodayMeal(); renderContractorsTable(); renderDashboard(); renderQuickActions(); updateEmployeeVacationStatuses();
       (function(){ var from=document.getElementById('dailyStatsFrom'); var to=document.getElementById('dailyStatsTo'); if(dailyStats.length){var dates=dailyStats.map(function(s){return s.date}).sort();if(from)from.value=dates[0];if(to)to.value=dates[dates.length-1];}else{var t=new Date().toISOString().split('T')[0];if(from)from.value=t;if(to)to.value=t;} renderDailyStatsTable(); })(); initAllSortableTables();
 
       // تحميل أولي من Google Drive (مرة واحدة)
