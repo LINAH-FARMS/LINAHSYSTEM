@@ -2826,8 +2826,7 @@
       </div>
     </div>
   </div>
-
-
+  </div>
 
   <!-- seed_data removed -->
   <script>
@@ -10325,6 +10324,7 @@ function toggleEmployeeStatus(empId) {
           localStorage.setItem('_pulledAt', JSON.stringify(_pulledAt));
           syncStorage(true, true);
           renderTable(); renderHousingLayout(); renderInventoryTable(); renderInventoryItems(); renderVacationsTable(); renderOvertimeCalendar(); renderHospitalityTable(); renderMaintenanceTable(); renderSepticTable(); renderPeriodicMaintenance(); renderTeaSugarTable(); renderMealLogTable(); renderDashboard(); renderQuickActions(); renderContractorsTable(); renderBakeryIngredients(); renderBakeryProductions(); renderBakeryContractorSupplies(); renderBakeryInvoices(); updateBakeryStats(); updateBreadSupplyStats();
+          rebuildAllDropdowns();
           updateLastSyncTime();
           showSyncToast('تم استلام تحديثات من جهاز آخر');
         } else {
@@ -10745,6 +10745,7 @@ function toggleEmployeeStatus(empId) {
         if (contractors.length > 0) contractors = dedupArray(contractors, function(c) { return c.id || JSON.stringify(c); });
         syncStorage(true);
         renderTable(); renderHousingLayout(); renderInventoryTable(); renderInventoryItems(); renderVacationsTable(); renderOvertimeCalendar(); renderHospitalityTable(); renderMaintenanceTable(); renderSepticTable(); renderPeriodicMaintenance(); renderTeaSugarTable(); renderMealLogTable(); renderDashboard(); renderQuickActions(); renderContractorsTable(); renderBakeryIngredients(); renderBakeryProductions(); renderBakeryContractorSupplies(); renderBakeryInvoices(); updateBakeryStats(); updateBreadSupplyStats();
+        rebuildAllDropdowns();
         updateBakeryStats(); updateBreadSupplyStats();
       } catch(e) {}
     }
