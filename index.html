@@ -2781,17 +2781,17 @@
   </div>
   <div id="tab-data-exchange" class="tab-content">
     <div style="background:#e8f5e9;border-radius:12px;padding:20px;margin-bottom:20px;text-align:center;border:2px solid #a5d6a7;">
-      <div style="font-size:28px;font-weight:700;color:#1b5e20;">📤 تصدير البيانات لقسم المعلومات</div>
+      <div style="font-size:28px;font-weight:700;color:#1b5e20;">تصدير البيانات لقسم المعلومات</div>
       <div style="font-size:14px;color:#2e7d32;margin-top:8px;">كل سبت — اضغط على كل تقرير على حدة عشان يسجل</div>
     </div>
 
     <div class="control-panel" style="flex-direction:column;gap:15px;padding:25px;">
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;width:100%;">
-        <div class="dx-stat-card"><div class="dx-stat-label">📋 أيام الوجبات</div><div class="dx-stat-value" id="dx-stat-meals">0</div></div>
-        <div class="dx-stat-card"><div class="dx-stat-label">🍵 صرف شاي وسكر</div><div class="dx-stat-value" id="dx-stat-tea">0</div></div>
-        <div class="dx-stat-card"><div class="dx-stat-label">🚽 صرف صحي</div><div class="dx-stat-value" id="dx-stat-septic">0</div></div>
-        <div class="dx-stat-card"><div class="dx-stat-label">🍞 دفعات إنتاج</div><div class="dx-stat-value" id="dx-stat-prod">0</div></div>
-        <div class="dx-stat-card"><div class="dx-stat-label">🚚 توريد مقاولين</div><div class="dx-stat-value" id="dx-stat-ctr">0</div></div>
+        <div class="dx-stat-card"><div class="dx-stat-label">أيام الوجبات</div><div class="dx-stat-value" id="dx-stat-meals">0</div></div>
+        <div class="dx-stat-card"><div class="dx-stat-label">صرف شاي وسكر</div><div class="dx-stat-value" id="dx-stat-tea">0</div></div>
+        <div class="dx-stat-card"><div class="dx-stat-label">صرف صحي</div><div class="dx-stat-value" id="dx-stat-septic">0</div></div>
+        <div class="dx-stat-card"><div class="dx-stat-label">دفعات إنتاج</div><div class="dx-stat-value" id="dx-stat-prod">0</div></div>
+        <div class="dx-stat-card"><div class="dx-stat-label">توريد مقاولين</div><div class="dx-stat-value" id="dx-stat-ctr">0</div></div>
       </div>
 
       <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;width:100%;background:#f1f8e9;padding:12px;border-radius:8px;">
@@ -2804,11 +2804,11 @@
       </div>
 
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;width:100%;">
-        <button class="btn btn-excel" onclick="exportDXMeals()" style="font-size:14px;padding:14px;">📋 تصدير الوجبات</button>
-        <button class="btn btn-excel" onclick="exportDXTea()" style="font-size:14px;padding:14px;">🍵 تصدير شاي وسكر</button>
-        <button class="btn btn-excel" onclick="exportDXSeptic()" style="font-size:14px;padding:14px;">🚽 تصدير صرف صحي</button>
-        <button class="btn btn-excel" onclick="exportDXBreadCost()" style="font-size:14px;padding:14px;">🍞 تصدير تكلفة الخبز</button>
-        <button class="btn btn-excel" onclick="exportDXBreadCount()" style="font-size:14px;padding:14px;">🥖 تصدير عدد الخبز</button>
+        <button class="btn btn-excel" onclick="exportDXMeals()" style="font-size:14px;padding:14px;">تقرير الوجبات</button>
+        <button class="btn btn-excel" onclick="exportDXTea()" style="font-size:14px;padding:14px;">تقرير شاي وسكر</button>
+        <button class="btn btn-excel" onclick="exportDXSeptic()" style="font-size:14px;padding:14px;">تقرير الصرف الصحي</button>
+        <button class="btn btn-excel" onclick="exportDXBreadCost()" style="font-size:14px;padding:14px;">تقرير تكلفة الخبز</button>
+        <button class="btn btn-excel" onclick="exportDXBreadCount()" style="font-size:14px;padding:14px;">تقرير توريد الخبز</button>
       </div>
 
       <hr style="width:100%;border:none;border-top:2px dashed #a5d6a7;margin:10px 0;">
@@ -11582,14 +11582,52 @@ function toggleEmployeeStatus(empId) {
       return true;
     }
 
+    function _dxSortDesc(arr, dateField) {
+      return arr.slice().sort(function(a, b) {
+        var da = a[dateField] || '', db = b[dateField] || '';
+        return db.localeCompare(da);
+      });
+    }
+    function _dxNum(n) { return (typeof n === 'number' && isFinite(n)) ? n : 0; }
+    function _dxFmt(n) { var v = _dxNum(n); return v; }
+    function _dxMonth(dateStr) {
+      if (!dateStr) return '';
+      var months = ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
+      var parts = dateStr.split('/');
+      if (parts.length >= 2) { var mi = parseInt(parts[1]) - 1; return months[mi] || ''; }
+      var d = new Date(dateStr);
+      return months[d.getMonth()] || '';
+    }
+    function _dxPreview(title, headers, rows) {
+      var container = document.getElementById('dx-report-container');
+      var titleEl = document.getElementById('dx-report-title');
+      var wrapper = document.getElementById('dx-report-table-wrapper');
+      if (!container || !titleEl || !wrapper) return;
+      titleEl.textContent = title;
+      var html = '<table class="dx-preview-table" style="width:100%;border-collapse:collapse;font-size:12px;"><thead><tr><th style="border:1px solid #ccc;padding:4px 8px;background:#e8f5e9;font-weight:600;">م</th>';
+      headers.forEach(function(h) { html += '<th style="border:1px solid #ccc;padding:4px 8px;background:#e8f5e9;font-weight:600;text-align:center;">' + h + '</th>'; });
+      html += '</tr></thead><tbody>';
+      rows.forEach(function(row, i) {
+        html += '<tr>';
+        row.forEach(function(cell, ci) {
+          var style = 'border:1px solid #ddd;padding:3px 6px;';
+          if (typeof cell === 'number') style += 'text-align:center;';
+          html += '<td style="' + style + '">' + (cell !== null && cell !== undefined ? cell : '') + '</td>';
+        });
+        html += '</tr>';
+      });
+      html += '</tbody></table>';
+      wrapper.innerHTML = html;
+      container.style.display = 'block';
+    }
+
     function exportDXMeals() {
       var range = getDXDateRange();
       var filtered = mealLogs.filter(function(m) { return dxDateInRange(m.date, range.from, range.to); });
-      if (!filtered.length) return alert('⚠️ لا توجد بيانات في النطاق المحدد');
-      var missing = filtered.filter(function(m) { return !m.date; });
-      if (missing.length) return alert('⚠️ يوجد ' + missing.length + ' سجل وجبات بدون تاريخ. أكمله أولاً.');
-      var filename = 'الوجبات_' + new Date().toISOString().slice(0,10) + '.xlsx';
-      var wsData = [['نموذج تسجيل الوجبات اليومية'], []];
+      if (!filtered.length) return alert('لا توجد بيانات وجبات في النطاق المحدد');
+      filtered = _dxSortDesc(filtered, 'date');
+      var filename = 'reports/weekly/meal_log_' + new Date().toISOString().slice(0,10) + '.xlsx';
+      var wsData = [['تقرير الوجبات اليومية', '', '', '', '', '', '', '', '', '', '', ''], ['الفترة: ' + (range.from || 'البداية') + ' إلى ' + (range.to || 'النهاية'), '', '', '', '', '', '', '', '', '', '', ''], []];
       wsData.push(['م', 'التاريخ', 'الشهر', 'إفطار قوة', 'غداء قوة', 'عشاء قوة', 'إفطار ضيوف', 'غداء ضيوف', 'عشاء ضيوف', 'الإجمالي', 'الشيف', 'ملاحظات']);
       var totalAll = 0; var previewRows = [];
       filtered.forEach(function(m, i) {
@@ -11598,87 +11636,103 @@ function toggleEmployeeStatus(empId) {
         var gb = g.gBf, gl = g.gLh, gd = g.gDn;
         var dayTotal = bf + lh + dn + gb + gl + gd;
         totalAll += dayTotal;
-        wsData.push([i+1, m.date, getMonthNameAr(m.date), bf, lh, dn, gb, gl, gd, dayTotal, m.chef || '', '']);
-        previewRows.push([m.date, getMonthNameAr(m.date), bf, lh, dn, gb, gl, gd, dayTotal, m.chef || '']);
+        wsData.push([i+1, m.date, _dxMonth(m.date), bf, lh, dn, gb, gl, gd, dayTotal, m.chef || '', '']);
+        previewRows.push([m.date, _dxMonth(m.date), bf, lh, dn, gb, gl, gd, dayTotal, m.chef || '']);
       });
       wsData.push([]);
       wsData.push(['الإجمالي الكلي', '', '', '', '', '', '', '', '', totalAll, '', '']);
-      showDXPreview('الوجبات — ' + filtered.length + ' يوم', ['التاريخ', 'الشهر', 'إفطار قوة', 'غداء قوة', 'عشاء قوة', 'إفطار ضيوف', 'غداء ضيوف', 'عشاء ضيوف', 'الإجمالي', 'الشيف'], previewRows);
+      wsData.push(['عدد أيام التقرير', filtered.length, '', '', '', '', '', '', '', '', '', '']);
+      _dxPreview('تقرير الوجبات - ' + filtered.length + ' يوم', ['التاريخ', 'الشهر', 'إفطار قوة', 'غداء قوة', 'عشاء قوة', 'إفطار ضيوف', 'غداء ضيوف', 'عشاء ضيوف', 'الإجمالي', 'الشيف'], previewRows);
       var ws = XLSX.utils.aoa_to_sheet(wsData);
-      ws['!cols'] = [{wch:4},{wch:12},{wch:6},{wch:10},{wch:10},{wch:10},{wch:10},{wch:10},{wch:10},{wch:10},{wch:15},{wch:15}];
+      ws['!cols'] = [{wch:4},{wch:12},{wch:8},{wch:10},{wch:10},{wch:10},{wch:10},{wch:10},{wch:10},{wch:10},{wch:15},{wch:15}];
+      ws['!merges'] = [{s:{r:0,c:0},e:{r:0,c:11}}];
       var wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, 'الوجبات');
       downloadWB(wb, filename);
-      document.getElementById('dx-export-log').innerText = '✅ تم تصدير الوجبات (' + filtered.length + ' يوم)';
+      document.getElementById('dx-export-log').innerText = 'تم تصدير تقرير الوجبات (' + filtered.length + ' يوم) - ' + new Date().toLocaleTimeString('ar-EG');
     }
 
     function exportDXTea() {
       var range = getDXDateRange();
       var filtered = teaSugarDisbursements.filter(function(t) { return dxDateInRange(t.date, range.from, range.to); });
-      if (!filtered.length) return alert('⚠️ لا توجد بيانات شاي وسكر في النطاق المحدد');
-      var missing = filtered.filter(function(t) { return !t.date || !t.empName; });
-      if (missing.length) return alert('⚠️ يوجد ' + missing.length + ' سجل شاي وسكر بدون تاريخ أو اسم موظف. أكمله أولاً.');
-      var filename = 'شاي_وسكر_' + new Date().toISOString().slice(0,10) + '.xlsx';
+      if (!filtered.length) return alert('لا توجد بيانات شاي وسكر في النطاق المحدد');
+      filtered = _dxSortDesc(filtered, 'date');
+      var filename = 'reports/weekly/tea_sugar_' + new Date().toISOString().slice(0,10) + '.xlsx';
       var wb = XLSX.utils.book_new();
-      var s1Data = [['صرف شاي وسكر'], []];
-      s1Data.push(['م', 'التاريخ', 'الكود', 'الاسم', 'الوظيفة', 'القطاع/الغرفة', 'المحافظة', 'شاي (ربطة)', 'سكر (كجم)', 'ملاحظات']);
+      var s1Data = [['تقرير صرف الشاي والسكر', '', '', '', '', '', '', '', '', ''], ['الفترة: ' + (range.from || 'البداية') + ' إلى ' + (range.to || 'النهاية'), '', '', '', '', '', '', '', '', ''], []];
+      s1Data.push(['م', 'التاريخ', 'الكود', 'اسم الموظف', 'الوظيفة', 'القطاع / الغرفة', 'المحافظة', 'شاي (ربطة)', 'سكر (كجم)', 'ملاحظات']);
+      var totalTea = 0, totalSugar = 0;
       var previewRows = [];
       filtered.forEach(function(t, i) {
         var emp = employees.find(function(e) { return e.id === t.empId || e.code === t.empCode; });
-        s1Data.push([i+1, t.date, t.empCode, t.empName, emp ? emp.title : '', emp ? (emp.sector + ' / ' + emp.room) : '', emp ? emp.gov : '', t.teaPacks || 0, t.sugarKg || 0, '']);
-        previewRows.push([t.date, t.empCode, t.empName, emp ? emp.title : '', emp ? (emp.sector + ' / ' + emp.room) : '', emp ? emp.gov : '', t.teaPacks || 0, t.sugarKg || 0]);
+        var tea = _dxNum(t.teaPacks), sugar = _dxNum(t.sugarKg);
+        totalTea += tea; totalSugar += sugar;
+        s1Data.push([i+1, t.date, t.empCode || '', t.empName || '', emp ? emp.title : '', emp ? (emp.sector + ' / ' + emp.room) : '', emp ? emp.gov : '', tea, sugar, '']);
+        previewRows.push([t.date, t.empCode || '', t.empName || '', emp ? emp.title : '', emp ? (emp.sector + ' / ' + emp.room) : '', emp ? emp.gov : '', tea, sugar]);
       });
-      showDXPreview('شاي وسكر — ' + filtered.length + ' عملية', ['التاريخ', 'الكود', 'الاسم', 'الوظيفة', 'القطاع/الغرفة', 'المحافظة', 'شاي (ربطة)', 'سكر (كجم)'], previewRows);
+      s1Data.push([]);
+      s1Data.push(['الإجمالي', '', '', '', '', '', '', totalTea, totalSugar, '']);
+      s1Data.push(['عدد العمليات', filtered.length, '', '', '', '', '', '', '', '']);
+      _dxPreview('تقرير الشاي والسكر - ' + filtered.length + ' عملية', ['التاريخ', 'الكود', 'اسم الموظف', 'الوظيفة', 'القطاع / الغرفة', 'المحافظة', 'شاي (ربطة)', 'سكر (كجم)'], previewRows);
       var ws1 = XLSX.utils.aoa_to_sheet(s1Data);
-      ws1['!cols'] = [{wch:4},{wch:12},{wch:8},{wch:20},{wch:18},{wch:20},{wch:12},{wch:10},{wch:10},{wch:20}];
-      XLSX.utils.book_append_sheet(wb, ws1, 'التسجيل');
-      var s2Data = [['قاعدة بيانات الموظفين'], []];
-      s2Data.push(['الكود', 'الاسم', 'الوظيفة', 'القطاع', 'المحافظة', 'الغرفة']);
-      employees.forEach(function(e) {
-        s2Data.push([e.code, e.name, e.title, e.sector, e.gov, e.room]);
+      ws1['!cols'] = [{wch:4},{wch:12},{wch:8},{wch:22},{wch:20},{wch:22},{wch:14},{wch:12},{wch:12},{wch:20}];
+      ws1['!merges'] = [{s:{r:0,c:0},e:{r:0,c:9}}];
+      XLSX.utils.book_append_sheet(wb, ws1, 'صرف الشاي والسكر');
+      var s2Data = [['بيانات الموظفين', '', '', '', '', ''], []];
+      s2Data.push(['الكود', 'اسم الموظف', 'الوظيفة', 'القطاع', 'المحافظة', 'الغرفة']);
+      var sortedEmp = employees.slice().sort(function(a, b) { return (a.code || '').localeCompare(b.code || ''); });
+      sortedEmp.forEach(function(e) {
+        s2Data.push([e.code || '', e.name || '', e.title || '', e.sector || '', e.gov || '', e.room || '']);
       });
       var ws2 = XLSX.utils.aoa_to_sheet(s2Data);
-      ws2['!cols'] = [{wch:8},{wch:20},{wch:18},{wch:15},{wch:12},{wch:15}];
-      XLSX.utils.book_append_sheet(wb, ws2, 'الموظفين');
+      ws2['!cols'] = [{wch:8},{wch:22},{wch:20},{wch:16},{wch:14},{wch:16}];
+      ws2['!merges'] = [{s:{r:0,c:0},e:{r:0,c:5}}];
+      XLSX.utils.book_append_sheet(wb, ws2, 'بيانات الموظفين');
       downloadWB(wb, filename);
-      document.getElementById('dx-export-log').innerText = '✅ تم تصدير شاي وسكر (' + filtered.length + ' عملية)';
+      document.getElementById('dx-export-log').innerText = 'تم تصدير تقرير الشاي والسكر (' + filtered.length + ' عملية) - ' + new Date().toLocaleTimeString('ar-EG');
     }
 
     function exportDXSeptic() {
       var range = getDXDateRange();
       var filtered = septicRecords.filter(function(s) { return dxDateInRange(s.date, range.from, range.to); });
-      if (!filtered.length) return alert('⚠️ لا توجد بيانات صرف صحي في النطاق المحدد');
-      var missing = filtered.filter(function(s) { return !s.date || !s.name; });
-      if (missing.length) return alert('⚠️ يوجد ' + missing.length + ' سجل صرف صحي بدون تاريخ أو قطاع. أكمله أولاً.');
-      var filename = 'صرف_صحي_' + new Date().toISOString().slice(0,10) + '.xlsx';
-      var wsData = [['حصر كميات الصرف الصحي'], []];
-      wsData.push(['م', 'التاريخ', 'التوقيت', 'الشهر', 'القطاع', 'عدد النقلات', 'الصرف (م³)', 'الفني المسؤول', 'ملاحظات']);
+      if (!filtered.length) return alert('لا توجد بيانات صرف صحي في النطاق المحدد');
+      filtered = _dxSortDesc(filtered, 'date');
+      var filename = 'reports/weekly/septic_' + new Date().toISOString().slice(0,10) + '.xlsx';
+      var wsData = [['حصر كميات الصرف الصحي', '', '', '', '', '', '', '', ''], ['الفترة: ' + (range.from || 'البداية') + ' إلى ' + (range.to || 'النهاية'), '', '', '', '', '', '', '', ''], []];
+      wsData.push(['م', 'التاريخ', 'التوقيت', 'الشهر', 'البيارة', 'عدد النقلات', 'الصرف (م3)', 'الفني المسؤول', 'ملاحظات']);
+      var totalTrips = 0, totalVol = 0;
       var previewRows = [];
       filtered.forEach(function(s, i) {
-        wsData.push([i+1, s.date, s.time || '—', getMonthNameAr(s.date), s.name, s.trips || 0, (s.trips || 0) * 5, s.supervisor || '', '']);
-        previewRows.push([s.date, s.time || '—', getMonthNameAr(s.date), s.name, s.trips || 0, (s.trips || 0) * 5, s.supervisor || '']);
+        var trips = _dxNum(s.trips), vol = trips * 5;
+        totalTrips += trips; totalVol += vol;
+        wsData.push([i+1, s.date, s.time || '', _dxMonth(s.date), s.name || '', trips, vol, s.supervisor || '', '']);
+        previewRows.push([s.date, s.time || '', _dxMonth(s.date), s.name || '', trips, vol, s.supervisor || '']);
       });
-      showDXPreview('الصرف الصحي — ' + septicRecords.length + ' عملية', ['التاريخ', 'التوقيت', 'الشهر', 'القطاع', 'عدد النقلات', 'الصرف (م³)', 'الفني المسؤول'], previewRows);
+      wsData.push([]);
+      wsData.push(['الإجمالي', '', '', '', '', totalTrips, totalVol, '', '']);
+      wsData.push(['عدد العمليات', filtered.length, '', '', '', '', '', '', '']);
+      _dxPreview('تقرير الصرف الصحي - ' + filtered.length + ' عملية', ['التاريخ', 'التوقيت', 'الشهر', 'البيارة', 'عدد النقلات', 'الصرف (م3)', 'الفني المسؤول'], previewRows);
       var ws = XLSX.utils.aoa_to_sheet(wsData);
-      ws['!cols'] = [{wch:4},{wch:12},{wch:8},{wch:6},{wch:15},{wch:10},{wch:10},{wch:15},{wch:20}];
+      ws['!cols'] = [{wch:4},{wch:12},{wch:10},{wch:8},{wch:22},{wch:12},{wch:12},{wch:16},{wch:20}];
+      ws['!merges'] = [{s:{r:0,c:0},e:{r:0,c:8}}];
       var wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, 'الصرف الصحي');
       downloadWB(wb, filename);
-      document.getElementById('dx-export-log').innerText = '✅ تم تصدير الصرف الصحي (' + filtered.length + ' عملية)';
+      document.getElementById('dx-export-log').innerText = 'تم تصدير تقرير الصرف الصحي (' + filtered.length + ' عملية) - ' + new Date().toLocaleTimeString('ar-EG');
     }
 
     function exportDXBreadCost() {
       var range = getDXDateRange();
       var filtered = bakeryProductions.filter(function(p) { return dxDateInRange(p.date, range.from, range.to); });
-      if (!filtered.length) return alert('⚠️ لا توجد بيانات إنتاج في النطاق المحدد');
-      var missing = filtered.filter(function(p) { return !p.date || !p.breadCount; });
-      if (missing.length) return alert('⚠️ يوجد ' + missing.length + ' سجل إنتاج بدون تاريخ أو عدد أرغفة. أكمله أولاً.');
-      var filename = 'تكلفة_الخبز_' + new Date().toISOString().slice(0,10) + '.xlsx';
-      var wsData = [['تكلفة إنتاج الخبز - فرن المزرعة (بما في ذلك توريد المقاولين)'], []];
-      wsData.push(['م', 'التاريخ', 'عدد الأرغفة', 'دقيق (كجم)', 'سعر الدقيق', 'تكلفة الدقيق', 'خميرة (كجم)', 'سعر الخميرة', 'تكلفة الخميرة', 'ملح (كجم)', 'سعر الملح', 'تكلفة الملح', 'ردة (كجم)', 'سعر الردة', 'تكلفة الردة', 'سولار (لتر)', 'سعر السولار', 'تكلفة السولار', 'أجر التشغيل', 'تكلفة خامات المقاولين', 'إجمالي التكلفة', 'تكلفة الرغيف']);
+      if (!filtered.length) return alert('لا توجد بيانات إنتاج في النطاق المحدد');
+      filtered = _dxSortDesc(filtered, 'date');
+      var filename = 'reports/weekly/bread_cost_' + new Date().toISOString().slice(0,10) + '.xlsx';
+      var wsData = [['تكلفة إنتاج الخبز - فرن المزرعة', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', ''], ['الفترة: ' + (range.from || 'البداية') + ' إلى ' + (range.to || 'النهاية'), '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', ''], []];
+      wsData.push(['م', 'التاريخ', 'عدد الأرغفة', 'دقيق (كجم)', 'سعر الدقيق', 'تكلفة الدقيق', 'خميرة (كجم)', 'سعر الخميرة', 'تكلفةخميرة', 'ملح (كجم)', 'سعر الملح', 'تكلفة الملح', 'ردة (كجم)', 'سعر الردة', 'تكلفة الردة', 'سولار (لتر)', 'سعر السولار', 'تكلفة السولار', 'أجر التشغيل', 'خامات مقاولين', 'إجمالي التكلفة', 'تكلفة الرغيف']);
       var previewRows = [];
       var ingPrice = function(id) { var i = bakeryIngredients.find(function(x) { return x.id === id; }); return i ? parseFloat(i.pricePerUnit) || 0 : 0; };
       var pFlour = ingPrice('ING001'), pYeast = ingPrice('ING002'), pSalt = ingPrice('ING003'), pBran = ingPrice('ING004'), pDiesel = ingPrice('ING007');
+      var grandTotal = 0, grandBread = 0;
       filtered.forEach(function(p, i) {
         var breadProd = parseInt(p.breadCount) || 0;
         var ctrSameDay = bakeryContractorSupplies.filter(function(cs) { return cs.date === p.date; });
@@ -11700,45 +11754,56 @@ function toggleEmployeeStatus(empId) {
         var cstCtr = ctrSameDay.reduce(function(s, cs) { return s + (parseFloat(cs.prodCost) || 0); }, 0);
         var totalCost = cstFarm;
         var costPerLoaf = bread > 0 ? Math.round((totalCost / bread) * 1000) / 1000 : 0;
+        grandTotal += totalCost; grandBread += bread;
         wsData.push([i+1, p.date, bread, flourQty, pFlour, costFlour, yeastQty, pYeast, costYeast, saltQty, pSalt, costSalt, branQty, pBran, costBran, dieselQty, pDiesel, costDiesel, opCost, cstCtr, Math.round(totalCost*100)/100, costPerLoaf]);
-        previewRows.push([p.date, bread, flourQty, pFlour, costFlour, yeastQty, pYeast, costYeast, saltQty, pSalt, costSalt, branQty, pBran, costBran, dieselQty, pDiesel, costDiesel, opCost, cstCtr, Math.round(totalCost*100)/100, costPerLoaf]);
+        previewRows.push([p.date, bread, flourQty, costFlour, yeastQty, costYeast, saltQty, costSalt, branQty, costBran, dieselQty, costDiesel, opCost, cstCtr, Math.round(totalCost*100)/100, costPerLoaf]);
       });
-      showDXPreview('تكلفة الخبز (إنتاج + توريد مقاولين) — ' + bakeryProductions.length + ' يوم', ['التاريخ', 'عدد الأرغفة', 'دقيق (كجم)', 'سعر الدقيق', 'تكلفة الدقيق', 'خميرة (كجم)', 'سعر الخميرة', 'تكلفة الخميرة', 'ملح (كجم)', 'سعر الملح', 'تكلفة الملح', 'ردة (كجم)', 'سعر الردة', 'تكلفة الردة', 'سولار (لتر)', 'سعر السولار', 'تكلفة السولار', 'أجر التشغيل', 'تكلفة خامات المقاولين', 'إجمالي التكلفة', 'تكلفة الرغيف'], previewRows);
+      wsData.push([]);
+      wsData.push(['الإجمالي', '', grandBread, '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', Math.round(grandTotal*100)/100, grandBread > 0 ? Math.round((grandTotal / grandBread) * 1000) / 1000 : 0]);
+      wsData.push(['عدد أيام الإنتاج', filtered.length, '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '']);
+      _dxPreview('تكلفة الخبز - ' + filtered.length + ' يوم', ['التاريخ', 'عدد الأرغفة', 'دقيق (كجم)', 'تكلفة الدقيق', 'خميرة (كجم)', 'تكلفةخميرة', 'ملح (كجم)', 'تكلفة الملح', 'ردة (كجم)', 'تكلفة الردة', 'سولار (لتر)', 'تكلفة السولار', 'أجر التشغيل', 'خامات مقاولين', 'إجمالي التكلفة', 'تكلفة الرغيف'], previewRows);
       var ws = XLSX.utils.aoa_to_sheet(wsData);
-      ws['!cols'] = [{wch:4},{wch:12},{wch:10},{wch:10},{wch:8},{wch:10},{wch:8},{wch:10},{wch:8},{wch:8},{wch:8},{wch:8},{wch:10},{wch:10},{wch:10},{wch:12},{wch:12},{wch:12},{wch:12},{wch:12},{wch:12}];
+      ws['!cols'] = [{wch:4},{wch:12},{wch:10},{wch:10},{wch:10},{wch:12},{wch:10},{wch:10},{wch:10},{wch:10},{wch:10},{wch:10},{wch:10},{wch:10},{wch:10},{wch:12},{wch:12},{wch:12},{wch:12},{wch:14},{wch:14},{wch:12}];
+      ws['!merges'] = [{s:{r:0,c:0},e:{r:0,c:21}}];
       var wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, 'تكلفة الخبز');
+      XLSX.utils.book_append_sheet(wb, ws, 'تكلفة الإنتاج');
       downloadWB(wb, filename);
-      document.getElementById('dx-export-log').innerText = '✅ تم تصدير تكلفة الخبز (' + bakeryProductions.length + ' يوم)';
+      document.getElementById('dx-export-log').innerText = 'تم تصدير تكلفة الخبز (' + filtered.length + ' يوم) - ' + new Date().toLocaleTimeString('ar-EG');
     }
 
     function exportDXBreadCount() {
-      var missing = bakeryContractorSupplies.filter(function(cs) { return !cs.date || !cs.name; });
-      if (missing.length) return alert('⚠️ يوجد ' + missing.length + ' سجل توريد بدون تاريخ أو اسم مقاول. أكمله أولاً.');
-      var filename = 'توريد_خبز_مقاولين_' + new Date().toISOString().slice(0,10) + '.xlsx';
-      var wsData = [['توريد خبز للمقاولين'], []];
-      wsData.push(['م', 'التاريخ', 'المقاول', 'عدد الأرغفة', 'سعر الرغيف', 'الإيراد', 'تكلفة الخامات', 'تكلفة التشغيل', 'إجمالي التكلفة', 'المدفوع', 'المتبقي', 'المسؤول', 'ملاحظات']);
+      var range = getDXDateRange();
+      var filtered = bakeryContractorSupplies.filter(function(cs) { return dxDateInRange(cs.date, range.from, range.to); });
+      if (!filtered.length) return alert('لا توجد بيانات توريد خبز في النطاق المحدد');
+      filtered = _dxSortDesc(filtered, 'date');
+      var filename = 'reports/weekly/bread_supply_' + new Date().toISOString().slice(0,10) + '.xlsx';
+      var wsData = [['توريد الخبز للمقاولين', '', '', '', '', '', '', '', '', '', '', '', ''], ['الفترة: ' + (range.from || 'البداية') + ' إلى ' + (range.to || 'النهاية'), '', '', '', '', '', '', '', '', '', '', '', ''], []];
+      wsData.push(['م', 'التاريخ', 'المقاول', 'عدد الأرغفة', 'سعر الرغيف', 'الإيراد', 'إجمالي التكلفة', 'المدفوع', 'المتبقي', 'الحالة', 'المسؤول', 'ملاحظات']);
       var previewRows = [];
-      bakeryContractorSupplies.forEach(function(cs, i) {
+      var totalRevenue = 0, totalPaid = 0, totalBread = 0;
+      filtered.forEach(function(cs, i) {
         var ctrCount = parseInt(cs.count) || 0;
         var price = parseFloat(cs.price) || 0;
         var revenue = ctrCount * price;
         var paid = parseFloat(cs.paid) || 0;
-        var opCost = parseFloat(cs.opCost) || 0;
         var prodCost = parseFloat(cs.prodCost) || 0;
-        var profit = parseFloat(cs.profit) || (revenue - prodCost);
-        var totalCost = opCost + (prodCost - opCost) || prodCost;
         var remaining = revenue - paid;
-        wsData.push([i+1, cs.date, cs.name, ctrCount, price, Math.round(revenue*100)/100, Math.round(prodCost*100)/100, opCost, Math.round(totalCost*100)/100, Math.round(paid*100)/100, Math.round(remaining*100)/100, cs.responsible || '', cs.notes || '']);
-        previewRows.push([cs.date, cs.name, ctrCount, price, Math.round(revenue*100)/100, Math.round(prodCost*100)/100, Math.round(paid*100)/100, Math.round(remaining*100)/100, cs.responsible || '']);
+        var status = remaining <= 0 ? 'مدفوع' : (paid > 0 ? 'جزئي' : 'معلق');
+        totalRevenue += revenue; totalPaid += paid; totalBread += ctrCount;
+        wsData.push([i+1, cs.date, cs.name || '', ctrCount, price, Math.round(revenue*100)/100, Math.round(prodCost*100)/100, Math.round(paid*100)/100, Math.round(remaining*100)/100, status, cs.responsible || '', cs.notes || '']);
+        previewRows.push([cs.date, cs.name || '', ctrCount, price, Math.round(revenue*100)/100, Math.round(prodCost*100)/100, Math.round(paid*100)/100, Math.round(remaining*100)/100, status, cs.responsible || '']);
       });
-      showDXPreview('توريد خبز مقاولين — ' + bakeryContractorSupplies.length + ' عملية', ['التاريخ', 'المقاول', 'عدد الأرغفة', 'سعر الرغيف', 'الإيراد', 'تكلفة الخامات', 'المدفوع', 'المتبقي', 'المسؤول'], previewRows);
+      wsData.push([]);
+      wsData.push(['الإجمالي', '', '', totalBread, '', Math.round(totalRevenue*100)/100, '', Math.round(totalPaid*100)/100, Math.round((totalRevenue - totalPaid)*100)/100, '', '', '']);
+      wsData.push(['عدد التوريدات', filtered.length, '', '', '', '', '', '', '', '', '', '']);
+      _dxPreview('توريد خبز المقاولين - ' + filtered.length + ' عملية', ['التاريخ', 'المقاول', 'عدد الأرغفة', 'سعر الرغيف', 'الإيراد', 'إجمالي التكلفة', 'المدفوع', 'المتبقي', 'الحالة', 'المسؤول'], previewRows);
       var ws = XLSX.utils.aoa_to_sheet(wsData);
-      ws['!cols'] = [{wch:4},{wch:12},{wch:18},{wch:10},{wch:10},{wch:10},{wch:10},{wch:10},{wch:10},{wch:10},{wch:10},{wch:15},{wch:20}];
+      ws['!cols'] = [{wch:4},{wch:12},{wch:20},{wch:12},{wch:12},{wch:12},{wch:14},{wch:12},{wch:12},{wch:10},{wch:16},{wch:20}];
+      ws['!merges'] = [{s:{r:0,c:0},e:{r:0,c:11}}];
       var wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, 'توريد خبز');
+      XLSX.utils.book_append_sheet(wb, ws, 'توريد الخبز');
       downloadWB(wb, filename);
-      document.getElementById('dx-export-log').innerText = '✅ تم تصدير توريد الخبز (' + bakeryContractorSupplies.length + ' توريد)';
+      document.getElementById('dx-export-log').innerText = 'تم تصدير توريد الخبز (' + filtered.length + ' توريد) - ' + new Date().toLocaleTimeString('ar-EG');
     }
 
     function checkMissingFields() {
