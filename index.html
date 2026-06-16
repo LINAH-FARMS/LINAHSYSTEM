@@ -7398,7 +7398,7 @@ function toggleEmployeeStatus(empId) {
         empTitle: emp ? emp.title : '',
         period, date: new Date().toISOString().split('T')[0],
         teaPacks, sugarKg
-      });
+      }));
       syncStorage(); renderTeaSugarTable(); renderTeaSugarBatchSummary();
     }
 
