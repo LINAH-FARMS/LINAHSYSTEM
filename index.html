@@ -1197,6 +1197,7 @@
         <button class="btn btn-excel" onclick="document.getElementById('excel-file').click()">📥 استيراد القوة (Excel)</button>
         <input type="file" id="excel-file" style="display: none;" accept=".xlsx, .xls" onchange="handleExcelImport(event)">
         <button class="btn btn-excel" onclick="exportEmployeesToExcel()" style="background-color: #2e7d32;">📤 تصدير القوة (Excel)</button>
+        <button class="btn btn-excel" onclick="exportSelectedEmployees()" style="background-color: #1565c0;">📤 تصدير المحدد</button>
         <button class="btn btn-secondary" onclick="showPrintChoice('table-employees-data')">🖨️ طباعة</button>
         <span style="flex:1;"></span>
         <button class="btn btn-danger" onclick="clearAllEmployeesData()" style="background-color: #b71c1c;font-size:11px;">🗑️ مسح كافة القوة</button>
@@ -5670,6 +5671,7 @@ function toggleEmployeeStatus(empId) {
 
       filtered.forEach(e => {
         let tr = document.createElement('tr');
+        tr.dataset.index = employees.indexOf(e);
         let assetsStr = (e.assets && e.assets.length > 0) ? e.assets.map(a => `${a.item} (${a.qty})`).join('، ') : "لا يوجد عهدة";
 
         tr.innerHTML = `
@@ -7735,6 +7737,45 @@ function toggleEmployeeStatus(empId) {
       if (merges.length) ws['!merges'] = merges;
       XLSX.utils.book_append_sheet(wb, ws, "تقرير القوة المفصل");
       XLSX.writeFile(wb, "تقرير_القوة_" + today.replace(/-/g, '') + ".xlsx");
+    }
+
+    function exportSelectedEmployees() {
+      var table = document.getElementById('table-employees-data');
+      if (!table) return;
+      var checkboxes = table.querySelectorAll('tbody input[type="checkbox"]:checked');
+      if (!checkboxes.length) return alert('⚠️ حدد موظفين أولاً bằng مربع الاختيار.');
+      var selectedIndices = [];
+      checkboxes.forEach(function(cb) {
+        var tr = cb.closest('tr');
+        if (tr) selectedIndices.push(parseInt(tr.dataset.index));
+      });
+      var selectedEmps = selectedIndices.map(function(i) { return employees[i]; }).filter(Boolean);
+      if (!selectedEmps.length) return alert('⚠️ لم يتم العثور على بيانات للمحدد.');
+      var today = new Date().toISOString().split('T')[0];
+      var wb = XLSX.utils.book_new();
+      function empRow(e) {
+        return {
+          "الكود": e.code || "",
+          "اسم الموظف": stripEmoji(e.name),
+          "الإدارة": stripEmoji(e.dept),
+          "الوظيفة": stripEmoji(e.title),
+          "المبنى": e.sector || "",
+          "الغرفة": e.room || "",
+          "تاريخ التعيين": e.hireDate || "",
+          "رقم الموبايل": e.nationalId || ""
+        };
+      }
+      var rows = [];
+      rows.push([{ v: 'القوة المحددة (' + selectedEmps.length + ')', t: 's' }]);
+      rows.push([{ v: 'الكود', t: 's' }, { v: 'اسم الموظف', t: 's' }, { v: 'الإدارة', t: 's' }, { v: 'الوظيفة', t: 's' }, { v: 'المبنى', t: 's' }, { v: 'الغرفة', t: 's' }, { v: 'تاريخ التعيين', t: 's' }, { v: 'رقم الموبايل', t: 's' }]);
+      selectedEmps.sort(function(a, b) { return (a.name || '').localeCompare(b.name || '', 'ar'); }).forEach(function(e) {
+        var r = empRow(e);
+        rows.push([r["الكود"], r["اسم الموظف"], r["الإدارة"], r["الوظيفة"], r["المبنى"], r["الغرفة"], r["تاريخ التعيين"], r["رقم الموبايل"]]);
+      });
+      var ws = XLSX.utils.aoa_to_sheet(rows);
+      ws['!cols'] = [{ wch: 18 }, { wch: 22 }, { wch: 18 }, { wch: 18 }, { wch: 14 }, { wch: 10 }, { wch: 14 }, { wch: 14 }];
+      XLSX.utils.book_append_sheet(wb, ws, "القوة المحددة");
+      XLSX.writeFile(wb, "قوة_محددة_" + today.replace(/-/g, '') + ".xlsx");
     }
 
     function handleExcelImport(evt) {
