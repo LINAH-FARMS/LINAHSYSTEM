@@ -9271,7 +9271,7 @@ function toggleEmployeeStatus(empId) {
           dieselUsed: dieselUsed,
           operatingCost: operatingCost,
           notes: notes
-        });
+        }));
         syncStorage(); renderBakeryProductions(); updateBakeryProductionIngredientStocks();
         document.getElementById('bprod-count').value = '0';
         document.getElementById('bprod-opcost').value = '1200';
@@ -12046,7 +12046,7 @@ function toggleEmployeeStatus(empId) {
         grade: grade,
         notes: notes,
         date: new Date().toISOString()
-      });
+      }));
       syncStorage();
       renderEvaluations();
       document.getElementById('eval-notes').value = '';
