@@ -11593,7 +11593,52 @@ function toggleEmployeeStatus(empId) {
       });
     }
     function _dxNum(n) { return (typeof n === 'number' && isFinite(n)) ? n : 0; }
-    function _dxFmt(n) { var v = _dxNum(n); return v; }
+    function _dxFmt(n) { var v = _dxNum(n); return v === 0 ? 0 : v; }
+    function _dxFinishSheet(ws, numCols, titleRows) {
+      if (!ws) return;
+      titleRows = titleRows || 2;
+      ws['!cols'] = [];
+      for (var c = 0; c < numCols; c++) ws['!cols'].push({ wch: c === 0 ? 4 : 14 });
+      if (ws['!merges'] && ws['!merges'].length) {
+        ws['!merges'].forEach(function(m) {
+          var addr = XLSX.utils.encode_cell({ r: m.s.r, c: m.s.c });
+          if (ws[addr]) ws[addr].s = ws[addr].s || {};
+        });
+      }
+      var range = XLSX.utils.decode_range(ws['!ref']);
+      for (var r = range.s.r; r <= range.e.r; r++) {
+        for (var c = range.s.c; c <= range.e.c; c++) {
+          var addr = XLSX.utils.encode_cell({ r: r, c: c });
+          if (!ws[addr]) continue;
+          ws[addr].s = ws[addr].s || {};
+          ws[addr].s.alignment = ws[addr].s.alignment || {};
+          ws[addr].s.alignment.horizontal = 'center';
+          ws[addr].s.alignment.vertical = 'center';
+          ws[addr].s.border = {
+            top: { style: 'thin', color: { rgb: 'CCCCCC' } },
+            bottom: { style: 'thin', color: { rgb: 'CCCCCC' } },
+            left: { style: 'thin', color: { rgb: 'CCCCCC' } },
+            right: { style: 'thin', color: { rgb: 'CCCCCC' } }
+          };
+          if (r < titleRows) {
+            ws[addr].s.font = ws[addr].s.font || {};
+            ws[addr].s.font.bold = true;
+            ws[addr].s.font.size = r === 0 ? 14 : 11;
+            ws[addr].s.font.color = { rgb: r === 0 ? '1B5E20' : '333333' };
+          } else if (r === titleRows) {
+            ws[addr].s.font = { bold: true, size: 11, color: { rgb: 'FFFFFF' } };
+            ws[addr].s.fill = { fgColor: { rgb: '1B5E20' } };
+            ws[addr].s.alignment.horizontal = 'center';
+          }
+          if (typeof ws[addr].v === 'number' && r > titleRows) {
+            ws[addr].z = '#,##0';
+          }
+        }
+      }
+      ws['!freeze'] = { xSplit: 0, ySplit: titleRows + 1, topLeftCell: 'A' + (titleRows + 2), activePane: 'bottomLeft', state: 'frozen' };
+      ws['!autofilter'] = { ref: XLSX.utils.encode_range({ s: { c: 0, r: titleRows }, e: { c: numCols - 1, r: range.e.r } }) };
+      ws['!printSetup'] = { orientation: 'landscape', paper: 9, fitToPage: true, fitToWidth: 1, fitToHeight: 0 };
+    }
     function _dxMonth(dateStr) {
       if (!dateStr) return '';
       var months = ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
@@ -11630,7 +11675,7 @@ function toggleEmployeeStatus(empId) {
       var filtered = mealLogs.filter(function(m) { return dxDateInRange(m.date, range.from, range.to); });
       if (!filtered.length) return alert('لا توجد بيانات وجبات في النطاق المحدد');
       filtered = _dxSortDesc(filtered, 'date');
-      var filename = 'reports/weekly/meal_log_' + new Date().toISOString().slice(0,10) + '.xlsx';
+      var filename = 'tqreport_meals_' + new Date().toISOString().slice(0,10) + '.xlsx';
       var wsData = [['تقرير الوجبات اليومية', '', '', '', '', '', '', '', '', '', '', ''], ['الفترة: ' + (range.from || 'البداية') + ' إلى ' + (range.to || 'النهاية'), '', '', '', '', '', '', '', '', '', '', ''], []];
       wsData.push(['م', 'التاريخ', 'الشهر', 'إفطار قوة', 'غداء قوة', 'عشاء قوة', 'إفطار ضيوف', 'غداء ضيوف', 'عشاء ضيوف', 'الإجمالي', 'الشيف', 'ملاحظات']);
       var totalAll = 0; var previewRows = [];
@@ -11648,8 +11693,8 @@ function toggleEmployeeStatus(empId) {
       wsData.push(['عدد أيام التقرير', filtered.length, '', '', '', '', '', '', '', '', '', '']);
       _dxPreview('تقرير الوجبات - ' + filtered.length + ' يوم', ['التاريخ', 'الشهر', 'إفطار قوة', 'غداء قوة', 'عشاء قوة', 'إفطار ضيوف', 'غداء ضيوف', 'عشاء ضيوف', 'الإجمالي', 'الشيف'], previewRows);
       var ws = XLSX.utils.aoa_to_sheet(wsData);
-      ws['!cols'] = [{wch:4},{wch:12},{wch:8},{wch:10},{wch:10},{wch:10},{wch:10},{wch:10},{wch:10},{wch:10},{wch:15},{wch:15}];
       ws['!merges'] = [{s:{r:0,c:0},e:{r:0,c:11}}];
+      _dxFinishSheet(ws, 12, 2);
       var wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, 'الوجبات');
       downloadWB(wb, filename);
@@ -11661,7 +11706,7 @@ function toggleEmployeeStatus(empId) {
       var filtered = teaSugarDisbursements.filter(function(t) { return dxDateInRange(t.date, range.from, range.to); });
       if (!filtered.length) return alert('لا توجد بيانات شاي وسكر في النطاق المحدد');
       filtered = _dxSortDesc(filtered, 'date');
-      var filename = 'reports/weekly/tea_sugar_' + new Date().toISOString().slice(0,10) + '.xlsx';
+      var filename = 'tqreport_tea_sugar_' + new Date().toISOString().slice(0,10) + '.xlsx';
       var wb = XLSX.utils.book_new();
       var s1Data = [['تقرير صرف الشاي والسكر', '', '', '', '', '', '', '', '', ''], ['الفترة: ' + (range.from || 'البداية') + ' إلى ' + (range.to || 'النهاية'), '', '', '', '', '', '', '', '', ''], []];
       s1Data.push(['م', 'التاريخ', 'الكود', 'اسم الموظف', 'الوظيفة', 'القطاع / الغرفة', 'المحافظة', 'شاي (ربطة)', 'سكر (كجم)', 'ملاحظات']);
@@ -11679,8 +11724,8 @@ function toggleEmployeeStatus(empId) {
       s1Data.push(['عدد العمليات', filtered.length, '', '', '', '', '', '', '', '']);
       _dxPreview('تقرير الشاي والسكر - ' + filtered.length + ' عملية', ['التاريخ', 'الكود', 'اسم الموظف', 'الوظيفة', 'القطاع / الغرفة', 'المحافظة', 'شاي (ربطة)', 'سكر (كجم)'], previewRows);
       var ws1 = XLSX.utils.aoa_to_sheet(s1Data);
-      ws1['!cols'] = [{wch:4},{wch:12},{wch:8},{wch:22},{wch:20},{wch:22},{wch:14},{wch:12},{wch:12},{wch:20}];
       ws1['!merges'] = [{s:{r:0,c:0},e:{r:0,c:9}}];
+      _dxFinishSheet(ws1, 10, 2);
       XLSX.utils.book_append_sheet(wb, ws1, 'صرف الشاي والسكر');
       var s2Data = [['بيانات الموظفين', '', '', '', '', ''], []];
       s2Data.push(['الكود', 'اسم الموظف', 'الوظيفة', 'القطاع', 'المحافظة', 'الغرفة']);
@@ -11689,8 +11734,8 @@ function toggleEmployeeStatus(empId) {
         s2Data.push([e.code || '', e.name || '', e.title || '', e.sector || '', e.gov || '', e.room || '']);
       });
       var ws2 = XLSX.utils.aoa_to_sheet(s2Data);
-      ws2['!cols'] = [{wch:8},{wch:22},{wch:20},{wch:16},{wch:14},{wch:16}];
       ws2['!merges'] = [{s:{r:0,c:0},e:{r:0,c:5}}];
+      _dxFinishSheet(ws2, 6, 1);
       XLSX.utils.book_append_sheet(wb, ws2, 'بيانات الموظفين');
       downloadWB(wb, filename);
       document.getElementById('dx-export-log').innerText = 'تم تصدير تقرير الشاي والسكر (' + filtered.length + ' عملية) - ' + new Date().toLocaleTimeString('ar-EG');
@@ -11701,7 +11746,7 @@ function toggleEmployeeStatus(empId) {
       var filtered = septicRecords.filter(function(s) { return dxDateInRange(s.date, range.from, range.to); });
       if (!filtered.length) return alert('لا توجد بيانات صرف صحي في النطاق المحدد');
       filtered = _dxSortDesc(filtered, 'date');
-      var filename = 'reports/weekly/septic_' + new Date().toISOString().slice(0,10) + '.xlsx';
+      var filename = 'tqreport_septic_' + new Date().toISOString().slice(0,10) + '.xlsx';
       var wsData = [['حصر كميات الصرف الصحي', '', '', '', '', '', '', '', ''], ['الفترة: ' + (range.from || 'البداية') + ' إلى ' + (range.to || 'النهاية'), '', '', '', '', '', '', '', ''], []];
       wsData.push(['م', 'التاريخ', 'التوقيت', 'الشهر', 'البيارة', 'عدد النقلات', 'الصرف (م3)', 'الفني المسؤول', 'ملاحظات']);
       var totalTrips = 0, totalVol = 0;
@@ -11717,8 +11762,8 @@ function toggleEmployeeStatus(empId) {
       wsData.push(['عدد العمليات', filtered.length, '', '', '', '', '', '', '']);
       _dxPreview('تقرير الصرف الصحي - ' + filtered.length + ' عملية', ['التاريخ', 'التوقيت', 'الشهر', 'البيارة', 'عدد النقلات', 'الصرف (م3)', 'الفني المسؤول'], previewRows);
       var ws = XLSX.utils.aoa_to_sheet(wsData);
-      ws['!cols'] = [{wch:4},{wch:12},{wch:10},{wch:8},{wch:22},{wch:12},{wch:12},{wch:16},{wch:20}];
       ws['!merges'] = [{s:{r:0,c:0},e:{r:0,c:8}}];
+      _dxFinishSheet(ws, 9, 2);
       var wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, 'الصرف الصحي');
       downloadWB(wb, filename);
@@ -11730,7 +11775,7 @@ function toggleEmployeeStatus(empId) {
       var filtered = bakeryProductions.filter(function(p) { return dxDateInRange(p.date, range.from, range.to); });
       if (!filtered.length) return alert('لا توجد بيانات إنتاج في النطاق المحدد');
       filtered = _dxSortDesc(filtered, 'date');
-      var filename = 'reports/weekly/bread_cost_' + new Date().toISOString().slice(0,10) + '.xlsx';
+      var filename = 'tqreport_bread_cost_' + new Date().toISOString().slice(0,10) + '.xlsx';
       var wsData = [['تكلفة إنتاج الخبز - فرن المزرعة', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', ''], ['الفترة: ' + (range.from || 'البداية') + ' إلى ' + (range.to || 'النهاية'), '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', ''], []];
       wsData.push(['م', 'التاريخ', 'عدد الأرغفة', 'دقيق (كجم)', 'سعر الدقيق', 'تكلفة الدقيق', 'خميرة (كجم)', 'سعر الخميرة', 'تكلفةخميرة', 'ملح (كجم)', 'سعر الملح', 'تكلفة الملح', 'ردة (كجم)', 'سعر الردة', 'تكلفة الردة', 'سولار (لتر)', 'سعر السولار', 'تكلفة السولار', 'أجر التشغيل', 'خامات مقاولين', 'إجمالي التكلفة', 'تكلفة الرغيف']);
       var previewRows = [];
@@ -11767,8 +11812,8 @@ function toggleEmployeeStatus(empId) {
       wsData.push(['عدد أيام الإنتاج', filtered.length, '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '']);
       _dxPreview('تكلفة الخبز - ' + filtered.length + ' يوم', ['التاريخ', 'عدد الأرغفة', 'دقيق (كجم)', 'تكلفة الدقيق', 'خميرة (كجم)', 'تكلفةخميرة', 'ملح (كجم)', 'تكلفة الملح', 'ردة (كجم)', 'تكلفة الردة', 'سولار (لتر)', 'تكلفة السولار', 'أجر التشغيل', 'خامات مقاولين', 'إجمالي التكلفة', 'تكلفة الرغيف'], previewRows);
       var ws = XLSX.utils.aoa_to_sheet(wsData);
-      ws['!cols'] = [{wch:4},{wch:12},{wch:10},{wch:10},{wch:10},{wch:12},{wch:10},{wch:10},{wch:10},{wch:10},{wch:10},{wch:10},{wch:10},{wch:10},{wch:10},{wch:12},{wch:12},{wch:12},{wch:12},{wch:14},{wch:14},{wch:12}];
       ws['!merges'] = [{s:{r:0,c:0},e:{r:0,c:21}}];
+      _dxFinishSheet(ws, 22, 2);
       var wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, 'تكلفة الإنتاج');
       downloadWB(wb, filename);
@@ -11780,7 +11825,7 @@ function toggleEmployeeStatus(empId) {
       var filtered = bakeryContractorSupplies.filter(function(cs) { return dxDateInRange(cs.date, range.from, range.to); });
       if (!filtered.length) return alert('لا توجد بيانات توريد خبز في النطاق المحدد');
       filtered = _dxSortDesc(filtered, 'date');
-      var filename = 'reports/weekly/bread_supply_' + new Date().toISOString().slice(0,10) + '.xlsx';
+      var filename = 'tqreport_bread_supply_' + new Date().toISOString().slice(0,10) + '.xlsx';
       var wsData = [['توريد الخبز للمقاولين', '', '', '', '', '', '', '', '', '', '', '', ''], ['الفترة: ' + (range.from || 'البداية') + ' إلى ' + (range.to || 'النهاية'), '', '', '', '', '', '', '', '', '', '', '', ''], []];
       wsData.push(['م', 'التاريخ', 'المقاول', 'عدد الأرغفة', 'سعر الرغيف', 'الإيراد', 'إجمالي التكلفة', 'المدفوع', 'المتبقي', 'الحالة', 'المسؤول', 'ملاحظات']);
       var previewRows = [];
@@ -11802,8 +11847,8 @@ function toggleEmployeeStatus(empId) {
       wsData.push(['عدد التوريدات', filtered.length, '', '', '', '', '', '', '', '', '', '']);
       _dxPreview('توريد خبز المقاولين - ' + filtered.length + ' عملية', ['التاريخ', 'المقاول', 'عدد الأرغفة', 'سعر الرغيف', 'الإيراد', 'إجمالي التكلفة', 'المدفوع', 'المتبقي', 'الحالة', 'المسؤول'], previewRows);
       var ws = XLSX.utils.aoa_to_sheet(wsData);
-      ws['!cols'] = [{wch:4},{wch:12},{wch:20},{wch:12},{wch:12},{wch:12},{wch:14},{wch:12},{wch:12},{wch:10},{wch:16},{wch:20}];
       ws['!merges'] = [{s:{r:0,c:0},e:{r:0,c:11}}];
+      _dxFinishSheet(ws, 12, 2);
       var wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, 'توريد الخبز');
       downloadWB(wb, filename);
