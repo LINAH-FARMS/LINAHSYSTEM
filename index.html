@@ -3591,7 +3591,7 @@
     }
 
     function _cleanCorruptedLocalStorage() {
-      if (localStorage.getItem('_corruptionCleaned')) return;
+      if (localStorage.getItem('_corruptionCleaned_v2')) return;
       var keys = ['lineh_employees','employees_db','lineh_rooms_capacity','rooms_db','lineh_vacations','lineh_hospitality','lineh_hospitality_bak','lineh_maintenance','lineh_septic','septic_db','lineh_inventory','excludedEmployees','lineh_periodic_maintenance','lineh_tea_sugar','lineh_tea_sugar_batches','lineh_meal_logs','lineh_inventory_items','lineh_contractors','dyn_sectors','ctr_sectors','ctr_rooms','dyn_rooms','dyn_septics','dyn_depts','dyn_titles','lineh_evaluations','lineh_eval_templates','lineh_users','linah_audit_log','linah_bakery_ingredients','linah_bakery_productions','linah_bakery_ctr_supplies','linah_bakery_invoices','linah_bakery_stock_log','lineh_admin_overtime','lineh_room_assets','lineh_archive_data','lineh_quick_actions','lineh_daily_stats'];
       var cleaned = 0;
       keys.forEach(function(k) {
@@ -3602,7 +3602,10 @@
             var arr = JSON.parse(raw);
             if (Array.isArray(arr)) {
               var before = arr.length;
-              arr = arr.filter(function(item) { return !_isCorrupted(item); });
+              arr = arr.filter(function(item) {
+                if (!item || typeof item !== 'object') return true;
+                return !/\?{2,}/.test(JSON.stringify(item));
+              });
               if (arr.length < before) {
                 localStorage.setItem(k, JSON.stringify(arr));
                 cleaned += (before - arr.length);
@@ -3611,8 +3614,7 @@
           }
         } catch(e) {}
       });
-      localStorage.setItem('_corruptionCleaned', '1');
-      if (cleaned > 0) syncLog('🧹 تم تنظيف ' + cleaned + ' سجل مشوّه من الكاش المحلي');
+      localStorage.setItem('_corruptionCleaned_v2', '1');
     }
     _cleanCorruptedLocalStorage();
     function syncStorage(noTimestamp, skipSync) {
