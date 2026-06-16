@@ -6429,7 +6429,7 @@ function toggleEmployeeStatus(empId) {
       if(confirm("حذف الإجازة من الأرشيف؟")) {
         var oldRec = vacations[idx];
         var empCode = oldRec?.code;
-        _logDeletion('vacations', (oldRec?.employeeCode || oldRec?.employeeName || empCode || '') + '|' + (oldRec?.startDate || oldRec?.dateFrom || '') + '|' + (oldRec?.endDate || oldRec?.dateTo || ''));
+        _logDeletion('vacations', (oldRec?.code || oldRec?.employeeCode || oldRec?.employeeName || oldRec?.name || empCode || '') + '|' + (oldRec?.start || oldRec?.startDate || oldRec?.dateFrom || '') + '|' + (oldRec?.end || oldRec?.endDate || oldRec?.dateTo || ''));
         // استعادة الرصيد السنوي
         if (oldRec) {
           var emp = employees.find(function(e) { return (e.code || e.id) === empCode; });
@@ -7017,7 +7017,7 @@ function toggleEmployeeStatus(empId) {
 
     function deletePM(idx) { if (!requireAdmin()) return;
       if(confirm("حذف مهمة الصيانة الدورية؟")) {
-        _logDeletion('periodicMaintenance', (periodicMaintenance[idx].task||'') + '|' + (periodicMaintenance[idx].sector||'') + '|' + (periodicMaintenance[idx].frequency||''));
+        _logDeletion('periodicMaintenance', (periodicMaintenance[idx].name||periodicMaintenance[idx].task||'') + '|' + (periodicMaintenance[idx].id||'') + '|' + (periodicMaintenance[idx].freq||periodicMaintenance[idx].frequency||''));
         periodicMaintenance.splice(idx, 1);
         syncStorage(); renderPeriodicMaintenance();
       }
@@ -7673,7 +7673,7 @@ function toggleEmployeeStatus(empId) {
       });
     }
 
-    function deleteSeptic(idx) { if (!requireAdmin()) return; _logDeletion('septicRecords', (septicRecords[idx].date||'') + '|' + (septicRecords[idx].sector||'') + '|' + (septicRecords[idx].quantity||'')); septicRecords.splice(idx,1); syncStorage(); renderSepticTable(); }
+    function deleteSeptic(idx) { if (!requireAdmin()) return;       _logDeletion('septicRecords', (septicRecords[idx].date||'') + '|' + (septicRecords[idx].name||septicRecords[idx].sector||'') + '|' + (septicRecords[idx].trips||septicRecords[idx].quantity||'')); septicRecords.splice(idx,1); syncStorage(); renderSepticTable(); }
 
     function exportEmployeesToExcel() {
       var today = new Date().toISOString().split('T')[0];
@@ -10037,27 +10037,27 @@ function toggleEmployeeStatus(empId) {
       var keyFns = {
         employees: function(e) { return e.code || e.name; },
         roomsCapacity: function(r) { return r.sector + '|' + r.number; },
-        vacations: function(v) { return (v.employeeCode || v.employeeName || '') + '|' + (v.startDate || v.dateFrom || '') + '|' + (v.endDate || v.dateTo || ''); },
-        inventoryVouchers: function(v) { return v.id || v._id; },
+        vacations: function(v) { return (v.code || v.employeeCode || v.employeeName || v.name || '') + '|' + (v.start || v.startDate || v.dateFrom || '') + '|' + (v.end || v.endDate || v.dateTo || ''); },
+        inventoryVouchers: function(v) { return v.voucherId || v.id || v._id; },
         excludedEmployees: function(e) { return e.code || e.name; },
         contractors: function(c) { return c.name || c.id; },
         mealLogs: function(m) { return m.date; },
         inventoryItems: function(i) { return i.id || i.name; },
         hospitalities: function(h) { return (h.name || '') + '|' + (h.arrival || '') + '|' + (h.type || ''); },
-        adminOvertime: function(o) { return (o.date || '') + '|' + (o.name || '') + '|' + (o.hours || ''); },
+        adminOvertime: function(o) { return (o.date || '') + '|' + (o.empCode || o.name || '') + '|' + (o.hours || ''); },
         maintenanceRecords: function(m) { return (m.category || '') + '|' + (m.task || '') + '|' + (m.date || m.createdAt || ''); },
-        septicRecords: function(s) { return (s.date || '') + '|' + (s.sector || '') + '|' + (s.quantity || ''); },
-        periodicMaintenance: function(p) { return (p.task || '') + '|' + (p.sector || '') + '|' + (p.frequency || ''); },
-        teaSugarDisbursements: function(t) { return (t.date || '') + '|' + (t.type || '') + '|' + (t.quantity || ''); },
+        septicRecords: function(s) { return (s.date || '') + '|' + (s.name || s.sector || '') + '|' + (s.trips || s.quantity || ''); },
+        periodicMaintenance: function(p) { return (p.name || p.task || '') + '|' + (p.id || '') + '|' + (p.freq || p.frequency || ''); },
+        teaSugarDisbursements: function(t) { return (t.date || '') + '|' + (t.period || t.type || '') + '|' + (t.empCode || t.empId || '') + '|' + (t.teaPacks || t.quantity || '') + '|' + (t.sugarKg || ''); },
         teaSugarBatches: function(t) { return t.id || t._id; },
-        evaluations: function(e) { return (e.employeeCode || '') + '|' + (e.date || '') + '|' + (e.type || ''); },
+        evaluations: function(e) { return (e.empCode || e.employeeCode || '') + '|' + (e.date || '') + '|' + (e.month || e.type || '') + '|' + (e.year || ''); },
         appUsers: function(u) { return u.name; },
         auditLog: function(a) { return a.id; },
         bakeryIngredients: function(b) { return b.name; },
         bakeryProductions: function(p) { return normalizeDateStr(p.date) + '|' + (p.breadCount || ''); },
         bakeryContractorSupplies: function(s) { return (s.name || '') + '|' + normalizeDateStr(s.date) + '|' + (s.count || ''); },
         bakeryInvoices: function(inv) { return inv.id || inv._id; },
-        bakeryStockLog: function(s) { return (s.date || '') + '|' + (s.ingredient || '') + '|' + (s.type || ''); },
+        bakeryStockLog: function(s) { return (s.date || '') + '|' + (s.materialName || s.ingredient || '') + '|' + (s.type || '') + '|' + (s.reference || ''); },
         roomAssets: function(a) { return (a.room || '') + '|' + (a.item || '') + '|' + (a.id || ''); },
         archiveData: function(a) { return a.id || a.date; },
         quickActions: function(q) { return q.label; },
@@ -10129,27 +10129,27 @@ function toggleEmployeeStatus(empId) {
       var _arrayKeyFns = {
         employees: function(e) { return e.code || e.name || JSON.stringify(e); },
         roomsCapacity: function(r) { return r.sector + '|' + r.number; },
-        vacations: function(v) { return (v.employeeCode || v.employeeName || '') + '|' + (v.startDate || v.dateFrom || '') + '|' + (v.endDate || v.dateTo || ''); },
-        inventoryVouchers: function(v) { return v.id || v._id || JSON.stringify(v); },
+        vacations: function(v) { return (v.code || v.employeeCode || v.employeeName || v.name || '') + '|' + (v.start || v.startDate || v.dateFrom || '') + '|' + (v.end || v.endDate || v.dateTo || ''); },
+        inventoryVouchers: function(v) { return v.voucherId || v.id || v._id || JSON.stringify(v); },
         excludedEmployees: function(e) { return e.code || e.name || JSON.stringify(e); },
         contractors: function(c) { return c.name || c.id || JSON.stringify(c); },
         mealLogs: function(m) { return m.date || JSON.stringify(m); },
         inventoryItems: function(i) { return i.id || i.name || JSON.stringify(i); },
         hospitalities: function(h) { return (h.name || '') + '|' + (h.arrival || '') + '|' + (h.type || ''); },
-        adminOvertime: function(o) { return (o.date || '') + '|' + (o.name || '') + '|' + (o.hours || ''); },
+        adminOvertime: function(o) { return (o.date || '') + '|' + (o.empCode || o.name || '') + '|' + (o.hours || ''); },
         maintenanceRecords: function(m) { return (m.category || '') + '|' + (m.task || '') + '|' + (m.date || m.createdAt || ''); },
-        septicRecords: function(s) { return (s.date || '') + '|' + (s.sector || '') + '|' + (s.quantity || ''); },
-        periodicMaintenance: function(p) { return (p.task || '') + '|' + (p.sector || '') + '|' + (p.frequency || ''); },
-        teaSugarDisbursements: function(t) { return (t.date || '') + '|' + (t.type || '') + '|' + (t.quantity || ''); },
+        septicRecords: function(s) { return (s.date || '') + '|' + (s.name || s.sector || '') + '|' + (s.trips || s.quantity || ''); },
+        periodicMaintenance: function(p) { return (p.name || p.task || '') + '|' + (p.id || '') + '|' + (p.freq || p.frequency || ''); },
+        teaSugarDisbursements: function(t) { return (t.date || '') + '|' + (t.period || t.type || '') + '|' + (t.empCode || t.empId || '') + '|' + (t.teaPacks || t.quantity || '') + '|' + (t.sugarKg || ''); },
         teaSugarBatches: function(t) { return t.id || t._id || JSON.stringify(t); },
-        evaluations: function(e) { return (e.employeeCode || '') + '|' + (e.date || '') + '|' + (e.type || ''); },
+        evaluations: function(e) { return (e.empCode || e.employeeCode || '') + '|' + (e.date || '') + '|' + (e.month || e.type || '') + '|' + (e.year || ''); },
         appUsers: function(u) { return u.name; },
         auditLog: function(a) { return a.id || JSON.stringify(a); },
         bakeryIngredients: function(b) { return b.name || JSON.stringify(b); },
         bakeryProductions: function(p) { return normalizeDateStr(p.date) + '|' + (p.breadCount || ''); },
         bakeryContractorSupplies: function(s) { return (s.name || '') + '|' + normalizeDateStr(s.date) + '|' + (s.count || ''); },
         bakeryInvoices: function(inv) { return inv.id || inv._id || JSON.stringify(inv); },
-        bakeryStockLog: function(s) { return (s.date || '') + '|' + (s.ingredient || '') + '|' + (s.type || ''); },
+        bakeryStockLog: function(s) { return (s.date || '') + '|' + (s.materialName || s.ingredient || '') + '|' + (s.type || '') + '|' + (s.reference || ''); },
         roomAssets: function(a) { return (a.room || '') + '|' + (a.item || '') + '|' + (a.id || JSON.stringify(a)); },
         archiveData: function(a) { return a.id || a.date || JSON.stringify(a); },
         quickActions: function(q) { return q.label || JSON.stringify(q); },
@@ -10498,14 +10498,14 @@ function toggleEmployeeStatus(empId) {
       }
       if (d.employees) employees = _smartMerge(employees, d.employees, function(e) { return e.code || e.name || JSON.stringify(e); }, 'employees');
       if (d.roomsCapacity) roomsCapacity = _smartMerge(roomsCapacity, d.roomsCapacity, function(r) { return r.sector + '|' + r.number; }, 'roomsCapacity');
-      if (d.vacations) vacations = _smartMerge(vacations, d.vacations, function(v) { return (v.employeeCode || v.employeeName || '') + '|' + (v.startDate || v.dateFrom || '') + '|' + (v.endDate || v.dateTo || ''); }, 'vacations');
+      if (d.vacations) vacations = _smartMerge(vacations, d.vacations, function(v) { return (v.code || v.employeeCode || v.employeeName || v.name || '') + '|' + (v.start || v.startDate || v.dateFrom || '') + '|' + (v.end || v.endDate || v.dateTo || ''); }, 'vacations');
       if (d.hospitalities) hospitalities = _smartMerge(hospitalities, d.hospitalities, function(h) { return (h.name || '') + '|' + (h.arrival || '') + '|' + (h.type || ''); }, 'hospitalities');
       if (d.maintenanceRecords) maintenanceRecords = _smartMerge(maintenanceRecords, d.maintenanceRecords, function(m) { return (m.category || '') + '|' + (m.task || '') + '|' + (m.date || m.createdAt || ''); }, 'maintenanceRecords');
       if (d.septicRecords) septicRecords = _smartMerge(septicRecords, d.septicRecords, function(s) { return (s.date || '') + '|' + (s.sector || '') + '|' + (s.quantity || ''); }, 'septicRecords');
       if (d.inventoryVouchers) inventoryVouchers = _smartMerge(inventoryVouchers, d.inventoryVouchers, function(v) { return v.id || v._id || JSON.stringify(v); }, 'inventoryVouchers');
       if (d.excludedEmployees) excludedEmployees = _smartMerge(excludedEmployees, d.excludedEmployees, function(e) { return e.code || e.name || JSON.stringify(e); }, 'excludedEmployees');
       if (d.periodicMaintenance) periodicMaintenance = _smartMerge(periodicMaintenance, d.periodicMaintenance, function(p) { return (p.task || '') + '|' + (p.sector || '') + '|' + (p.frequency || ''); }, 'periodicMaintenance');
-      if (d.teaSugarDisbursements) teaSugarDisbursements = _smartMerge(teaSugarDisbursements, d.teaSugarDisbursements, function(t) { return (t.date || '') + '|' + (t.type || '') + '|' + (t.quantity || ''); }, 'teaSugarDisbursements');
+      if (d.teaSugarDisbursements) teaSugarDisbursements = _smartMerge(teaSugarDisbursements, d.teaSugarDisbursements, function(t) { return (t.date || '') + '|' + (t.period || t.type || '') + '|' + (t.empCode || t.empId || '') + '|' + (t.teaPacks || t.quantity || '') + '|' + (t.sugarKg || ''); }, 'teaSugarDisbursements');
       if (d.teaSugarBatches) teaSugarBatches = _smartMerge(teaSugarBatches, d.teaSugarBatches, function(t) { return t.id || t._id || JSON.stringify(t); }, 'teaSugarBatches');
       if (d.mealLogs) mealLogs = _smartMerge(mealLogs, d.mealLogs, function(m) { return m.date || JSON.stringify(m); }, 'mealLogs');
       if (d.inventoryItems) inventoryItems = _smartMerge(inventoryItems, d.inventoryItems, function(i) { return i.id || i.name || JSON.stringify(i); }, 'inventoryItems');
@@ -10560,20 +10560,20 @@ function toggleEmployeeStatus(empId) {
       dedupBy(hospitalities, function(h) { return (h.name || '') + '|' + (h.arrival || '') + '|' + (h.type || ''); });
       dedupBy(bakeryProductions, function(p) { return normalizeDateStr(p.date) + '|' + (p.breadCount || ''); });
       dedupBy(bakeryContractorSupplies, function(s) { return (s.name || '') + '|' + normalizeDateStr(s.date) + '|' + (s.count || ''); });
-      dedupBy(vacations, function(v) { return (v.employeeCode || v.employeeName || '') + '|' + (v.startDate || v.dateFrom || '') + '|' + (v.endDate || v.dateTo || ''); });
+      dedupBy(vacations, function(v) { return (v.code || v.employeeCode || v.employeeName || v.name || '') + '|' + (v.start || v.startDate || v.dateFrom || '') + '|' + (v.end || v.endDate || v.dateTo || ''); });
       dedupBy(maintenanceRecords, function(m) { return (m.category || '') + '|' + (m.task || '') + '|' + (m.date || m.createdAt || ''); });
-      dedupBy(septicRecords, function(s) { return (s.date || '') + '|' + (s.sector || '') + '|' + (s.quantity || ''); });
-      dedupBy(teaSugarDisbursements, function(t) { return (t.date || '') + '|' + (t.type || '') + '|' + (t.quantity || ''); });
+      dedupBy(septicRecords, function(s) { return (s.date || '') + '|' + (s.name || s.sector || '') + '|' + (s.trips || s.quantity || ''); });
+      dedupBy(teaSugarDisbursements, function(t) { return (t.date || '') + '|' + (t.period || t.type || '') + '|' + (t.empCode || t.empId || '') + '|' + (t.teaPacks || t.quantity || '') + '|' + (t.sugarKg || ''); });
       dedupBy(mealLogs, function(m) { return m.date || JSON.stringify(m); });
       dedupBy(bakeryInvoices, function(inv) { return inv.id || inv._id || JSON.stringify(inv); });
       dedupBy(employees, function(e) { return e.code || e.name || JSON.stringify(e); });
       dedupBy(contractors, function(c) { return c.name || c.id || JSON.stringify(c); });
       dedupBy(inventoryItems, function(i) { return i.id || i.name || JSON.stringify(i); });
       dedupBy(excludedEmployees, function(e) { return e.code || e.name || JSON.stringify(e); });
-      dedupBy(periodicMaintenance, function(p) { return (p.task || '') + '|' + (p.sector || '') + '|' + (p.frequency || ''); });
+      dedupBy(periodicMaintenance, function(p) { return (p.name || p.task || '') + '|' + (p.id || '') + '|' + (p.freq || p.frequency || ''); });
       dedupBy(bakeryIngredients, function(b) { return b.name || JSON.stringify(b); });
-      dedupBy(adminOvertime, function(o) { return (o.date || '') + '|' + (o.name || '') + '|' + (o.hours || ''); });
-      dedupBy(inventoryVouchers, function(v) { return v.id || v._id || JSON.stringify(v); });
+      dedupBy(adminOvertime, function(o) { return (o.date || '') + '|' + (o.empCode || o.name || '') + '|' + (o.hours || ''); });
+      dedupBy(inventoryVouchers, function(v) { return v.voucherId || v.id || v._id || JSON.stringify(v); });
     }
 
     function showSyncToast(msg) {
@@ -12093,7 +12093,7 @@ function toggleEmployeeStatus(empId) {
 
     function deleteEvaluation(idx) { if (!requireAdmin()) return;
       if (!confirm('هل أنت متأكد من حذف هذا التقييم؟')) return;
-      _logDeletion('evaluations', (evaluations[idx].employeeCode||'') + '|' + (evaluations[idx].date||'') + '|' + (evaluations[idx].type||''));
+      _logDeletion('evaluations', (evaluations[idx].empCode || evaluations[idx].employeeCode||'') + '|' + (evaluations[idx].date||'') + '|' + (evaluations[idx].month || evaluations[idx].type||'') + '|' + (evaluations[idx].year||''));
       evaluations.splice(idx, 1);
       syncStorage();
       renderEvaluations();
