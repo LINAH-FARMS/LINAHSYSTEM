@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8">
@@ -1047,10 +1047,14 @@
           <div style="position:relative;width:150px;height:150px;">
             <canvas id="dash-donut" width="150" height="150" style="width:150px;height:150px;"></canvas>
             <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;font-weight:800;font-size:22px;color:#1b5e20;line-height:1.1;" id="dash-donut-total">0</div>
-          </div>
-        </div>
-        <div class="dash-legend" id="dash-dnut-legend"></div>
       </div>
+    </div>
+    <div style="margin-top:10px;">
+      <button onclick="scanAndShowDuplicates('duplicates-panel-bread')" class="btn btn-warning" style="font-size:13px;">🔍 فحص وعرض البيانات المكررة</button>
+    </div>
+    <div id="duplicates-panel-bread"></div>
+
+  </div>
       <div class="dash-chart-panel">
         <div class="dash-chart-title">🏠 إشغال السكن بالمباني <span class="badge-count" id="dash-housing-badge">0</span></div>
         <div id="dash-hbars"></div>
@@ -1608,6 +1612,10 @@
         <tbody id="hospitality-table-body"></tbody>
       </table>
     </div>
+    <div style="margin-top:10px;">
+      <button onclick="scanAndShowDuplicates()" class="btn btn-warning" style="font-size:13px;">🔍 فحص وعرض البيانات المكررة</button>
+    </div>
+    <div id="duplicates-panel"></div>
   </div>
 
   <div id="tab-maintenance" class="tab-content">
@@ -6523,6 +6531,8 @@ function toggleEmployeeStatus(empId) {
         document.getElementById('hosp-save-btn').innerHTML = '🛎️ تسجيل وإعتماد الزيارة';
         document.getElementById('hosp-save-btn').onclick = function() { addHospitalityRecord(); };
       } else {
+        var dupHosp = hospitalities.find(function(h) { return h.name === name && h.arrival === arrival; });
+        if (dupHosp) return alert('⚠️ توجد زيارة مكررة لنفس الزائر في نفس التاريخ (' + name + ' - ' + arrival + ').');
         hospitalities.push({ _id: Date.now().toString(), name, type, title, arrival, departure, guests, meals: meals.slice() });
       }
       updateMealLogFromHospitality(arrival);
@@ -6595,6 +6605,149 @@ function toggleEmployeeStatus(empId) {
       hospitalities.splice(idx, 1);
       if (rec && rec.arrival) updateMealLogFromHospitality(rec.arrival);
       syncStorage(); renderHospitalityTable(); renderMealLogTable();
+    }
+
+    function scanAndShowDuplicates(panelId) {
+      var container = document.getElementById(panelId || 'duplicates-panel');
+      if (!container) return;
+      var html = '<div style="background:#fff3cd;border:1px solid #ffc107;border-radius:8px;padding:15px;margin:10px 0;">';
+      html += '<h3 style="color:#856404;margin:0 0 10px;">🔍 فحص البيانات المكررة</h3>';
+      var found = false;
+
+      // 1. فحص الضيافة
+      var hospDups = [];
+      var hospSeen = {};
+      hospitalities.forEach(function(h, i) {
+        var key = h.name + '|' + h.arrival;
+        if (hospSeen[key] !== undefined) {
+          hospDups.push({ idx: i, rec: h, origIdx: hospSeen[key] });
+        } else {
+          hospSeen[key] = i;
+        }
+      });
+      if (hospDups.length > 0) {
+        found = true;
+        html += '<div style="margin-bottom:12px;"><strong style="color:#c62828;">🛎️ ضيافة (' + hospDups.length + ' مكرر):</strong>';
+        hospDups.forEach(function(d) {
+          html += '<div style="background:#ffebee;padding:8px;border-radius:6px;margin:4px 0;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;">';
+          html += '<span style="font-size:13px;">👤 ' + d.rec.name + ' | 📅 ' + d.rec.arrival + (d.rec.title ? ' | ' + d.rec.title : '') + '</span>';
+          html += '<button onclick="deleteDupHospitality(' + d.idx + ')" style="padding:4px 12px;background:#c62828;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:12px;">🗑️ حذف</button>';
+          html += '</div>';
+        });
+        html += '</div>';
+      }
+
+      // 2. فحص إنتاج الخبازية
+      var prodDups = [];
+      var prodSeen = {};
+      bakeryProductions.forEach(function(p, i) {
+        var key = normalizeDateStr(p.date);
+        if (prodSeen[key] !== undefined) {
+          prodDups.push({ idx: i, rec: p, origIdx: prodSeen[key] });
+        } else {
+          prodSeen[key] = i;
+        }
+      });
+      if (prodDups.length > 0) {
+        found = true;
+        html += '<div style="margin-bottom:12px;"><strong style="color:#c62828;">🏭 إنتاج الخبازية (' + prodDups.length + ' مكرر):</strong>';
+        prodDups.forEach(function(d) {
+          html += '<div style="background:#ffebee;padding:8px;border-radius:6px;margin:4px 0;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;">';
+          html += '<span style="font-size:13px;">📅 ' + normalizeDateStr(d.rec.date) + ' | 🍞 ' + (d.rec.breadCount || 0) + ' رغيف</span>';
+          html += '<button onclick="deleteDupProduction(' + d.idx + ')" style="padding:4px 12px;background:#c62828;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:12px;">🗑️ حذف</button>';
+          html += '</div>';
+        });
+        html += '</div>';
+      }
+
+      // 3. فحص توريدات المقاولين
+      var ctrDups = [];
+      var ctrSeen = {};
+      bakeryContractorSupplies.forEach(function(s, i) {
+        var key = s.name + '|' + normalizeDateStr(s.date);
+        if (ctrSeen[key] !== undefined) {
+          ctrDups.push({ idx: i, rec: s, origIdx: ctrSeen[key] });
+        } else {
+          ctrSeen[key] = i;
+        }
+      });
+      if (ctrDups.length > 0) {
+        found = true;
+        html += '<div style="margin-bottom:12px;"><strong style="color:#c62828;">👷 توريدات المقاولين (' + ctrDups.length + ' مكرر):</strong>';
+        ctrDups.forEach(function(d) {
+          html += '<div style="background:#ffebee;padding:8px;border-radius:6px;margin:4px 0;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;">';
+          html += '<span style="font-size:13px;">👤 ' + d.rec.name + ' | 📅 ' + normalizeDateStr(d.rec.date) + ' | 🍞 ' + (d.rec.count || 0) + ' رغيف</span>';
+          html += '<button onclick="deleteDupContractor(' + d.idx + ')" style="padding:4px 12px;background:#c62828;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:12px;">🗑️ حذف</button>';
+          html += '</div>';
+        });
+        html += '</div>';
+      }
+
+      if (!found) {
+        html += '<div style="background:#e8f5e9;padding:12px;border-radius:6px;color:#2e7d32;font-weight:600;text-align:center;">✅ لا توجد بيانات مكررة - كل شيء سليم!</div>';
+      } else {
+        html += '<div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">';
+        html += '<button onclick="deleteAllDuplicates()" style="padding:6px 16px;background:#c62828;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600;">🗑️ حذف جميع المكررات (' + (hospDups.length + prodDups.length + ctrDups.length) + ')</button>';
+        html += '<button onclick="document.getElementById(\'' + (panelId || 'duplicates-panel') + '\').innerHTML=\'\'" style="padding:6px 16px;background:#757575;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;">✕ إغلاق</button>';
+        html += '</div>';
+      }
+      html += '</div>';
+      container.innerHTML = html;
+    }
+
+    function deleteDupHospitality(idx) {
+      if (!requireAdmin()) return;
+      var rec = hospitalities[idx];
+      hospitalities.splice(idx, 1);
+      if (rec && rec.arrival) updateMealLogFromHospitality(rec.arrival);
+      syncStorage(); renderHospitalityTable(); renderMealLogTable();
+      scanAndShowDuplicates();
+    }
+
+    function deleteDupProduction(idx) {
+      if (!requireAdmin()) return;
+      bakeryProductions.splice(idx, 1);
+      syncStorage(); renderBakeryProductions(); updateBakeryProductionIngredientStocks();
+      scanAndShowDuplicates();
+    }
+
+    function deleteDupContractor(idx) {
+      if (!requireAdmin()) return;
+      bakeryContractorSupplies.splice(idx, 1);
+      syncStorage(); renderBakeryContractorSupplies(); updateBakeryStats(); updateBreadSupplyStats();
+      scanAndShowDuplicates();
+    }
+
+    function deleteAllDuplicates() {
+      if (!requireAdmin()) return;
+      if (!confirm('هل أنت متأكد من حذف جميع البيانات المكررة؟')) return;
+
+      // حذف ضيافة مكررة
+      var hospSeen = {};
+      for (var i = hospitalities.length - 1; i >= 0; i--) {
+        var key = hospitalities[i].name + '|' + hospitalities[i].arrival;
+        if (hospSeen[key]) { hospitalities.splice(i, 1); } else { hospSeen[key] = true; }
+      }
+
+      // حذف إنتاج مكرر
+      var prodSeen = {};
+      for (var i = bakeryProductions.length - 1; i >= 0; i--) {
+        var key = normalizeDateStr(bakeryProductions[i].date);
+        if (prodSeen[key]) { bakeryProductions.splice(i, 1); } else { prodSeen[key] = true; }
+      }
+
+      // حذف توريدات مقاولين مكررة
+      var ctrSeen = {};
+      for (var i = bakeryContractorSupplies.length - 1; i >= 0; i--) {
+        var key = bakeryContractorSupplies[i].name + '|' + normalizeDateStr(bakeryContractorSupplies[i].date);
+        if (ctrSeen[key]) { bakeryContractorSupplies.splice(i, 1); } else { ctrSeen[key] = true; }
+      }
+
+      syncStorage(); renderHospitalityTable(); renderMealLogTable();
+      renderBakeryProductions(); updateBakeryProductionIngredientStocks();
+      renderBakeryContractorSupplies(); updateBakeryStats(); updateBreadSupplyStats();
+      scanAndShowDuplicates();
+      alert('✅ تم حذف جميع البيانات المكررة بنجاح!');
     }
 
     async function addMaintenanceRecord() {
@@ -9015,6 +9168,18 @@ function toggleEmployeeStatus(empId) {
         let notes = document.getElementById('bprod-notes').value.trim();
         var ingIds = ['ING001','ING002','ING003','ING004','ING007'];
         var ingQtys = { ING001: flourUsed, ING002: yeastUsed, ING003: saltUsed, ING004: branUsed, ING007: dieselUsed };
+        // حذف الإنتاج القديم إن وجد لنفس التاريخ (استعادة الخامات أولاً)
+        var prodDate = normalizeDateStr(date);
+        var prodIdx = bakeryProductions.findIndex(function(r) { return normalizeDateStr(r.date) === prodDate; });
+        if (prodIdx >= 0) {
+          var oldProd = bakeryProductions[prodIdx];
+          [{id:'ING001',qty:oldProd.flourUsed},{id:'ING002',qty:oldProd.yeastUsed},{id:'ING003',qty:oldProd.saltUsed},{id:'ING004',qty:oldProd.branUsed},{id:'ING007',qty:oldProd.dieselUsed}].forEach(function(item) {
+            if (item.qty <= 0) return;
+            var ing = bakeryIngredients.find(function(i) { return i.id === item.id; });
+            if (ing) ing.currentQty = (ing.currentQty || 0) + item.qty;
+          });
+          bakeryProductions.splice(prodIdx, 1);
+        }
         ingIds.forEach(function(id) {
           var qty = ingQtys[id];
           if (qty <= 0) return;
@@ -9027,10 +9192,6 @@ function toggleEmployeeStatus(empId) {
           }
           ing.currentQty = before - qty;
         });
-        // منع تكرار الإنتاج لنفس التاريخ
-        var prodDate = normalizeDateStr(date);
-        var prodDup = bakeryProductions.find(function(r) { return normalizeDateStr(r.date) === prodDate; });
-        if (prodDup) return alert('⚠️ يوجد إنتاج مكرر في هذا التاريخ (' + prodDate + ').');
         bakeryProductions.push({
           id: getBakeryNextId('PROD', bakeryProductions),
           date: prodDate,
@@ -9090,6 +9251,22 @@ function toggleEmployeeStatus(empId) {
         let paid = parseFloat(document.getElementById('bctr-paid').value) || 0;
         let responsible = document.getElementById('bctr-responsible').value.trim();
         let notes = document.getElementById('bctr-notes').value.trim();
+        // حذف التوريد القديم لنفس المقاول في نفس التاريخ (استعادة الخامات أولاً)
+        var normDate = normalizeDateStr(date);
+        var dupIdx = bakeryContractorSupplies.findIndex(function(r) { return r.name === name && normalizeDateStr(r.date) === normDate; });
+        if (dupIdx >= 0) {
+          var oldSup = bakeryContractorSupplies[dupIdx];
+          if (oldSup.ingredients) {
+            Object.keys(oldSup.ingredients).forEach(function(id) {
+              var qty = oldSup.ingredients[id];
+              if (qty <= 0) return;
+              var ing = bakeryIngredients.find(function(i) { return i.id === id; });
+              if (ing) ing.currentQty = (ing.currentQty || 0) + qty;
+            });
+          }
+          bakeryStockLog = bakeryStockLog.filter(function(l) { return l.reference !== 'CTR_' + name || normalizeDateStr(l.date) !== normDate; });
+          bakeryContractorSupplies.splice(dupIdx, 1);
+        }
         // Deduct ingredients
         var ingIds = ['ING001','ING002','ING003','ING004','ING007'];
         var deducted = {};
@@ -9123,10 +9300,6 @@ function toggleEmployeeStatus(empId) {
         let prodCost = deductedCost;
         let revenue = count * price;
         let profit = revenue - prodCost;
-        // منع تكرار توريد لنفس المقاول في نفس اليوم
-        var normDate = normalizeDateStr(date);
-        var dup = bakeryContractorSupplies.find(function(r) { return r.name === name && normalizeDateStr(r.date) === normDate; });
-        if (dup) return alert('⚠️ يوجد توريد مكرر لنفس المقاول في هذا التاريخ (' + name + ' - ' + normDate + ').');
         bakeryContractorSupplies.push({ id: getBakeryNextId('CTR', bakeryContractorSupplies), date: normDate, name, count, price, paid, prodCost, revenue, profit, responsible, notes, ingredients: deducted });
         syncStorage(); renderBakeryContractorSupplies(); updateBakeryStats(); updateBreadSupplyStats(); updateBctrIngredientStocks(); updateBakeryProductionIngredientStocks();
         document.getElementById('bctr-count').value = '0'; document.getElementById('bctr-paid').value = '0';
@@ -10082,23 +10255,23 @@ function toggleEmployeeStatus(empId) {
       if (srcId && srcId === _deviceId) return;
       employees = mergeArrays(employees, d.employees, function(e) { return e.code || e.name || JSON.stringify(e); });
       roomsCapacity = mergeArrays(roomsCapacity, d.roomsCapacity, function(r) { return r.sector + '|' + r.number; });
-      vacations = mergeArrays(vacations, d.vacations);
-      hospitalities = mergeArrays(hospitalities, d.hospitalities);
-      maintenanceRecords = mergeArrays(maintenanceRecords, d.maintenanceRecords);
-      septicRecords = mergeArrays(septicRecords, d.septicRecords);
-      inventoryVouchers = mergeArrays(inventoryVouchers, d.inventoryVouchers);
-      excludedEmployees = mergeArrays(excludedEmployees, d.excludedEmployees);
-      periodicMaintenance = mergeArrays(periodicMaintenance, d.periodicMaintenance);
-      teaSugarDisbursements = mergeArrays(teaSugarDisbursements, d.teaSugarDisbursements);
-      teaSugarBatches = mergeArrays(teaSugarBatches, d.teaSugarBatches);
-      mealLogs = mergeArrays(mealLogs, d.mealLogs);
-      inventoryItems = mergeArrays(inventoryItems, d.inventoryItems);
-      contractors = mergeArrays(contractors, d.contractors);
-      dynamicSectors = mergeArrays(dynamicSectors, d.dynamicSectors);
-      dynamicRooms = mergeArrays(dynamicRooms, d.dynamicRooms);
-      dynamicSeptics = mergeArrays(dynamicSeptics, d.dynamicSeptics);
-      dynamicDepts = mergeArrays(dynamicDepts, d.dynamicDepts);
-      dynamicTitles = mergeArrays(dynamicTitles, d.dynamicTitles);
+      vacations = mergeArrays(vacations, d.vacations, function(v) { return (v.employeeCode || v.employeeName || '') + '|' + (v.startDate || v.dateFrom || '') + '|' + (v.endDate || v.dateTo || ''); });
+      hospitalities = mergeArrays(hospitalities, d.hospitalities, function(h) { return (h.name || '') + '|' + (h.arrival || '') + '|' + (h.type || ''); });
+      maintenanceRecords = mergeArrays(maintenanceRecords, d.maintenanceRecords, function(m) { return (m.category || '') + '|' + (m.task || '') + '|' + (m.date || m.createdAt || ''); });
+      septicRecords = mergeArrays(septicRecords, d.septicRecords, function(s) { return (s.date || '') + '|' + (s.sector || '') + '|' + (s.quantity || ''); });
+      inventoryVouchers = mergeArrays(inventoryVouchers, d.inventoryVouchers, function(v) { return v.id || v._id || JSON.stringify(v); });
+      excludedEmployees = mergeArrays(excludedEmployees, d.excludedEmployees, function(e) { return e.code || e.name || JSON.stringify(e); });
+      periodicMaintenance = mergeArrays(periodicMaintenance, d.periodicMaintenance, function(p) { return (p.task || '') + '|' + (p.sector || '') + '|' + (p.frequency || ''); });
+      teaSugarDisbursements = mergeArrays(teaSugarDisbursements, d.teaSugarDisbursements, function(t) { return (t.date || '') + '|' + (t.type || '') + '|' + (t.quantity || ''); });
+      teaSugarBatches = mergeArrays(teaSugarBatches, d.teaSugarBatches, function(t) { return t.id || t._id || JSON.stringify(t); });
+      mealLogs = mergeArrays(mealLogs, d.mealLogs, function(m) { return m.date || JSON.stringify(m); });
+      inventoryItems = mergeArrays(inventoryItems, d.inventoryItems, function(i) { return i.id || i.name || JSON.stringify(i); });
+      contractors = mergeArrays(contractors, d.contractors, function(c) { return c.name || c.id || JSON.stringify(c); });
+      dynamicSectors = mergeArrays(dynamicSectors, d.dynamicSectors, function(s) { return s.name || JSON.stringify(s); });
+      dynamicRooms = mergeArrays(dynamicRooms, d.dynamicRooms, function(r) { return (r.sector || '') + '|' + (r.number || ''); });
+      dynamicSeptics = mergeArrays(dynamicSeptics, d.dynamicSeptics, function(s) { return (s.sector || '') + '|' + (s.name || ''); });
+      dynamicDepts = mergeArrays(dynamicDepts, d.dynamicDepts, function(d2) { return d2.name || JSON.stringify(d2); });
+      dynamicTitles = mergeArrays(dynamicTitles, d.dynamicTitles, function(t) { return t.name || JSON.stringify(t); });
       if (d.deptTitles) {
         Object.keys(d.deptTitles).forEach(dept => {
           if (!deptTitles[dept]) deptTitles[dept] = [];
@@ -10109,10 +10282,10 @@ function toggleEmployeeStatus(empId) {
       appUsers = appUsers.filter(function(u) { return /^[\u0621-\u064A\s]+$/.test(u.name); });
       if (d.currentUser) currentUser = d.currentUser;
       bakeryIngredients = mergeArrays(bakeryIngredients, d.bakeryIngredients, function(b) { return b.name || JSON.stringify(b); });
-      bakeryProductions = mergeArrays(bakeryProductions, d.bakeryProductions);
-      bakeryContractorSupplies = mergeArrays(bakeryContractorSupplies, d.bakeryContractorSupplies);
-      bakeryInvoices = mergeArrays(bakeryInvoices, d.bakeryInvoices);
-      if (d.adminOvertime) adminOvertime = mergeArrays(adminOvertime, d.adminOvertime);
+      bakeryProductions = mergeArrays(bakeryProductions, d.bakeryProductions, function(p) { return normalizeDateStr(p.date) + '|' + (p.breadCount || ''); });
+      bakeryContractorSupplies = mergeArrays(bakeryContractorSupplies, d.bakeryContractorSupplies, function(s) { return (s.name || '') + '|' + normalizeDateStr(s.date) + '|' + (s.count || ''); });
+      bakeryInvoices = mergeArrays(bakeryInvoices, d.bakeryInvoices, function(inv) { return inv.id || inv._id || JSON.stringify(inv); });
+      if (d.adminOvertime) adminOvertime = mergeArrays(adminOvertime, d.adminOvertime, function(o) { return (o.date || '') + '|' + (o.name || '') + '|' + (o.hours || ''); });
       if (typeof d.manualTotalBeds === 'number') manualTotalBeds = d.manualTotalBeds;
       // منع ظهور المستبعدين في القوة بعد المزامنة
       if (excludedEmployees.length > 0) {
@@ -10121,9 +10294,37 @@ function toggleEmployeeStatus(empId) {
         employees = employees.filter(function(e) { return !exclMap[e.code || e.id || e.name]; });
       }
       normalizeBakeryDates(true);
+      deduplicateAfterSync();
       syncStorage(true, true);
       renderTable(); renderHousingLayout(); renderInventoryTable(); renderInventoryItems(); renderVacationsTable(); renderOvertimeCalendar(); renderHospitalityTable(); renderMaintenanceTable(); renderSepticTable(); renderPeriodicMaintenance(); renderTeaSugarTable(); renderMealLogTable(); renderDashboard(); renderQuickActions(); renderContractorsTable(); renderBakeryIngredients(); renderBakeryProductions(); renderBakeryContractorSupplies(); renderBakeryInvoices(); updateBakeryStats(); updateBreadSupplyStats(); showSyncToast('تم استلام تحديثات من جهاز آخر');
       updateLastSyncTime();
+    }
+
+    function deduplicateAfterSync() {
+      function dedupBy(arr, keyFn) {
+        var seen = {};
+        for (var i = arr.length - 1; i >= 0; i--) {
+          var k = keyFn(arr[i]);
+          if (seen[k]) arr.splice(i, 1); else seen[k] = true;
+        }
+      }
+      dedupBy(hospitalities, function(h) { return (h.name || '') + '|' + (h.arrival || '') + '|' + (h.type || ''); });
+      dedupBy(bakeryProductions, function(p) { return normalizeDateStr(p.date) + '|' + (p.breadCount || ''); });
+      dedupBy(bakeryContractorSupplies, function(s) { return (s.name || '') + '|' + normalizeDateStr(s.date) + '|' + (s.count || ''); });
+      dedupBy(vacations, function(v) { return (v.employeeCode || v.employeeName || '') + '|' + (v.startDate || v.dateFrom || '') + '|' + (v.endDate || v.dateTo || ''); });
+      dedupBy(maintenanceRecords, function(m) { return (m.category || '') + '|' + (m.task || '') + '|' + (m.date || m.createdAt || ''); });
+      dedupBy(septicRecords, function(s) { return (s.date || '') + '|' + (s.sector || '') + '|' + (s.quantity || ''); });
+      dedupBy(teaSugarDisbursements, function(t) { return (t.date || '') + '|' + (t.type || '') + '|' + (t.quantity || ''); });
+      dedupBy(mealLogs, function(m) { return m.date || JSON.stringify(m); });
+      dedupBy(bakeryInvoices, function(inv) { return inv.id || inv._id || JSON.stringify(inv); });
+      dedupBy(employees, function(e) { return e.code || e.name || JSON.stringify(e); });
+      dedupBy(contractors, function(c) { return c.name || c.id || JSON.stringify(c); });
+      dedupBy(inventoryItems, function(i) { return i.id || i.name || JSON.stringify(i); });
+      dedupBy(excludedEmployees, function(e) { return e.code || e.name || JSON.stringify(e); });
+      dedupBy(periodicMaintenance, function(p) { return (p.task || '') + '|' + (p.sector || '') + '|' + (p.frequency || ''); });
+      dedupBy(bakeryIngredients, function(b) { return b.name || JSON.stringify(b); });
+      dedupBy(adminOvertime, function(o) { return (o.date || '') + '|' + (o.name || '') + '|' + (o.hours || ''); });
+      dedupBy(inventoryVouchers, function(v) { return v.id || v._id || JSON.stringify(v); });
     }
 
     function showSyncToast(msg) {
