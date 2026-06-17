@@ -6387,7 +6387,7 @@ function toggleEmployeeStatus(empId) {
         notes
       };
 
-      vacations.push(_ts(vRecord)); syncStorage(); updateEmployeeVacationStatuses(); renderTable(); renderVacationsTable();
+      vacations.push(_ts(vRecord)); syncStorage(); updateEmployeeVacationStatuses(); renderTable(); renderVacationsTable(); renderDashboard();
       document.getElementById('vacation-notes').value = '';
       document.getElementById('vacation-days').value = '';
       document.getElementById('vacation-start-date').value = '';
@@ -6470,7 +6470,7 @@ function toggleEmployeeStatus(empId) {
             var emp = employees.find(function(e) { return (e.code || e.id) === empCode; });
             if (emp) emp.status = 'P';
           }
-          renderTable();
+          renderTable(); renderDashboard();
         }
       }
     }
@@ -6531,7 +6531,7 @@ function toggleEmployeeStatus(empId) {
       v.lastWorkDay = dates.lastWorkDay;
       v.returnDate = dates.returnDate;
       v.notes = notes;
-      syncStorage(); renderVacationsTable();
+      syncStorage(); renderVacationsTable(); updateEmployeeVacationStatuses(); renderTable(); renderDashboard();
       // إعادة تعيين الفورم
       document.getElementById('vacation-notes').value = '';
       document.getElementById('vacation-days').value = '';
