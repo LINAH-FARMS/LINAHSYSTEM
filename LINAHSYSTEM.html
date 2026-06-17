@@ -936,6 +936,7 @@
       <span style="font-size:11px;font-weight:600;color:rgba(255,255,255,0.85);">Supabase </span><span id="supabase-status" style="font-size:11px;font-weight:600;">🔄 قيد الاتصال...</span>
       <button onclick="manualSync()" style="background:rgba(255,255,255,0.12);color:white;border:1px solid rgba(255,255,255,0.25);padding:3px 10px;border-radius:50px;font-size:11px;cursor:pointer;font-family:'Cairo',sans-serif;" title="دفع يدوي">⬆️ دفع يدوي</button>
       <button onclick="manualPull()" style="background:rgba(255,255,255,0.08);color:white;border:1px solid rgba(255,255,255,0.15);padding:3px 10px;border-radius:50px;font-size:11px;cursor:pointer;font-family:'Cairo',sans-serif;" title="سحب يدوي">⬇️ سحب يدوي</button>
+      <button onclick="forceFullSync()" style="background:rgba(255,100,0,0.25);color:white;border:1px solid rgba(255,150,0,0.5);padding:3px 10px;border-radius:50px;font-size:11px;cursor:pointer;font-family:'Cairo',sans-serif;" title="دفع كل البيانات إلى السحابة — استخدمه مرة واحدة فقط">⚡ مزامنة قوية</button>
       <span id="presence-users" style="font-size:11px;font-weight:600;display:none;"></span>
       <span id="last-sync-time" style="font-size:10px;color:rgba(255,255,255,0.6);display:none;"></span>
       <span id="backup-status" style="font-size:10px;display:none;"></span>
@@ -9835,6 +9836,18 @@ function toggleEmployeeStatus(empId) {
       }
       _pushInProgress = false;
       return !hasError;
+    }
+    async function forceFullSync() {
+      if (!supabaseConnected) return alert('❌ غير متصل بـ Supabase');
+      if (!confirm('⚡ سيتم دفع كل البيانات من جهازك إلى السحابة.\nجهازك هو المصدر الوحيد. هل أنت متأكد؟')) return;
+      _dataHashes = {};
+      _pulledAt = {};
+      localStorage.setItem('_pushedHashes', '{}');
+      localStorage.setItem('_pulledAt', '{}');
+      syncLog('🔄 جاري المزامنة القوية...');
+      var ok = await pushToSupabase();
+      if (ok) { syncLog('✅ تمت المزامنة القوية بنجاح'); alert('✅ تمت المزامنة القوية بنجاح!'); }
+      else { syncLog('⚠️ فشلت المزامنة القوية'); alert('⚠️ فشلت المزامنة — تحقق من الاتصال'); }
     }
     async function pullFromSupabase() {
       if (!supabaseConnected) return;
