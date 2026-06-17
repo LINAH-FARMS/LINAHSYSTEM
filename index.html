@@ -10143,7 +10143,6 @@ function toggleEmployeeStatus(empId) {
         archiveData: JSON.parse(JSON.stringify(archiveData)),
         quickActions: JSON.parse(JSON.stringify(quickActions)),
         deptTitles: JSON.parse(JSON.stringify(deptTitles)),
-        currentUser: currentUser || '',
         manualTotalBeds: typeof manualTotalBeds === 'number' ? manualTotalBeds : 0,
         dailyStats: JSON.parse(JSON.stringify(dailyStats)),
         syncDeletions: JSON.parse(JSON.stringify(syncDeletions))
@@ -10553,7 +10552,6 @@ function toggleEmployeeStatus(empId) {
       }
       if (d.appUsers) appUsers = _smartMerge(appUsers, d.appUsers, function(u) { return u.name; }, 'appUsers');
       appUsers = appUsers.filter(function(u) { return /^[\u0621-\u064A\s]+$/.test(u.name); });
-      if (d.currentUser) currentUser = d.currentUser;
       if (d.bakeryIngredients) bakeryIngredients = _smartMerge(bakeryIngredients, d.bakeryIngredients, function(b) { return b.name || JSON.stringify(b); }, 'bakeryIngredients');
       if (d.bakeryProductions) bakeryProductions = _smartMerge(bakeryProductions, d.bakeryProductions, function(p) { return normalizeDateStr(p.date) + '|' + (p.breadCount || ''); }, 'bakeryProductions');
       if (d.bakeryContractorSupplies) bakeryContractorSupplies = _smartMerge(bakeryContractorSupplies, d.bakeryContractorSupplies, function(s) { return (s.name || '') + '|' + normalizeDateStr(s.date) + '|' + (s.count || ''); }, 'bakeryContractorSupplies');
