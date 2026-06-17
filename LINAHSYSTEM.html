@@ -9940,7 +9940,7 @@ function toggleEmployeeStatus(empId) {
     var debouncedSyncToSupabase = function() { setTimeout(pushToSupabase, 500); };
 
     // backward compat for old function refs
-    var DATA_KEYS = ['employees','roomsCapacity','vacations','hospitalities','maintenanceRecords','septicRecords','inventoryVouchers','inventoryItems','excludedEmployees','periodicMaintenance','teaSugarDisbursements','teaSugarBatches','mealLogs','contractors','dynamicSectors','dynamicRooms','dynamicSeptics','dynamicDepts','dynamicTitles','deptTitles','appUsers','auditLog','bakeryIngredients','bakeryProductions','bakeryContractorSupplies','bakeryInvoices','currentUser','manualTotalBeds','roomAssets','archiveData','quickActions'];
+    var DATA_KEYS = ['employees','roomsCapacity','vacations','hospitalities','maintenanceRecords','septicRecords','inventoryVouchers','inventoryItems','excludedEmployees','periodicMaintenance','teaSugarDisbursements','teaSugarBatches','mealLogs','contractors','dynamicSectors','dynamicRooms','dynamicSeptics','dynamicDepts','dynamicTitles','deptTitles','appUsers','auditLog','bakeryIngredients','bakeryProductions','bakeryContractorSupplies','bakeryInvoices','manualTotalBeds','roomAssets','archiveData','quickActions'];
 
     // Snapshot after pull — نعرف إيه اللي اتشال عشان push ما يضيفوش تاني
     var _snapshotKeys = {};
@@ -10107,7 +10107,6 @@ function toggleEmployeeStatus(empId) {
       }
       if (d.appUsers) appUsers = mergeArrays(appUsers, d.appUsers, function(u) { return u.name; });
       appUsers = appUsers.filter(function(u) { return /^[\u0621-\u064A\s]+$/.test(u.name); });
-      if (d.currentUser) currentUser = d.currentUser;
       bakeryIngredients = mergeArrays(bakeryIngredients, d.bakeryIngredients, function(b) { return b.name || JSON.stringify(b); });
       bakeryProductions = mergeArrays(bakeryProductions, d.bakeryProductions);
       bakeryContractorSupplies = mergeArrays(bakeryContractorSupplies, d.bakeryContractorSupplies);
@@ -10190,7 +10189,7 @@ function toggleEmployeeStatus(empId) {
           septicRecords, inventoryVouchers, inventoryItems, excludedEmployees,
           periodicMaintenance, teaSugarDisbursements, teaSugarBatches, mealLogs, contractors,
           dynamicSectors, dynamicRooms, dynamicSeptics, dynamicDepts, dynamicTitles,
-          appUsers, currentUser, bakeryIngredients, bakeryProductions,
+          appUsers, bakeryIngredients, bakeryProductions,
           bakeryContractorSupplies, bakeryInvoices
         };
         var json = JSON.stringify(backup);
@@ -10213,7 +10212,7 @@ function toggleEmployeeStatus(empId) {
         if (!res.ok) return;
         var data = await res.json();
         if (!data || !data.employees) return;
-        var localJson = JSON.stringify({employees,roomsCapacity,vacations,hospitalities,maintenanceRecords,septicRecords,inventoryVouchers,inventoryItems,excludedEmployees,periodicMaintenance,teaSugarDisbursements,teaSugarBatches,mealLogs,contractors,dynamicSectors,contractorSectors,contractorRooms,dynamicRooms,dynamicSeptics,dynamicDepts,dynamicTitles,deptTitles,appUsers,currentUser,bakeryIngredients,bakeryProductions,bakeryContractorSupplies,bakeryInvoices,manualTotalBeds});
+        var localJson = JSON.stringify({employees,roomsCapacity,vacations,hospitalities,maintenanceRecords,septicRecords,inventoryVouchers,inventoryItems,excludedEmployees,periodicMaintenance,teaSugarDisbursements,teaSugarBatches,mealLogs,contractors,dynamicSectors,contractorSectors,contractorRooms,dynamicRooms,dynamicSeptics,dynamicDepts,dynamicTitles,deptTitles,appUsers,bakeryIngredients,bakeryProductions,bakeryContractorSupplies,bakeryInvoices,manualTotalBeds});
         lastCloudData = JSON.stringify(data);
         if (JSON.stringify(data) === localJson) return;
         var localTime = parseInt(localStorage.getItem('_localChangeTime')) || 0;
@@ -10246,7 +10245,6 @@ function toggleEmployeeStatus(empId) {
         if (data.dynamicTitles) dynamicTitles = data.dynamicTitles;
         if (data.deptTitles) deptTitles = data.deptTitles;
         if (data.appUsers) appUsers = filterLatinUsers(data.appUsers);
-        if (data.currentUser) currentUser = data.currentUser;
         if (data.bakeryIngredients) {
           var localQty = {}; bakeryIngredients.forEach(function(ing) { localQty[ing.id] = ing.currentQty || 0; });
           data.bakeryIngredients.forEach(function(ing) {
@@ -10463,7 +10461,6 @@ function toggleEmployeeStatus(empId) {
         if (data.dynamicTitles) dynamicTitles = data.dynamicTitles;
         if (data.deptTitles) deptTitles = data.deptTitles;
         if (data.appUsers) appUsers = filterLatinUsers(data.appUsers);
-        if (data.currentUser) currentUser = data.currentUser;
         if (data.bakeryIngredients) {
           var localQty2 = {}; bakeryIngredients.forEach(function(ing) { localQty2[ing.id] = ing.currentQty || 0; });
           data.bakeryIngredients.forEach(function(ing) {
@@ -10648,7 +10645,6 @@ function toggleEmployeeStatus(empId) {
         if (data.dynamicTitles) dynamicTitles = data.dynamicTitles;
         if (data.deptTitles) deptTitles = data.deptTitles;
         if (data.appUsers) appUsers = filterLatinUsers(data.appUsers);
-        if (data.currentUser) currentUser = data.currentUser;
 
       syncStorage();
       sortEmployeesAlphabetically(); rebuildAllDropdowns();
