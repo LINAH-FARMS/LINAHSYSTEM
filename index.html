@@ -5675,11 +5675,11 @@ function toggleEmployeeStatus(empId) {
             emp.status = 'P';
             emp.departureTime = '';
         }
-        
+        _ts(emp);
         playChangeSound();
         syncStorage();
         logAction('تعديل', 'حالة موظف', emp.name, 'من ' + (oldStatus === 'P' ? 'تواجد' : 'إجازة') + ' إلى ' + (emp.status === 'P' ? 'تواجد' : 'إجازة'));
-        renderTable();
+        renderTable(); renderDashboard();
         calculateSystemStats();
     }
 }
@@ -6344,8 +6344,8 @@ function toggleEmployeeStatus(empId) {
           if (!travel || !ret) return false;
           return todayStr >= travel && todayStr < ret;
         });
-        if (active) emp.status = 'V';
-        else emp.status = 'P';
+        var newStatus = active ? 'V' : 'P';
+        if (emp.status !== newStatus) { emp.status = newStatus; _ts(emp); }
       });
     }
 
@@ -6468,7 +6468,7 @@ function toggleEmployeeStatus(empId) {
           if (hasMore) { updateEmployeeVacationStatuses(); }
           else {
             var emp = employees.find(function(e) { return (e.code || e.id) === empCode; });
-            if (emp) emp.status = 'P';
+            if (emp && emp.status !== 'P') { emp.status = 'P'; _ts(emp); }
           }
           renderTable(); renderDashboard();
         }
