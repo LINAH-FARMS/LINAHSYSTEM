@@ -935,6 +935,7 @@
       <span id="server-status" style="font-size:11px;font-weight:600;display:none;">🔴</span>
       <span id="cloud-status" style="font-size:11px;font-weight:600;">☁️ غير متصل</span>
       <span style="font-size:11px;font-weight:600;color:rgba(255,255,255,0.85);">Supabase </span><span id="supabase-status" style="font-size:11px;font-weight:600;">🔄 قيد الاتصال...</span>
+      <button onclick="manualPull()" style="background:rgba(33,150,243,0.25);color:white;border:1px solid rgba(33,150,243,0.5);padding:3px 10px;border-radius:50px;font-size:11px;cursor:pointer;font-family:'Cairo',sans-serif;" title="سحب أحدث البيانات من السحابة">🔄 سحب</button>
       <button onclick="forceFullSync()" style="background:rgba(255,100,0,0.25);color:white;border:1px solid rgba(255,150,0,0.5);padding:3px 10px;border-radius:50px;font-size:11px;cursor:pointer;font-family:'Cairo',sans-serif;" title="دفع كل البيانات إلى السحابة — استخدمه مرة واحدة فقط">⚡ مزامنة قوية</button>
       <input type="file" id="import-db-file" style="display:none;" accept=".json" onchange="importBackupSystem(event)">
       <button onclick="document.getElementById('import-db-file').click()" style="background:rgba(76,175,80,0.25);color:white;border:1px solid rgba(76,175,80,0.5);padding:3px 10px;border-radius:50px;font-size:11px;cursor:pointer;font-family:'Cairo',sans-serif;" title="استيراد نسخة احتياطية JSON">📥 استيراد قاعدة بيانات</button>
