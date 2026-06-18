@@ -960,6 +960,7 @@
     <button class="btn btn-sm" style="padding:5px 12px;font-size:12px;background:#c62828;color:white;border:none;border-radius:6px;cursor:pointer;" onclick="exportPdfActiveTab()">📄 تصدير PDF</button>
     <button class="btn btn-sm" style="padding:5px 12px;font-size:12px;background:#e65100;color:white;border:none;border-radius:6px;cursor:pointer;" onclick="exportSelectedToExcel()">📤 تصدير المحدد Excel</button>
     <button class="btn btn-sm" style="padding:5px 12px;font-size:12px;background:#1b5e20;color:white;border:none;border-radius:6px;cursor:pointer;" onclick="openDailyReport()">📋 التقرير</button>
+    <button class="btn btn-sm" style="padding:5px 12px;font-size:12px;background:#e65100;color:white;border:none;border-radius:6px;cursor:pointer;" onclick="openBreadPlanReport()">🥖 اعداد الخبز للغد</button>
 
     <span style="flex:1;"></span>
   </div>
@@ -5122,6 +5123,191 @@
       document.getElementById('bread-suggestion-modal').remove();
       estimateBprodIngredients();
       alert('✅ تم تعبئة عدد الأرغفة: ' + val);
+    }
+    function openBreadPlanReport() {
+      var tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      var tomorrowStr = tomorrow.getFullYear()+'-'+('0'+(tomorrow.getMonth()+1)).slice(-2)+'-'+('0'+tomorrow.getDate()).slice(-2);
+      var todayStr = new Date().toISOString().split('T')[0];
+      var pCount = employees.filter(function(e) { return e.status === 'P'; }).length;
+      var todayGuests = hospitalities.filter(function(h) {
+        if (!h.arrival) return false;
+        var a = new Date(h.arrival + 'T00:00:00');
+        var d = h.departure ? new Date(h.departure + 'T00:00:00') : a;
+        var target = new Date(todayStr + 'T00:00:00');
+        return target >= a && target <= d;
+      });
+      var womenCount = 0, studentCount = 0, otherGuestsCount = 0;
+      todayGuests.forEach(function(h) {
+        var g = h.guests || 1;
+        if (h.type === 'سيدات') womenCount += g;
+        else if (h.type === 'طلبة مدرسة') studentCount += g;
+        else otherGuestsCount += g;
+      });
+      var workerLoaves = pCount * 6;
+      var womenLoaves = womenCount * 2;
+      var studentLoaves = studentCount * 2;
+      var otherLoaves = otherGuestsCount * 2;
+      var totalLoaves = workerLoaves + womenLoaves + studentLoaves + otherLoaves;
+      var flourKg = Math.round(totalLoaves * 0.45 * 100) / 100;
+      var yeastKg = Math.round(totalLoaves * 0.005 * 100) / 100;
+      var saltKg = Math.round(totalLoaves * 0.008 * 100) / 100;
+      var branKg = Math.round(totalLoaves * 0.03 * 100) / 100;
+      var dieselL = Math.round(totalLoaves * 0.00979 * 100) / 100;
+      var currentStock = {};
+      bakeryIngredients.forEach(function(ing) { currentStock[ing.id] = ing.currentQty || 0; });
+      var flourStock = currentStock['ING001'] || 0;
+      var yeastStock = currentStock['ING002'] || 0;
+      var saltStock = currentStock['ING003'] || 0;
+      var branStock = currentStock['ING004'] || 0;
+      var dieselStock = currentStock['ING007'] || 0;
+      var existing = document.getElementById('bread-plan-modal');
+      if (existing) existing.remove();
+      var modal = document.createElement('div');
+      modal.id = 'bread-plan-modal';
+      modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:99999;display:flex;align-items:center;justify-content:center;';
+      modal.onclick = function(e) { if (e.target === modal) modal.remove(); };
+      var box = document.createElement('div');
+      box.style.cssText = 'background:#fff;padding:24px;border-radius:16px;width:520px;max-width:96%;text-align:center;box-shadow:0 12px 40px rgba(0,0,0,.3);direction:rtl;font-family:Cairo,sans-serif;max-height:90vh;overflow-y:auto;';
+      var ingDiffHtml = function(need, have, unit) {
+        var diff = have - need;
+        if (diff >= 0) return '<span style="color:#2e7d32;font-weight:700;">✓ متوفر</span>';
+        return '<span style="color:#c62828;font-weight:700;">✗ ناقص ' + Math.abs(diff) + ' ' + unit + '</span>';
+      };
+      box.innerHTML = '<div style="font-size:32px;margin-bottom:6px;">🥖</div>' +
+        '<h3 style="margin:0 0 2px;color:#e65100;font-size:18px;">اعداد الخبز للغد</h3>' +
+        '<div style="font-size:13px;color:#555;margin:0 0 4px;">📅 ' + tomorrowStr + '</div>' +
+        '<p style="font-size:11px;color:#999;margin:0 0 14px;">تقرير للقراءة فقط — لا يأثر على البيانات</p>' +
+        '<div style="text-align:right;">' +
+        '<div style="background:#e8f5e9;border-radius:10px;padding:12px;margin-bottom:10px;border:1px solid #c8e6c9;">' +
+        '<div style="font-weight:700;color:#1b5e20;margin-bottom:8px;font-size:14px;">📊 القوة والضيوف (بيانات اليوم)</div>' +
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:13px;">' +
+        '<div style="padding:6px 10px;background:white;border-radius:6px;border:1px solid #a5d6a7;"><span style="color:#888;">العمال الحاضرين:</span> <b style="color:#1b5e20;">' + pCount + '</b></div>' +
+        '<div style="padding:6px 10px;background:white;border-radius:6px;border:1px solid #a5d6a7;"><span style="color:#888;">إجمالي الأرغفة:</span> <b style="color:#e65100;">' + totalLoaves + '</b></div>' +
+        '<div style="padding:6px 10px;background:white;border-radius:6px;border:1px solid #f48fb1;"><span style="color:#888;">سيدات:</span> <b style="color:#c2185b;">' + womenCount + '</b></div>' +
+        '<div style="padding:6px 10px;background:white;border-radius:6px;border:1px solid #90caf9;"><span style="color:#888;">طلبة:</span> <b style="color:#1565c0;">' + studentCount + '</b></div>' +
+        '<div style="padding:6px 10px;background:white;border-radius:6px;border:1px solid #b0bec5;"><span style="color:#888;">ضيوف آخرين:</span> <b style="color:#546e7a;">' + otherGuestsCount + '</b></div>' +
+        '<div style="padding:6px 10px;background:white;border-radius:6px;border:1px solid #a5d6a7;"><span style="color:#888;">المقاولين:</span> <b style="color:#e65100;">يُحدد يدوياً</b></div>' +
+        '</div></div>' +
+        '<div style="background:#fff3e0;border-radius:10px;padding:12px;margin-bottom:10px;border:1px solid #ffcc80;">' +
+        '<div style="font-weight:700;color:#e65100;margin-bottom:8px;font-size:14px;">🍞 توزيع الأرغفة</div>' +
+        '<div style="font-size:13px;display:grid;grid-template-columns:1fr auto;gap:4px 12px;">' +
+        '<span>عمال (' + pCount + ' × 6):</span><b>' + workerLoaves + '</b>' +
+        '<span>سيدات (' + womenCount + ' × 2):</span><b>' + womenLoaves + '</b>' +
+        '<span>طلبة (' + studentCount + ' × 2):</span><b>' + studentLoaves + '</b>' +
+        '<span>ضيوف آخرين (' + otherGuestsCount + ' × 2):</span><b>' + otherLoaves + '</b>' +
+        '<hr style="grid-column:span 2;border:none;border-top:1px dashed #e0e0e0;margin:4px 0;">' +
+        '<span style="font-weight:700;">الإجمالي:</span><b style="color:#e65100;font-size:15px;">' + totalLoaves + ' رغيف</b>' +
+        '</div></div>' +
+        '<div style="background:#e3f2fd;border-radius:10px;padding:12px;border:1px solid #90caf9;">' +
+        '<div style="font-weight:700;color:#1565c0;margin-bottom:8px;font-size:14px;">📦 الخامات المطلوبة مقابل المخزون</div>' +
+        '<div style="font-size:13px;">' +
+        '<table style="width:100%;border-collapse:collapse;font-size:12px;">' +
+        '<tr style="background:#bbdefb;"><th style="padding:6px;border:1px solid #90caf9;text-align:right;">الخام</th><th style="padding:6px;border:1px solid #90caf9;">المطلوب</th><th style="padding:6px;border:1px solid #90caf9;">المخزون</th><th style="padding:6px;border:1px solid #90caf9;">الحالة</th></tr>' +
+        '<tr><td style="padding:6px;border:1px solid #e0e0e0;">🌾 دقيق</td><td style="padding:6px;border:1px solid #e0e0e0;text-align:center;">' + flourKg + ' كجم</td><td style="padding:6px;border:1px solid #e0e0e0;text-align:center;">' + flourStock + ' كجم</td><td style="padding:6px;border:1px solid #e0e0e0;text-align:center;">' + ingDiffHtml(flourKg, flourStock, 'كجم') + '</td></tr>' +
+        '<tr><td style="padding:6px;border:1px solid #e0e0e0;">🧫 خميرة</td><td style="padding:6px;border:1px solid #e0e0e0;text-align:center;">' + yeastKg + ' كجم</td><td style="padding:6px;border:1px solid #e0e0e0;text-align:center;">' + yeastStock + ' كجم</td><td style="padding:6px;border:1px solid #e0e0e0;text-align:center;">' + ingDiffHtml(yeastKg, yeastStock, 'كجم') + '</td></tr>' +
+        '<tr><td style="padding:6px;border:1px solid #e0e0e0;">🧂 ملح</td><td style="padding:6px;border:1px solid #e0e0e0;text-align:center;">' + saltKg + ' كجم</td><td style="padding:6px;border:1px solid #e0e0e0;text-align:center;">' + saltStock + ' كجم</td><td style="padding:6px;border:1px solid #e0e0e0;text-align:center;">' + ingDiffHtml(saltKg, saltStock, 'كجم') + '</td></tr>' +
+        '<tr><td style="padding:6px;border:1px solid #e0e0e0;">🌾 ردة</td><td style="padding:6px;border:1px solid #e0e0e0;text-align:center;">' + branKg + ' كجم</td><td style="padding:6px;border:1px solid #e0e0e0;text-align:center;">' + branStock + ' كجم</td><td style="padding:6px;border:1px solid #e0e0e0;text-align:center;">' + ingDiffHtml(branKg, branStock, 'كجم') + '</td></tr>' +
+        '<tr><td style="padding:6px;border:1px solid #e0e0e0;">⛽ سولار</td><td style="padding:6px;border:1px solid #e0e0e0;text-align:center;">' + dieselL + ' لتر</td><td style="padding:6px;border:1px solid #e0e0e0;text-align:center;">' + dieselStock + ' لتر</td><td style="padding:6px;border:1px solid #e0e0e0;text-align:center;">' + ingDiffHtml(dieselL, dieselStock, 'لتر') + '</td></tr>' +
+        '</table></div></div>' +
+        '</div>' +
+        '<div style="margin-top:14px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">' +
+        '<button onclick="generateBreadPlanReport()" style="padding:10px 24px;background:#1b5e20;color:white;border:none;border-radius:8px;cursor:pointer;font-size:15px;font-family:Cairo,sans-serif;font-weight:700;">📄 توليد التقرير</button>' +
+        '<button onclick="document.getElementById(\'bread-plan-modal\').remove()" style="padding:10px 24px;background:#e0e0e0;color:#333;border:none;border-radius:8px;cursor:pointer;font-size:14px;font-family:Cairo,sans-serif;">✖ إغلاق</button>' +
+        '</div>';
+      modal.appendChild(box);
+      document.body.appendChild(modal);
+    }
+    function generateBreadPlanReport() {
+      var tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      var tomorrowStr = tomorrow.getFullYear()+'-'+('0'+(tomorrow.getMonth()+1)).slice(-2)+'-'+('0'+tomorrow.getDate()).slice(-2);
+      var dateArabic = tomorrow.toLocaleDateString('ar-EG');
+      var todayStr = new Date().toISOString().split('T')[0];
+      var pCount = employees.filter(function(e) { return e.status === 'P'; }).length;
+      var todayGuests = hospitalities.filter(function(h) {
+        if (!h.arrival) return false;
+        var a = new Date(h.arrival + 'T00:00:00');
+        var d = h.departure ? new Date(h.departure + 'T00:00:00') : a;
+        var target = new Date(todayStr + 'T00:00:00');
+        return target >= a && target <= d;
+      });
+      var womenCount = 0, studentCount = 0, otherGuestsCount = 0;
+      todayGuests.forEach(function(h) {
+        var g = h.guests || 1;
+        if (h.type === 'سيدات') womenCount += g;
+        else if (h.type === 'طلبة مدرسة') studentCount += g;
+        else otherGuestsCount += g;
+      });
+      var workerLoaves = pCount * 6;
+      var womenLoaves = womenCount * 2;
+      var studentLoaves = studentCount * 2;
+      var otherLoaves = otherGuestsCount * 2;
+      var totalLoaves = workerLoaves + womenLoaves + studentLoaves + otherLoaves;
+      var flourKg = Math.round(totalLoaves * 0.45 * 100) / 100;
+      var yeastKg = Math.round(totalLoaves * 0.005 * 100) / 100;
+      var saltKg = Math.round(totalLoaves * 0.008 * 100) / 100;
+      var branKg = Math.round(totalLoaves * 0.03 * 100) / 100;
+      var dieselL = Math.round(totalLoaves * 0.00979 * 100) / 100;
+      var currentStock = {};
+      bakeryIngredients.forEach(function(ing) { currentStock[ing.id] = ing.currentQty || 0; });
+      var flourStock = currentStock['ING001'] || 0;
+      var yeastStock = currentStock['ING002'] || 0;
+      var saltStock = currentStock['ING003'] || 0;
+      var branStock = currentStock['ING004'] || 0;
+      var dieselStock = currentStock['ING007'] || 0;
+      var logoSrc = '';
+      var logoEl = document.querySelector('img[alt="Logo"]');
+      if (logoEl) logoSrc = logoEl.src;
+      var ingRow = function(name, need, have, unit) {
+        var diff = have - need;
+        var status = diff >= 0 ? '<span style="color:#2e7d32;">✓ متوفر</span>' : '<span style="color:#c62828;">✗ ناقص ' + Math.abs(diff) + ' ' + unit + '</span>';
+        return '<tr><td style="padding:6px;border:1px solid #e0e0e0;">' + name + '</td><td style="padding:6px;border:1px solid #e0e0e0;text-align:center;">' + need + ' ' + unit + '</td><td style="padding:6px;border:1px solid #e0e0e0;text-align:center;">' + have + ' ' + unit + '</td><td style="padding:6px;border:1px solid #e0e0e0;text-align:center;">' + status + '</td></tr>';
+      };
+      var fullHtml = '<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8"><title>اعداد الخبز للغد - لينه فارمز</title>' +
+        '<style>@page{size:A4;margin:1.5cm}body{font-family:"Cairo","Segoe UI",sans-serif;direction:rtl;padding:20px;color:#222;background:#fafafa;margin:0}' +
+        '.rp-container{max-width:190mm;margin:0 auto;background:white;padding:20px 25px;box-shadow:0 2px 20px rgba(0,0,0,0.1)}' +
+        '.rp-header{text-align:center;border-bottom:3px double #e65100;padding-bottom:15px;margin-bottom:18px}' +
+        '.rp-header h1{margin:0;color:#e65100;font-size:22px}.rp-header h2{margin:3px 0 0;color:#f57c00;font-size:14px;font-weight:400}' +
+        '.rp-header .rp-date{margin-top:6px;font-size:12px;color:#666}.rp-section{margin-bottom:12px;page-break-inside:avoid}' +
+        '.rp-summary{display:flex;align-items:center;gap:8px;background:#f5f5f5;border-radius:6px;padding:8px 12px;border:1px solid #e0e0e0;font-size:13px}' +
+        '.rp-summary-icon{font-size:18px}.rp-summary-label{font-weight:700;color:#1b5e20;white-space:nowrap}.rp-summary-value{color:#555;margin-right:auto;text-align:left}' +
+        '.rp-table{width:100%;border-collapse:collapse;font-size:12px;margin-top:8px;}' +
+        '.rp-table th{background:#fff3e0;padding:6px;border:1px solid #e0e0e0;font-weight:700;color:#e65100;}' +
+        '.rp-table td{padding:6px;border:1px solid #e0e0e0;}' +
+        '.rp-footer{text-align:center;border-top:2px solid #e0e0e0;padding-top:10px;margin-top:20px;font-size:10px;color:#888}' +
+        '</style></head><body><div class="rp-container">' +
+        '<div class="rp-header">' + (logoSrc ? '<div style="text-align:center;margin-bottom:8px;"><img src="' + logoSrc + '" style="height:50px;width:auto;"></div>' : '') +
+        '<h1>🥖 لينه فارمز</h1><h2>إعداد الخبز للغد</h2><div class="rp-date">📅 ' + dateArabic + ' (' + tomorrowStr + ')</div></div>' +
+        '<div class="rp-section"><div class="rp-summary"><span class="rp-summary-icon">📊</span><span class="rp-summary-label">القوة والضيوف</span><span class="rp-summary-value">' + pCount + ' عامل | ' + womenCount + ' سيدة | ' + studentCount + ' طالب | ' + otherGuestsCount + ' ضيف آخر</span></div></div>' +
+        '<div class="rp-section"><div class="rp-summary"><span class="rp-summary-icon">🍞</span><span class="rp-summary-label">إجمالي الأرغفة</span><span class="rp-summary-value" style="font-weight:700;color:#e65100;font-size:16px;">' + totalLoaves + ' رغيف</span></div></div>' +
+        '<div class="rp-section"><h3 style="color:#e65100;font-size:14px;margin:0 0 6px;">📦 توزيع الأرغفة</h3>' +
+        '<table class="rp-table"><tr><th>الفئة</th><th>العدد</th><th>النسبة</th></tr>' +
+        '<tr><td>عمال (' + pCount + ' × 6)</td><td style="text-align:center;">' + workerLoaves + '</td><td style="text-align:center;">' + (totalLoaves > 0 ? Math.round(workerLoaves/totalLoaves*100) : 0) + '%</td></tr>' +
+        '<tr><td>سيدات (' + womenCount + ' × 2)</td><td style="text-align:center;">' + womenLoaves + '</td><td style="text-align:center;">' + (totalLoaves > 0 ? Math.round(womenLoaves/totalLoaves*100) : 0) + '%</td></tr>' +
+        '<tr><td>طلبة (' + studentCount + ' × 2)</td><td style="text-align:center;">' + studentLoaves + '</td><td style="text-align:center;">' + (totalLoaves > 0 ? Math.round(studentLoaves/totalLoaves*100) : 0) + '%</td></tr>' +
+        '<tr><td>ضيوف آخرين (' + otherGuestsCount + ' × 2)</td><td style="text-align:center;">' + otherLoaves + '</td><td style="text-align:center;">' + (totalLoaves > 0 ? Math.round(otherLoaves/totalLoaves*100) : 0) + '%</td></tr>' +
+        '<tr style="background:#fff3e0;font-weight:700;"><td>الإجمالي</td><td style="text-align:center;">' + totalLoaves + '</td><td style="text-align:center;">100%</td></tr>' +
+        '</table></div>' +
+        '<div class="rp-section"><h3 style="color:#1565c0;font-size:14px;margin:0 0 6px;">📦 الخامات المطلوبة</h3>' +
+        '<table class="rp-table"><tr><th>الخام</th><th>المطلوب</th><th>المخزون الحالي</th><th>الحالة</th></tr>' +
+        ingRow('🌾 دقيق', flourKg, flourStock, 'كجم') +
+        ingRow('🧫 خميرة', yeastKg, yeastStock, 'كجم') +
+        ingRow('🧂 ملح', saltKg, saltStock, 'كجم') +
+        ingRow('🌾 ردة', branKg, branStock, 'كجم') +
+        ingRow('⛽ سولار', dieselL, dieselStock, 'لتر') +
+        '</table></div>' +
+        '<div class="rp-footer">徉 منظومة الشئون الإدارية المتكاملة - لينه فارمز | إعداد الخبز للغد | ' + dateArabic + '</div>' +
+        '</div></body></html>';
+      try {
+        var blob = new Blob([fullHtml], { type: 'text/html;charset=utf-8' });
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        a.href = url; a.download = 'اعداد_الخبز_' + tomorrowStr + '.html';
+        document.body.appendChild(a); a.click();
+        document.body.removeChild(a);
+        setTimeout(function() { URL.revokeObjectURL(url); }, 5000);
+      } catch(e) { alert('خطأ: ' + e.message); }
     }
     function requireLogin() {
       populateLoginDropdown();
