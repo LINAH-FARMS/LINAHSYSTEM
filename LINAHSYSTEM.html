@@ -5228,7 +5228,7 @@
       var logoSrc = '';
       var logoEl = document.querySelector('img[alt="Logo"]');
       if (logoEl) logoSrc = logoEl.src;
-      var fullHtml = '<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8"><title>اعداد الخبز للغد - لينه فارمز</title>' +
+      var fullHtml = '<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8"><title>اعداد الخبز للغد</title>' +
         '<style>@page{size:A4;margin:1.5cm}body{font-family:"Cairo","Segoe UI",sans-serif;direction:rtl;padding:20px;color:#222;background:#fafafa;margin:0}' +
         '.rp-container{max-width:190mm;margin:0 auto;background:white;padding:20px 25px;box-shadow:0 2px 20px rgba(0,0,0,0.1)}' +
         '.rp-header{text-align:center;border-bottom:3px double #e65100;padding-bottom:15px;margin-bottom:18px}' +
@@ -5242,7 +5242,7 @@
         '.rp-footer{text-align:center;border-top:2px solid #e0e0e0;padding-top:10px;margin-top:20px;font-size:10px;color:#888}' +
         '</style></head><body><div class="rp-container">' +
         '<div class="rp-header">' + (logoSrc ? '<div style="text-align:center;margin-bottom:8px;"><img src="' + logoSrc + '" style="height:50px;width:auto;"></div>' : '') +
-        '<h1>🥖 لينه فارمز</h1><h2>إعداد الخبز للغد</h2><div class="rp-date">📅 ' + dateArabic + ' (' + tomorrowStr + ')</div></div>' +
+        '<h1>🥖 إعداد الخبز للغد</h1><div class="rp-date">📅 ' + dateArabic + ' (' + tomorrowStr + ')</div></div>' +
         '<div class="rp-section"><div class="rp-summary"><span class="rp-summary-icon">📊</span><span class="rp-summary-label">القوة والضيوف</span><span class="rp-summary-value">' + pCount + ' عامل | ' + womenCount + ' سيدة | ' + studentCount + ' طالب | ' + otherGuestsCount + ' ضيف آخر</span></div></div>' +
         '<div class="rp-section"><div class="rp-summary"><span class="rp-summary-icon">🍞</span><span class="rp-summary-label">إجمالي الأرغفة</span><span class="rp-summary-value" style="font-weight:700;color:#e65100;font-size:16px;">' + totalLoaves + ' رغيف</span></div></div>' +
         '<div class="rp-section"><h3 style="color:#e65100;font-size:14px;margin:0 0 6px;">📦 توزيع الأرغفة</h3>' +
@@ -5255,7 +5255,7 @@
         '<tr style="background:#fff3e0;font-weight:700;"><td>الإجمالي</td><td style="text-align:center;">' + totalLoaves + '</td></tr>' +
         '</table></div>' +
         (contractorsData.length > 0 ? '<div class="rp-section"><h3 style="color:#e65100;font-size:14px;margin:0 0 6px;">👷 تفاصيل المقاولين</h3><table class="rp-table"><tr><th>المقاول</th><th>عدد الأرغفة</th></tr>' + contractorsData.map(function(c) { return '<tr><td>' + c.name + '</td><td style="text-align:center;">' + c.qty + '</td></tr>'; }).join('') + '</table></div>' : '') +
-        '<div class="rp-footer">徉 منظومة الشئون الإدارية المتكاملة - لينه فارمز | إعداد الخبز للغد | ' + dateArabic + '</div>' +
+        '<div class="rp-footer">إعداد الخبز للغد | ' + dateArabic + '</div>' +
         '</div></body></html>';
       try {
         var blob = new Blob([fullHtml], { type: 'text/html;charset=utf-8' });
