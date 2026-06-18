@@ -950,9 +950,6 @@
   <hr style="border:none;border-top:2px solid rgba(27,94,32,0.1);margin:4px 0;">
 
   <div class="toolbar no-print" style="display:flex;gap:6px;padding:8px 12px;background:white;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.06);margin-bottom:6px;flex-wrap:wrap;align-items:center;border:1px solid rgba(27,94,32,0.08);">
-    <button class="btn btn-warning" style="padding:5px 12px;font-size:12px;" onclick="exportBackupSystem()">💾 نسخة احتياطية</button>
-    <button class="btn btn-danger" style="padding:5px 12px;font-size:12px;" onclick="document.getElementById('header-import-backup').click();this.classList.remove('btn-restore-pulse')">📂 استعادة نسخة</button>
-    <input type="file" id="header-import-backup" style="display:none;" accept=".json" onchange="importBackupSystem(event)">
     <span style="padding:5px 12px;font-size:12px;background:#e3f2fd;color:#1565c0;border-radius:6px;">☁️ Drive <span id="drive-status" style="font-size:10px;color:#2e7d32;">✅ شغال</span></span>
     <button class="btn btn-sm admin-only" style="padding:5px 12px;font-size:12px;background:#6a1b9a;color:white;border:none;border-radius:6px;cursor:pointer;" onclick="openManageUsers()">👥 إدارة المستخدمين</button>
     <button class="btn btn-sm" style="padding:5px 12px;font-size:12px;background:#c62828;color:white;border:none;border-radius:6px;cursor:pointer;" onclick="exportPdfActiveTab()">📄 تصدير PDF</button>
@@ -1841,6 +1838,9 @@
       <button class="btn btn-excel" onclick="exportDynamicToExcel()">📤 تصدير Excel</button>
       <button class="btn btn-secondary" onclick="showPrintChoice('')">🖨️ طباعة</button>
       <button class="btn" style="background:#e65100;color:white;padding:6px 12px;font-size:13px;" onclick="openModal('modal-add-room')">🛏️ تعديل سعة الغرف</button>
+      <button class="btn btn-warning" style="padding:6px 12px;font-size:12px;" onclick="exportBackupSystem()">💾 نسخة احتياطية</button>
+      <button class="btn btn-danger" style="padding:6px 12px;font-size:12px;" onclick="document.getElementById('header-import-backup').click();this.classList.remove('btn-restore-pulse')">📂 استعادة نسخة</button>
+      <input type="file" id="header-import-backup" style="display:none;" accept=".json" onchange="importBackupSystem(event)">
     </div>
 
     <div class="flex-section-grid">
