@@ -10094,6 +10094,12 @@ function toggleEmployeeStatus(empId) {
     function applyRemoteData(d, srcId) {
       if (srcId && srcId === _deviceId) return;
       employees = mergeArrays(employees, d.employees, function(e) { return e.code || e.name || JSON.stringify(e); });
+      // إعادة تطبيق فلتر المستبعدين بعد الدمج لمنع ظهورهم مجدداً
+      if (excludedEmployees.length > 0) {
+        var _exclMap = {};
+        excludedEmployees.forEach(function(e) { _exclMap[e.code || e.id || e.name] = true; });
+        employees = employees.filter(function(e) { return !_exclMap[e.code || e.id || e.name]; });
+      }
       roomsCapacity = mergeArrays(roomsCapacity, d.roomsCapacity, function(r) { return r.sector + '|' + r.number; });
       vacations = mergeArrays(vacations, d.vacations);
       hospitalities = mergeArrays(hospitalities, d.hospitalities);

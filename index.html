@@ -10218,6 +10218,12 @@ function toggleEmployeeStatus(empId) {
           mergedArr = mergedArr.filter(function(item) {
             return !_isDeleted(mk, _arrayKeyFns[mk](item));
           });
+          // حماية إضافية: تصفية المستبعدين من القوة أثناء الدفع
+          if (mk === 'employees' && excludedEmployees.length > 0) {
+            var _exclPushMap = {};
+            excludedEmployees.forEach(function(e) { _exclPushMap[e.code || e.id || e.name] = true; });
+            mergedArr = mergedArr.filter(function(e) { return !_exclPushMap[e.code || e.id || e.name]; });
+          }
           entities[mk] = mergedArr;
         }
       }
@@ -10537,7 +10543,15 @@ function toggleEmployeeStatus(empId) {
         syncDeletions = syncDeletions.filter(function(d) { return d.deletedAt > cutoff; });
         localStorage.setItem('lineh_sync_deletions', JSON.stringify(syncDeletions));
       }
-      if (d.employees) employees = _smartMerge(employees, d.employees, function(e) { return e.code || e.name || JSON.stringify(e); }, 'employees');
+      if (d.employees) {
+        employees = _smartMerge(employees, d.employees, function(e) { return e.code || e.name || JSON.stringify(e); }, 'employees');
+        // إعادة تطبيق فلتر المستبعدين بعد الدمج لمنع ظهورهم مجدداً
+        if (excludedEmployees.length > 0) {
+          var _exclMap = {};
+          excludedEmployees.forEach(function(e) { _exclMap[e.code || e.id || e.name] = true; });
+          employees = employees.filter(function(e) { return !_exclMap[e.code || e.id || e.name]; });
+        }
+      }
       if (d.roomsCapacity) roomsCapacity = _smartMerge(roomsCapacity, d.roomsCapacity, function(r) { return r.sector + '|' + r.number; }, 'roomsCapacity');
       if (d.vacations) vacations = _smartMerge(vacations, d.vacations, function(v) { return (v.code || v.employeeCode || v.employeeName || v.name || '') + '|' + (v.start || v.startDate || v.dateFrom || '') + '|' + (v.end || v.endDate || v.dateTo || ''); }, 'vacations');
       if (d.hospitalities) hospitalities = _smartMerge(hospitalities, d.hospitalities, function(h) { return (h.name || '') + '|' + (h.arrival || '') + '|' + (h.type || ''); }, 'hospitalities');
