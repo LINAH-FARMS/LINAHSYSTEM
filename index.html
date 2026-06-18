@@ -5142,7 +5142,7 @@
         else otherGuestsCount += g;
       });
       var workerLoaves = pCount * 6;
-      var womenLoaves = womenCount * 6;
+      var womenLoaves = womenCount * 2;
       var studentLoaves = studentCount * 6;
       var otherLoaves = otherGuestsCount * 6;
       var totalLoaves = workerLoaves + womenLoaves + studentLoaves + otherLoaves;
@@ -5258,7 +5258,7 @@
       var bpStudents = parseInt(document.getElementById('bp-students').value) || studentCount;
       var bpOther = parseInt(document.getElementById('bp-other').value) || otherGuestsCount;
       var workerLoaves = bpWorkers * 6;
-      var womenLoaves = bpWomen * 6;
+      var womenLoaves = bpWomen * 2;
       var studentLoaves = bpStudents * 6;
       var otherLoaves = bpOther * 6;
       var totalLoaves = workerLoaves + womenLoaves + studentLoaves + otherLoaves;
