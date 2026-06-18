@@ -936,8 +936,6 @@
       <span style="font-size:11px;font-weight:600;color:rgba(255,255,255,0.85);">Supabase </span><span id="supabase-status" style="font-size:11px;font-weight:600;">🔄 قيد الاتصال...</span>
       <button onclick="manualPull()" style="background:rgba(33,150,243,0.25);color:white;border:1px solid rgba(33,150,243,0.5);padding:3px 10px;border-radius:50px;font-size:11px;cursor:pointer;font-family:'Cairo',sans-serif;" title="سحب أحدث البيانات من السحابة">🔄 سحب</button>
       <button onclick="forceFullSync()" style="background:rgba(255,100,0,0.25);color:white;border:1px solid rgba(255,150,0,0.5);padding:3px 10px;border-radius:50px;font-size:11px;cursor:pointer;font-family:'Cairo',sans-serif;" title="دفع كل البيانات إلى السحابة — استخدمه مرة واحدة فقط">⚡ مزامنة قوية</button>
-      <input type="file" id="import-db-file" style="display:none;" accept=".json" onchange="importBackupSystem(event)">
-      <button onclick="document.getElementById('import-db-file').click()" style="background:rgba(76,175,80,0.25);color:white;border:1px solid rgba(76,175,80,0.5);padding:3px 10px;border-radius:50px;font-size:11px;cursor:pointer;font-family:'Cairo',sans-serif;" title="استيراد نسخة احتياطية JSON">📥 استيراد قاعدة بيانات</button>
       <span id="presence-users" style="font-size:11px;font-weight:600;display:none;"></span>
       <span id="last-sync-time" style="font-size:10px;color:rgba(255,255,255,0.6);display:none;"></span>
       <span id="backup-status" style="font-size:10px;display:none;"></span>
@@ -5105,22 +5103,10 @@
         else otherGuestsCount += g;
       });
       var workerLoaves = pCount * 6;
-      var womenLoaves = womenCount * 2;
-      var studentLoaves = studentCount * 2;
-      var otherLoaves = otherGuestsCount * 2;
+      var womenLoaves = womenCount * 6;
+      var studentLoaves = studentCount * 6;
+      var otherLoaves = otherGuestsCount * 6;
       var totalLoaves = workerLoaves + womenLoaves + studentLoaves + otherLoaves;
-      var flourKg = Math.round(totalLoaves * 0.45 * 100) / 100;
-      var yeastKg = Math.round(totalLoaves * 0.005 * 100) / 100;
-      var saltKg = Math.round(totalLoaves * 0.008 * 100) / 100;
-      var branKg = Math.round(totalLoaves * 0.03 * 100) / 100;
-      var dieselL = Math.round(totalLoaves * 0.00979 * 100) / 100;
-      var currentStock = {};
-      bakeryIngredients.forEach(function(ing) { currentStock[ing.id] = ing.currentQty || 0; });
-      var flourStock = currentStock['ING001'] || 0;
-      var yeastStock = currentStock['ING002'] || 0;
-      var saltStock = currentStock['ING003'] || 0;
-      var branStock = currentStock['ING004'] || 0;
-      var dieselStock = currentStock['ING007'] || 0;
       var existing = document.getElementById('bread-plan-modal');
       if (existing) existing.remove();
       var modal = document.createElement('div');
@@ -5149,27 +5135,20 @@
         '<div style="padding:6px 10px;background:white;border-radius:6px;border:1px solid #b0bec5;"><span style="color:#888;">ضيوف آخرين:</span> <b style="color:#546e7a;">' + otherGuestsCount + '</b></div>' +
         '<div style="padding:6px 10px;background:white;border-radius:6px;border:1px solid #a5d6a7;"><span style="color:#888;">المقاولين:</span> <b style="color:#e65100;">يُحدد يدوياً</b></div>' +
         '</div></div>' +
+        '<div style="background:#fff8e1;border-radius:10px;padding:12px;margin-bottom:10px;border:1px solid #ffe082;">' +
+        '<div style="font-weight:700;color:#e65100;margin-bottom:8px;font-size:14px;display:flex;justify-content:space-between;align-items:center;"><span>👷 المقاولين (إدخال يدوي)</span><button onclick="addBreadPlanCtrRow()" style="padding:4px 12px;background:#e65100;color:white;border:none;border-radius:4px;cursor:pointer;font-size:12px;font-family:Cairo,sans-serif;">➕ إضافة مقاول</button></div>' +
+        '<div style="max-height:150px;overflow-y:auto;"><table id="bread-plan-ctr-table" style="width:100%;border-collapse:collapse;font-size:12px;"><thead><tr><th style="padding:6px;background:#fff3e0;border:1px solid #e0e0e0;">المقاول</th><th style="padding:6px;background:#fff3e0;border:1px solid #e0e0e0;width:80px;">عدد الأرغفة</th><th style="padding:6px;background:#fff3e0;border:1px solid #e0e0e0;width:30px;"></th></tr></thead><tbody id="bread-plan-ctr-tbody"></tbody></table></div>' +
+        '</div>' +
         '<div style="background:#fff3e0;border-radius:10px;padding:12px;margin-bottom:10px;border:1px solid #ffcc80;">' +
         '<div style="font-weight:700;color:#e65100;margin-bottom:8px;font-size:14px;">🍞 توزيع الأرغفة</div>' +
         '<div style="font-size:13px;display:grid;grid-template-columns:1fr auto;gap:4px 12px;">' +
         '<span>عمال (' + pCount + ' × 6):</span><b>' + workerLoaves + '</b>' +
-        '<span>سيدات (' + womenCount + ' × 2):</span><b>' + womenLoaves + '</b>' +
-        '<span>طلبة (' + studentCount + ' × 2):</span><b>' + studentLoaves + '</b>' +
-        '<span>ضيوف آخرين (' + otherGuestsCount + ' × 2):</span><b>' + otherLoaves + '</b>' +
+        '<span>سيدات (' + womenCount + ' × 6):</span><b>' + womenLoaves + '</b>' +
+        '<span>طلبة (' + studentCount + ' × 6):</span><b>' + studentLoaves + '</b>' +
+        '<span>ضيوف آخرين (' + otherGuestsCount + ' × 6):</span><b>' + otherLoaves + '</b>' +
         '<hr style="grid-column:span 2;border:none;border-top:1px dashed #e0e0e0;margin:4px 0;">' +
         '<span style="font-weight:700;">الإجمالي:</span><b style="color:#e65100;font-size:15px;">' + totalLoaves + ' رغيف</b>' +
         '</div></div>' +
-        '<div style="background:#e3f2fd;border-radius:10px;padding:12px;border:1px solid #90caf9;">' +
-        '<div style="font-weight:700;color:#1565c0;margin-bottom:8px;font-size:14px;">📦 الخامات المطلوبة مقابل المخزون</div>' +
-        '<div style="font-size:13px;">' +
-        '<table style="width:100%;border-collapse:collapse;font-size:12px;">' +
-        '<tr style="background:#bbdefb;"><th style="padding:6px;border:1px solid #90caf9;text-align:right;">الخام</th><th style="padding:6px;border:1px solid #90caf9;">المطلوب</th><th style="padding:6px;border:1px solid #90caf9;">المخزون</th><th style="padding:6px;border:1px solid #90caf9;">الحالة</th></tr>' +
-        '<tr><td style="padding:6px;border:1px solid #e0e0e0;">🌾 دقيق</td><td style="padding:6px;border:1px solid #e0e0e0;text-align:center;">' + flourKg + ' كجم</td><td style="padding:6px;border:1px solid #e0e0e0;text-align:center;">' + flourStock + ' كجم</td><td style="padding:6px;border:1px solid #e0e0e0;text-align:center;">' + ingDiffHtml(flourKg, flourStock, 'كجم') + '</td></tr>' +
-        '<tr><td style="padding:6px;border:1px solid #e0e0e0;">🧫 خميرة</td><td style="padding:6px;border:1px solid #e0e0e0;text-align:center;">' + yeastKg + ' كجم</td><td style="padding:6px;border:1px solid #e0e0e0;text-align:center;">' + yeastStock + ' كجم</td><td style="padding:6px;border:1px solid #e0e0e0;text-align:center;">' + ingDiffHtml(yeastKg, yeastStock, 'كجم') + '</td></tr>' +
-        '<tr><td style="padding:6px;border:1px solid #e0e0e0;">🧂 ملح</td><td style="padding:6px;border:1px solid #e0e0e0;text-align:center;">' + saltKg + ' كجم</td><td style="padding:6px;border:1px solid #e0e0e0;text-align:center;">' + saltStock + ' كجم</td><td style="padding:6px;border:1px solid #e0e0e0;text-align:center;">' + ingDiffHtml(saltKg, saltStock, 'كجم') + '</td></tr>' +
-        '<tr><td style="padding:6px;border:1px solid #e0e0e0;">🌾 ردة</td><td style="padding:6px;border:1px solid #e0e0e0;text-align:center;">' + branKg + ' كجم</td><td style="padding:6px;border:1px solid #e0e0e0;text-align:center;">' + branStock + ' كجم</td><td style="padding:6px;border:1px solid #e0e0e0;text-align:center;">' + ingDiffHtml(branKg, branStock, 'كجم') + '</td></tr>' +
-        '<tr><td style="padding:6px;border:1px solid #e0e0e0;">⛽ سولار</td><td style="padding:6px;border:1px solid #e0e0e0;text-align:center;">' + dieselL + ' لتر</td><td style="padding:6px;border:1px solid #e0e0e0;text-align:center;">' + dieselStock + ' لتر</td><td style="padding:6px;border:1px solid #e0e0e0;text-align:center;">' + ingDiffHtml(dieselL, dieselStock, 'لتر') + '</td></tr>' +
-        '</table></div></div>' +
         '</div>' +
         '<div style="margin-top:14px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">' +
         '<button onclick="generateBreadPlanReport()" style="padding:10px 24px;background:#1b5e20;color:white;border:none;border-radius:8px;cursor:pointer;font-size:15px;font-family:Cairo,sans-serif;font-weight:700;">📄 توليد التقرير</button>' +
@@ -5177,6 +5156,34 @@
         '</div>';
       modal.appendChild(box);
       document.body.appendChild(modal);
+    }
+    var _breadPlanCtrCounter = 0;
+    function addBreadPlanCtrRow() {
+      var id = 'bpctr-' + (++_breadPlanCtrCounter);
+      var tbody = document.getElementById('bread-plan-ctr-tbody');
+      if (!tbody) return;
+      var tr = document.createElement('tr');
+      tr.id = 'bprow-' + id;
+      tr.innerHTML = '<td style="border:1px solid #e0e0e0;padding:4px;"><input type="text" id="bpname-' + id + '" style="width:100%;border:none;padding:6px;font-size:13px;font-family:Cairo,sans-serif;background:transparent;" placeholder="اسم المقاول"></td><td style="border:1px solid #e0e0e0;padding:4px;width:80px;"><input type="number" id="bpqty-' + id + '" min="0" value="0" style="width:70px;border:none;padding:6px;font-size:13px;font-family:Cairo,sans-serif;text-align:center;" oninput="updateBreadPlanTotal()"></td><td style="border:1px solid #e0e0e0;padding:4px;width:30px;"><button onclick="removeBreadPlanCtrRow(\'bprow-' + id + '\')" style="background:none;border:none;color:#d32f2f;cursor:pointer;font-size:16px;">✖</button></td>';
+      tbody.appendChild(tr);
+      document.getElementById('bpname-' + id).focus();
+      updateBreadPlanTotal();
+    }
+    function removeBreadPlanCtrRow(rowId) {
+      var row = document.getElementById(rowId);
+      if (row) { row.remove(); updateBreadPlanTotal(); }
+    }
+    function updateBreadPlanTotal() {
+      var workers = parseInt(document.getElementById('bsug-workers').value) || 0;
+      var women = parseInt(document.getElementById('bsug-women').value) || 0;
+      var students = parseInt(document.getElementById('bsug-students').value) || 0;
+      var other = parseInt(document.getElementById('bsug-other').value) || 0;
+      var ctrInputs = document.querySelectorAll('#bread-plan-ctr-tbody input[id^="bpqty-"]');
+      var ctrTotal = 0;
+      ctrInputs.forEach(function(inp) { ctrTotal += parseInt(inp.value) || 0; });
+      var total = workers + women + students + other + ctrTotal;
+      var el = document.getElementById('bread-total-display');
+      if (el) el.textContent = total + ' رغيف';
     }
     function generateBreadPlanReport() {
       var tomorrow = new Date();
@@ -5200,30 +5207,29 @@
         else otherGuestsCount += g;
       });
       var workerLoaves = pCount * 6;
-      var womenLoaves = womenCount * 2;
-      var studentLoaves = studentCount * 2;
-      var otherLoaves = otherGuestsCount * 2;
+      var womenLoaves = womenCount * 6;
+      var studentLoaves = studentCount * 6;
+      var otherLoaves = otherGuestsCount * 6;
       var totalLoaves = workerLoaves + womenLoaves + studentLoaves + otherLoaves;
-      var flourKg = Math.round(totalLoaves * 0.45 * 100) / 100;
-      var yeastKg = Math.round(totalLoaves * 0.005 * 100) / 100;
-      var saltKg = Math.round(totalLoaves * 0.008 * 100) / 100;
-      var branKg = Math.round(totalLoaves * 0.03 * 100) / 100;
-      var dieselL = Math.round(totalLoaves * 0.00979 * 100) / 100;
-      var currentStock = {};
-      bakeryIngredients.forEach(function(ing) { currentStock[ing.id] = ing.currentQty || 0; });
-      var flourStock = currentStock['ING001'] || 0;
-      var yeastStock = currentStock['ING002'] || 0;
-      var saltStock = currentStock['ING003'] || 0;
-      var branStock = currentStock['ING004'] || 0;
-      var dieselStock = currentStock['ING007'] || 0;
+      var ctrInputs = document.querySelectorAll('#bread-plan-ctr-tbody tr');
+      var contractorsData = [];
+      var ctrLoaves = 0;
+      ctrInputs.forEach(function(row) {
+        var nameEl = row.querySelector('input[id^="bpname-"]');
+        var qtyEl = row.querySelector('input[id^="bpqty-"]');
+        if (nameEl && qtyEl) {
+          var name = nameEl.value.trim();
+          var qty = parseInt(qtyEl.value) || 0;
+          if (name && qty > 0) {
+            contractorsData.push({ name: name, qty: qty });
+            ctrLoaves += qty;
+          }
+        }
+      });
+      totalLoaves += ctrLoaves;
       var logoSrc = '';
       var logoEl = document.querySelector('img[alt="Logo"]');
       if (logoEl) logoSrc = logoEl.src;
-      var ingRow = function(name, need, have, unit) {
-        var diff = have - need;
-        var status = diff >= 0 ? '<span style="color:#2e7d32;">✓ متوفر</span>' : '<span style="color:#c62828;">✗ ناقص ' + Math.abs(diff) + ' ' + unit + '</span>';
-        return '<tr><td style="padding:6px;border:1px solid #e0e0e0;">' + name + '</td><td style="padding:6px;border:1px solid #e0e0e0;text-align:center;">' + need + ' ' + unit + '</td><td style="padding:6px;border:1px solid #e0e0e0;text-align:center;">' + have + ' ' + unit + '</td><td style="padding:6px;border:1px solid #e0e0e0;text-align:center;">' + status + '</td></tr>';
-      };
       var fullHtml = '<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8"><title>اعداد الخبز للغد - لينه فارمز</title>' +
         '<style>@page{size:A4;margin:1.5cm}body{font-family:"Cairo","Segoe UI",sans-serif;direction:rtl;padding:20px;color:#222;background:#fafafa;margin:0}' +
         '.rp-container{max-width:190mm;margin:0 auto;background:white;padding:20px 25px;box-shadow:0 2px 20px rgba(0,0,0,0.1)}' +
@@ -5244,19 +5250,13 @@
         '<div class="rp-section"><h3 style="color:#e65100;font-size:14px;margin:0 0 6px;">📦 توزيع الأرغفة</h3>' +
         '<table class="rp-table"><tr><th>الفئة</th><th>العدد</th><th>النسبة</th></tr>' +
         '<tr><td>عمال (' + pCount + ' × 6)</td><td style="text-align:center;">' + workerLoaves + '</td><td style="text-align:center;">' + (totalLoaves > 0 ? Math.round(workerLoaves/totalLoaves*100) : 0) + '%</td></tr>' +
-        '<tr><td>سيدات (' + womenCount + ' × 2)</td><td style="text-align:center;">' + womenLoaves + '</td><td style="text-align:center;">' + (totalLoaves > 0 ? Math.round(womenLoaves/totalLoaves*100) : 0) + '%</td></tr>' +
-        '<tr><td>طلبة (' + studentCount + ' × 2)</td><td style="text-align:center;">' + studentLoaves + '</td><td style="text-align:center;">' + (totalLoaves > 0 ? Math.round(studentLoaves/totalLoaves*100) : 0) + '%</td></tr>' +
-        '<tr><td>ضيوف آخرين (' + otherGuestsCount + ' × 2)</td><td style="text-align:center;">' + otherLoaves + '</td><td style="text-align:center;">' + (totalLoaves > 0 ? Math.round(otherLoaves/totalLoaves*100) : 0) + '%</td></tr>' +
+        '<tr><td>سيدات (' + womenCount + ' × 6)</td><td style="text-align:center;">' + womenLoaves + '</td><td style="text-align:center;">' + (totalLoaves > 0 ? Math.round(womenLoaves/totalLoaves*100) : 0) + '%</td></tr>' +
+        '<tr><td>طلبة (' + studentCount + ' × 6)</td><td style="text-align:center;">' + studentLoaves + '</td><td style="text-align:center;">' + (totalLoaves > 0 ? Math.round(studentLoaves/totalLoaves*100) : 0) + '%</td></tr>' +
+        '<tr><td>ضيوف آخرين (' + otherGuestsCount + ' × 6)</td><td style="text-align:center;">' + otherLoaves + '</td><td style="text-align:center;">' + (totalLoaves > 0 ? Math.round(otherLoaves/totalLoaves*100) : 0) + '%</td></tr>' +
+        (contractorsData.length > 0 ? '<tr><td>مقاولين (' + contractorsData.length + ')</td><td style="text-align:center;">' + ctrLoaves + '</td><td style="text-align:center;">' + (totalLoaves > 0 ? Math.round(ctrLoaves/totalLoaves*100) : 0) + '%</td></tr>' : '') +
         '<tr style="background:#fff3e0;font-weight:700;"><td>الإجمالي</td><td style="text-align:center;">' + totalLoaves + '</td><td style="text-align:center;">100%</td></tr>' +
         '</table></div>' +
-        '<div class="rp-section"><h3 style="color:#1565c0;font-size:14px;margin:0 0 6px;">📦 الخامات المطلوبة</h3>' +
-        '<table class="rp-table"><tr><th>الخام</th><th>المطلوب</th><th>المخزون الحالي</th><th>الحالة</th></tr>' +
-        ingRow('🌾 دقيق', flourKg, flourStock, 'كجم') +
-        ingRow('🧫 خميرة', yeastKg, yeastStock, 'كجم') +
-        ingRow('🧂 ملح', saltKg, saltStock, 'كجم') +
-        ingRow('🌾 ردة', branKg, branStock, 'كجم') +
-        ingRow('⛽ سولار', dieselL, dieselStock, 'لتر') +
-        '</table></div>' +
+        (contractorsData.length > 0 ? '<div class="rp-section"><h3 style="color:#e65100;font-size:14px;margin:0 0 6px;">👷 تفاصيل المقاولين</h3><table class="rp-table"><tr><th>المقاول</th><th>عدد الأرغفة</th></tr>' + contractorsData.map(function(c) { return '<tr><td>' + c.name + '</td><td style="text-align:center;">' + c.qty + '</td></tr>'; }).join('') + '</table></div>' : '') +
         '<div class="rp-footer">徉 منظومة الشئون الإدارية المتكاملة - لينه فارمز | إعداد الخبز للغد | ' + dateArabic + '</div>' +
         '</div></body></html>';
       try {
