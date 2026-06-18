@@ -5142,10 +5142,14 @@
         else if (h.type === 'طلبة مدرسة') studentCount += g;
         else otherGuestsCount += g;
       });
-      var workerLoaves = pCount * 6;
-      var womenLoaves = womenCount * 6;
-      var studentLoaves = studentCount * 6;
-      var otherLoaves = otherGuestsCount * 6;
+      var bpWorkers = parseInt(document.getElementById('bp-workers').value) || pCount;
+      var bpWomen = parseInt(document.getElementById('bp-women').value) || womenCount;
+      var bpStudents = parseInt(document.getElementById('bp-students').value) || studentCount;
+      var bpOther = parseInt(document.getElementById('bp-other').value) || otherGuestsCount;
+      var workerLoaves = bpWorkers * 6;
+      var womenLoaves = bpWomen * 6;
+      var studentLoaves = bpStudents * 6;
+      var otherLoaves = bpOther * 6;
       var totalLoaves = workerLoaves + womenLoaves + studentLoaves + otherLoaves;
       var flourKg = Math.round(totalLoaves * 0.45 * 100) / 100;
       var yeastKg = Math.round(totalLoaves * 0.005 * 100) / 100;
@@ -5175,31 +5179,30 @@
       box.innerHTML = '<div style="font-size:32px;margin-bottom:6px;">🥖</div>' +
         '<h3 style="margin:0 0 2px;color:#e65100;font-size:18px;">اعداد الخبز للغد</h3>' +
         '<div style="font-size:13px;color:#555;margin:0 0 4px;">📅 ' + tomorrowStr + '</div>' +
-        '<p style="font-size:11px;color:#999;margin:0 0 14px;">تقرير للقراءة فقط — لا يأثر على البيانات</p>' +
+        '<p style="font-size:11px;color:#999;margin:0 0 14px;">عدّل الأرقام براحتك — التقرير يطلع باللي تكتبه</p>' +
         '<div style="text-align:right;">' +
         '<div style="background:#e8f5e9;border-radius:10px;padding:12px;margin-bottom:10px;border:1px solid #c8e6c9;">' +
-        '<div style="font-weight:700;color:#1b5e20;margin-bottom:8px;font-size:14px;">📊 القوة والضيوف (بيانات اليوم)</div>' +
-        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:13px;">' +
-        '<div style="padding:6px 10px;background:white;border-radius:6px;border:1px solid #a5d6a7;"><span style="color:#888;">العمال الحاضرين:</span> <b style="color:#1b5e20;">' + pCount + '</b></div>' +
-        '<div style="padding:6px 10px;background:white;border-radius:6px;border:1px solid #a5d6a7;"><span style="color:#888;">إجمالي الأرغفة:</span> <b style="color:#e65100;">' + totalLoaves + '</b></div>' +
-        '<div style="padding:6px 10px;background:white;border-radius:6px;border:1px solid #f48fb1;"><span style="color:#888;">سيدات:</span> <b style="color:#c2185b;">' + womenCount + '</b></div>' +
-        '<div style="padding:6px 10px;background:white;border-radius:6px;border:1px solid #90caf9;"><span style="color:#888;">طلبة:</span> <b style="color:#1565c0;">' + studentCount + '</b></div>' +
-        '<div style="padding:6px 10px;background:white;border-radius:6px;border:1px solid #b0bec5;"><span style="color:#888;">ضيوف آخرين:</span> <b style="color:#546e7a;">' + otherGuestsCount + '</b></div>' +
-        '<div style="padding:6px 10px;background:white;border-radius:6px;border:1px solid #a5d6a7;"><span style="color:#888;">المقاولين:</span> <b style="color:#e65100;">يُحدد يدوياً</b></div>' +
+        '<div style="font-weight:700;color:#1b5e20;margin-bottom:8px;font-size:14px;">📊 عدد الأشخاص (عدّل حسب الحاجة)</div>' +
+        '<div style="font-size:13px;">' +
+        '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:white;border-radius:8px;margin-bottom:6px;border-right:4px solid #2e7d32;"><span>👤 عمال (الحضور: ' + pCount + ')</span><input type="number" id="bp-workers" min="0" value="' + pCount + '" style="width:70px;padding:4px 6px;border:1px solid #a5d6a7;border-radius:4px;font-size:13px;font-family:Cairo,sans-serif;text-align:center;" oninput="updateBreadPlanTotal()"></div>' +
+        '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:white;border-radius:8px;margin-bottom:6px;border-right:4px solid #e91e63;"><span>👩 سيدات (الحضور: ' + womenCount + ')</span><input type="number" id="bp-women" min="0" value="' + womenCount + '" style="width:70px;padding:4px 6px;border:1px solid #f48fb1;border-radius:4px;font-size:13px;font-family:Cairo,sans-serif;text-align:center;" oninput="updateBreadPlanTotal()"></div>' +
+        '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:white;border-radius:8px;margin-bottom:6px;border-right:4px solid #1565c0;"><span>🎒 طلبة (الحضور: ' + studentCount + ')</span><input type="number" id="bp-students" min="0" value="' + studentCount + '" style="width:70px;padding:4px 6px;border:1px solid #90caf9;border-radius:4px;font-size:13px;font-family:Cairo,sans-serif;text-align:center;" oninput="updateBreadPlanTotal()"></div>' +
+        '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:white;border-radius:8px;margin-bottom:6px;border-right:4px solid #78909c;"><span>🚗 ضيوف آخرين (الحضور: ' + otherGuestsCount + ')</span><input type="number" id="bp-other" min="0" value="' + otherGuestsCount + '" style="width:70px;padding:4px 6px;border:1px solid #b0bec5;border-radius:4px;font-size:13px;font-family:Cairo,sans-serif;text-align:center;" oninput="updateBreadPlanTotal()"></div>' +
         '</div></div>' +
         '<div style="background:#fff8e1;border-radius:10px;padding:12px;margin-bottom:10px;border:1px solid #ffe082;">' +
-        '<div style="font-weight:700;color:#e65100;margin-bottom:8px;font-size:14px;display:flex;justify-content:space-between;align-items:center;"><span>👷 المقاولين (إدخال يدوي)</span><button onclick="addBreadPlanCtrRow()" style="padding:4px 12px;background:#e65100;color:white;border:none;border-radius:4px;cursor:pointer;font-size:12px;font-family:Cairo,sans-serif;">➕ إضافة مقاول</button></div>' +
+        '<div style="font-weight:700;color:#e65100;margin-bottom:8px;font-size:14px;display:flex;justify-content:space-between;align-items:center;"><span>👷 المقاولين</span><button onclick="addBreadPlanCtrRow()" style="padding:4px 12px;background:#e65100;color:white;border:none;border-radius:4px;cursor:pointer;font-size:12px;font-family:Cairo,sans-serif;">➕ إضافة مقاول</button></div>' +
         '<div style="max-height:150px;overflow-y:auto;"><table id="bread-plan-ctr-table" style="width:100%;border-collapse:collapse;font-size:12px;"><thead><tr><th style="padding:6px;background:#fff3e0;border:1px solid #e0e0e0;">المقاول</th><th style="padding:6px;background:#fff3e0;border:1px solid #e0e0e0;width:80px;">عدد الأرغفة</th><th style="padding:6px;background:#fff3e0;border:1px solid #e0e0e0;width:30px;"></th></tr></thead><tbody id="bread-plan-ctr-tbody"></tbody></table></div>' +
         '</div>' +
         '<div style="background:#fff3e0;border-radius:10px;padding:12px;margin-bottom:10px;border:1px solid #ffcc80;">' +
-        '<div style="font-weight:700;color:#e65100;margin-bottom:8px;font-size:14px;">🍞 توزيع الأرغفة</div>' +
+        '<div style="font-weight:700;color:#e65100;margin-bottom:8px;font-size:14px;">🍞 ملخص الأرغفة</div>' +
         '<div style="font-size:13px;display:grid;grid-template-columns:1fr auto;gap:4px 12px;">' +
-        '<span>عمال (' + pCount + ' × 6):</span><b>' + workerLoaves + '</b>' +
-        '<span>سيدات (' + womenCount + ' × 6):</span><b>' + womenLoaves + '</b>' +
-        '<span>طلبة (' + studentCount + ' × 6):</span><b>' + studentLoaves + '</b>' +
-        '<span>ضيوف آخرين (' + otherGuestsCount + ' × 6):</span><b>' + otherLoaves + '</b>' +
+        '<span>عمال:</span><b id="bp-loaves-workers">' + workerLoaves + '</b>' +
+        '<span>سيدات:</span><b id="bp-loaves-women">' + womenLoaves + '</b>' +
+        '<span>طلبة:</span><b id="bp-loaves-students">' + studentLoaves + '</b>' +
+        '<span>ضيوف آخرين:</span><b id="bp-loaves-other">' + otherLoaves + '</b>' +
+        '<span>مقاولين:</span><b id="bp-loaves-ctr">0</b>' +
         '<hr style="grid-column:span 2;border:none;border-top:1px dashed #e0e0e0;margin:4px 0;">' +
-        '<span style="font-weight:700;">الإجمالي:</span><b style="color:#e65100;font-size:15px;">' + totalLoaves + ' رغيف</b>' +
+        '<span style="font-weight:700;">الإجمالي:</span><b style="color:#e65100;font-size:15px;" id="bread-total-display">' + totalLoaves + ' رغيف</b>' +
         '</div></div>' +
         '</div>' +
         '<div style="margin-top:14px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">' +
@@ -5226,16 +5229,30 @@
       if (row) { row.remove(); updateBreadPlanTotal(); }
     }
     function updateBreadPlanTotal() {
-      var workers = parseInt(document.getElementById('bsug-workers').value) || 0;
-      var women = parseInt(document.getElementById('bsug-women').value) || 0;
-      var students = parseInt(document.getElementById('bsug-students').value) || 0;
-      var other = parseInt(document.getElementById('bsug-other').value) || 0;
+      var workers = parseInt(document.getElementById('bp-workers').value) || 0;
+      var women = parseInt(document.getElementById('bp-women').value) || 0;
+      var students = parseInt(document.getElementById('bp-students').value) || 0;
+      var other = parseInt(document.getElementById('bp-other').value) || 0;
+      var workerLoaves = workers * 6;
+      var womenLoaves = women * 6;
+      var studentLoaves = students * 6;
+      var otherLoaves = other * 6;
       var ctrInputs = document.querySelectorAll('#bread-plan-ctr-tbody input[id^="bpqty-"]');
       var ctrTotal = 0;
       ctrInputs.forEach(function(inp) { ctrTotal += parseInt(inp.value) || 0; });
-      var total = workers + women + students + other + ctrTotal;
-      var el = document.getElementById('bread-total-display');
-      if (el) el.textContent = total + ' رغيف';
+      var total = workerLoaves + womenLoaves + studentLoaves + otherLoaves + ctrTotal;
+      var ew = document.getElementById('bp-loaves-workers');
+      var ewo = document.getElementById('bp-loaves-women');
+      var es = document.getElementById('bp-loaves-students');
+      var eo = document.getElementById('bp-loaves-other');
+      var ec = document.getElementById('bp-loaves-ctr');
+      var et = document.getElementById('bread-total-display');
+      if (ew) ew.textContent = workerLoaves;
+      if (ewo) ewo.textContent = womenLoaves;
+      if (es) es.textContent = studentLoaves;
+      if (eo) eo.textContent = otherLoaves;
+      if (ec) ec.textContent = ctrTotal;
+      if (et) et.textContent = total + ' رغيف';
     }
     function generateBreadPlanReport() {
       var tomorrow = new Date();
@@ -5258,10 +5275,14 @@
         else if (h.type === 'طلبة مدرسة') studentCount += g;
         else otherGuestsCount += g;
       });
-      var workerLoaves = pCount * 6;
-      var womenLoaves = womenCount * 6;
-      var studentLoaves = studentCount * 6;
-      var otherLoaves = otherGuestsCount * 6;
+      var bpWorkers = parseInt(document.getElementById('bp-workers').value) || pCount;
+      var bpWomen = parseInt(document.getElementById('bp-women').value) || womenCount;
+      var bpStudents = parseInt(document.getElementById('bp-students').value) || studentCount;
+      var bpOther = parseInt(document.getElementById('bp-other').value) || otherGuestsCount;
+      var workerLoaves = bpWorkers * 6;
+      var womenLoaves = bpWomen * 6;
+      var studentLoaves = bpStudents * 6;
+      var otherLoaves = bpOther * 6;
       var totalLoaves = workerLoaves + womenLoaves + studentLoaves + otherLoaves;
       var ctrInputs = document.querySelectorAll('#bread-plan-ctr-tbody tr');
       var contractorsData = [];
@@ -5297,16 +5318,16 @@
         '</style></head><body><div class="rp-container">' +
         '<div class="rp-header">' + (logoSrc ? '<div style="text-align:center;margin-bottom:8px;"><img src="' + logoSrc + '" style="height:50px;width:auto;"></div>' : '') +
         '<h1>🥖 لينه فارمز</h1><h2>إعداد الخبز للغد</h2><div class="rp-date">📅 ' + dateArabic + ' (' + tomorrowStr + ')</div></div>' +
-        '<div class="rp-section"><div class="rp-summary"><span class="rp-summary-icon">📊</span><span class="rp-summary-label">القوة والضيوف</span><span class="rp-summary-value">' + pCount + ' عامل | ' + womenCount + ' سيدة | ' + studentCount + ' طالب | ' + otherGuestsCount + ' ضيف آخر</span></div></div>' +
+        '<div class="rp-section"><div class="rp-summary"><span class="rp-summary-icon">📊</span><span class="rp-summary-label">القوة والضيوف</span><span class="rp-summary-value">' + bpWorkers + ' عامل | ' + bpWomen + ' سيدة | ' + bpStudents + ' طالب | ' + bpOther + ' ضيف آخر</span></div></div>' +
         '<div class="rp-section"><div class="rp-summary"><span class="rp-summary-icon">🍞</span><span class="rp-summary-label">إجمالي الأرغفة</span><span class="rp-summary-value" style="font-weight:700;color:#e65100;font-size:16px;">' + totalLoaves + ' رغيف</span></div></div>' +
         '<div class="rp-section"><h3 style="color:#e65100;font-size:14px;margin:0 0 6px;">📦 توزيع الأرغفة</h3>' +
-        '<table class="rp-table"><tr><th>الفئة</th><th>العدد</th><th>النسبة</th></tr>' +
-        '<tr><td>عمال (' + pCount + ' × 6)</td><td style="text-align:center;">' + workerLoaves + '</td><td style="text-align:center;">' + (totalLoaves > 0 ? Math.round(workerLoaves/totalLoaves*100) : 0) + '%</td></tr>' +
-        '<tr><td>سيدات (' + womenCount + ' × 6)</td><td style="text-align:center;">' + womenLoaves + '</td><td style="text-align:center;">' + (totalLoaves > 0 ? Math.round(womenLoaves/totalLoaves*100) : 0) + '%</td></tr>' +
-        '<tr><td>طلبة (' + studentCount + ' × 6)</td><td style="text-align:center;">' + studentLoaves + '</td><td style="text-align:center;">' + (totalLoaves > 0 ? Math.round(studentLoaves/totalLoaves*100) : 0) + '%</td></tr>' +
-        '<tr><td>ضيوف آخرين (' + otherGuestsCount + ' × 6)</td><td style="text-align:center;">' + otherLoaves + '</td><td style="text-align:center;">' + (totalLoaves > 0 ? Math.round(otherLoaves/totalLoaves*100) : 0) + '%</td></tr>' +
-        (contractorsData.length > 0 ? '<tr><td>مقاولين (' + contractorsData.length + ')</td><td style="text-align:center;">' + ctrLoaves + '</td><td style="text-align:center;">' + (totalLoaves > 0 ? Math.round(ctrLoaves/totalLoaves*100) : 0) + '%</td></tr>' : '') +
-        '<tr style="background:#fff3e0;font-weight:700;"><td>الإجمالي</td><td style="text-align:center;">' + totalLoaves + '</td><td style="text-align:center;">100%</td></tr>' +
+        '<table class="rp-table"><tr><th>الفئة</th><th>العدد</th></tr>' +
+        '<tr><td>عمال (' + bpWorkers + ' × 6)</td><td style="text-align:center;">' + workerLoaves + '</td></tr>' +
+        '<tr><td>سيدات (' + bpWomen + ' × 6)</td><td style="text-align:center;">' + womenLoaves + '</td></tr>' +
+        '<tr><td>طلبة (' + bpStudents + ' × 6)</td><td style="text-align:center;">' + studentLoaves + '</td></tr>' +
+        '<tr><td>ضيوف آخرين (' + bpOther + ' × 6)</td><td style="text-align:center;">' + otherLoaves + '</td></tr>' +
+        (contractorsData.length > 0 ? '<tr><td>مقاولين (' + contractorsData.length + ')</td><td style="text-align:center;">' + ctrLoaves + '</td></tr>' : '') +
+        '<tr style="background:#fff3e0;font-weight:700;"><td>الإجمالي</td><td style="text-align:center;">' + totalLoaves + '</td></tr>' +
         '</table></div>' +
         (contractorsData.length > 0 ? '<div class="rp-section"><h3 style="color:#e65100;font-size:14px;margin:0 0 6px;">👷 تفاصيل المقاولين</h3><table class="rp-table"><tr><th>المقاول</th><th>عدد الأرغفة</th></tr>' + contractorsData.map(function(c) { return '<tr><td>' + c.name + '</td><td style="text-align:center;">' + c.qty + '</td></tr>'; }).join('') + '</table></div>' : '') +
         '<div class="rp-footer">徉 منظومة الشئون الإدارية المٳتزمة - لينه فارمز | إعداد الخبز للغد | ' + dateArabic + '</div>' +
