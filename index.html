@@ -5143,7 +5143,7 @@
       });
       var workerLoaves = pCount * 6;
       var womenLoaves = womenCount * 2;
-      var studentLoaves = studentCount * 6;
+      var studentLoaves = studentCount * 2;
       var otherLoaves = otherGuestsCount * 6;
       var totalLoaves = workerLoaves + womenLoaves + studentLoaves + otherLoaves;
       var existing = document.getElementById('bread-plan-modal');
@@ -5213,7 +5213,7 @@
       var other = parseInt(document.getElementById('bp-other').value) || 0;
       var workerLoaves = workers * 6;
       var womenLoaves = women * 2;
-      var studentLoaves = students * 6;
+      var studentLoaves = students * 2;
       var otherLoaves = other * 6;
       var ctrInputs = document.querySelectorAll('#bread-plan-ctr-tbody input[id^="bpqty-"]');
       var ctrTotal = 0;
@@ -5259,7 +5259,7 @@
       var bpOther = parseInt(document.getElementById('bp-other').value) || otherGuestsCount;
       var workerLoaves = bpWorkers * 6;
       var womenLoaves = bpWomen * 2;
-      var studentLoaves = bpStudents * 6;
+      var studentLoaves = bpStudents * 2;
       var otherLoaves = bpOther * 6;
       var totalLoaves = workerLoaves + womenLoaves + studentLoaves + otherLoaves;
       var ctrInputs = document.querySelectorAll('#bread-plan-ctr-tbody tr');
@@ -5302,7 +5302,7 @@
         '<table class="rp-table"><tr><th>الفئة</th><th>العدد</th></tr>' +
         '<tr><td>عمال (' + bpWorkers + ' × 6)</td><td style="text-align:center;">' + workerLoaves + '</td></tr>' +
         '<tr><td>سيدات (' + bpWomen + ' × 2)</td><td style="text-align:center;">' + womenLoaves + '</td></tr>' +
-        '<tr><td>طلبة (' + bpStudents + ' × 6)</td><td style="text-align:center;">' + studentLoaves + '</td></tr>' +
+        '<tr><td>طلبة (' + bpStudents + ' × 2)</td><td style="text-align:center;">' + studentLoaves + '</td></tr>' +
         '<tr><td>ضيوف آخرين (' + bpOther + ' × 6)</td><td style="text-align:center;">' + otherLoaves + '</td></tr>' +
         '<tr style="background:#e8f5e9;font-weight:700;"><td>إجمالي المزرعة</td><td style="text-align:center;">' + farmLoaves + '</td></tr>' +
         '</table></div>' +
