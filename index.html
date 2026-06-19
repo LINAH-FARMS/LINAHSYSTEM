@@ -985,7 +985,7 @@
     <button class="tab-btn" onclick="switchTab('tab-bakery')" style="background:#fff3e0; color:#e65100; font-weight:700;">🍞 فرن المزرعة <span class="tab-badge orange" id="badge-bakery">0</span></button>
     <button class="tab-btn" onclick="switchTab('tab-bread-supply')" style="background:#e3f2fd; color:#1565c0; font-weight:700;">🚚 توريد الخبز للمقاولين <span class="tab-badge blue" id="badge-bread-supply">0</span></button>
     <button class="tab-btn" onclick="switchTab('tab-evaluations')" style="background:#fce4ec; color:#880e4f; font-weight:700;">⭐ تقييم العاملين <span class="tab-badge danger" id="badge-eval">0</span></button>
-    <button class="tab-btn" onclick="alert('DEBUG: finance button clicked!'); switchTab('tab-finance')" style="background:#e8eaf6; color:#283593; font-weight:700;">💰 المركز المالي والميزانية</button>
+    <button class="tab-btn" onclick="switchTab('tab-finance')" style="background:#e8eaf6; color:#283593; font-weight:700;">💰 المركز المالي والميزانية</button>
     <button class="tab-btn" onclick="switchTab('tab-data-exchange')" style="background:#e8f5e9; color:#1b5e20; font-weight:700;">🔄 تبادل البيانات</button>
   </div>
 
@@ -4197,8 +4197,11 @@
       tabEl.classList.add('active');
       if (el) el.classList.add('active');
       if (tabId === 'tab-finance') {
-        var cs = getComputedStyle(tabEl);
-        alert('tab-finance: display=' + cs.display + ', visibility=' + cs.visibility + ', opacity=' + cs.opacity + ', height=' + cs.height + ', class=' + tabEl.className + ', children=' + tabEl.children.length);
+        var overlay = document.createElement('div');
+        overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:red;color:white;font-size:48px;font-weight:900;text-align:center;padding-top:40%;z-index:999999';
+        overlay.innerHTML = '💰💰💰 التبويب شغال على الشاشة 💰💰💰';
+        document.body.appendChild(overlay);
+        setTimeout(function(){ overlay.remove(); }, 5000);
       }
       var tabNames = { 'tab-dashboard':'الرئيسية','tab-employees':'القوة','tab-housing':'السكن','tab-inventory':'المخزن','tab-vacations':'إجازات وإضافي الشئون الإدارية','tab-hospitality':'الضيافة','tab-maintenance':'الصيانة','tab-septic':'البيارات','tab-dynamic':'الإدارة المرنة','tab-excluded':'المستبعدين','tab-periodic-maint':'الصيانة الدورية','tab-tea-sugar':'شاي وسكر','tab-meal-log':'الوجبات','tab-contractors':'المقاولين','tab-bakery':'المخبز','tab-bread-supply':'توريد الخبز','tab-evaluations':'التقييمات','tab-audit':'سجل التعديلات','tab-finance':'المركز المالي والميزانية','tab-data-exchange':'تبادل البيانات' };
       setAction('🔍 ' + (tabNames[tabId] || tabId));
