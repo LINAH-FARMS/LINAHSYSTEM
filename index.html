@@ -5987,11 +5987,19 @@ function toggleEmployeeStatus(empId) {
       let buildingEmps = employees.filter(e => e.sector === sector);
       let otherSectors = dynamicSectors.filter(s => s !== sector);
       if (buildingEmps.length === 0) {
-        if (!confirm('هل أنت متأكد من حذف المبنى "' + sector + '"؟\nلا يوجد موظفين مسجلين فيه.')) return;
+        if (!confirm('هل أنت متأكد من حذف المبنى "' + sector + '"؟')) return;
+        let sectorRooms = roomsCapacity.filter(r => r.sector === sector);
+        sectorRooms.forEach(r => _logDeletion('roomsCapacity', r.sector + '|' + r.number));
+        _logDeletion('dynamicSectors', sector);
         roomsCapacity = roomsCapacity.filter(r => r.sector !== sector);
         dynamicSectors = dynamicSectors.filter(s => s !== sector);
         syncStorage();
         renderHousingLayout();
+        alert('✅ تم حذف المبنى "' + sector + '"');
+        return;
+      }
+      if (otherSectors.length === 0) {
+        alert('⚠️ لا يوجد مبانٍ أخرى لنُقل إليها الموظفون. أضف مبنى أولاً.');
         return;
       }
       let modal = document.createElement('div');
@@ -6003,13 +6011,13 @@ function toggleEmployeeStatus(empId) {
       html += '<div style="background:#ffebee;padding:10px 14px;border-radius:8px;font-size:13px;color:#c62828;margin-bottom:12px;">⚠️ يوجد <b>' + buildingEmps.length + '</b> موظف مسجل في هذا المبنى. يجب نقلهم لغرف أخرى قبل الحذف.</div>';
       html += '<div id="delete-building-emps-list">';
       buildingEmps.forEach(function(emp, i) {
-        html += '<div style="display:flex;align-items:center;gap:8px;background:#f5f5f5;padding:8px 12px;border-radius:8px;margin-bottom:6px;">';
-        html += '<span style="flex:1;font-size:13px;font-weight:600;">' + emp.name + ' <span style="color:#888;font-size:11px;">[' + (emp.code || 'بدون') + '] - غرفة ' + (emp.room || '-') + '</span></span>';
-        html += '<select id="db-sect-' + i + '" style="width:120px;padding:4px 6px;border:2px solid #e0e0e0;border-radius:6px;font-size:12px;font-family:Cairo;">';
-        html += '<option value="">-- اختر --</option>';
+        html += '<div style="display:flex;align-items:center;gap:8px;background:#f5f5f5;padding:8px 12px;border-radius:8px;margin-bottom:6px;flex-wrap:wrap;">';
+        html += '<span style="flex:1;min-width:150px;font-size:13px;font-weight:600;">' + emp.name + ' <span style="color:#888;font-size:11px;">[' + (emp.code || 'بدون') + '] - غرفة ' + (emp.room || '-') + '</span></span>';
+        html += '<select id="db-sect-' + i + '" style="width:130px;padding:6px 8px;border:2px solid #e0e0e0;border-radius:6px;font-size:12px;font-family:Cairo;">';
+        html += '<option value="">-- اختر مبنى --</option>';
         otherSectors.forEach(function(s) { html += '<option value="' + s + '">' + s + '</option>'; });
         html += '</select>';
-        html += '<select id="db-room-' + i + '" style="width:100px;padding:4px 6px;border:2px solid #e0e0e0;border-radius:6px;font-size:12px;font-family:Cairo;">';
+        html += '<select id="db-room-' + i + '" style="width:120px;padding:6px 8px;border:2px solid #e0e0e0;border-radius:6px;font-size:12px;font-family:Cairo;">';
         html += '<option value="">-- مبنى أولاً --</option>';
         html += '</select>';
         html += '</div>';
@@ -6017,13 +6025,14 @@ function toggleEmployeeStatus(empId) {
       html += '</div></div>';
       html += '<div style="padding:10px 0;border-top:1px solid #eee;display:flex;gap:8px;justify-content:flex-end;">';
       html += '<button class="btn" style="background:#757575;color:#fff;" onclick="document.getElementById(\'modal-delete-building\').remove()">إلغاء</button>';
-      html += '<button class="btn" style="background:#c62828;color:#fff;" onclick="confirmDeleteBuilding(\'' + sector + '\')">🗑️ ترحيل الكل ثم حذف المبنى</button>';
+      html += '<button class="btn" style="background:#c62828;color:#fff;" onclick="confirmDeleteBuilding(\'' + sector.replace(/'/g, "\\'") + '\')">🗑️ ترحيل الكل ثم حذف المبنى</button>';
       html += '</div></div>';
       modal.innerHTML = html;
       document.body.appendChild(modal);
       buildingEmps.forEach(function(emp, i) {
         var sectSel = document.getElementById('db-sect-' + i);
         var roomSel = document.getElementById('db-room-' + i);
+        if (!sectSel || !roomSel) return;
         sectSel.onchange = function() {
           var selSect = sectSel.value;
           roomSel.innerHTML = '<option value="">-- اختر غرفة --</option>';
@@ -6034,7 +6043,7 @@ function toggleEmployeeStatus(empId) {
             var hasSpace = occupantCount < r.beds;
             var opt = document.createElement('option');
             opt.value = r.number;
-            opt.textContent = 'غرفة ' + r.number + ' (المشغول: ' + occupantCount + '/' + r.beds + ')' + (hasSpace ? '' : ' ⛔ ممتلئة');
+            opt.textContent = 'غرفة ' + r.number + ' (' + occupantCount + '/' + r.beds + ')' + (hasSpace ? '' : ' ⛔');
             opt.disabled = !hasSpace;
             roomSel.appendChild(opt);
           });
@@ -6058,6 +6067,7 @@ function toggleEmployeeStatus(empId) {
         alert('⚠️ يجب تعيين مبنى وغرفة لكل من: ' + unassigned.join('، '));
         return;
       }
+      if (!confirm('هل أنت متأكد؟ سيتم ترحيل ' + buildingEmps.length + ' موظف وحذف المبنى "' + sector + '"')) return;
       buildingEmps.forEach(function(emp, i) {
         var sectSel = document.getElementById('db-sect-' + i);
         var roomSel = document.getElementById('db-room-' + i);
@@ -6065,6 +6075,9 @@ function toggleEmployeeStatus(empId) {
         emp.room = roomSel.value;
         emp.modifiedAt = new Date().toISOString();
       });
+      let sectorRooms = roomsCapacity.filter(r => r.sector === sector);
+      sectorRooms.forEach(r => _logDeletion('roomsCapacity', r.sector + '|' + r.number));
+      _logDeletion('dynamicSectors', sector);
       roomsCapacity = roomsCapacity.filter(r => r.sector !== sector);
       dynamicSectors = dynamicSectors.filter(s => s !== sector);
       syncStorage();
