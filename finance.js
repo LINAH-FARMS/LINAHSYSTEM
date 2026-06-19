@@ -23,12 +23,14 @@ function finExcelSerial(dateStr) {
 }
 
 function finParseDate(dateVal) {
-  if (!dateVal) return null;
+  if (dateVal === null || dateVal === undefined || dateVal === '') return null;
+  if (dateVal instanceof Date && !isNaN(dateVal.getTime())) return dateVal;
   if (typeof dateVal === 'number' && dateVal > 30000 && dateVal < 60000) {
     return new Date((dateVal - 25569) * 86400 * 1000);
   }
   if (typeof dateVal === 'string') {
     var trimmed = dateVal.trim();
+    if (!trimmed) return null;
     if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(trimmed)) {
       var parts = trimmed.split('/');
       return new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
@@ -47,19 +49,22 @@ function finParseDate(dateVal) {
 }
 
 function finMonthFromExcelDate(serial) {
-  var d = typeof serial === 'object' ? serial : finParseDate(serial);
+  if (serial === null || serial === undefined) return 0;
+  var d = (serial instanceof Date) ? serial : finParseDate(serial);
   if (!d || isNaN(d.getTime())) return 0;
   return d.getMonth() + 1;
 }
 
 function finYearFromExcelDate(serial) {
-  var d = typeof serial === 'object' ? serial : finParseDate(serial);
+  if (serial === null || serial === undefined) return 0;
+  var d = (serial instanceof Date) ? serial : finParseDate(serial);
   if (!d || isNaN(d.getTime())) return 0;
   return d.getFullYear();
 }
 
 function finExcelDate(serial) {
-  var d = typeof serial === 'object' ? serial : finParseDate(serial);
+  if (serial === null || serial === undefined) return '';
+  var d = (serial instanceof Date) ? serial : finParseDate(serial);
   if (!d || isNaN(d.getTime())) return '';
   var y = d.getFullYear();
   var m = String(d.getMonth() + 1).padStart(2, '0');
@@ -87,16 +92,19 @@ function finImportReport(evt) {
       var data = new Uint8Array(e.target.result);
       var workbook = XLSX.read(data, { type: 'array' });
       var imported = 0;
+      var _dbgDates = [];
+      var _dbgKeys = [];
       workbook.SheetNames.forEach(function(sheetName) {
         var sheet = workbook.Sheets[sheetName];
         var json = XLSX.utils.sheet_to_json(sheet);
         if (!json.length) return;
         var firstRow = json[0];
         var keys = Object.keys(firstRow);
+        if (_dbgKeys.length === 0) _dbgKeys = keys.slice(0, 15);
         var hasTaskCol = keys.some(function(k) { return k.toLowerCase().indexOf('task') >= 0 && k.toLowerCase().indexOf('desc') < 0; });
         var hasValueCol = keys.some(function(k) { return k === 'القيمة' || k.toLowerCase() === 'value'; });
         if (hasTaskCol && hasValueCol) {
-          json.forEach(function(row) {
+          json.forEach(function(row, _ri) {
             var taskVal = row['Task'] || row['task'] || '';
             var overheadCode = String(taskVal).trim();
             var dateVal = row['التاريخ'] || row['Date'] || '';
@@ -104,6 +112,7 @@ function finImportReport(evt) {
             var txMonth = finMonthFromExcelDate(parsed);
             var txYear = finYearFromExcelDate(parsed);
             var txDate = finExcelDate(parsed);
+            if (_ri < 3) _dbgDates.push('raw=' + JSON.stringify(dateVal) + ' type=' + typeof dateVal + ' parsed=' + (parsed ? parsed.toISOString() : 'NULL') + ' y=' + txYear + ' m=' + txMonth);
             var orderNum = String(row['رقم اذن الصرف'] || row['رقم البون'] || '').trim();
             var itemName = String(row['اسم الصـــنف'] || row['اسم الصنف'] || '').trim();
             var existsIdx = finTransactions.findIndex(function(t) { return t.date === txDate && t.task === overheadCode && t.orderNum === orderNum && t.itemName === itemName; });
@@ -172,7 +181,10 @@ function finImportReport(evt) {
       finSave();
       finPopulateYearSelect();
       finRenderAll();
-      alert('✅ تم استيراد ' + imported + ' معاملة بنجاح.');
+      var _dbgMsg = '✅ تم استيراد ' + imported + ' معاملة بنجاح.';
+      _dbgMsg += '\n\nColumns: ' + JSON.stringify(_dbgKeys);
+      if (_dbgDates.length > 0) _dbgMsg += '\n\n' + _dbgDates.join('\n');
+      alert(_dbgMsg);
     } catch(err) { alert('❌ خطأ في الاستيراد: ' + err.message); }
   };
   reader.readAsArrayBuffer(file);
