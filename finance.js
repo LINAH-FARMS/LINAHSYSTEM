@@ -253,6 +253,8 @@ function finRenderCharts(data, month, year) {
   if (finCharts.monthly) finCharts.monthly.destroy();
   if (finCharts.pie) finCharts.pie.destroy();
   if (finCharts.variance) finCharts.variance.destroy();
+  var budgetMap = {};
+  data.budgets.forEach(function(b) { budgetMap[b.code] = (budgetMap[b.code] || 0) + b.budget; });
   if (month == 0) {
     var monthLabels = ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
     var budgetByMonth = new Array(12).fill(0);
@@ -277,8 +279,6 @@ function finRenderCharts(data, month, year) {
   } else {
     var txGroups = finGroupByTask(data.transactions);
     var codes = Object.keys(txGroups).sort();
-    var budgetMap = {};
-    data.budgets.forEach(function(b) { budgetMap[b.code] = b.budget; });
     finCharts.monthly = new Chart(ctxMonthly, {
       type: 'bar',
       data: {
