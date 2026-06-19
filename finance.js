@@ -100,7 +100,8 @@ function finImportReport(evt) {
         if (!json.length) return;
         var firstRow = json[0];
         var keys = Object.keys(firstRow);
-        if (_dbgKeys.length === 0) _dbgKeys = keys.slice(0, 15);
+        if (_dbgKeys.length === 0) _dbgKeys = keys.slice(0, 20);
+        if (_dbgDates.length === 0 && keys.length > 0) _dbgDates.push('Sheet: ' + sheetName + ' | Rows: ' + json.length + ' | Keys: ' + JSON.stringify(keys));
         var hasTaskCol = keys.some(function(k) { return k.toLowerCase().indexOf('task') >= 0 && k.toLowerCase().indexOf('desc') < 0; });
         var hasValueCol = keys.some(function(k) { return k === 'القيمة' || k.toLowerCase() === 'value'; });
         if (hasTaskCol && hasValueCol) {
@@ -181,9 +182,10 @@ function finImportReport(evt) {
       finSave();
       finPopulateYearSelect();
       finRenderAll();
-      var _dbgMsg = '✅ تم استيراد ' + imported + ' معاملة بنجاح.';
+      var _dbgMsg = '📦 الشيتات: ' + workbook.SheetNames.join(', ');
+      _dbgMsg += '\n\n' + _dbgDates.join('\n');
       _dbgMsg += '\n\nColumns: ' + JSON.stringify(_dbgKeys);
-      if (_dbgDates.length > 0) _dbgMsg += '\n\n' + _dbgDates.join('\n');
+      _dbgMsg += '\n✅ تم استيراد ' + imported + ' معاملة.';
       alert(_dbgMsg);
     } catch(err) { alert('❌ خطأ في الاستيراد: ' + err.message); }
   };
