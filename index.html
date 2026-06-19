@@ -1364,7 +1364,8 @@
     </div>
 
     <div class="no-print" style="margin-top:30px;border-top:2px solid var(--primary);padding-top:15px;">
-      <h3 style="margin-bottom:15px;">📦 سجل الأصناف والمواد المخزنية</h3>
+      <h3 onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none';this.querySelector('.toggle-arrow').textContent=this.nextElementSibling.style.display==='none'?'◀':'▼'" style="margin-bottom:15px;cursor:pointer;user-select:none;display:flex;align-items:center;gap:8px;">📦 سجل الأصناف والمواد المخزنية <span class="toggle-arrow" style="font-size:12px;color:#888;">▼</span></h3>
+      <div style="display:none;">
       <div class="control-panel no-print" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;align-items:flex-end;">
         <div class="form-group">
           <label style="font-weight:600;">كود الصنف</label>
@@ -1408,10 +1409,12 @@
           <tbody id="items-registry-body"></tbody>
         </table>
       </div>
+      </div>
     </div>
 
     <div class="no-print" style="margin-top:30px;border-top:2px solid var(--primary);padding-top:15px;">
-      <h3 style="margin-bottom:15px;">🏛️ أرشيف المخازن — الشئون الإدارية</h3>
+      <h3 onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none';this.querySelector('.toggle-arrow').textContent=this.nextElementSibling.style.display==='none'?'◀':'▼'" style="margin-bottom:15px;cursor:pointer;user-select:none;display:flex;align-items:center;gap:8px;">🏛️ أرشيف المخازن — الشئون الإدارية <span class="toggle-arrow" style="font-size:12px;color:#888;">▼</span></h3>
+      <div style="display:none;">
       <div class="control-panel no-print" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;align-items:flex-end;">
         <div class="form-group">
           <label>اسم العهدة</label>
@@ -1464,6 +1467,7 @@
           </thead>
           <tbody id="archive-table-body"></tbody>
         </table>
+      </div>
       </div>
     </div>
   </div>
