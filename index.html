@@ -1253,6 +1253,7 @@
       <input type="file" id="excel-housing-file" style="display: none;" accept=".xlsx, .xls" onchange="handleHousingExcelImport(event)">
       <button class="btn btn-danger" onclick="document.getElementById('excel-replace-housing-file').click()" style="background-color: #e65100;">🔄 استيراد سعة سكن جديد (إحلال كامل)</button>
       <input type="file" id="excel-replace-housing-file" style="display: none;" accept=".xlsx, .xls" onchange="replaceHousingFromExcel(event)">
+      <button class="btn" onclick="printHousing()" style="background:#1565c0;color:#fff;">🖨️ طباعة تقرير السكن</button>
     </div>
 
     <div class="no-print" style="margin:15px 0;padding:15px;background:#fff;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.06);">
@@ -6068,6 +6069,79 @@ function toggleEmployeeStatus(empId) {
       if (modal) modal.remove();
       renderHousingLayout();
       alert('✅ تم ترحيل ' + buildingEmps.length + ' موظف وحذف المبنى "' + sector + '" بنجاح.');
+    }
+
+    function printHousing() {
+      let sectorsMap = {};
+      dynamicSectors.forEach(s => sectorsMap[s] = []);
+      roomsCapacity.forEach(rc => {
+        if (!sectorsMap[rc.sector]) sectorsMap[rc.sector] = [];
+        sectorsMap[rc.sector].push(rc);
+      });
+      let totalBeds = 0, totalOccupied = 0, totalVacant = 0;
+      let buildingRows = '';
+      for (let sector in sectorsMap) {
+        if (sectorsMap[sector].length === 0) continue;
+        let sectorBeds = 0, sectorOccupied = 0;
+        let roomRows = '';
+        sectorsMap[sector].forEach(room => {
+          let occupants = employees.filter(e => e.sector === sector && e.room === room.number);
+          let occCount = occupants.length;
+          let vacant = room.beds - occCount;
+          sectorBeds += room.beds;
+          sectorOccupied += occCount;
+          let names = occupants.map(e => {
+            let badge = e.status === 'V' ? ' <span style="color:#e65100;font-size:10px;">(إجازة)</span>' : '';
+            return e.name + badge;
+          }).join('، ');
+          if (!names) names = '<span style="color:#999;">شاغرة</span>';
+          roomRows += '<tr><td style="text-align:center;font-weight:700;">' + room.number + '</td><td style="text-align:center;">' + room.beds + '</td><td style="text-align:center;">' + occCount + '</td><td style="text-align:center;' + (vacant === 0 ? 'color:#c62828;font-weight:700;' : vacant <= 1 ? 'color:#e65100;' : 'color:#2e7d32;') + '">' + vacant + '</td><td style="font-size:11px;">' + names + '</td></tr>';
+        });
+        totalBeds += sectorBeds;
+        totalOccupied += sectorOccupied;
+        let sectorVacant = sectorBeds - sectorOccupied;
+        totalVacant += sectorVacant;
+        let occPercent = sectorBeds > 0 ? Math.round(sectorOccupied / sectorBeds * 100) : 0;
+        buildingRows += '<tr style="background:#e8f5e9;"><td colspan="5" style="font-weight:800;font-size:14px;color:#1b5e20;padding:10px;">🏠 ' + sector + ' <span style="font-size:11px;color:#555;font-weight:400;">(' + sectorsMap[sector].length + ' غرفة | المشغول: ' + sectorOccupied + '/' + sectorBeds + ' | ' + occPercent + '%)</span></td></tr>';
+        buildingRows += roomRows;
+      }
+      let mainPercent = totalBeds > 0 ? Math.round(totalOccupied / totalBeds * 100) : 0;
+      let printContent = '<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8"><title>تقرير تسكين العاملين</title>';
+      printContent += '<style>';
+      printContent += '*{margin:0;padding:0;box-sizing:border-box;}';
+      printContent += 'body{font-family:"Cairo","Segoe UI",Tahoma,Arial,sans-serif;padding:15px;color:#333;background:#fff;}';
+      printContent += '.header{text-align:center;border-bottom:3px solid #1b5e20;padding-bottom:10px;margin-bottom:15px;}';
+      printContent += '.header h1{font-size:20px;color:#1b5e20;margin-bottom:2px;}';
+      printContent += '.header p{font-size:12px;color:#666;}';
+      printContent += '.summary{display:flex;justify-content:center;gap:20px;margin-bottom:18px;flex-wrap:wrap;}';
+      printContent += '.summary-box{background:#f1f8e9;border:2px solid #a5d6a7;border-radius:8px;padding:10px 20px;text-align:center;min-width:140px;}';
+      printContent += '.summary-box .label{font-size:11px;color:#555;font-weight:600;}';
+      printContent += '.summary-box .value{font-size:22px;font-weight:800;color:#1b5e20;}';
+      printContent += '.summary-box.blue{background:#e3f2fd;border-color:#90caf9;}.summary-box.blue .value{color:#1565c0;}';
+      printContent += '.summary-box.orange{background:#fff3e0;border-color:#ffcc80;}.summary-box.orange .value{color:#e65100;}';
+      printContent += 'table{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:0;}';
+      printContent += 'th{background:#1b5e20;color:white;padding:7px 8px;font-size:12px;font-weight:700;text-align:center;}';
+      printContent += 'td{padding:6px 8px;border-bottom:1px solid #e0e0e0;}';
+      printContent += 'tr:nth-child(even):not(:has(td[colspan])){background:#f9fafb;}';
+      printContent += 'tr:hover:not(:has(td[colspan])){background:#e8f5e9;}';
+      printContent += '.footer{text-align:center;font-size:10px;color:#999;margin-top:12px;border-top:1px solid #eee;padding-top:6px;}';
+      printContent += '@media print{body{padding:0;}@page{size:A4 landscape;margin:0.8cm;}.no-print{display:none!important;}}';
+      printContent += '</style></head><body>';
+      printContent += '<div class="header"><h1>🏠 تقرير تسكين العاملين — لينه فارمز</h1><p>تاريخ الطباعة: ' + new Date().toLocaleDateString('ar-EG', {weekday:'long',year:'numeric',month:'long',day:'numeric'}) + ' | الساعة: ' + new Date().toLocaleTimeString('ar-EG') + '</p></div>';
+      printContent += '<div class="summary">';
+      printContent += '<div class="summary-box"><div class="label">إجمالي الأسِرّة</div><div class="value">' + totalBeds + '</div></div>';
+      printContent += '<div class="summary-box blue"><div class="label">المشغولة (P)</div><div class="value">' + totalOccupied + '</div><div class="label">' + mainPercent + '%</div></div>';
+      printContent += '<div class="summary-box orange"><div class="label">الشاغرة</div><div class="value">' + totalVacant + '</div></div>';
+      printContent += '</div>';
+      printContent += '<table><thead><tr><th style="width:80px;">الغرفة</th><th style="width:70px;">السعة</th><th style="width:70px;">المشغول</th><th style="width:70px;">الشاغر</th><th>الساكنين</th></tr></thead><tbody>';
+      printContent += buildingRows;
+      printContent += '</tbody></table>';
+      printContent += '<div class="footer">منظومة الشئون الإدارية المتكاملة — لينه فارمز | طباعة تلقائية</div>';
+      printContent += '<script>setTimeout(function(){window.print();},500);<\/script>';
+      printContent += '</body></html>';
+      let w = window.open('', '_blank', 'width=1100,height=800');
+      w.document.write(printContent);
+      w.document.close();
     }
 
     function showHousingEmployeeResult() {
