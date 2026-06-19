@@ -3,9 +3,6 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-  <meta http-equiv="Pragma" content="no-cache">
-  <meta http-equiv="Expires" content="0">
   <title>منظومة الشئون الإدارية المتكاملة – لينه فارمز</title>
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -2795,8 +2792,9 @@
       </table>
       <div id="audit-empty" style="text-align:center;padding:40px;color:#888;font-size:14px;">لا يوجد سجل تعديلات</div>
     </div>
+    </div>
   </div>
-  </div>
+
   <div id="tab-data-exchange" class="tab-content">
     <div style="background:#e8f5e9;border-radius:12px;padding:20px;margin-bottom:20px;text-align:center;border:2px solid #a5d6a7;">
       <div style="font-size:28px;font-weight:700;color:#1b5e20;">تصدير البيانات لقسم المعلومات</div>
@@ -2845,10 +2843,9 @@
       </div>
     </div>
   </div>
+  </div>
 
-  <div id="tab-finance" class="tab-content" style="border:10px solid red;background:yellow;min-height:500px;">
-    <div style="position:fixed;top:0;left:0;right:0;bottom:0;background:yellow;z-index:999998;display:flex;align-items:center;justify-content:center;font-size:48px;font-weight:900;color:black;">🔍 هل بتشفا الصفر دي؟ لو اه يبقى التبويب شغال بس في حاجة بتغطية</div>
-    <div id="fin-debug-banner" style="background:#d32f2f;color:#fff;padding:10px;text-align:center;font-size:16px;font-weight:700;border-radius:8px;margin:10px;">✅ التبويب شغال — finance.js يتحمل</div>
+  <div id="tab-finance" class="tab-content">
     <div class="stats-container" id="fin-stats"></div>
     <div class="control-panel no-print" style="flex-wrap:wrap;gap:10px;">
       <button class="btn btn-primary" style="background:#1565c0;" onclick="document.getElementById('fin-import-file').click()">📥 استيراد تقرير شهري</button>
@@ -4194,16 +4191,9 @@
       document.querySelectorAll('.tab-content').forEach(e => e.classList.remove('active'));
       document.querySelectorAll('.tab-btn').forEach(e => e.classList.remove('active'));
       var tabEl = document.getElementById(tabId);
-      if (!tabEl) { alert('ERROR: Tab not found: ' + tabId); console.error('Tab not found:', tabId); return; }
+      if (!tabEl) { console.error('Tab not found:', tabId); return; }
       tabEl.classList.add('active');
       if (el) el.classList.add('active');
-      if (tabId === 'tab-finance') {
-        var overlay = document.createElement('div');
-        overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:red;color:white;font-size:48px;font-weight:900;text-align:center;padding-top:40%;z-index:999999';
-        overlay.innerHTML = '💰💰💰 التبويب شغال على الشاشة 💰💰💰';
-        document.body.appendChild(overlay);
-        setTimeout(function(){ overlay.remove(); }, 5000);
-      }
       var tabNames = { 'tab-dashboard':'الرئيسية','tab-employees':'القوة','tab-housing':'السكن','tab-inventory':'المخزن','tab-vacations':'إجازات وإضافي الشئون الإدارية','tab-hospitality':'الضيافة','tab-maintenance':'الصيانة','tab-septic':'البيارات','tab-dynamic':'الإدارة المرنة','tab-excluded':'المستبعدين','tab-periodic-maint':'الصيانة الدورية','tab-tea-sugar':'شاي وسكر','tab-meal-log':'الوجبات','tab-contractors':'المقاولين','tab-bakery':'المخبز','tab-bread-supply':'توريد الخبز','tab-evaluations':'التقييمات','tab-audit':'سجل التعديلات','tab-finance':'المركز المالي والميزانية','tab-data-exchange':'تبادل البيانات' };
       setAction('🔍 ' + (tabNames[tabId] || tabId));
       try { if(tabId === 'tab-dashboard') { renderDashboard(); renderQuickActions(); } } catch(e) { console.error('tab-dashboard error:', e); }
