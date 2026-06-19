@@ -2859,6 +2859,8 @@
       <button class="btn" style="background:#7b1fa2;color:#fff;" onclick="finShowCompare()">📊 مقارنة فترتين</button>
       <button class="btn" style="background:#e65100;color:#fff;" onclick="finShowPredict()">🔮 توقعات الفترة القادمة</button>
       <button class="btn" style="background:#2e7d32;color:#fff;" onclick="finExportChoice()">📤 تصدير التقرير</button>
+      <button class="btn" style="background:#0d47a1;color:#fff;" onclick="finShowYearlyBudget()">📐 ميزانية العام الجديد</button>
+      <button class="btn" style="background:#37474f;color:#fff;" onclick="finShowOverview()">📋 ملخص شامل للسنة</button>
     </div>
     <div id="fin-compare-section" style="display:none;background:#f3e5f5;border-radius:10px;padding:15px;margin-bottom:15px;">
       <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px;">
@@ -2885,6 +2887,28 @@
         <button class="btn" style="background:#999;color:#fff;" onclick="document.getElementById('fin-predict-section').style.display='none'">✖</button>
       </div>
       <div id="fin-predict-result"></div>
+    </div>
+    <div id="fin-yearly-section" style="display:none;background:#e3f2fd;border-radius:10px;padding:15px;margin-bottom:15px;">
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px;">
+        <b style="color:#0d47a1;">📐 ميزانية العام الجديد:</b>
+        <label style="font-size:12px;">من سنة:</label>
+        <input type="number" id="fin-yr-from" style="width:80px;padding:6px;border-radius:6px;border:1px solid #ccc;" value="2026">
+        <label style="font-size:12px;">لسنة:</label>
+        <input type="number" id="fin-yr-to" style="width:80px;padding:6px;border-radius:6px;border:1px solid #ccc;" value="2027">
+        <label style="font-size:12px;">نسبة الزيادة %:</label>
+        <input type="number" id="fin-yr-pct" style="width:70px;padding:6px;border-radius:6px;border:1px solid #ccc;" value="10" min="0" max="500">
+        <button class="btn btn-primary" style="background:#0d47a1;" onclick="finRunYearlyBudget()">احسب الميزانية</button>
+        <button class="btn" style="background:#999;color:#fff;" onclick="document.getElementById('fin-yearly-section').style.display='none'">✖</button>
+      </div>
+      <div id="fin-yearly-result"></div>
+    </div>
+    <div id="fin-overview-section" style="display:none;background:#e8f5e9;border-radius:10px;padding:15px;margin-bottom:15px;">
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px;">
+        <b style="color:#2e7d32;">📋 ملخص شامل للسنة:</b>
+        <select id="fin-ov-year" style="padding:6px;border-radius:6px;border:1px solid #ccc;" onchange="finRunOverview()"></select>
+        <button class="btn" style="background:#999;color:#fff;" onclick="document.getElementById('fin-overview-section').style.display='none'">✖</button>
+      </div>
+      <div id="fin-overview-result"></div>
     </div>
     <div style="display:grid;grid-template-columns:2fr 1fr;gap:16px;margin-bottom:16px;">
       <div style="background:#fff;border-radius:14px;padding:16px;box-shadow:0 2px 12px rgba(0,0,0,0.06);border:1px solid #f0f0f0;">

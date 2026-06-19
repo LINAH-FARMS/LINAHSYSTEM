@@ -490,6 +490,123 @@ function finExportChoice() {
   else if (choice === '2') finExportPDF();
 }
 
+function finShowYearlyBudget() {
+  var el = document.getElementById('fin-yearly-section');
+  el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+
+function finRunYearlyBudget() {
+  var fromYear = parseInt(document.getElementById('fin-yr-from').value) || new Date().getFullYear();
+  var toYear = parseInt(document.getElementById('fin-yr-to').value) || (fromYear + 1);
+  var pctIncrease = parseFloat(document.getElementById('fin-yr-pct').value) || 0;
+  var multiplier = 1 + (pctIncrease / 100);
+  var fromData = finFiltered(0, fromYear);
+  var fromGroups = finGroupByTask(fromData.transactions);
+  var fromBudgetMap = {};
+  fromData.budgets.forEach(function(b) { fromBudgetMap[b.code] = b; });
+  var allCodes = new Set();
+  Object.keys(fromGroups).forEach(function(c) { allCodes.add(c); });
+  Object.keys(fromBudgetMap).forEach(function(c) { allCodes.add(c); });
+  var results = [];
+  var totalCurrent = 0, totalNew = 0, totalCurrentBudget = 0;
+  allCodes.forEach(function(code) {
+    var g = fromGroups[code] || {};
+    var b = fromBudgetMap[code] || {};
+    var currentActual = Math.round(g.total || 0);
+    var currentBudget = Math.round(b.budget || 0);
+    var base = currentActual || currentBudget;
+    var newBudget = Math.round(base * multiplier);
+    var name = g.name || b.name || code;
+    results.push({ code: code, name: name, currentActual: currentActual, currentBudget: currentBudget, base: base, newBudget: newBudget });
+    totalCurrent += currentActual;
+    totalNew += newBudget;
+    totalCurrentBudget += currentBudget;
+  });
+  results.sort(function(a, b) { return b.newBudget - a.newBudget; });
+  var html = '<div style="background:#fff;padding:12px;border-radius:8px;margin-bottom:10px;"><b style="font-size:16px;color:#0d47a1;">📐 ميزانية ' + toYear + '</b><br><span style="font-size:12px;color:#888;">بناءً على بيانات ' + fromYear + ' + نسبة زيادة ' + pctIncrease + '% — عدد البنود: ' + results.length + '</span></div>';
+  if (results.length === 0) {
+    html += '<div style="text-align:center;padding:20px;color:#888;">لا توجد بيانات للسنة ' + fromYear + '. قم باستيراد تقارير أولاً.</div>';
+    document.getElementById('fin-yearly-result').innerHTML = html;
+    return;
+  }
+  html += '<table style="width:100%;font-size:12px;border-collapse:collapse;">';
+  html += '<tr style="background:#0d47a1;color:white;"><th>الكود</th><th>البند</th><th>فعلي ' + fromYear + '</th><th>ميزانية ' + fromYear + '</th><th>الأساس</th><th>نسبة الزيادة</th><th style="background:#1565c0;">ميزانية ' + toYear + '</th></tr>';
+  results.forEach(function(r) {
+    html += '<tr style="border-bottom:1px solid #eee;">';
+    html += '<td style="font-weight:700;">' + r.code + '</td>';
+    html += '<td style="font-weight:600;">' + r.name + '</td>';
+    html += '<td style="text-align:center;">' + (r.currentActual ? r.currentActual.toLocaleString() : '-') + '</td>';
+    html += '<td style="text-align:center;">' + (r.currentBudget ? r.currentBudget.toLocaleString() : '-') + '</td>';
+    html += '<td style="text-align:center;font-weight:600;">' + r.base.toLocaleString() + '</td>';
+    html += '<td style="text-align:center;color:#2e7d32;">+' + pctIncrease + '%</td>';
+    html += '<td style="text-align:center;font-weight:700;color:#0d47a1;background:#e3f2fd;">' + r.newBudget.toLocaleString() + '</td>';
+    html += '</tr>';
+  });
+  html += '<tr style="background:#e3f2fd;font-weight:700;"><td>الإجمالي</td><td></td><td style="text-align:center;">' + totalCurrent.toLocaleString() + '</td><td style="text-align:center;">' + totalCurrentBudget.toLocaleString() + '</td><td style="text-align:center;">' + totalCurrent.toLocaleString() + '</td><td></td><td style="text-align:center;color:#0d47a1;font-size:16px;">' + totalNew.toLocaleString() + '</td></tr>';
+  html += '</table>';
+  document.getElementById('fin-yearly-result').innerHTML = html;
+}
+
+function finShowOverview() {
+  var el = document.getElementById('fin-overview-section');
+  el.style.display = el.style.display === 'none' ? 'block' : 'none';
+  var sel = document.getElementById('fin-ov-year');
+  var years = new Set();
+  finTransactions.forEach(function(t) { if (t.year) years.add(t.year); });
+  finBudgets.forEach(function(b) { if (b.year) years.add(b.year); });
+  if (years.size === 0) years.add(new Date().getFullYear());
+  sel.innerHTML = '';
+  Array.from(years).sort().forEach(function(y) {
+    sel.innerHTML += '<option value="' + y + '">' + y + '</option>';
+  });
+  sel.value = new Date().getFullYear();
+  finRunOverview();
+}
+
+function finRunOverview() {
+  var year = parseInt(document.getElementById('fin-ov-year').value) || new Date().getFullYear();
+  var monthNames = ['','يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
+  var monthsData = [];
+  var totalBudget = 0, totalActual = 0;
+  for (var m = 1; m <= 12; m++) {
+    var d = finFiltered(m, year);
+    var mBudget = 0, mActual = 0;
+    d.budgets.forEach(function(b) { mBudget += b.budget; });
+    d.transactions.forEach(function(t) { mActual += t.value || 0; });
+    monthsData.push({ month: m, name: monthNames[m], budget: Math.round(mBudget), actual: Math.round(mActual), variance: Math.round(mBudget - mActual), txCount: d.transactions.length });
+    totalBudget += mBudget;
+    totalActual += mActual;
+  }
+  var importedMonths = monthsData.filter(function(m) { return m.budget > 0 || m.actual > 0; });
+  var avgMonthly = importedMonths.length > 0 ? Math.round(totalActual / importedMonths.length) : 0;
+  var projected = avgMonthly * 12;
+  var html = '<div style="background:#fff;padding:12px;border-radius:8px;margin-bottom:10px;"><b style="font-size:16px;color:#2e7d32;">📋 ملخص شامل — ' + year + '</b><br><span style="font-size:12px;color:#888;">أشهر مسجلة: ' + importedMonths.length + '/12 — إجمالي المعاملات: ' + finTransactions.length + '</span></div>';
+  html += '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:12px;">';
+  html += '<div style="background:#e8f5e9;padding:10px;border-radius:8px;text-align:center;"><div style="font-size:11px;color:#666;">إجمالي الميزانية</div><div style="font-size:18px;font-weight:700;color:#2e7d32;">' + Math.round(totalBudget).toLocaleString() + '</div></div>';
+  html += '<div style="background:#e3f2fd;padding:10px;border-radius:8px;text-align:center;"><div style="font-size:11px;color:#666;">إجمالي الفعلي</div><div style="font-size:18px;font-weight:700;color:#1565c0;">' + Math.round(totalActual).toLocaleString() + '</div></div>';
+  html += '<div style="background:#fff3e0;padding:10px;border-radius:8px;text-align:center;"><div style="font-size:11px;color:#666;">متوسط شهري</div><div style="font-size:18px;font-weight:700;color:#e65100;">' + avgMonthly.toLocaleString() + '</div></div>';
+  html += '<div style="background:#f3e5f5;padding:10px;border-radius:8px;text-align:center;"><div style="font-size:11px;color:#666;">المتوقع للسنة</div><div style="font-size:18px;font-weight:700;color:#6a1b9a;">' + projected.toLocaleString() + '</div></div>';
+  html += '</div>';
+  html += '<table style="width:100%;font-size:12px;border-collapse:collapse;">';
+  html += '<tr style="background:#2e7d32;color:white;"><th>الشهر</th><th>الميزانية</th><th>الفعلي</th><th>الانحراف</th><th>نسبة التنفيذ</th><th>عدد المعاملات</th></tr>';
+  monthsData.forEach(function(m) {
+    var pct = m.budget ? Math.round((m.actual / m.budget) * 100) : (m.actual > 0 ? '-' : 0);
+    var rowBg = m.budget > 0 || m.actual > 0 ? '' : 'background:#f5f5f5;';
+    var pctColor = typeof pct === 'number' ? (pct <= 100 ? '#2e7d32' : '#d32f2f') : '#888';
+    html += '<tr style="border-bottom:1px solid #eee;' + rowBg + '">';
+    html += '<td style="font-weight:600;">' + m.name + '</td>';
+    html += '<td style="text-align:center;">' + (m.budget ? m.budget.toLocaleString() : '-') + '</td>';
+    html += '<td style="text-align:center;font-weight:700;color:#1565c0;">' + (m.actual ? m.actual.toLocaleString() : '-') + '</td>';
+    html += '<td style="text-align:center;color:' + (m.variance >= 0 ? '#2e7d32' : '#d32f2f') + ';">' + (m.actual ? (m.variance >= 0 ? '+' : '') + m.variance.toLocaleString() : '-') + '</td>';
+    html += '<td style="text-align:center;font-weight:700;color:' + pctColor + ';">' + (typeof pct === 'number' ? pct + '%' : pct) + '</td>';
+    html += '<td style="text-align:center;color:#888;">' + m.txCount + '</td>';
+    html += '</tr>';
+  });
+  html += '<tr style="background:#e8f5e9;font-weight:700;"><td>الإجمالي</td><td style="text-align:center;">' + Math.round(totalBudget).toLocaleString() + '</td><td style="text-align:center;color:#1565c0;">' + Math.round(totalActual).toLocaleString() + '</td><td style="text-align:center;color:' + (totalBudget - totalActual >= 0 ? '#2e7d32' : '#d32f2f') + ';">' + (totalBudget - totalActual >= 0 ? '+' : '') + Math.round(totalBudget - totalActual).toLocaleString() + '</td><td style="text-align:center;">' + (totalBudget ? Math.round((totalActual / totalBudget) * 100) + '%' : '-') + '</td><td style="text-align:center;">' + importedMonths.reduce(function(s, m) { return s + m.txCount; }, 0) + '</td></tr>';
+  html += '</table>';
+  document.getElementById('fin-overview-result').innerHTML = html;
+}
+
 function finExportExcel() {
   var year = document.getElementById('fin-year-select')?.value || new Date().getFullYear();
   var month = parseInt(document.getElementById('fin-month-select')?.value || 0);
