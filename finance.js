@@ -67,6 +67,17 @@ function finExcelDate(serial) {
   return y + '-' + m + '-' + day;
 }
 
+function finClearAll() {
+  if (!confirm('⚠️ سيتم مسح جميع المعاملات والميزانيات المالية.\nهل أنت متأكد؟')) return;
+  if (!confirm('تأكيد أخير: مسح كل البيانات المالية؟')) return;
+  finTransactions = [];
+  finBudgets = [];
+  finSave();
+  finPopulateYearSelect();
+  finRenderAll();
+  alert('✅ تم مسح كل البيانات المالية.');
+}
+
 function finImportReport(evt) {
   var file = evt.target.files[0];
   if (!file) return;

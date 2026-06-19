@@ -2850,6 +2850,7 @@
     <div class="control-panel no-print" style="flex-wrap:wrap;gap:10px;">
       <button class="btn btn-primary" style="background:#1565c0;" onclick="document.getElementById('fin-import-file').click()">📥 استيراد تقرير شهري</button>
       <input type="file" id="fin-import-file" style="display:none;" accept=".xlsx,.xls" onchange="finImportReport(event)">
+      <button class="btn" style="background:#c62828;color:#fff;" onclick="finClearAll()">🗑️ مسح كل البيانات المالية</button>
       <select id="fin-year-select" class="search-input" style="max-width:120px;" onchange="finRenderAll()"></select>
       <select id="fin-month-select" class="search-input" style="max-width:150px;" onchange="finRenderAll()">
         <option value="0">كل الشهور</option>
