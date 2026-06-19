@@ -15,15 +15,6 @@ function finSave() {
   if (typeof syncStorage === 'function') syncStorage();
 }
 
-function finExcelDate(serial) {
-  if (!serial || serial < 1) return '';
-  var d = new Date((serial - 25569) * 86400 * 1000);
-  var y = d.getFullYear();
-  var m = String(d.getMonth() + 1).padStart(2, '0');
-  var day = String(d.getDate()).padStart(2, '0');
-  return y + '-' + m + '-' + day;
-}
-
 function finExcelSerial(dateStr) {
   if (!dateStr) return 0;
   var d = new Date(dateStr);
@@ -31,14 +22,49 @@ function finExcelSerial(dateStr) {
   return Math.floor((d.getTime() / 86400000) + 25569);
 }
 
+function finParseDate(dateVal) {
+  if (!dateVal) return null;
+  if (typeof dateVal === 'number' && dateVal > 30000 && dateVal < 60000) {
+    return new Date((dateVal - 25569) * 86400 * 1000);
+  }
+  if (typeof dateVal === 'string') {
+    var trimmed = dateVal.trim();
+    if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(trimmed)) {
+      var parts = trimmed.split('/');
+      return new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
+    }
+    if (/^\d{4}-\d{1,2}-\d{1,2}$/.test(trimmed)) {
+      return new Date(trimmed);
+    }
+  }
+  var d = new Date(dateVal);
+  if (!isNaN(d.getTime())) return d;
+  var asNum = parseFloat(dateVal);
+  if (!isNaN(asNum) && asNum > 30000 && asNum < 60000) {
+    return new Date((asNum - 25569) * 86400 * 1000);
+  }
+  return null;
+}
+
 function finMonthFromExcelDate(serial) {
-  var d = new Date((serial - 25569) * 86400 * 1000);
+  var d = typeof serial === 'object' ? serial : finParseDate(serial);
+  if (!d || isNaN(d.getTime())) return 0;
   return d.getMonth() + 1;
 }
 
 function finYearFromExcelDate(serial) {
-  var d = new Date((serial - 25569) * 86400 * 1000);
+  var d = typeof serial === 'object' ? serial : finParseDate(serial);
+  if (!d || isNaN(d.getTime())) return 0;
   return d.getFullYear();
+}
+
+function finExcelDate(serial) {
+  var d = typeof serial === 'object' ? serial : finParseDate(serial);
+  if (!d || isNaN(d.getTime())) return '';
+  var y = d.getFullYear();
+  var m = String(d.getMonth() + 1).padStart(2, '0');
+  var day = String(d.getDate()).padStart(2, '0');
+  return y + '-' + m + '-' + day;
 }
 
 function finImportReport(evt) {
@@ -63,10 +89,10 @@ function finImportReport(evt) {
             var taskVal = row['Task'] || row['task'] || '';
             var overheadCode = String(taskVal).trim();
             var dateVal = row['التاريخ'] || row['Date'] || '';
-            var serial = typeof dateVal === 'number' ? dateVal : parseFloat(dateVal);
-            var txMonth = finMonthFromExcelDate(serial);
-            var txYear = finYearFromExcelDate(serial);
-            var txDate = finExcelDate(serial);
+            var parsed = finParseDate(dateVal);
+            var txMonth = finMonthFromExcelDate(parsed);
+            var txYear = finYearFromExcelDate(parsed);
+            var txDate = finExcelDate(parsed);
             var orderNum = String(row['رقم اذن الصرف'] || row['رقم البون'] || '').trim();
             var itemName = String(row['اسم الصـــنف'] || row['اسم الصنف'] || '').trim();
             var existsIdx = finTransactions.findIndex(function(t) { return t.date === txDate && t.task === overheadCode && t.orderNum === orderNum && t.itemName === itemName; });
@@ -157,8 +183,10 @@ function finPopulateYearSelect() {
 }
 
 function finFiltered(month, year) {
-  var tx = finTransactions.filter(function(t) { return t.year == year && (month == 0 || t.month == month); });
-  var bg = finBudgets.filter(function(b) { return b.year == year && (month == 0 || b.month == month); });
+  var yr = Number(year);
+  var mo = Number(month);
+  var tx = finTransactions.filter(function(t) { return Number(t.year) === yr && (mo === 0 || Number(t.month) === mo); });
+  var bg = finBudgets.filter(function(b) { return Number(b.year) === yr && (mo === 0 || Number(b.month) === mo); });
   return { transactions: tx, budgets: bg };
 }
 
