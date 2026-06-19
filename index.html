@@ -11,7 +11,9 @@
   
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <script src="script.js" defer></script>
+  <script src="finance.js" defer></script>
 
   <style>
     #login-screen {
@@ -980,6 +982,7 @@
     <button class="tab-btn" onclick="switchTab('tab-bakery')" style="background:#fff3e0; color:#e65100; font-weight:700;">🍞 فرن المزرعة <span class="tab-badge orange" id="badge-bakery">0</span></button>
     <button class="tab-btn" onclick="switchTab('tab-bread-supply')" style="background:#e3f2fd; color:#1565c0; font-weight:700;">🚚 توريد الخبز للمقاولين <span class="tab-badge blue" id="badge-bread-supply">0</span></button>
     <button class="tab-btn" onclick="switchTab('tab-evaluations')" style="background:#fce4ec; color:#880e4f; font-weight:700;">⭐ تقييم العاملين <span class="tab-badge danger" id="badge-eval">0</span></button>
+    <button class="tab-btn" onclick="switchTab('tab-finance')" style="background:#e8eaf6; color:#283593; font-weight:700;">💰 المركز المالي والميزانية</button>
     <button class="tab-btn" onclick="switchTab('tab-data-exchange')" style="background:#e8f5e9; color:#1b5e20; font-weight:700;">🔄 تبادل البيانات</button>
   </div>
 
@@ -2839,9 +2842,98 @@
       </div>
     </div>
   </div>
+
+  <div id="tab-finance" class="tab-content">
+    <div class="stats-container" id="fin-stats"></div>
+    <div class="control-panel no-print" style="flex-wrap:wrap;gap:10px;">
+      <button class="btn btn-primary" style="background:#1565c0;" onclick="document.getElementById('fin-import-file').click()">📥 استيراد تقرير شهري</button>
+      <input type="file" id="fin-import-file" style="display:none;" accept=".xlsx,.xls" onchange="finImportReport(event)">
+      <select id="fin-year-select" class="search-input" style="max-width:120px;" onchange="finRenderAll()"></select>
+      <select id="fin-month-select" class="search-input" style="max-width:150px;" onchange="finRenderAll()">
+        <option value="0">كل الشهور</option>
+        <option value="1">يناير</option><option value="2">فبراير</option><option value="3">مارس</option>
+        <option value="4">أبريل</option><option value="5">مايو</option><option value="6">يونيو</option>
+        <option value="7">يوليو</option><option value="8">أغسطس</option><option value="9">سبتمبر</option>
+        <option value="10">أكتوبر</option><option value="11">نوفمبر</option><option value="12">ديسمبر</option>
+      </select>
+      <button class="btn" style="background:#7b1fa2;color:#fff;" onclick="finShowCompare()">📊 مقارنة فترتين</button>
+      <button class="btn" style="background:#e65100;color:#fff;" onclick="finShowPredict()">🔮 توقعات الفترة القادمة</button>
+      <button class="btn" style="background:#2e7d32;color:#fff;" onclick="finExportChoice()">📤 تصدير التقرير</button>
+    </div>
+    <div id="fin-compare-section" style="display:none;background:#f3e5f5;border-radius:10px;padding:15px;margin-bottom:15px;">
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px;">
+        <b style="color:#6a1b9a;">📊 مقارنة:</b>
+        <select id="fin-cmp-from-m" style="padding:6px;border-radius:6px;border:1px solid #ccc;"><option value="1">يناير</option><option value="2">فبراير</option><option value="3">مارس</option><option value="4">أبريل</option><option value="5">مايو</option><option value="6">يونيو</option><option value="7">يوليو</option><option value="8">أغسطس</option><option value="9">سبتمبر</option><option value="10">أكتوبر</option><option value="11">نوفمبر</option><option value="12">ديسمبر</option></select>
+        <input type="number" id="fin-cmp-from-y" style="width:80px;padding:6px;border-radius:6px;border:1px solid #ccc;" value="2026">
+        <span style="font-weight:700;">↔</span>
+        <select id="fin-cmp-to-m" style="padding:6px;border-radius:6px;border:1px solid #ccc;"><option value="1">يناير</option><option value="2">فبراير</option><option value="3">مارس</option><option value="4">أبريل</option><option value="5">مايو</option><option value="6">يونيو</option><option value="7">يوليو</option><option value="8">أغسطس</option><option value="9">سبتمبر</option><option value="10">أكتوبر</option><option value="11">نوفمبر</option><option value="12">ديسمبر</option></select>
+        <input type="number" id="fin-cmp-to-y" style="width:80px;padding:6px;border-radius:6px;border:1px solid #ccc;" value="2026">
+        <button class="btn btn-primary" style="background:#6a1b9a;" onclick="finRunCompare()">قارن</button>
+        <button class="btn" style="background:#999;color:#fff;" onclick="document.getElementById('fin-compare-section').style.display='none'">✖</button>
+      </div>
+      <div id="fin-compare-result"></div>
+    </div>
+    <div id="fin-predict-section" style="display:none;background:#fff3e0;border-radius:10px;padding:15px;margin-bottom:15px;">
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px;">
+        <b style="color:#e65100;">🔮 توقعات:</b>
+        <label style="font-size:12px;">أشهر متاحة:</label>
+        <input type="number" id="fin-pred-months" min="1" max="12" value="6" style="width:60px;padding:6px;border-radius:6px;border:1px solid #ccc;">
+        <label style="font-size:12px;">الشهر المستهدف:</label>
+        <select id="fin-pred-target-m" style="padding:6px;border-radius:6px;border:1px solid #ccc;"><option value="5">مايو</option><option value="6">يونيو</option><option value="7">يوليو</option><option value="8">أغسطس</option><option value="9">سبتمبر</option><option value="10">أكتوبر</option><option value="11">نوفمبر</option><option value="12">ديسمبر</option></select>
+        <input type="number" id="fin-pred-target-y" style="width:80px;padding:6px;border-radius:6px;border:1px solid #ccc;" value="2026">
+        <button class="btn btn-primary" style="background:#e65100;" onclick="finRunPredict()">احسب التوقع</button>
+        <button class="btn" style="background:#999;color:#fff;" onclick="document.getElementById('fin-predict-section').style.display='none'">✖</button>
+      </div>
+      <div id="fin-predict-result"></div>
+    </div>
+    <div style="display:grid;grid-template-columns:2fr 1fr;gap:16px;margin-bottom:16px;">
+      <div style="background:#fff;border-radius:14px;padding:16px;box-shadow:0 2px 12px rgba(0,0,0,0.06);border:1px solid #f0f0f0;">
+        <div style="font-weight:700;font-size:14px;color:#37474f;margin-bottom:10px;">📈 الميزانية vs الفعلي — شهرياً</div>
+        <canvas id="fin-chart-monthly" height="280"></canvas>
+      </div>
+      <div style="background:#fff;border-radius:14px;padding:16px;box-shadow:0 2px 12px rgba(0,0,0,0.06);border:1px solid #f0f0f0;">
+        <div style="font-weight:700;font-size:14px;color:#37474f;margin-bottom:10px;">🍩 توزيع الفعلي حسب البند</div>
+        <canvas id="fin-chart-pie" height="280"></canvas>
+      </div>
+    </div>
+    <div style="background:#fff;border-radius:14px;padding:16px;box-shadow:0 2px 12px rgba(0,0,0,0.06);border:1px solid #f0f0f0;margin-bottom:16px;">
+      <div style="font-weight:700;font-size:14px;color:#37474f;margin-bottom:10px;">📊 الانحراف حسب البند (%)</div>
+      <canvas id="fin-chart-variance" height="160"></canvas>
+    </div>
+    <div class="table-container">
+      <table id="fin-budget-table">
+        <thead>
+          <tr>
+            <th data-sort-key="code">الكود</th>
+            <th data-sort-key="name">البند</th>
+            <th data-sort-key="budget">الميزانية</th>
+            <th data-sort-key="actual">الفعلي</th>
+            <th data-sort-key="variance">الانحراف</th>
+            <th data-sort-key="percent">نسبة التنفيذ</th>
+            <th data-sort-key="ytdBudget">ميزانية YTD</th>
+            <th data-sort-key="ytdActual">فعلي YTD</th>
+            <th>التفاصيل</th>
+          </tr>
+        </thead>
+        <tbody id="fin-budget-body"></tbody>
+      </table>
+    </div>
+    <div id="fin-detail-section" style="display:none;margin-top:20px;">
+      <div style="background:#fff;border-radius:14px;padding:16px;box-shadow:0 2px 12px rgba(0,0,0,0.06);border:1px solid #f0f0f0;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+          <div style="font-weight:700;font-size:16px;color:#1b5e20;" id="fin-detail-title">تفاصيل البند</div>
+          <button class="btn" style="background:#999;color:#fff;font-size:12px;" onclick="document.getElementById('fin-detail-section').style.display='none'">✖ إغلاق</button>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:12px;">
+          <canvas id="fin-detail-chart" height="200"></canvas>
+          <div id="fin-detail-top-items" style="max-height:250px;overflow:auto;"></div>
+        </div>
+        <div class="table-container" id="fin-detail-table-wrap"></div>
+      </div>
+    </div>
   </div>
 
-  <!-- seed_data removed -->
+
   <script>
     // ====== API Layer (SQLite server) with localStorage fallback ======
     const API_BASE = 'http://localhost:3001/api';
@@ -4068,7 +4160,7 @@
       if (!tabEl) { console.error('Tab not found:', tabId); return; }
       tabEl.classList.add('active');
       if (el) el.classList.add('active');
-      var tabNames = { 'tab-dashboard':'الرئيسية','tab-employees':'القوة','tab-housing':'السكن','tab-inventory':'المخزن','tab-vacations':'إجازات وإضافي الشئون الإدارية','tab-hospitality':'الضيافة','tab-maintenance':'الصيانة','tab-septic':'البيارات','tab-dynamic':'الإدارة المرنة','tab-excluded':'المستبعدين','tab-periodic-maint':'الصيانة الدورية','tab-tea-sugar':'شاي وسكر','tab-meal-log':'الوجبات','tab-contractors':'المقاولين','tab-bakery':'المخبز','tab-bread-supply':'توريد الخبز','tab-evaluations':'التقييمات','tab-audit':'سجل التعديلات','tab-data-exchange':'تبادل البيانات' };
+      var tabNames = { 'tab-dashboard':'الرئيسية','tab-employees':'القوة','tab-housing':'السكن','tab-inventory':'المخزن','tab-vacations':'إجازات وإضافي الشئون الإدارية','tab-hospitality':'الضيافة','tab-maintenance':'الصيانة','tab-septic':'البيارات','tab-dynamic':'الإدارة المرنة','tab-excluded':'المستبعدين','tab-periodic-maint':'الصيانة الدورية','tab-tea-sugar':'شاي وسكر','tab-meal-log':'الوجبات','tab-contractors':'المقاولين','tab-bakery':'المخبز','tab-bread-supply':'توريد الخبز','tab-evaluations':'التقييمات','tab-audit':'سجل التعديلات','tab-finance':'المركز المالي والميزانية','tab-data-exchange':'تبادل البيانات' };
       setAction('🔍 ' + (tabNames[tabId] || tabId));
       if(tabId === 'tab-dashboard') { renderDashboard(); renderQuickActions(); }
       if(tabId === 'tab-housing') { renderHousingLayout(); updateHousingStats(); }
@@ -10550,7 +10642,9 @@ function toggleEmployeeStatus(empId) {
         dynamicRooms: function(r) { return r.name || r; },
         dynamicSeptics: function(s) { return s.name || s; },
         dynamicDepts: function(d) { return d.name || d; },
-        dynamicTitles: function(t) { return t.name || t; }
+        dynamicTitles: function(t) { return t.name || t; },
+        finTransactions: function(t) { return (t.date || '') + '|' + (t.task || '') + '|' + (t.orderNum || '') + '|' + (t.itemName || ''); },
+        finBudgets: function(b) { return (b.code || '') + '|' + (b.month || '') + '|' + (b.year || ''); }
       };
       return keyFns[entity] ? keyFns[entity](item) : JSON.stringify(item);
     }
@@ -10598,6 +10692,8 @@ function toggleEmployeeStatus(empId) {
         deptTitles: JSON.parse(JSON.stringify(deptTitles)),
         manualTotalBeds: typeof manualTotalBeds === 'number' ? manualTotalBeds : 0,
         dailyStats: JSON.parse(JSON.stringify(dailyStats)),
+        finTransactions: JSON.parse(JSON.stringify(typeof finTransactions !== 'undefined' ? finTransactions : [])),
+        finBudgets: JSON.parse(JSON.stringify(typeof finBudgets !== 'undefined' ? finBudgets : [])),
         syncDeletions: JSON.parse(JSON.stringify(syncDeletions))
       };
       // Fetch remote data to merge before push (prevents overwriting other users' data)
@@ -10634,7 +10730,9 @@ function toggleEmployeeStatus(empId) {
         roomAssets: function(a) { return (a.room || '') + '|' + (a.item || '') + '|' + (a.id || JSON.stringify(a)); },
         archiveData: function(a) { return a.id || a.date || JSON.stringify(a); },
         quickActions: function(q) { return q.label || JSON.stringify(q); },
-        dailyStats: function(d) { return d.date || JSON.stringify(d); }
+        dailyStats: function(d) { return d.date || JSON.stringify(d); },
+        finTransactions: function(t) { return (t.date || '') + '|' + (t.task || '') + '|' + (t.orderNum || '') + '|' + (t.itemName || ''); },
+        finBudgets: function(b) { return (b.code || '') + '|' + (b.month || '') + '|' + (b.year || ''); }
       };
       for (var mk in entities) {
         if (!remoteMap[mk]) continue;
@@ -11044,6 +11142,9 @@ function toggleEmployeeStatus(empId) {
       if (d.archiveData) archiveData = _smartMerge(archiveData, d.archiveData, function(a) { return a.id || a.date || JSON.stringify(a); }, 'archiveData');
       if (d.quickActions) quickActions = _smartMerge(quickActions, d.quickActions, function(q) { return q.label || JSON.stringify(q); }, 'quickActions');
       if (d.dailyStats) dailyStats = _smartMerge(dailyStats, d.dailyStats, function(s) { return s.date || JSON.stringify(s); }, 'dailyStats');
+      if (d.finTransactions) finTransactions = _smartMerge(typeof finTransactions !== 'undefined' ? finTransactions : [], d.finTransactions, function(t) { return (t.date || '') + '|' + (t.task || '') + '|' + (t.orderNum || '') + '|' + (t.itemName || ''); }, 'finTransactions');
+      if (d.finBudgets) finBudgets = _smartMerge(typeof finBudgets !== 'undefined' ? finBudgets : [], d.finBudgets, function(b) { return (b.code || '') + '|' + (b.month || '') + '|' + (b.year || ''); }, 'finBudgets');
+      if (d.finTransactions || d.finBudgets) { try { if (typeof finSave === 'function') finSave(); } catch(e) {} }
       if (d.contractorSectors) contractorSectors = _smartMerge(contractorSectors, d.contractorSectors, function(s) { return s.name || JSON.stringify(s); }, 'contractorSectors');
       if (d.contractorRooms) contractorRooms = _smartMerge(contractorRooms, d.contractorRooms, function(r) { return (r.sector || '') + '|' + (r.number || '') + '|' + (r.beds || ''); }, 'contractorRooms');
       if (d.evaluations) evaluations = _smartMerge(evaluations, d.evaluations, function(e) { return (e.empCode || e.employeeCode || '') + '|' + (e.date || '') + '|' + (e.month || e.type || '') + '|' + (e.year || ''); }, 'evaluations');
@@ -11084,6 +11185,8 @@ function toggleEmployeeStatus(empId) {
       dedupBy(bakeryIngredients, function(b) { return b.name || JSON.stringify(b); });
       dedupBy(adminOvertime, function(o) { return (o.date || '') + '|' + (o.empCode || o.name || '') + '|' + (o.hours || ''); });
       dedupBy(inventoryVouchers, function(v) { return v.voucherId || v.id || v._id || JSON.stringify(v); });
+      dedupBy(finTransactions, function(t) { return (t.date || '') + '|' + (t.task || '') + '|' + (t.orderNum || '') + '|' + (t.itemName || ''); });
+      dedupBy(finBudgets, function(b) { return (b.code || '') + '|' + (b.month || '') + '|' + (b.year || ''); });
     }
 
     function showSyncToast(msg) {
@@ -11831,6 +11934,7 @@ function toggleEmployeeStatus(empId) {
       }
       employees.forEach(function(e) { if (typeof e.vacationBalance !== 'number') e.vacationBalance = 30; });
       sortEmployeesAlphabetically(); rebuildDeptTitles(); rebuildAllDropdowns(); initEmployeeSearchInputs(); setupItemNameSearch(); setupNameAutocomplete(); populateRoomSectorDropdown(); populateContractorSectorDropdown();
+      if (typeof finInit === 'function') finInit();
       setTimeout(function() {
         renderTable(); renderInventoryTable(); renderInventoryItems(); renderArchiveTable(); renderVacationsTable(); renderOvertimeCalendar();
         setTimeout(function() {
