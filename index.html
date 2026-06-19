@@ -2077,7 +2077,7 @@
   <div id="modal-add-room" class="modal">
     <div class="modal-content" style="max-width: 450px;">
       <div class="modal-header">
-        <h2>تعديل سعة الغرف والأسِرّة</h2>
+        <h2>إضافة / تعديل سعة غرفة</h2>
         <span class="close-btn" onclick="closeModal('modal-add-room')">&times;</span>
       </div>
       <div class="form-grid" style="grid-template-columns: 1fr;">
@@ -2086,15 +2086,20 @@
           <select id="form-room-sector" required></select>
         </div>
         <div class="form-group">
-          <label>رقم الغرفة</label>
-          <select id="form-room-number" required></select>
+          <label>الغرفة (موجودة)</label>
+          <select id="form-room-number" onchange="if(this.value)document.getElementById('form-room-new').value=''"></select>
+        </div>
+        <div style="text-align:center;font-size:12px;color:#888;margin:4px 0;">— أو أضف غرفة جديدة —</div>
+        <div class="form-group">
+          <label>غرفة جديدة (رقم / اسم)</label>
+          <input type="text" id="form-room-new" placeholder="مثلاً: 105 أو غرفة الزعفران" oninput="if(this.value)document.getElementById('form-room-number').value=''">
         </div>
         <div class="form-group">
           <label>عدد الأسِرّة (السعة الاستيعابية)</label>
-          <input type="number" id="form-room-beds" min="1" required>
+          <input type="number" id="form-room-beds" min="1" value="4" required>
         </div>
       </div>
-      <button class="btn btn-primary" style="width: 100%; justify-content: center; margin-top: 10px;" onclick="saveRoomCapacity()">💾 حفظ السعة الاستيعابية</button>
+      <button class="btn btn-primary" style="width: 100%; justify-content: center; margin-top: 10px;" onclick="saveRoomCapacity()">💾 حفظ</button>
     </div>
   </div>
 
@@ -6160,10 +6165,14 @@ function toggleEmployeeStatus(empId) {
 
     function saveRoomCapacity() {
       let sector = document.getElementById('form-room-sector').value.trim();
-      let number = document.getElementById('form-room-number').value.trim();
+      let existingRoom = document.getElementById('form-room-number').value.trim();
+      let newRoom = document.getElementById('form-room-new').value.trim();
+      let number = newRoom || existingRoom;
       let beds = document.getElementById('form-room-beds').value;
 
-      if(!sector || !number || !beds) return alert("كافة حقول السكن إجبارية");
+      if(!sector) return alert("اختر المبنى السكني");
+      if(!number) return alert("اختر غرفة موجودة أو اكتب اسم غرفة جديدة");
+      if(!beds) return alert("حدد عدد الأسِرّة");
 
       if(!dynamicSectors.includes(sector)) dynamicSectors.push(sector);
       if(!dynamicRooms.includes(number)) dynamicRooms.push(number);
@@ -8060,7 +8069,11 @@ function toggleEmployeeStatus(empId) {
     }
 
     function exportHousingToExcel() {
-      let data = roomsCapacity.map(r => ({ "المبنى السكني": r.sector, "رقم الغرفة": r.number, "السعة (الأسرة)": r.beds }));
+      let data = roomsCapacity.map(r => {
+        let residents = employees.filter(e => e.sector === r.sector && e.room === r.number && e.status === 'P').map(e => e.name).join(', ');
+        let occupied = employees.filter(e => e.sector === r.sector && e.room === r.number && e.status === 'P').length;
+        return { "المبنى السكني": r.sector, "رقم الغرفة": r.number, "السعة (الأسرة)": r.beds, "المشغول": occupied, "الشاغر": r.beds - occupied, "الساكنين": residents };
+      });
       let ws = XLSX.utils.json_to_sheet(data); let wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, "سعة غرف السكن"); XLSX.writeFile(wb, "سعة_غرف_السكن_مزارع_لينه.xlsx");
     }
