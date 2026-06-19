@@ -8253,13 +8253,28 @@ function toggleEmployeeStatus(empId) {
     }
 
     function exportHousingToExcel() {
-      let data = roomsCapacity.map(r => {
-        let residents = employees.filter(e => e.sector === r.sector && e.room === r.number && e.status === 'P').map(e => e.name).join(', ');
-        let occupied = employees.filter(e => e.sector === r.sector && e.room === r.number && e.status === 'P').length;
-        return { "المبنى السكني": r.sector, "رقم الغرفة": r.number, "السعة (الأسرة)": r.beds, "المشغول": occupied, "الشاغر": r.beds - occupied, "الساكنين": residents };
+      let data = [];
+      dynamicSectors.forEach(sector => {
+        let rooms = roomsCapacity.filter(r => r.sector === sector);
+        rooms.forEach(r => {
+          let residents = employees.filter(e => e.sector === sector && e.room === r.number);
+          let present = residents.filter(e => e.status === 'P');
+          let vacation = residents.filter(e => e.status === 'V');
+          data.push({
+            "المبنى السكني": sector,
+            "رقم الغرفة": r.number,
+            "السعة (الأسرة)": r.beds,
+            "المشغول": present.length,
+            "الشاغر": r.beds - residents.length,
+            "الساكنين (الحاضر)": present.map(e => e.name + ' [' + (e.code || '-') + ']').join(', '),
+            "الساكنين (إجازة)": vacation.map(e => e.name + ' [' + (e.code || '-') + ']').join(', ')
+          });
+        });
       });
-      let ws = XLSX.utils.json_to_sheet(data); let wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, "سعة غرف السكن"); XLSX.writeFile(wb, "سعة_غرف_السكن_مزارع_لينه.xlsx");
+      let ws = XLSX.utils.json_to_sheet(data);
+      let wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "سعة غرف السكن");
+      XLSX.writeFile(wb, "سعة_غرف_السكن_مزارع_لينه.xlsx");
     }
 
     function handleHousingExcelImport(evt) {
@@ -8269,17 +8284,42 @@ function toggleEmployeeStatus(empId) {
         let data = new Uint8Array(e.target.result);
         let workbook = XLSX.read(data, {type: 'array'});
         let json = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
-        if(json.length > 0) {
-          roomsCapacity = json.map(r => ({
-            sector: (r["المبنى السكني"] || r["القطاع السكني"] || r["القطاع"] || "A").toString().trim(),
-            number: (r["رقم الغرفة"] || r["الغرفة"] || "1").toString().trim(),
-            beds: parseInt(r["السعة (الأسرة)"] || r["السعة"] || r["الأسرة"] || 4)
-          }));
-          syncStorage(); renderHousingLayout(); rebuildAllDropdowns();
-          alert("تم استيراد كشف سعة الأسرة والغرف بنجاح.");
-        }
+        if(json.length === 0) return alert('⚠️ الملف فارغ');
+        let movedCount = 0;
+        let newRooms = json.map(r => {
+          let sector = (r["المبنى السكني"] || r["القطاع السكني"] || r["القطاع"] || "A").toString().trim();
+          let number = (r["رقم الغرفة"] || r["الغرفة"] || "1").toString().trim();
+          let beds = parseInt(r["السعة (الأسرة)"] || r["السعة"] || r["الأسرة"] || 4);
+          let presentNames = (r["الساكنين (الحاضر)"] || r["الساكنين"] || '').toString().trim();
+          let vacationNames = (r["الساكنين (إجازة)"] || '').toString().trim();
+          let allNames = presentNames + (vacationNames ? ', ' + vacationNames : '');
+          let nameList = allNames.split(/[,،]/).map(s => s.replace(/\[.*?\]/g, '').trim()).filter(s => s);
+          nameList.forEach(name => {
+            if (!name) return;
+            let emp = employees.find(e => e.name === name || (e.name && e.name.includes(name)) || (name && name.includes(e.name)));
+            if (emp) {
+              let oldSector = emp.sector;
+              let oldRoom = emp.room;
+              if (oldSector !== sector || oldRoom !== number) {
+                emp.sector = sector;
+                emp.room = number;
+                emp.modifiedAt = new Date().toISOString();
+                movedCount++;
+              }
+            }
+          });
+          return { sector, number, beds };
+        }).filter(r => r.number && r.beds > 0);
+        roomsCapacity = newRooms;
+        let newSectors = [...new Set(newRooms.map(r => r.sector))];
+        newSectors.forEach(s => { if(!dynamicSectors.includes(s)) dynamicSectors.push(s); });
+        syncStorage(); renderHousingLayout(); rebuildAllDropdowns();
+        let msg = '✅ تم استيراد كشف السكن بنجاح.\n' + newRooms.length + ' غرفة في ' + newSectors.length + ' مبنى.';
+        if (movedCount > 0) msg += '\n🏠 تم ترحيل ' + movedCount + ' موظف حسب الأسماء في الملف.';
+        alert(msg);
       };
       reader.readAsArrayBuffer(file);
+      evt.target.value = '';
     }
 
     function replaceHousingFromExcel(evt) {
