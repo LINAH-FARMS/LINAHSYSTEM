@@ -10435,6 +10435,12 @@ function toggleEmployeeStatus(empId) {
             excludedEmployees.forEach(function(e) { _exclPushMap[e.code || e.id || e.name] = true; });
             mergedArr = mergedArr.filter(function(e) { return !_exclPushMap[e.code || e.id || e.name]; });
           }
+          // شيل من المستبعدين أي حد رجع في القوة فعلاً أثناء الدفع
+          if (mk === 'excludedEmployees' && employees.length > 0) {
+            var _empPushCodes = {};
+            employees.forEach(function(e) { _empPushCodes[e.code || e.name || e.id] = true; });
+            mergedArr = mergedArr.filter(function(e) { return !_empPushCodes[e.code || e.name]; });
+          }
           entities[mk] = mergedArr;
         }
       }
