@@ -178,12 +178,18 @@ function finGroupByTask(txList) {
 }
 
 function finRenderAll() {
-  var year = document.getElementById('fin-year-select')?.value || new Date().getFullYear();
-  var month = parseInt(document.getElementById('fin-month-select')?.value || 0);
-  var data = finFiltered(month, year);
-  finRenderStats(data);
-  finRenderBudgetTable(data);
-  finRenderCharts(data, month, year);
+  try {
+    var yearEl = document.getElementById('fin-year-select');
+    var year = (yearEl && yearEl.value) ? yearEl.value : String(new Date().getFullYear());
+    var monthEl = document.getElementById('fin-month-select');
+    var month = monthEl ? (parseInt(monthEl.value) || 0) : 0;
+    var data = finFiltered(month, year);
+    finRenderStats(data);
+    finRenderBudgetTable(data);
+    if (typeof Chart !== 'undefined') {
+      try { finRenderCharts(data, month, year); } catch(e) { console.error('finRenderCharts error:', e); }
+    }
+  } catch(e) { console.error('finRenderAll error:', e); }
 }
 
 function finRenderStats(data) {

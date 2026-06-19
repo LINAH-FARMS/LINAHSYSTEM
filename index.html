@@ -4200,7 +4200,7 @@
       if(tabId === 'tab-maintenance') { searchMaintMaterial(); renderMaintMaterialsList(); }
       if(tabId === 'tab-vacations') { renderOvertimeCalendar(); }
       if(tabId === 'tab-evaluations') { populateEvalEmployees(); renderEvaluations(); }
-      if(tabId === 'tab-finance') { finRenderAll(); }
+      if(tabId === 'tab-finance') { if(typeof finRenderAll === 'function') { try { finRenderAll(); } catch(e) { console.error('Finance render error:', e); } } else { setTimeout(function(){ if(typeof finRenderAll === 'function') { try { finRenderAll(); } catch(e) { console.error('Finance render error:', e); } } }, 500); } }
     }
 
     function printActiveTab() {
