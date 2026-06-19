@@ -5972,7 +5972,10 @@ function toggleEmployeeStatus(empId) {
               ${roomUsers.map(u => `<span class="user-badge${u.status === 'V' ? ' user-badge-vacation' : ''}" onclick="editEmployee('${u.id}')">${u.name.split(' ')[0]} ${u.name.split(' ')[1] || ''}${u.status === 'V' ? ' 🔴' : ''}</span>`).join('')}
               ${roomUsers.length === 0 ? '<span style="color:#b0bec5; font-size:12px; font-style:italic;">غرفة شاغرة بالكامل</span>' : ''}
             </div>
-            <button class="btn btn-sm" style="margin-top:6px;padding:2px 8px;font-size:11px;background:#6a1b9a;color:#fff;" onclick="openRoomAssets('${sector}','${room.number}')">📦 أصول الغرفة</button>
+            <div style="display:flex;gap:4px;margin-top:6px;">
+              <button class="btn btn-sm" style="padding:2px 8px;font-size:11px;background:#e65100;color:#fff;" onclick="editRoomBeds('${sector}','${room.number}',${room.beds})">🛏️ تعديل السعة</button>
+              <button class="btn btn-sm" style="padding:2px 8px;font-size:11px;background:#6a1b9a;color:#fff;" onclick="openRoomAssets('${sector}','${room.number}')">📦 أصول الغرفة</button>
+            </div>
           `;
           roomsContainer.appendChild(card);
         });
@@ -6069,6 +6072,21 @@ function toggleEmployeeStatus(empId) {
       if (modal) modal.remove();
       renderHousingLayout();
       alert('✅ تم ترحيل ' + buildingEmps.length + ' موظف وحذف المبنى "' + sector + '" بنجاح.');
+    }
+
+    function editRoomBeds(sector, roomNumber, currentBeds) {
+      let newBeds = prompt('تعديل سعة غرفة ' + roomNumber + ' في مبنى ' + sector + '\nالسعة الحالية: ' + currentBeds + '\nأدخل السعة الجديدة:', currentBeds);
+      if (newBeds === null) return;
+      newBeds = parseInt(newBeds);
+      if (isNaN(newBeds) || newBeds < 1) return alert('⚠️ السعة يجب أن تكون رقم أكبر من صفر');
+      let room = roomsCapacity.find(r => r.sector === sector && r.number === roomNumber);
+      if (room) {
+        room.beds = newBeds;
+        room.modifiedAt = new Date().toISOString();
+      }
+      syncStorage();
+      renderHousingLayout();
+      alert('✅ تم تعديل سعة غرفة ' + roomNumber + ' إلى ' + newBeds + ' سرير');
     }
 
     function printHousing() {
