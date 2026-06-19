@@ -10292,6 +10292,12 @@ function toggleEmployeeStatus(empId) {
       septicRecords = mergeArrays(septicRecords, d.septicRecords);
       inventoryVouchers = mergeArrays(inventoryVouchers, d.inventoryVouchers);
       excludedEmployees = mergeArrays(excludedEmployees, d.excludedEmployees);
+      // شيل من المستبعدين أي حد رجع في القوة فعلاً
+      if (employees.length > 0) {
+        var _empCodes = {};
+        employees.forEach(function(e) { _empCodes[e.code || e.name || e.id] = true; });
+        excludedEmployees = excludedEmployees.filter(function(e) { return !_empCodes[e.code || e.name]; });
+      }
       periodicMaintenance = mergeArrays(periodicMaintenance, d.periodicMaintenance);
       teaSugarDisbursements = mergeArrays(teaSugarDisbursements, d.teaSugarDisbursements);
       teaSugarBatches = mergeArrays(teaSugarBatches, d.teaSugarBatches);

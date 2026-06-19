@@ -10770,6 +10770,12 @@ function toggleEmployeeStatus(empId) {
       if (d.septicRecords) septicRecords = _smartMerge(septicRecords, d.septicRecords, function(s) { return (s.date || '') + '|' + (s.sector || '') + '|' + (s.quantity || ''); }, 'septicRecords');
       if (d.inventoryVouchers) inventoryVouchers = _smartMerge(inventoryVouchers, d.inventoryVouchers, function(v) { return v.id || v._id || JSON.stringify(v); }, 'inventoryVouchers');
       if (d.excludedEmployees) excludedEmployees = _smartMerge(excludedEmployees, d.excludedEmployees, function(e) { return e.code || e.name || JSON.stringify(e); }, 'excludedEmployees');
+      // شيل من المستبعدين أي حد رجع في القوة فعلاً
+      if (employees.length > 0) {
+        var _empCodes = {};
+        employees.forEach(function(e) { _empCodes[e.code || e.name || e.id] = true; });
+        excludedEmployees = excludedEmployees.filter(function(e) { return !_empCodes[e.code || e.name]; });
+      }
       if (d.periodicMaintenance) periodicMaintenance = _smartMerge(periodicMaintenance, d.periodicMaintenance, function(p) { return (p.task || '') + '|' + (p.sector || '') + '|' + (p.frequency || ''); }, 'periodicMaintenance');
       if (d.teaSugarDisbursements) teaSugarDisbursements = _smartMerge(teaSugarDisbursements, d.teaSugarDisbursements, function(t) { return (t.date || '') + '|' + (t.period || t.type || '') + '|' + (t.empCode || t.empId || '') + '|' + (t.teaPacks || t.quantity || '') + '|' + (t.sugarKg || ''); }, 'teaSugarDisbursements');
       if (d.teaSugarBatches) teaSugarBatches = _smartMerge(teaSugarBatches, d.teaSugarBatches, function(t) { return t.id || t._id || JSON.stringify(t); }, 'teaSugarBatches');
