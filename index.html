@@ -4194,21 +4194,21 @@
       if (el) el.classList.add('active');
       var tabNames = { 'tab-dashboard':'الرئيسية','tab-employees':'القوة','tab-housing':'السكن','tab-inventory':'المخزن','tab-vacations':'إجازات وإضافي الشئون الإدارية','tab-hospitality':'الضيافة','tab-maintenance':'الصيانة','tab-septic':'البيارات','tab-dynamic':'الإدارة المرنة','tab-excluded':'المستبعدين','tab-periodic-maint':'الصيانة الدورية','tab-tea-sugar':'شاي وسكر','tab-meal-log':'الوجبات','tab-contractors':'المقاولين','tab-bakery':'المخبز','tab-bread-supply':'توريد الخبز','tab-evaluations':'التقييمات','tab-audit':'سجل التعديلات','tab-finance':'المركز المالي والميزانية','tab-data-exchange':'تبادل البيانات' };
       setAction('🔍 ' + (tabNames[tabId] || tabId));
-      if(tabId === 'tab-dashboard') { renderDashboard(); renderQuickActions(); }
-      if(tabId === 'tab-housing') { renderHousingLayout(); updateHousingStats(); }
-      if(tabId === 'tab-dynamic') { renderDynamicLists(); }
-      if(tabId === 'tab-excluded') { renderExcludedTable(); }
-      if(tabId === 'tab-inventory') { renderInventoryItems(); renderArchiveTable(); }
-      if(tabId === 'tab-periodic-maint') { renderPeriodicMaintenance(); }
-      if(tabId === 'tab-tea-sugar') { renderTeaSugarTable(); }
-      if(tabId === 'tab-meal-log') { renderMealLogTable(); if(!document.getElementById('meal-date').value) document.getElementById('meal-date').value = new Date().toISOString().split('T')[0]; }
-      if(tabId === 'tab-contractors') { populateContractorSectorDropdown(); renderContractorsTable(); }
-      if(tabId === 'tab-bakery') { renderBakeryProductions(); renderBakeryIngredients(); updateBakeryStats(); populateBakeryDropdowns(); updateBakeryProductionIngredientStocks(); }
-      if(tabId === 'tab-bread-supply') { renderBakeryContractorSupplies(); renderBakeryInvoices(); updateBreadSupplyStats(); populateBakeryDropdowns(); }
-      if(tabId === 'tab-maintenance') { searchMaintMaterial(); renderMaintMaterialsList(); }
-      if(tabId === 'tab-vacations') { renderOvertimeCalendar(); }
-      if(tabId === 'tab-evaluations') { populateEvalEmployees(); renderEvaluations(); }
-      if(tabId === 'tab-finance') { renderFinanceTab(); }
+      try { if(tabId === 'tab-dashboard') { renderDashboard(); renderQuickActions(); } } catch(e) { console.error('tab-dashboard error:', e); }
+      try { if(tabId === 'tab-housing') { renderHousingLayout(); updateHousingStats(); } } catch(e) { console.error('tab-housing error:', e); }
+      try { if(tabId === 'tab-dynamic') { renderDynamicLists(); } } catch(e) { console.error('tab-dynamic error:', e); }
+      try { if(tabId === 'tab-excluded') { renderExcludedTable(); } } catch(e) { console.error('tab-excluded error:', e); }
+      try { if(tabId === 'tab-inventory') { renderInventoryItems(); renderArchiveTable(); } } catch(e) { console.error('tab-inventory error:', e); }
+      try { if(tabId === 'tab-periodic-maint') { renderPeriodicMaintenance(); } } catch(e) { console.error('tab-periodic-maint error:', e); }
+      try { if(tabId === 'tab-tea-sugar') { renderTeaSugarTable(); } } catch(e) { console.error('tab-tea-sugar error:', e); }
+      try { if(tabId === 'tab-meal-log') { renderMealLogTable(); if(!document.getElementById('meal-date').value) document.getElementById('meal-date').value = new Date().toISOString().split('T')[0]; } } catch(e) { console.error('tab-meal-log error:', e); }
+      try { if(tabId === 'tab-contractors') { populateContractorSectorDropdown(); renderContractorsTable(); } } catch(e) { console.error('tab-contractors error:', e); }
+      try { if(tabId === 'tab-bakery') { renderBakeryProductions(); renderBakeryIngredients(); updateBakeryStats(); populateBakeryDropdowns(); updateBakeryProductionIngredientStocks(); } } catch(e) { console.error('tab-bakery error:', e); }
+      try { if(tabId === 'tab-bread-supply') { renderBakeryContractorSupplies(); renderBakeryInvoices(); updateBreadSupplyStats(); populateBakeryDropdowns(); } } catch(e) { console.error('tab-bread-supply error:', e); }
+      try { if(tabId === 'tab-maintenance') { searchMaintMaterial(); renderMaintMaterialsList(); } } catch(e) { console.error('tab-maintenance error:', e); }
+      try { if(tabId === 'tab-vacations') { renderOvertimeCalendar(); } } catch(e) { console.error('tab-vacations error:', e); }
+      try { if(tabId === 'tab-evaluations') { populateEvalEmployees(); renderEvaluations(); } } catch(e) { console.error('tab-evaluations error:', e); }
+      try { if(tabId === 'tab-finance') { renderFinanceTab(); } } catch(e) { console.error('tab-finance error:', e); }
     }
 
     function printActiveTab() {
