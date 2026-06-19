@@ -67,16 +67,19 @@ function finImportReport(evt) {
             var txMonth = finMonthFromExcelDate(serial);
             var txYear = finYearFromExcelDate(serial);
             var txDate = finExcelDate(serial);
+            var orderNum = String(row['رقم اذن الصرف'] || row['رقم البون'] || '').trim();
+            var itemName = String(row['اسم الصـــنف'] || row['اسم الصنف'] || '').trim();
+            var existsIdx = finTransactions.findIndex(function(t) { return t.date === txDate && t.task === overheadCode && t.orderNum === orderNum && t.itemName === itemName; });
             var qty = parseFloat(row['كمية الصرف'] || row['الكمية'] || row['Qty'] || 0);
             var price = parseFloat(row['السعر'] || row['Price'] || 0);
             var value = parseFloat(row['القيمة'] || row['Value'] || 0);
             if (isNaN(value)) value = qty * price;
-            finTransactions.push({
+            var txObj = {
               date: txDate, month: txMonth, year: txYear,
-              orderNum: String(row['رقم اذن الصرف'] || row['رقم البون'] || '').trim(),
+              orderNum: orderNum,
               itemCode: String(row['كود الصنف'] || '').trim(),
               storeName: String(row['اسم المخزن'] || '').trim(),
-              itemName: String(row['اسم الصـــنف'] || row['اسم الصنف'] || '').trim(),
+              itemName: itemName,
               unit: String(row['الوحدة'] || '').trim(),
               qty: qty,
               costCenter: String(row['Cost center'] || row['Cost Center'] || '').trim(),
@@ -87,7 +90,8 @@ function finImportReport(evt) {
               notes: String(row['ملاحظات'] || '').trim(),
               price: price, value: value,
               modifiedAt: new Date().toISOString()
-            });
+            };
+            if (existsIdx >= 0) finTransactions[existsIdx] = txObj; else finTransactions.push(txObj);
           });
           imported += json.length;
         }
