@@ -4176,6 +4176,14 @@
       XLSX.utils.book_append_sheet(wb, ws, 'سجل التعديلات');
       XLSX.writeFile(wb, 'سجل_التعديلات_' + new Date().toISOString().split('T')[0] + '.xlsx');
     }
+    function renderFinanceTab() {
+      if (typeof finRenderAll === 'function') {
+        try { finRenderAll(); } catch(e) { console.error('Finance error:', e); }
+      } else {
+        var el = document.getElementById('fin-stats');
+        if (el) el.innerHTML = '<div style="padding:20px;color:red;text-align:center;">⚠️ finance.js لم يُحمّل</div>';
+      }
+    }
     function switchTab(tabId, el) {
       if (!el) el = document.querySelector(`.tab-btn[onclick*="'${tabId}'"]`) || document.querySelector(`.tab-btn[onclick*='"${tabId}"']`);
       document.querySelectorAll('.tab-content').forEach(e => e.classList.remove('active'));
@@ -4200,7 +4208,7 @@
       if(tabId === 'tab-maintenance') { searchMaintMaterial(); renderMaintMaterialsList(); }
       if(tabId === 'tab-vacations') { renderOvertimeCalendar(); }
       if(tabId === 'tab-evaluations') { populateEvalEmployees(); renderEvaluations(); }
-      if(tabId === 'tab-finance') { if(typeof finRenderAll === 'function') { try { finRenderAll(); } catch(e) { console.error('Finance error:', e); document.getElementById('fin-stats').innerHTML = '<div style="padding:20px;color:red;text-align:center;">⚠️ خطأ: ' + e.message + '</div>'; } } else { document.getElementById('fin-stats').innerHTML = '<div style="padding:20px;color:orange;text-align:center;">⏳ جاري تحميل finance.js...</div>'; setTimeout(function(){ if(typeof finRenderAll === 'function') { try { finRenderAll(); } catch(e) { console.error('Finance error:', e); } } else { document.getElementById('fin-stats').innerHTML = '<div style="padding:20px;color:red;text-align:center;">❌ finance.js لم يُحمّل — تحقق من Console (F12)</div>'; } }, 1000); } }
+      if(tabId === 'tab-finance') { renderFinanceTab(); }
     }
 
     function printActiveTab() {
