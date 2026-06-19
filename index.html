@@ -10432,14 +10432,14 @@ function toggleEmployeeStatus(empId) {
           // حماية إضافية: تصفية المستبعدين من القوة أثناء الدفع
           if (mk === 'employees' && excludedEmployees.length > 0) {
             var _exclPushMap = {};
-            excludedEmployees.forEach(function(e) { _exclPushMap[e.code || e.id || e.name] = true; });
-            mergedArr = mergedArr.filter(function(e) { return !_exclPushMap[e.code || e.id || e.name]; });
+            excludedEmployees.forEach(function(e) { if(e.code) _exclPushMap['c:'+e.code] = true; });
+            mergedArr = mergedArr.filter(function(e) { return !_exclPushMap['c:'+e.code]; });
           }
           // شيل من المستبعدين أي حد رجع في القوة فعلاً أثناء الدفع
           if (mk === 'excludedEmployees' && employees.length > 0) {
             var _empPushCodes = {};
-            employees.forEach(function(e) { _empPushCodes[e.code || e.name || e.id] = true; });
-            mergedArr = mergedArr.filter(function(e) { return !_empPushCodes[e.code || e.name]; });
+            employees.forEach(function(e) { if(e.code) _empPushCodes['c:'+e.code] = true; });
+            mergedArr = mergedArr.filter(function(e) { return !_empPushCodes['c:'+e.code]; });
           }
           entities[mk] = mergedArr;
         }
@@ -10779,8 +10779,8 @@ function toggleEmployeeStatus(empId) {
       // شيل من المستبعدين أي حد رجع في القوة فعلاً
       if (employees.length > 0) {
         var _empCodes = {};
-        employees.forEach(function(e) { _empCodes[e.code || e.name || e.id] = true; });
-        excludedEmployees = excludedEmployees.filter(function(e) { return !_empCodes[e.code || e.name]; });
+        employees.forEach(function(e) { if(e.code) _empCodes['c:'+e.code] = true; });
+        excludedEmployees = excludedEmployees.filter(function(e) { return !_empCodes['c:'+e.code]; });
       }
       if (d.periodicMaintenance) periodicMaintenance = _smartMerge(periodicMaintenance, d.periodicMaintenance, function(p) { return (p.task || '') + '|' + (p.sector || '') + '|' + (p.frequency || ''); }, 'periodicMaintenance');
       if (d.teaSugarDisbursements) teaSugarDisbursements = _smartMerge(teaSugarDisbursements, d.teaSugarDisbursements, function(t) { return (t.date || '') + '|' + (t.period || t.type || '') + '|' + (t.empCode || t.empId || '') + '|' + (t.teaPacks || t.quantity || '') + '|' + (t.sugarKg || ''); }, 'teaSugarDisbursements');

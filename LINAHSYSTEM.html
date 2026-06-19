@@ -10295,8 +10295,8 @@ function toggleEmployeeStatus(empId) {
       // شيل من المستبعدين أي حد رجع في القوة فعلاً
       if (employees.length > 0) {
         var _empCodes = {};
-        employees.forEach(function(e) { _empCodes[e.code || e.name || e.id] = true; });
-        excludedEmployees = excludedEmployees.filter(function(e) { return !_empCodes[e.code || e.name]; });
+        employees.forEach(function(e) { if(e.code) _empCodes['c:'+e.code] = true; });
+        excludedEmployees = excludedEmployees.filter(function(e) { return !_empCodes['c:'+e.code]; });
       }
       periodicMaintenance = mergeArrays(periodicMaintenance, d.periodicMaintenance);
       teaSugarDisbursements = mergeArrays(teaSugarDisbursements, d.teaSugarDisbursements);
