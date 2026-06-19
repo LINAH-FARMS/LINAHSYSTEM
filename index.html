@@ -10240,8 +10240,8 @@ function toggleEmployeeStatus(empId) {
       localStorage.setItem('lineh_sync_deletions', JSON.stringify(syncDeletions));
     }
     function _ts(item) { if (item && typeof item === 'object') item.modifiedAt = new Date().toISOString(); return item; }
-    function _isDeleted(entity, key) {
-      return syncDeletions.some(function(d) { return d.entity === entity && d.key === key; });
+    function _isDeleted(entity, key, modifiedAt) {
+      return syncDeletions.some(function(d) { return d.entity === entity && d.key === key && (!modifiedAt || d.deletedAt > modifiedAt); });
     }
     function _isCorrupted(item) {
       if (!item || typeof item !== 'object') return false;
@@ -10249,8 +10249,8 @@ function toggleEmployeeStatus(empId) {
       return /\?{2,}/.test(json);
     }
     function _smartMerge(localArr, remoteArr, keyFn, entityName) {
-      if (!remoteArr || !remoteArr.length) return (localArr || []).filter(function(item) { return !_isDeleted(entityName, keyFn(item)) && !_isCorrupted(item); });
-      if (!localArr || !localArr.length) return (remoteArr || []).filter(function(item) { return !_isDeleted(entityName, keyFn(item)) && !_isCorrupted(item); });
+      if (!remoteArr || !remoteArr.length) return (localArr || []).filter(function(item) { return !_isDeleted(entityName, keyFn(item), item.modifiedAt) && !_isCorrupted(item); });
+      if (!localArr || !localArr.length) return (remoteArr || []).filter(function(item) { return !_isDeleted(entityName, keyFn(item), item.modifiedAt) && !_isCorrupted(item); });
       var remoteKeyed = {};
       remoteArr.forEach(function(item) { remoteKeyed[keyFn(item)] = item; });
       var localKeyed = {};
@@ -10269,10 +10269,10 @@ function toggleEmployeeStatus(empId) {
       result.forEach(function(item) { resultKeys[keyFn(item)] = true; });
       remoteArr.forEach(function(item) {
         var k = keyFn(item);
-        if (!resultKeys[k] && !_isDeleted(entityName, k) && !_isCorrupted(item)) { result.push(item); resultKeys[k] = true; }
+        if (!resultKeys[k] && !_isDeleted(entityName, k, item.modifiedAt) && !_isCorrupted(item)) { result.push(item); resultKeys[k] = true; }
       });
       // Filter out deleted items
-      return result.filter(function(item) { return !_isDeleted(entityName, keyFn(item)); });
+      return result.filter(function(item) { return !_isDeleted(entityName, keyFn(item), item.modifiedAt); });
     }
     function _getItemKey(item, entity) {
       var keyFns = {
@@ -10423,11 +10423,11 @@ function toggleEmployeeStatus(empId) {
           mergedArr.forEach(function(item) { localKeys[_arrayKeyFns[mk](item)] = true; });
           remoteArr.forEach(function(item) {
             var k = _arrayKeyFns[mk](item);
-            if (!localKeys[k] && !_isDeleted(mk, k)) { mergedArr.push(item); localKeys[k] = true; }
+            if (!localKeys[k] && !_isDeleted(mk, k, item.modifiedAt)) { mergedArr.push(item); localKeys[k] = true; }
           });
           // Remove items that are in deletion log
           mergedArr = mergedArr.filter(function(item) {
-            return !_isDeleted(mk, _arrayKeyFns[mk](item));
+            return !_isDeleted(mk, _arrayKeyFns[mk](item), item.modifiedAt);
           });
           // حماية إضافية: تصفية المستبعدين من القوة أثناء الدفع
           if (mk === 'employees' && excludedEmployees.length > 0) {
@@ -10805,7 +10805,7 @@ function toggleEmployeeStatus(empId) {
       if (d.dailyStats) dailyStats = _smartMerge(dailyStats, d.dailyStats, function(s) { return s.date || JSON.stringify(s); }, 'dailyStats');
       if (d.contractorSectors) contractorSectors = _smartMerge(contractorSectors, d.contractorSectors, function(s) { return s.name || JSON.stringify(s); }, 'contractorSectors');
       if (d.contractorRooms) contractorRooms = _smartMerge(contractorRooms, d.contractorRooms, function(r) { return (r.sector || '') + '|' + (r.number || '') + '|' + (r.beds || ''); }, 'contractorRooms');
-      if (d.evaluations) evaluations = _smartMerge(evaluations, d.evaluations, function(e) { return (e.employeeCode || '') + '|' + (e.date || '') + '|' + (e.type || ''); }, 'evaluations');
+      if (d.evaluations) evaluations = _smartMerge(evaluations, d.evaluations, function(e) { return (e.empCode || e.employeeCode || '') + '|' + (e.date || '') + '|' + (e.month || e.type || '') + '|' + (e.year || ''); }, 'evaluations');
       if (d.evalTemplates) evalTemplates = d.evalTemplates;
       if (d.auditLog) auditLog = _smartMerge(auditLog, d.auditLog, function(a) { return a.id || JSON.stringify(a); }, 'auditLog');
       if (d.bakeryStockLog) bakeryStockLog = _smartMerge(bakeryStockLog, d.bakeryStockLog, function(s) { return (s.date || '') + '|' + (s.ingredient || '') + '|' + (s.type || ''); }, 'bakeryStockLog');
