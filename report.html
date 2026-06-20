@@ -129,7 +129,7 @@ function submitReport() {
     date: dateStr
   };
 
-  fetch(SB + '/rest/v1/sync_data?key=eq.incident_reports', {
+  fetch(SB + '/rest/v1/sync_data?id=eq.incident_reports', {
     method: 'GET',
     headers: { 'apikey': KEY, 'Authorization': 'Bearer ' + KEY }
   })
@@ -137,21 +137,21 @@ function submitReport() {
   .then(function(rows) {
     var reports = [];
     if (rows && rows.length > 0 && rows[0].data) {
-      try { reports = JSON.parse(rows[0].data); } catch(e) { reports = []; }
+      try { reports = rows[0].data; if (typeof reports === 'string') reports = JSON.parse(reports); } catch(e) { reports = []; }
     }
     reports.push(report);
 
     if (rows && rows.length > 0) {
-      return fetch(SB + '/rest/v1/sync_data?key=eq.incident_reports', {
+      return fetch(SB + '/rest/v1/sync_data?id=eq.incident_reports', {
         method: 'PATCH',
         headers: HEADERS,
-        body: JSON.stringify({ data: JSON.stringify(reports), updated_at: new Date().toISOString() })
+        body: JSON.stringify({ data: reports, updated_at: new Date().toISOString() })
       });
     } else {
       return fetch(SB + '/rest/v1/sync_data', {
         method: 'POST',
         headers: HEADERS,
-        body: JSON.stringify({ key: 'incident_reports', data: JSON.stringify(reports), updated_at: new Date().toISOString() })
+        body: JSON.stringify({ id: 'incident_reports', data: reports, updated_at: new Date().toISOString() })
       });
     }
   })

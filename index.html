@@ -4315,7 +4315,7 @@
       document.getElementById('reports-table-container').style.display = 'none';
       document.getElementById('reports-empty').style.display = 'none';
 
-      fetch(SUPABASE_URL + '/rest/v1/sync_data?key=eq.incident_reports', {
+      fetch(SUPABASE_URL + '/rest/v1/sync_data?id=eq.incident_reports', {
         method: 'GET',
         headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
       })
@@ -4323,7 +4323,7 @@
       .then(function(rows) {
         var reports = [];
         if (rows && rows.length > 0 && rows[0].data) {
-          try { reports = JSON.parse(rows[0].data); } catch(e) { reports = []; }
+          try { reports = typeof rows[0].data === 'string' ? JSON.parse(rows[0].data) : rows[0].data; } catch(e) { reports = []; }
         }
         var local = JSON.parse(localStorage.getItem('linah_reports') || '[]');
         local.forEach(function(lr) {
@@ -4523,24 +4523,24 @@
       }
       localStorage.setItem('linah_reports', JSON.stringify(local));
 
-      fetch(SUPABASE_URL + '/rest/v1/sync_data?key=eq.incident_reports', {
+      fetch(SUPABASE_URL + '/rest/v1/sync_data?id=eq.incident_reports', {
         method: 'GET',
         headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
       })
       .then(function(r) { return r.json(); })
       .then(function(rows) {
         if (rows && rows.length > 0 && rows[0].data) {
-          var reports = JSON.parse(rows[0].data);
+          var reports = typeof rows[0].data === 'string' ? JSON.parse(rows[0].data) : rows[0].data;
           for (var j = 0; j < reports.length; j++) {
             if (reports[j].id == report._row) {
               reports[j].status = newStatus;
               break;
             }
           }
-          return fetch(SUPABASE_URL + '/rest/v1/sync_data?key=eq.incident_reports', {
+          return fetch(SUPABASE_URL + '/rest/v1/sync_data?id=eq.incident_reports', {
             method: 'PATCH',
             headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/json' },
-            body: JSON.stringify({ data: JSON.stringify(reports), updated_at: new Date().toISOString() })
+            body: JSON.stringify({ data: reports, updated_at: new Date().toISOString() })
           });
         }
       })
@@ -4555,7 +4555,7 @@
     }
 
     function testReportsApi() {
-      fetch(SUPABASE_URL + '/rest/v1/sync_data?key=eq.incident_reports', {
+      fetch(SUPABASE_URL + '/rest/v1/sync_data?id=eq.incident_reports', {
         method: 'GET',
         headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
       })
@@ -4563,8 +4563,12 @@
       .then(function(rows) {
         var count = 0;
         if (rows && rows.length > 0 && rows[0].data) {
-          try { count = JSON.parse(rows[0].data).length; } catch(e) {}
+          try { var arr = typeof rows[0].data === 'string' ? JSON.parse(rows[0].data) : rows[0].data; count = arr.length; } catch(e) {}
         }
+        alert('الاتصال ناجح! عدد البلاغات المحفوظة: ' + count);
+      })
+      .catch(function(e) { alert('فشل الاتصال: ' + e.message); });
+    }
         alert('الاتصال ناجح! عدد البلاغات المحفوظة: ' + count);
       })
       .catch(function(e) { alert('فشل الاتصال: ' + e.message); });
