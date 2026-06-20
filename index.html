@@ -4302,7 +4302,18 @@
 
     // ==================== بلاغات الأعطال ====================
     var _reportsData = [];
+    var _reportsHeaders = [];
     var _reportsApiUrl = localStorage.getItem('linah_reports_api_url') || '';
+
+    function _findReportCol(headers, keywords) {
+      for (var i = 0; i < headers.length; i++) {
+        var h = headers[i].toLowerCase();
+        for (var k = 0; k < keywords.length; k++) {
+          if (h.indexOf(keywords[k]) !== -1) return headers[i];
+        }
+      }
+      return null;
+    }
 
     function fetchReports() {
       var url = _reportsApiUrl || document.getElementById('reports-api-url').value;
@@ -4318,6 +4329,7 @@
         .then(function(data) {
           if (data.success && data.reports) {
             _reportsData = data.reports;
+            _reportsHeaders = data.headers || [];
             renderReportsTable(_reportsData);
             updateReportsStats(_reportsData);
           } else {
@@ -4337,40 +4349,85 @@
         document.getElementById('reports-empty').style.display = 'block';
         return;
       }
+
+      var headers = _reportsHeaders.filter(function(h) { return h && h !== '_row' && h.indexOf('Timestamp') === -1; });
+      var colType = _findReportCol(headers, ['القسم', 'نوع', 'الطلب', 'بلاغ']);
+      var colDesc = _findReportCol(headers, ['وصف', 'البيان', 'التفاصيل', 'شرح', 'ادخل وصف']);
+      var colLocation = _findReportCol(headers, ['موقع', 'المبنى', 'ال Building', 'المكان', 'العنوان']);
+      var colStatus = _findReportCol(headers, ['الحالة', 'status']);
+      var colName = _findReportCol(headers, ['اسم', 'الاسم', 'name']);
+      var colPhone = _findReportCol(headers, ['تليفون', 'موبايل', 'هاتف', 'phone']);
+      var colPriority = _findReportCol(headers, ['أولوية', 'priorit', 'عجلة']);
+      var colDate = _findReportCol(headers, ['تاريخ', 'التاريخ', 'date', 'timestamp']);
+      var colNotes = _findReportCol(headers, ['ملاحظات', 'ملاحظة', 'notes']);
+
+      var displayCols = [];
+      displayCols.push({ key: '_num', label: '#', w: '40px' });
+      if (colName) displayCols.push({ key: colName, label: colName, w: '120px' });
+      if (colPhone) displayCols.push({ key: colPhone, label: colPhone, w: '100px' });
+      if (colType) displayCols.push({ key: colType, label: colType, w: '130px' });
+      if (colDesc) displayCols.push({ key: colDesc, label: colDesc, w: '220px' });
+      if (colLocation) displayCols.push({ key: colLocation, label: colLocation, w: '120px' });
+      if (colPriority) displayCols.push({ key: colPriority, label: colPriority, w: '90px' });
+      if (colStatus) displayCols.push({ key: colStatus, label: colStatus, w: '100px' });
+      if (colNotes) displayCols.push({ key: colNotes, label: colNotes, w: '150px' });
+      if (colDate) displayCols.push({ key: colDate, label: 'التاريخ', w: '140px' });
+
+      var otherCols = headers.filter(function(h) {
+        return h && h !== '_row' && h.indexOf('Timestamp') === -1 &&
+          displayCols.every(function(c) { return c.key !== h; });
+      });
+      otherCols.forEach(function(h) { displayCols.push({ key: h, label: h, w: '120px' }); });
+
+      displayCols.push({ key: '_actions', label: 'إجراءات', w: '100px', isAction: true });
+
+      var thead = '<tr>';
+      displayCols.forEach(function(c) {
+        thead += '<th style="width:' + c.w + ';">' + c.label + '</th>';
+      });
+      thead += '</tr>';
+
       var html = '';
       reports.forEach(function(r, i) {
-        var name = r['اسم العامل'] || r['الاسم'] || r['name'] || '';
-        var phone = r['رقم الموبايل'] || r['التليفون'] || r['phone'] || '';
-        var type = r['نوع العطل'] || r['النوع'] || r['type'] || '';
-        var desc = r['وصف العطل'] || r['الوصف'] || r['description'] || r['البيان'] || '';
-        var location = r['الموقع'] || r['المبنى'] || r['location'] || '';
-        var priority = r['الأولوية'] || r['priorit'] || '';
-        var status = r['الحالة'] || r['status'] || 'جديد';
-        var date = r['Timestamp'] || r['التاريخ'] || r['date'] || r['تاريخ الإبلاغ'] || '';
-        var priorityBadge = priority === 'عاجل' ? '<span style="color:#c62828;font-weight:700;">🔴 عاجل</span>' :
-                            priority === 'متوسط' ? '<span style="color:#f57f17;font-weight:700;">🟡 متوسط</span>' :
-                            '<span style="color:#2e7d32;font-weight:700;">🟢 منخفض</span>';
-        var statusBadge = status === 'مغلق' ? '<span style="color:#2e7d32;font-weight:700;">✅ مغلق</span>' :
-                          status === 'قيد التنفيذ' ? '<span style="color:#f57f17;font-weight:700;">🟡 قيد التنفيذ</span>' :
-                          '<span style="color:#1565c0;font-weight:700;">🆕 جديد</span>';
-        html += '<tr style="background:' + (priority === 'عاجl' ? '#fff3e0' : 'white') + ';">' +
-          '<td>' + (reports.length - i) + '</td>' +
-          '<td style="font-weight:600;">' + name + '</td>' +
-          '<td>' + phone + '</td>' +
-          '<td><span style="background:#fff3e0;padding:2px 8px;border-radius:4px;font-size:11px;">' + type + '</span></td>' +
-          '<td style="max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="' + desc.replace(/"/g, '&quot;') + '">' + desc + '</td>' +
-          '<td>' + location + '</td>' +
-          '<td>' + priorityBadge + '</td>' +
-          '<td>' + statusBadge + '</td>' +
-          '<td style="font-size:11px;">' + (typeof date === 'string' ? date.substring(0, 16) : date) + '</td>' +
-          '<td class="no-print"><select onchange="updateReportStatusFromList(' + i + ', this.value)" style="padding:4px;border:1px solid #ddd;border-radius:4px;font-size:11px;font-family:Cairo,sans-serif;">' +
-          '<option value="جديد"' + (status === 'جديد' ? ' selected' : '') + '>جديد</option>' +
-          '<option value="قيد التنفيذ"' + (status === 'قيد التنفيذ' ? ' selected' : '') + '>قيد التنفيذ</option>' +
-          '<option value="مغلق"' + (status === 'مغلق' ? ' selected' : '') + '>مغلق</option>' +
-          '</select></td>' +
-          '</tr>';
+        html += '<tr>';
+        displayCols.forEach(function(c) {
+          if (c.key === '_num') {
+            html += '<td>' + (reports.length - i) + '</td>';
+          } else if (c.isAction) {
+            if (colStatus) {
+              html += '<td class="no-print"><select onchange="updateReportStatusFromList(' + i + ', this.value)" style="padding:4px;border:1px solid #ddd;border-radius:4px;font-size:11px;font-family:Cairo,sans-serif;">' +
+                '<option value="جديد"' + ((r[colStatus] || '') === 'جديد' ? ' selected' : '') + '>جديد</option>' +
+                '<option value="قيد التنفيذ"' + ((r[colStatus] || '') === 'قيد التنفيذ' ? ' selected' : '') + '>قيد التنفيذ</option>' +
+                '<option value="مغلق"' + ((r[colStatus] || '') === 'مغلق' ? ' selected' : '') + '>مغلق</option>' +
+                '</select></td>';
+            } else {
+              html += '<td class="no-print">-</td>';
+            }
+          } else {
+            var val = r[c.key] || '';
+            var style = '';
+            if (c.key === colPriority) {
+              if (val.indexOf('عجل') !== -1 || val.indexOf('عالي') !== -1) style = 'color:#c62828;font-weight:700;';
+              else if (val.indexOf('متوسط') !== -1) style = 'color:#f57f17;font-weight:700;';
+              else if (val.indexOf('منخفض') !== -1 || val.indexOf('عادي') !== -1) style = 'color:#2e7d32;font-weight:700;';
+            }
+            if (c.key === colStatus) {
+              if (val === 'مغلق') style = 'color:#2e7d32;font-weight:700;';
+              else if (val === 'قيد التنفيذ') style = 'color:#f57f17;font-weight:700;';
+              else style = 'color:#1565c0;font-weight:700;';
+            }
+            var title = c.key === colDesc ? ' title="' + val.replace(/"/g, '&quot;') + '"' : '';
+            var trunc = c.key === colDesc ? ' style="max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"' : '';
+            html += '<td' + trunc + title + '><span style="' + style + '">' + val + '</span></td>';
+          }
+        });
+        html += '</tr>';
       });
       tbody.innerHTML = html;
+
+      var thRow = document.querySelector('#table-reports thead tr');
+      if (thRow) thRow.innerHTML = thead;
+
       document.getElementById('reports-loading').style.display = 'none';
       document.getElementById('reports-table-container').style.display = 'block';
       document.getElementById('reports-empty').style.display = 'none';
@@ -4379,13 +4436,18 @@
     function updateReportsStats(reports) {
       var total = reports.length;
       var urgent = 0, pending = 0, closed = 0, newCount = 0;
+      var headers = _reportsHeaders;
+      var colType = _findReportCol(headers, ['القسم', 'نوع', 'الطلب', 'بلاغ']);
+      var colStatus = _findReportCol(headers, ['الحالة', 'status']);
+      var colPriority = _findReportCol(headers, ['أولوية', 'priorit', 'عجلة']);
+
       reports.forEach(function(r) {
-        var p = r['الأولوية'] || '';
-        var s = r['الحالة'] || 'جديد';
-        if (p === 'عاجل') urgent++;
+        var p = colPriority ? (r[colPriority] || '') : '';
+        var s = colStatus ? (r[colStatus] || 'جديد') : 'جديد';
+        if (p.indexOf('عجل') !== -1 || p.indexOf('عالي') !== -1) urgent++;
         if (s === 'قيد التنفيذ') pending++;
         if (s === 'مغلق') closed++;
-        if (s === 'جديد') newCount++;
+        if (s === 'جديد' || s === '') newCount++;
       });
       document.getElementById('reports-stat-total').textContent = total;
       document.getElementById('reports-stat-urgent').textContent = urgent;
@@ -4401,16 +4463,20 @@
       var typeFilter = document.getElementById('reports-filter-type').value;
       var priorityFilter = document.getElementById('reports-filter-priority').value;
       var statusFilter = document.getElementById('reports-filter-status').value;
+      var colType = _findReportCol(_reportsHeaders, ['القسم', 'نوع', 'الطلب', 'بلاغ']);
+      var colStatus = _findReportCol(_reportsHeaders, ['الحالة', 'status']);
+      var colPriority = _findReportCol(_reportsHeaders, ['أولوية', 'priorit', 'عجلة']);
       var filtered = _reportsData.filter(function(r) {
-        var name = (r['اسم العامل'] || r['الاسم'] || r['name'] || '').toLowerCase();
-        var desc = (r['وصف العطل'] || r['الوصف'] || r['description'] || '').toLowerCase();
-        var type = r['نوع العطل'] || r['النوع'] || r['type'] || '';
-        var priority = r['الأولوية'] || '';
-        var status = r['الحالة'] || 'جديد';
-        if (search && name.indexOf(search) === -1 && desc.indexOf(search) === -1) return false;
-        if (typeFilter && type !== typeFilter) return false;
-        if (priorityFilter && priority !== priorityFilter) return false;
-        if (statusFilter && status !== statusFilter) return false;
+        var vals = Object.values(r).join(' ').toLowerCase();
+        if (search && vals.indexOf(search) === -1) return false;
+        if (typeFilter && colType && (r[colType] || '').indexOf(typeFilter) === -1) return false;
+        if (priorityFilter && colPriority) {
+          var p = r[colPriority] || '';
+          if (priorityFilter === 'عاجل' && p.indexOf('عجل') === -1 && p.indexOf('عالي') === -1) return false;
+          if (priorityFilter === 'متوسط' && p.indexOf('متوسط') === -1) return false;
+          if (priorityFilter === 'منخفض' && p.indexOf('منخفض') === -1 && p.indexOf('عادي') === -1) return false;
+        }
+        if (statusFilter && colStatus && (r[colStatus] || 'جديد') !== statusFilter) return false;
         return true;
       });
       renderReportsTable(filtered);
@@ -4420,7 +4486,7 @@
       var url = _reportsApiUrl || document.getElementById('reports-api-url').value;
       var report = _reportsData[index];
       if (!report || !url) return;
-      var id = report.id || (index + 1);
+      var id = report._row || (index + 1);
       fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -4428,9 +4494,10 @@
       }).then(function(r) { return r.json(); })
         .then(function(d) {
           if (d.success) {
-            report['الحالة'] = newStatus;
+            var colStatus = _findReportCol(_reportsHeaders, ['الحالة', 'status']);
+            if (colStatus) report[colStatus] = newStatus;
             updateReportsStats(_reportsData);
-            logAction('تعديل', 'حالة بلاغ أعطال', report['اسم العامل'] || '', 'إلى ' + newStatus);
+            logAction('تعديل', 'حالة بلاغ', report[_findReportCol(_reportsHeaders, ['اسم', 'الاسم'])] || '', 'إلى ' + newStatus);
           }
         }).catch(function(e) { console.error('Status update error:', e); });
     }
@@ -4450,8 +4517,10 @@
       fetch(url + '?action=getReports')
         .then(function(r) { return r.json(); })
         .then(function(d) {
-          if (d.success) alert('✅ الاتصال ناجح! عدد البلاغات: ' + d.count);
-          else alert('❌ خطأ في البيانات');
+          if (d.success) {
+            var msg = '✅ الاتصال ناجح!\n\nعدد البلاغات: ' + d.count + '\n\nالأعمدة: ' + (d.headers || []).filter(function(h){return h&&h!=='_row';}).join(', ');
+            alert(msg);
+          } else alert('❌ خطأ في البيانات');
         })
         .catch(function(e) { alert('❌ فشل الاتصال: ' + e.message); });
     }
@@ -4459,22 +4528,16 @@
     function exportReportsToExcel() {
       if (!_reportsData.length) return alert('⚠️ لا توجد بلاغات للتصدير');
       var wb = XLSX.utils.book_new();
-      var rows = [['#', 'اسم العامل', 'رقم الموبايل', 'نوع العطل', 'وصف العطل', 'الموقع', 'الأولوية', 'الحالة', 'التاريخ']];
-      _reportsData.forEach(function(r, i) {
-        rows.push([
-          _reportsData.length - i,
-          r['اسم العامل'] || r['الاسم'] || r['name'] || '',
-          r['رقم الموبايل'] || r['التليفون'] || r['phone'] || '',
-          r['نوع العطل'] || r['النوع'] || r['type'] || '',
-          r['وصف العطل'] || r['الوصف'] || r['description'] || r['البيان'] || '',
-          r['الموقع'] || r['المبنى'] || r['location'] || '',
-          r['الأولوية'] || '',
-          r['الحالة'] || 'جديد',
-          r['Timestamp'] || r['التاريخ'] || r['date'] || ''
-        ]);
+      var headers = _reportsHeaders.filter(function(h) { return h && h !== '_row' && h.indexOf('Timestamp') === -1; });
+      var rows = [headers.concat(['حالة البلاغ (تحديث محلي)'])];
+      _reportsData.forEach(function(r) {
+        var row = headers.map(function(h) { return r[h] || ''; });
+        row.push('');
+        rows.push(row);
       });
       var ws = XLSX.utils.aoa_to_sheet(rows);
-      ws['!cols'] = [{ wch: 5 }, { wch: 18 }, { wch: 14 }, { wch: 12 }, { wch: 35 }, { wch: 15 }, { wch: 10 }, { wch: 12 }, { wch: 18 }];
+      ws['!cols'] = headers.map(function() { return { wch: 18 }; });
+      ws['!cols'].push({ wch: 16 });
       XLSX.utils.book_append_sheet(wb, ws, 'بلاغات الأعطال');
       var today = new Date().toISOString().split('T')[0];
       XLSX.writeFile(wb, 'بلاغات_الأعطال_' + today.replace(/-/g, '') + '.xlsx');
