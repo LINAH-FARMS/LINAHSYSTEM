@@ -983,6 +983,7 @@
     <button class="tab-btn" onclick="switchTab('tab-bread-supply')" style="background:#e3f2fd; color:#1565c0; font-weight:700;">🚚 توريد الخبز للمقاولين <span class="tab-badge blue" id="badge-bread-supply">0</span></button>
     <button class="tab-btn" onclick="switchTab('tab-evaluations')" style="background:#fce4ec; color:#880e4f; font-weight:700;">⭐ تقييم العاملين <span class="tab-badge danger" id="badge-eval">0</span></button>
     <button class="tab-btn" onclick="switchTab('tab-finance')" style="background:#e8eaf6; color:#283593; font-weight:700;">💰 المركز المالي والميزانية</button>
+    <button class="tab-btn" onclick="switchTab('tab-reports')" style="background:#fce4ec; color:#c62828; font-weight:700;">🚨 بلاغات الأعطال <span class="tab-badge danger" id="badge-reports">0</span></button>
     <button class="tab-btn" onclick="switchTab('tab-data-exchange')" style="background:#e8f5e9; color:#1b5e20; font-weight:700;">🔄 تبادل البيانات</button>
   </div>
 
@@ -2795,6 +2796,117 @@
     </div>
   </div>
 
+  <div id="tab-reports" class="tab-content">
+    <div style="background:linear-gradient(135deg,#c62828,#e53935);border-radius:12px;padding:20px;margin-bottom:20px;text-align:center;color:white;">
+      <div style="font-size:28px;font-weight:700;">🚨 بلاغات الأعطال</div>
+      <div style="font-size:14px;margin-top:8px;opacity:0.9;">بلاغات العمال من جوجل فورم — تتحدث تلقائياً</div>
+    </div>
+
+    <div class="control-panel no-print" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;align-items:flex-end;">
+      <div class="form-group">
+        <label>🔍 بحث</label>
+        <input type="text" id="reports-search" placeholder="ابحث في البلاغات..." oninput="filterReports()" style="width:100%;">
+      </div>
+      <div class="form-group">
+        <label>نوع العطل</label>
+        <select id="reports-filter-type" onchange="filterReports()" style="width:100%;">
+          <option value="">الكل</option>
+          <option value="كهرباء">كهرباء</option>
+          <option value="سباكة">سباكة</option>
+          <option value="أجهزة">أجهزة</option>
+          <option value="بناء">بناء</option>
+          <option value="نظافة">نظافة</option>
+          <option value="أخرى">أخرى</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>الأولوية</label>
+        <select id="reports-filter-priority" onchange="filterReports()" style="width:100%;">
+          <option value="">الكل</option>
+          <option value="عاجل">🔴 عاجل</option>
+          <option value="متوسط">🟡 متوسط</option>
+          <option value="منخفض">🟢 منخفض</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>الحالة</label>
+        <select id="reports-filter-status" onchange="filterReports()" style="width:100%;">
+          <option value="">الكل</option>
+          <option value="جديد">جديد</option>
+          <option value="قيد التنفيذ">قيد التنفيذ</option>
+          <option value="مغلق">مغلق</option>
+        </select>
+      </div>
+      <button class="btn btn-primary" onclick="fetchReports()" style="height:42px;">🔄 تحديث</button>
+      <button class="btn btn-excel" onclick="exportReportsToExcel()" style="background:#2e7d32;height:42px;">📤 تصدير Excel</button>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:16px;">
+      <div style="background:#fff3e0;border-radius:10px;padding:14px;text-align:center;border:2px solid #ffcc80;">
+        <div style="font-size:24px;font-weight:800;color:#e65100;" id="reports-stat-total">0</div>
+        <div style="font-size:12px;color:#bf360c;">إجمالي البلاغات</div>
+      </div>
+      <div style="background:#fce4ec;border-radius:10px;padding:14px;text-align:center;border:2px solid #f48fb1;">
+        <div style="font-size:24px;font-weight:800;color:#c62828;" id="reports-stat-urgent">0</div>
+        <div style="font-size:12px;color:#c62828;">🔴 عاجل</div>
+      </div>
+      <div style="background:#fff8e1;border-radius:10px;padding:14px;text-align:center;border:2px solid #ffe082;">
+        <div style="font-size:24px;font-weight:800;color:#f57f17;" id="reports-stat-pending">0</div>
+        <div style="font-size:12px;color:#f57f17;">🟡 قيد التنفيذ</div>
+      </div>
+      <div style="background:#e8f5e9;border-radius:10px;padding:14px;text-align:center;border:2px solid #a5d6a7;">
+        <div style="font-size:24px;font-weight:800;color:#2e7d32;" id="reports-stat-closed">0</div>
+        <div style="font-size:12px;color:#2e7d32;">✅ مغلق</div>
+      </div>
+      <div style="background:#e3f2fd;border-radius:10px;padding:14px;text-align:center;border:2px solid #90caf9;">
+        <div style="font-size:24px;font-weight:800;color:#1565c0;" id="reports-stat-new">0</div>
+        <div style="font-size:12px;color:#1565c0;">🆕 جديد</div>
+      </div>
+    </div>
+
+    <div id="reports-loading" style="text-align:center;padding:40px;color:#888;font-size:16px;">
+      <div style="font-size:32px;margin-bottom:10px;">⏳</div>
+      جاري تحميل البلاغات...
+      <div style="font-size:12px;color:#aaa;margin-top:8px;">تأكد من إدخال رابط API في الإعدادات</div>
+    </div>
+
+    <div class="table-container" id="reports-table-container" style="display:none;">
+      <table id="table-reports">
+        <thead>
+          <tr>
+            <th style="width:40px;">#</th>
+            <th>اسم العامل</th>
+            <th>رقم الموبايل</th>
+            <th>نوع العطل</th>
+            <th>وصف العطل</th>
+            <th>الموقع</th>
+            <th>الأولوية</th>
+            <th>الحالة</th>
+            <th>التاريخ</th>
+            <th style="width:100px;" class="no-print">إجراءات</th>
+          </tr>
+        </thead>
+        <tbody id="reports-table-body"></tbody>
+      </table>
+    </div>
+
+    <div id="reports-empty" style="display:none;text-align:center;padding:40px;color:#888;font-size:14px;">
+      لا توجد بلاغات حالياً
+    </div>
+
+    <div style="margin-top:16px;padding:16px;background:#f5f5f5;border-radius:10px;">
+      <div style="font-weight:700;color:#333;margin-bottom:8px;">📋 إعدادات الاتصال</div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+        <input type="text" id="reports-api-url" placeholder="رابط Google Apps Script API" style="flex:1;min-width:300px;padding:8px;border:2px solid #e0e0e0;border-radius:6px;font-size:12px;font-family:monospace;">
+        <button class="btn btn-primary" onclick="saveReportsApiUrl()" style="padding:8px 16px;">💾 حفظ الرابط</button>
+        <button class="btn btn-secondary" onclick="testReportsApi()" style="padding:8px 16px;">🔍 اختبار</button>
+      </div>
+      <div style="font-size:11px;color:#888;margin-top:6px;">
+        الخطوات: 1) أنشئ جوجل فورم → 2) اربطه بشيت → 3) أضف Apps Script (الملف google-forms-script.gs) → 4) Deploy as Web App → 5) الصق الرابط هنا
+      </div>
+    </div>
+  </div>
+
   <div id="tab-data-exchange" class="tab-content">
     <div style="background:#e8f5e9;border-radius:12px;padding:20px;margin-bottom:20px;text-align:center;border:2px solid #a5d6a7;">
       <div style="font-size:28px;font-weight:700;color:#1b5e20;">تصدير البيانات لقسم المعلومات</div>
@@ -4187,6 +4299,186 @@
         if (el) el.innerHTML = '<div style="padding:20px;color:red;text-align:center;">⚠️ finance.js لم يُحمّل</div>';
       }
     }
+
+    // ==================== بلاغات الأعطال ====================
+    var _reportsData = [];
+    var _reportsApiUrl = localStorage.getItem('linah_reports_api_url') || '';
+
+    function fetchReports() {
+      var url = _reportsApiUrl || document.getElementById('reports-api-url').value;
+      if (!url) {
+        document.getElementById('reports-loading').innerHTML = '<div style="color:#c62828;font-size:16px;">⚠️ أدخل رابط API أولاً<br><span style="font-size:12px;color:#888;">ادخل الرابط في قسم الإعدادات في الأسفل</span></div>';
+        return;
+      }
+      document.getElementById('reports-loading').style.display = 'block';
+      document.getElementById('reports-table-container').style.display = 'none';
+      document.getElementById('reports-empty').style.display = 'none';
+      fetch(url + '?action=getReports')
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          if (data.success && data.reports) {
+            _reportsData = data.reports;
+            renderReportsTable(_reportsData);
+            updateReportsStats(_reportsData);
+          } else {
+            document.getElementById('reports-loading').innerHTML = '<div style="color:#c62828;">❌ خطأ في البيانات</div>';
+          }
+        })
+        .catch(function(err) {
+          document.getElementById('reports-loading').innerHTML = '<div style="color:#c62828;">❌ فشل الاتصال بالخادم<br><span style="font-size:12px;">' + (err.message || '') + '</span></div>';
+        });
+    }
+
+    function renderReportsTable(reports) {
+      var tbody = document.getElementById('reports-table-body');
+      if (!reports.length) {
+        document.getElementById('reports-loading').style.display = 'none';
+        document.getElementById('reports-table-container').style.display = 'none';
+        document.getElementById('reports-empty').style.display = 'block';
+        return;
+      }
+      var html = '';
+      reports.forEach(function(r, i) {
+        var name = r['اسم العامل'] || r['الاسم'] || r['name'] || '';
+        var phone = r['رقم الموبايل'] || r['التليفون'] || r['phone'] || '';
+        var type = r['نوع العطل'] || r['النوع'] || r['type'] || '';
+        var desc = r['وصف العطل'] || r['الوصف'] || r['description'] || r['البيان'] || '';
+        var location = r['الموقع'] || r['المبنى'] || r['location'] || '';
+        var priority = r['الأولوية'] || r['priorit'] || '';
+        var status = r['الحالة'] || r['status'] || 'جديد';
+        var date = r['Timestamp'] || r['التاريخ'] || r['date'] || r['تاريخ الإبلاغ'] || '';
+        var priorityBadge = priority === 'عاجل' ? '<span style="color:#c62828;font-weight:700;">🔴 عاجل</span>' :
+                            priority === 'متوسط' ? '<span style="color:#f57f17;font-weight:700;">🟡 متوسط</span>' :
+                            '<span style="color:#2e7d32;font-weight:700;">🟢 منخفض</span>';
+        var statusBadge = status === 'مغلق' ? '<span style="color:#2e7d32;font-weight:700;">✅ مغلق</span>' :
+                          status === 'قيد التنفيذ' ? '<span style="color:#f57f17;font-weight:700;">🟡 قيد التنفيذ</span>' :
+                          '<span style="color:#1565c0;font-weight:700;">🆕 جديد</span>';
+        html += '<tr style="background:' + (priority === 'عاجl' ? '#fff3e0' : 'white') + ';">' +
+          '<td>' + (reports.length - i) + '</td>' +
+          '<td style="font-weight:600;">' + name + '</td>' +
+          '<td>' + phone + '</td>' +
+          '<td><span style="background:#fff3e0;padding:2px 8px;border-radius:4px;font-size:11px;">' + type + '</span></td>' +
+          '<td style="max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="' + desc.replace(/"/g, '&quot;') + '">' + desc + '</td>' +
+          '<td>' + location + '</td>' +
+          '<td>' + priorityBadge + '</td>' +
+          '<td>' + statusBadge + '</td>' +
+          '<td style="font-size:11px;">' + (typeof date === 'string' ? date.substring(0, 16) : date) + '</td>' +
+          '<td class="no-print"><select onchange="updateReportStatusFromList(' + i + ', this.value)" style="padding:4px;border:1px solid #ddd;border-radius:4px;font-size:11px;font-family:Cairo,sans-serif;">' +
+          '<option value="جديد"' + (status === 'جديد' ? ' selected' : '') + '>جديد</option>' +
+          '<option value="قيد التنفيذ"' + (status === 'قيد التنفيذ' ? ' selected' : '') + '>قيد التنفيذ</option>' +
+          '<option value="مغلق"' + (status === 'مغلق' ? ' selected' : '') + '>مغلق</option>' +
+          '</select></td>' +
+          '</tr>';
+      });
+      tbody.innerHTML = html;
+      document.getElementById('reports-loading').style.display = 'none';
+      document.getElementById('reports-table-container').style.display = 'block';
+      document.getElementById('reports-empty').style.display = 'none';
+    }
+
+    function updateReportsStats(reports) {
+      var total = reports.length;
+      var urgent = 0, pending = 0, closed = 0, newCount = 0;
+      reports.forEach(function(r) {
+        var p = r['الأولوية'] || '';
+        var s = r['الحالة'] || 'جديد';
+        if (p === 'عاجل') urgent++;
+        if (s === 'قيد التنفيذ') pending++;
+        if (s === 'مغلق') closed++;
+        if (s === 'جديد') newCount++;
+      });
+      document.getElementById('reports-stat-total').textContent = total;
+      document.getElementById('reports-stat-urgent').textContent = urgent;
+      document.getElementById('reports-stat-pending').textContent = pending;
+      document.getElementById('reports-stat-closed').textContent = closed;
+      document.getElementById('reports-stat-new').textContent = newCount;
+      var badge = document.getElementById('badge-reports');
+      if (badge) badge.textContent = total;
+    }
+
+    function filterReports() {
+      var search = (document.getElementById('reports-search').value || '').toLowerCase();
+      var typeFilter = document.getElementById('reports-filter-type').value;
+      var priorityFilter = document.getElementById('reports-filter-priority').value;
+      var statusFilter = document.getElementById('reports-filter-status').value;
+      var filtered = _reportsData.filter(function(r) {
+        var name = (r['اسم العامل'] || r['الاسم'] || r['name'] || '').toLowerCase();
+        var desc = (r['وصف العطل'] || r['الوصف'] || r['description'] || '').toLowerCase();
+        var type = r['نوع العطل'] || r['النوع'] || r['type'] || '';
+        var priority = r['الأولوية'] || '';
+        var status = r['الحالة'] || 'جديد';
+        if (search && name.indexOf(search) === -1 && desc.indexOf(search) === -1) return false;
+        if (typeFilter && type !== typeFilter) return false;
+        if (priorityFilter && priority !== priorityFilter) return false;
+        if (statusFilter && status !== statusFilter) return false;
+        return true;
+      });
+      renderReportsTable(filtered);
+    }
+
+    function updateReportStatusFromList(index, newStatus) {
+      var url = _reportsApiUrl || document.getElementById('reports-api-url').value;
+      var report = _reportsData[index];
+      if (!report || !url) return;
+      var id = report.id || (index + 1);
+      fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'updateStatus', id: String(id), status: newStatus })
+      }).then(function(r) { return r.json(); })
+        .then(function(d) {
+          if (d.success) {
+            report['الحالة'] = newStatus;
+            updateReportsStats(_reportsData);
+            logAction('تعديل', 'حالة بلاغ أعطال', report['اسم العامل'] || '', 'إلى ' + newStatus);
+          }
+        }).catch(function(e) { console.error('Status update error:', e); });
+    }
+
+    function saveReportsApiUrl() {
+      var url = document.getElementById('reports-api-url').value.trim();
+      if (!url) return alert('⚠️ أدخل رابط API');
+      _reportsApiUrl = url;
+      localStorage.setItem('linah_reports_api_url', url);
+      alert('✅ تم حفظ الرابط');
+      fetchReports();
+    }
+
+    function testReportsApi() {
+      var url = document.getElementById('reports-api-url').value.trim() || _reportsApiUrl;
+      if (!url) return alert('⚠️ أدخل رابط API أولاً');
+      fetch(url + '?action=getReports')
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+          if (d.success) alert('✅ الاتصال ناجح! عدد البلاغات: ' + d.count);
+          else alert('❌ خطأ في البيانات');
+        })
+        .catch(function(e) { alert('❌ فشل الاتصال: ' + e.message); });
+    }
+
+    function exportReportsToExcel() {
+      if (!_reportsData.length) return alert('⚠️ لا توجد بلاغات للتصدير');
+      var wb = XLSX.utils.book_new();
+      var rows = [['#', 'اسم العامل', 'رقم الموبايل', 'نوع العطل', 'وصف العطل', 'الموقع', 'الأولوية', 'الحالة', 'التاريخ']];
+      _reportsData.forEach(function(r, i) {
+        rows.push([
+          _reportsData.length - i,
+          r['اسم العامل'] || r['الاسم'] || r['name'] || '',
+          r['رقم الموبايل'] || r['التليفون'] || r['phone'] || '',
+          r['نوع العطل'] || r['النوع'] || r['type'] || '',
+          r['وصف العطل'] || r['الوصف'] || r['description'] || r['البيان'] || '',
+          r['الموقع'] || r['المبنى'] || r['location'] || '',
+          r['الأولوية'] || '',
+          r['الحالة'] || 'جديد',
+          r['Timestamp'] || r['التاريخ'] || r['date'] || ''
+        ]);
+      });
+      var ws = XLSX.utils.aoa_to_sheet(rows);
+      ws['!cols'] = [{ wch: 5 }, { wch: 18 }, { wch: 14 }, { wch: 12 }, { wch: 35 }, { wch: 15 }, { wch: 10 }, { wch: 12 }, { wch: 18 }];
+      XLSX.utils.book_append_sheet(wb, ws, 'بلاغات الأعطال');
+      var today = new Date().toISOString().split('T')[0];
+      XLSX.writeFile(wb, 'بلاغات_الأعطال_' + today.replace(/-/g, '') + '.xlsx');
+    }
     function switchTab(tabId, el) {
       if (!el) el = document.querySelector(`.tab-btn[onclick*="'${tabId}'"]`) || document.querySelector(`.tab-btn[onclick*='"${tabId}"']`);
       document.querySelectorAll('.tab-content').forEach(e => e.classList.remove('active'));
@@ -4195,7 +4487,7 @@
       if (!tabEl) { console.error('Tab not found:', tabId); return; }
       tabEl.classList.add('active');
       if (el) el.classList.add('active');
-      var tabNames = { 'tab-dashboard':'الرئيسية','tab-employees':'القوة','tab-housing':'السكن','tab-inventory':'المخزن','tab-vacations':'إجازات وإضافي الشئون الإدارية','tab-hospitality':'الضيافة','tab-maintenance':'الصيانة','tab-septic':'البيارات','tab-dynamic':'الإدارة المرنة','tab-excluded':'المستبعدين','tab-periodic-maint':'الصيانة الدورية','tab-tea-sugar':'شاي وسكر','tab-meal-log':'الوجبات','tab-contractors':'المقاولين','tab-bakery':'المخبز','tab-bread-supply':'توريد الخبز','tab-evaluations':'التقييمات','tab-audit':'سجل التعديلات','tab-finance':'المركز المالي والميزانية','tab-data-exchange':'تبادل البيانات' };
+      var tabNames = { 'tab-dashboard':'الرئيسية','tab-employees':'القوة','tab-housing':'السكن','tab-inventory':'المخزن','tab-vacations':'إجازات وإضافي الشئون الإدارية','tab-hospitality':'الضيافة','tab-maintenance':'الصيانة','tab-septic':'البيارات','tab-dynamic':'الإدارة المرنة','tab-excluded':'المستبعدين','tab-periodic-maint':'الصيانة الدورية','tab-tea-sugar':'شاي وسكر','tab-meal-log':'الوجبات','tab-contractors':'المقاولين','tab-bakery':'المخبز','tab-bread-supply':'توريد الخبز','tab-evaluations':'التقييمات','tab-audit':'سجل التعديلات','tab-finance':'المركز المالي والميزانية','tab-reports':'بلاغات الأعطال','tab-data-exchange':'تبادل البيانات' };
       setAction('🔍 ' + (tabNames[tabId] || tabId));
       try { if(tabId === 'tab-dashboard') { renderDashboard(); renderQuickActions(); } } catch(e) { console.error('tab-dashboard error:', e); }
       try { if(tabId === 'tab-housing') { renderHousingLayout(); updateHousingStats(); } } catch(e) { console.error('tab-housing error:', e); }
@@ -4212,6 +4504,7 @@
       try { if(tabId === 'tab-vacations') { renderOvertimeCalendar(); } } catch(e) { console.error('tab-vacations error:', e); }
       try { if(tabId === 'tab-evaluations') { populateEvalEmployees(); renderEvaluations(); } } catch(e) { console.error('tab-evaluations error:', e); }
       try { if(tabId === 'tab-finance') { renderFinanceTab(); } } catch(e) { console.error('tab-finance error:', e); }
+      try { if(tabId === 'tab-reports') { if(_reportsApiUrl) { document.getElementById('reports-api-url').value = _reportsApiUrl; fetchReports(); } else { document.getElementById('reports-loading').style.display = 'none'; } } } catch(e) { console.error('tab-reports error:', e); }
     }
 
     function printActiveTab() {
@@ -12049,6 +12342,7 @@ function toggleEmployeeStatus(empId) {
       employees.forEach(function(e) { if (typeof e.vacationBalance !== 'number') e.vacationBalance = 30; });
       sortEmployeesAlphabetically(); rebuildDeptTitles(); rebuildAllDropdowns(); initEmployeeSearchInputs(); setupItemNameSearch(); setupNameAutocomplete(); populateRoomSectorDropdown(); populateContractorSectorDropdown();
       if (typeof finInit === 'function') finInit();
+      _reportsApiUrl = localStorage.getItem('linah_reports_api_url') || '';
       setTimeout(function() {
         renderTable(); renderInventoryTable(); renderInventoryItems(); renderArchiveTable(); renderVacationsTable(); renderOvertimeCalendar();
         setTimeout(function() {
