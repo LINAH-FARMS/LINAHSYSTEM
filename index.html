@@ -2799,7 +2799,7 @@
   <div id="tab-reports" class="tab-content">
     <div style="background:linear-gradient(135deg,#c62828,#e53935);border-radius:12px;padding:20px;margin-bottom:20px;text-align:center;color:white;">
       <div style="font-size:28px;font-weight:700;">🚨 بلاغات الأعطال</div>
-      <div style="font-size:14px;margin-top:8px;opacity:0.9;">بلاغات العمال من جوجل فورم — تتحدث تلقائياً</div>
+      <div style="font-size:14px;margin-top:8px;opacity:0.9;">بلاغات العمال — تتحدث تلقائياً</div>
     </div>
 
     <div class="control-panel no-print" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;align-items:flex-end;">
@@ -2867,7 +2867,6 @@
     <div id="reports-loading" style="text-align:center;padding:40px;color:#888;font-size:16px;">
       <div style="font-size:32px;margin-bottom:10px;">⏳</div>
       جاري تحميل البلاغات...
-      <div style="font-size:12px;color:#aaa;margin-top:8px;">تأكد من إدخال رابط API في الإعدادات</div>
     </div>
 
     <div class="table-container" id="reports-table-container" style="display:none;">
@@ -4312,41 +4311,61 @@
     }
 
     function fetchReports() {
-      var url = _reportsApiUrl || document.getElementById('reports-api-url').value;
       document.getElementById('reports-loading').style.display = 'block';
       document.getElementById('reports-table-container').style.display = 'none';
       document.getElementById('reports-empty').style.display = 'none';
 
-      fetch(SUPABASE_URL + '/rest/v1/incident_reports?select=*&order=id.desc', {
+      fetch(SUPABASE_URL + '/rest/v1/sync_data?key=eq.incident_reports', {
         method: 'GET',
         headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
       })
       .then(function(r) { return r.json(); })
-      .then(function(data) {
-        if (Array.isArray(data)) {
-          _reportsHeaders = ['id', 'phone', 'name', 'type', 'description', 'location', 'priority', 'status', 'created_at'];
-          _reportsData = data.map(function(r, i) {
-            return {
-              _row: r.id,
-              'رقم التليفون': r.phone || '',
-              'اسم العامل': r.name || '',
-              'نوع العطل': r.type || '',
-              'وصف العطل': r.description || '',
-              'الموقع': r.location || '',
-              'الأولوية': r.priority || '',
-              'الحالة': r.status || 'جديد',
-              'التاريخ': r.created_at || ''
-            };
-          });
-          _reportsHeaders = ['رقم التليفون', 'اسم العامل', 'نوع العطل', 'وصف العطل', 'الموقع', 'الأولوية', 'الحالة', 'التاريخ'];
-          renderReportsTable(_reportsData);
-          updateReportsStats(_reportsData);
-        } else {
-          document.getElementById('reports-loading').innerHTML = '<div style="color:#c62828;">خطا في البيانات</div>';
+      .then(function(rows) {
+        var reports = [];
+        if (rows && rows.length > 0 && rows[0].data) {
+          try { reports = JSON.parse(rows[0].data); } catch(e) { reports = []; }
         }
+        var local = JSON.parse(localStorage.getItem('linah_reports') || '[]');
+        local.forEach(function(lr) {
+          var exists = reports.some(function(r) { return r.id === lr.id; });
+          if (!exists) reports.push(lr);
+        });
+
+        _reportsHeaders = ['رقم التليفون', 'اسم العامل', 'نوع العطل', 'وصف العطل', 'الموقع', 'الأولوية', 'الحالة', 'التاريخ'];
+        _reportsData = reports.map(function(r) {
+          return {
+            _row: r.id || Date.now(),
+            'رقم التليفون': r.phone || '',
+            'اسم العامل': r.name || '',
+            'نوع العطل': r.type || '',
+            'وصف العطل': r.desc || r.description || '',
+            'الموقع': r.location || '',
+            'الأولوية': r.priority || '',
+            'الحالة': r.status || 'جديد',
+            'التاريخ': r.date || r.created_at || ''
+          };
+        }).reverse();
+        renderReportsTable(_reportsData);
+        updateReportsStats(_reportsData);
       })
       .catch(function(err) {
-        document.getElementById('reports-loading').innerHTML = '<div style="color:#c62828;">فشل الاتصال<br><span style="font-size:12px;">' + (err.message || '') + '</span></div>';
+        var local = JSON.parse(localStorage.getItem('linah_reports') || '[]');
+        _reportsHeaders = ['رقم التليفون', 'اسم العامل', 'نوع العطل', 'وصف العطل', 'الموقع', 'الأولوية', 'الحالة', 'التاريخ'];
+        _reportsData = local.map(function(r) {
+          return {
+            _row: r.id || Date.now(),
+            'رقم التليفون': r.phone || '',
+            'اسم العامل': r.name || '',
+            'نوع العطل': r.type || '',
+            'وصف العطل': r.desc || '',
+            'الموقع': r.location || '',
+            'الأولوية': r.priority || '',
+            'الحالة': r.status || 'جديد',
+            'التاريخ': r.date || r.created_at || ''
+          };
+        }).reverse();
+        renderReportsTable(_reportsData);
+        updateReportsStats(_reportsData);
       });
     }
 
@@ -4494,41 +4513,59 @@
     function updateReportStatusFromList(index, newStatus) {
       var report = _reportsData[index];
       if (!report) return;
-      var id = report._row;
-      fetch(SUPABASE_URL + '/rest/v1/incident_reports?id=eq.' + id, {
-        method: 'PATCH',
-        headers: {
-          'apikey': SUPABASE_KEY,
-          'Authorization': 'Bearer ' + SUPABASE_KEY,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ status: newStatus })
-      }).then(function(r) { return r.json(); })
-        .then(function(d) {
-          report['الحالة'] = newStatus;
-          updateReportsStats(_reportsData);
-          logAction('تعديل', 'حالة بلاغ', report['اسم العامل'] || '', 'الى ' + newStatus);
-        }).catch(function(e) { console.error('Status update error:', e); });
-    }
+      report['الحالة'] = newStatus;
+      var local = JSON.parse(localStorage.getItem('linah_reports') || '[]');
+      for (var i = 0; i < local.length; i++) {
+        if ((local[i].id || i) == report._row) {
+          local[i].status = newStatus;
+          break;
+        }
+      }
+      localStorage.setItem('linah_reports', JSON.stringify(local));
 
-    function saveReportsApiUrl() {
-      var url = document.getElementById('reports-api-url').value.trim();
-      if (!url) return alert('⚠️ أدخل رابط API');
-      _reportsApiUrl = url;
-      localStorage.setItem('linah_reports_api_url', url);
-      alert('✅ تم حفظ الرابط');
-      fetchReports();
-    }
-
-    function testReportsApi() {
-      fetch(SUPABASE_URL + '/rest/v1/incident_reports?select=id', {
+      fetch(SUPABASE_URL + '/rest/v1/sync_data?key=eq.incident_reports', {
         method: 'GET',
         headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
       })
       .then(function(r) { return r.json(); })
-      .then(function(d) {
-        if (Array.isArray(d)) alert('الاتصال ناجح! عدد البلاغات: ' + d.length);
-        else alert('خطا في البيانات');
+      .then(function(rows) {
+        if (rows && rows.length > 0 && rows[0].data) {
+          var reports = JSON.parse(rows[0].data);
+          for (var j = 0; j < reports.length; j++) {
+            if (reports[j].id == report._row) {
+              reports[j].status = newStatus;
+              break;
+            }
+          }
+          return fetch(SUPABASE_URL + '/rest/v1/sync_data?key=eq.incident_reports', {
+            method: 'PATCH',
+            headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ data: JSON.stringify(reports), updated_at: new Date().toISOString() })
+          });
+        }
+      })
+      .catch(function(e) { console.error('Status sync error:', e); });
+
+      updateReportsStats(_reportsData);
+      logAction('تعديل', 'حالة بلاغ', report['اسم العامل'] || '', 'الى ' + newStatus);
+    }
+
+    function saveReportsApiUrl() {
+      fetchReports();
+    }
+
+    function testReportsApi() {
+      fetch(SUPABASE_URL + '/rest/v1/sync_data?key=eq.incident_reports', {
+        method: 'GET',
+        headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
+      })
+      .then(function(r) { return r.json(); })
+      .then(function(rows) {
+        var count = 0;
+        if (rows && rows.length > 0 && rows[0].data) {
+          try { count = JSON.parse(rows[0].data).length; } catch(e) {}
+        }
+        alert('الاتصال ناجح! عدد البلاغات المحفوظة: ' + count);
       })
       .catch(function(e) { alert('فشل الاتصال: ' + e.message); });
     }
@@ -4582,7 +4619,7 @@
       try { if(tabId === 'tab-vacations') { renderOvertimeCalendar(); } } catch(e) { console.error('tab-vacations error:', e); }
       try { if(tabId === 'tab-evaluations') { populateEvalEmployees(); renderEvaluations(); } } catch(e) { console.error('tab-evaluations error:', e); }
       try { if(tabId === 'tab-finance') { renderFinanceTab(); } } catch(e) { console.error('tab-finance error:', e); }
-      try { if(tabId === 'tab-reports') { if(_reportsApiUrl) { document.getElementById('reports-api-url').value = _reportsApiUrl; fetchReports(); } else { document.getElementById('reports-loading').style.display = 'none'; } generateReportsQR(); } } catch(e) { console.error('tab-reports error:', e); }
+      try { if(tabId === 'tab-reports') { fetchReports(); generateReportsQR(); } } catch(e) { console.error('tab-reports error:', e); }
     }
 
     function printActiveTab() {

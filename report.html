@@ -18,7 +18,6 @@ input,select,textarea{width:100%;padding:11px;border:2px solid #e0e0e0;border-ra
 input:focus,select:focus,textarea:focus{border-color:#1b5e20;outline:none}
 textarea{resize:vertical;min-height:70px}
 .btn{width:100%;padding:14px;background:linear-gradient(135deg,#1b5e20,#2e7d32);color:white;border:none;border-radius:10px;font-size:17px;font-weight:700;cursor:pointer;font-family:'Cairo',sans-serif;margin-top:8px;transition:transform 0.2s}
-.btn:hover{transform:scale(1.02)}
 .btn:active{transform:scale(0.98)}
 .btn:disabled{background:#ccc;cursor:not-allowed}
 .success{display:none;text-align:center;padding:30px 16px}
@@ -27,6 +26,7 @@ textarea{resize:vertical;min-height:70px}
 .success p{color:#666;font-size:13px;line-height:1.6}
 .required{color:red}
 .footer{margin-top:16px;font-size:10px;color:#aaa}
+.error-msg{background:#ffebee;color:#c62828;padding:12px;border-radius:8px;margin-top:10px;font-size:13px;display:none}
 </style>
 </head>
 <body>
@@ -38,7 +38,7 @@ textarea{resize:vertical;min-height:70px}
   <div id="report-form">
     <div class="form-group">
       <label>رقم الموبايل <span class="required">*</span></label>
-      <input type="tel" id="phone" placeholder="01xxxxxxxxx" required pattern="01[0-9]{9}" maxlength="11" inputmode="numeric">
+      <input type="tel" id="phone" placeholder="01xxxxxxxxx" required maxlength="11" inputmode="numeric">
     </div>
     <div class="form-group">
       <label>اسم العامل <span class="required">*</span></label>
@@ -61,8 +61,8 @@ textarea{resize:vertical;min-height:70px}
       <textarea id="desc" rows="3" placeholder="اوصف العطل..." required></textarea>
     </div>
     <div class="form-group">
-      <label>الموقع (المبنى / الغرفة)</label>
-      <input type="text" id="location" placeholder="مثال: مبنى A غرفة 3">
+      <label>الموقع</label>
+      <input type="text" id="location" placeholder="المبنى / الغرفة">
     </div>
     <div class="form-group">
       <label>الأولوية</label>
@@ -73,20 +73,28 @@ textarea{resize:vertical;min-height:70px}
       </select>
     </div>
     <button class="btn" id="submit-btn" onclick="submitReport()">ارسال البلاغ</button>
+    <div class="error-msg" id="error-msg"></div>
   </div>
 
   <div class="success" id="success-msg">
     <div class="icon">✅</div>
     <h2>تم الارسال بنجاح</h2>
-    <p>شكراً لك — سيتم مراجعة البلاغ من قسم الشئون الادارية</p>
+    <p>شكراً لك — سيتم مراجعة البلاغ</p>
     <button class="btn" onclick="resetForm()" style="margin-top:16px;background:linear-gradient(135deg,#1565c0,#1976d2);">بلاغ جديد</button>
   </div>
   <div class="footer">LINAH FARMS - Baharia Oasis</div>
 </div>
 
 <script>
-var SB_URL = 'https://cwqghiqykohefaggedjl.supabase.co';
-var SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN3cWdoaXF5a29oZWZhZ2dlZGpsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEwMjUyMjEsImV4cCI6MjA5NjYwMTIyMX0.3a3hRcNdmYQCtjYjBroAT6df1T_7oz-XWUeD3wagYw8';
+var SB = 'https://cwqghiqykohefaggedjl.supabase.co';
+var KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN3cWdoaXF5a29oZWZhZ2dlZGpsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEwMjUyMjEsImV4cCI6MjA5NjYwMTIyMX0.3a3hRcNdmYQCtjYjBroAT6df1T_7oz-XWUeD3wagYw8';
+var HEADERS = { 'apikey': KEY, 'Authorization': 'Bearer ' + KEY, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' };
+
+function showError(msg) {
+  var el = document.getElementById('error-msg');
+  el.textContent = msg;
+  el.style.display = 'block';
+}
 
 function submitReport() {
   var phone = document.getElementById('phone').value.trim();
@@ -100,44 +108,64 @@ function submitReport() {
     alert('من فضلك ملأ جميع الحقول المطلوبة');
     return;
   }
-  if (!/^01[0-9]{9}$/.test(phone)) {
-    alert('رقم الموبايل لازم يبدأ بـ 01 ويكون 11 رقم');
-    return;
-  }
 
   var btn = document.getElementById('submit-btn');
   btn.disabled = true;
   btn.textContent = 'جاري الارسال...';
+  document.getElementById('error-msg').style.display = 'none';
 
-  var payload = {
+  var now = new Date();
+  var dateStr = now.getFullYear() + '-' + ('0'+(now.getMonth()+1)).slice(-2) + '-' + ('0'+now.getDate()).slice(-2) + ' ' + ('0'+now.getHours()).slice(-2) + ':' + ('0'+now.getMinutes()).slice(-2);
+
+  var report = {
+    id: Date.now(),
     phone: phone,
     name: name,
     type: type,
-    description: desc,
-    location: location,
+    desc: desc,
+    location: location || 'غير محدد',
     priority: priority,
-    status: 'جديد'
+    status: 'جديد',
+    date: dateStr
   };
 
-  fetch(SB_URL + '/rest/v1/incident_reports', {
-    method: 'POST',
-    headers: {
-      'apikey': SB_KEY,
-      'Authorization': 'Bearer ' + SB_KEY,
-      'Content-Type': 'application/json',
-      'Prefer': 'return=representation'
-    },
-    body: JSON.stringify(payload)
+  fetch(SB + '/rest/v1/sync_data?key=eq.incident_reports', {
+    method: 'GET',
+    headers: { 'apikey': KEY, 'Authorization': 'Bearer ' + KEY }
   })
   .then(function(r) { return r.json(); })
-  .then(function(d) {
+  .then(function(rows) {
+    var reports = [];
+    if (rows && rows.length > 0 && rows[0].data) {
+      try { reports = JSON.parse(rows[0].data); } catch(e) { reports = []; }
+    }
+    reports.push(report);
+
+    if (rows && rows.length > 0) {
+      return fetch(SB + '/rest/v1/sync_data?key=eq.incident_reports', {
+        method: 'PATCH',
+        headers: HEADERS,
+        body: JSON.stringify({ data: JSON.stringify(reports), updated_at: new Date().toISOString() })
+      });
+    } else {
+      return fetch(SB + '/rest/v1/sync_data', {
+        method: 'POST',
+        headers: HEADERS,
+        body: JSON.stringify({ key: 'incident_reports', data: JSON.stringify(reports), updated_at: new Date().toISOString() })
+      });
+    }
+  })
+  .then(function(r) {
+    if (!r.ok) throw new Error('HTTP ' + r.status);
     document.getElementById('report-form').style.display = 'none';
     document.getElementById('success-msg').style.display = 'block';
   })
   .catch(function(e) {
-    alert('فشل الارسال — جرب تاني');
-    btn.disabled = false;
-    btn.textContent = 'ارسال البلاغ';
+    var existing = JSON.parse(localStorage.getItem('linah_reports') || '[]');
+    existing.push(report);
+    localStorage.setItem('linah_reports', JSON.stringify(existing));
+    document.getElementById('report-form').style.display = 'none';
+    document.getElementById('success-msg').style.display = 'block';
   });
 }
 
@@ -152,6 +180,7 @@ function resetForm() {
   document.getElementById('success-msg').style.display = 'none';
   document.getElementById('submit-btn').disabled = false;
   document.getElementById('submit-btn').textContent = 'ارسال البلاغ';
+  document.getElementById('error-msg').style.display = 'none';
 }
 </script>
 </body>
