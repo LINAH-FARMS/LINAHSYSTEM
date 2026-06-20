@@ -7688,7 +7688,7 @@ function toggleEmployeeStatus(empId) {
         let realIdx = hospitalities.indexOf(h);
         let tr = document.createElement('tr');
         tr.innerHTML = `
-          <td class="no-print"><input type="checkbox" class="row-check" data-table="table-hospitality"></td>
+          <td class="no-print"><input type="checkbox" class="row-check" data-table="table-hospitality" data-index="${realIdx}"></td>
           <td><b>${h.name}</b></td>
           <td>${h.type}</td>
           <td>${h.title || '—'}</td>
@@ -9256,9 +9256,21 @@ function toggleEmployeeStatus(empId) {
       XLSX.utils.book_append_sheet(wb, ws, "الإجازات"); XLSX.writeFile(wb, "تقرير_الإجازات_" + new Date().toISOString().split('T')[0].replace(/-/g, '') + ".xlsx");
     }
     function exportHospitalityToExcel() {
-      var data = sortNewestFirst(hospitalities, 'arrival').map(function(h) {
-        return { "الوصول": h.arrival || '', "المغادرة": h.departure || '', "اسم الزائر": stripEmoji(h.name), "النوع": stripEmoji(h.type), "المسمى": stripEmoji(h.title), "عدد الأفراد": h.guests || 1, "الوجبات": (h.meals || []).join(', ') };
-      });
+      var checked = document.querySelectorAll('#table-hospitality .row-check:checked');
+      var data;
+      if (checked.length > 0) {
+        var selectedIndexes = [];
+        checked.forEach(function(cb) { selectedIndexes.push(parseInt(cb.getAttribute('data-index'))); });
+        data = selectedIndexes.map(function(i) {
+          var h = hospitalities[i];
+          return { "الوصول": h.arrival || '', "المغادرة": h.departure || '', "اسم الزائر": stripEmoji(h.name), "النوع": stripEmoji(h.type), "المسمى": stripEmoji(h.title), "عدد الأفراد": h.guests || 1, "الوجبات": (h.meals || []).join(', ') };
+        });
+      } else {
+        data = sortNewestFirst(hospitalities, 'arrival').map(function(h) {
+          return { "الوصول": h.arrival || '', "المغادرة": h.departure || '', "اسم الزائر": stripEmoji(h.name), "النوع": stripEmoji(h.type), "المسمى": stripEmoji(h.title), "عدد الأفراد": h.guests || 1, "الوجبات": (h.meals || []).join(', ') };
+        });
+      }
+      if (!data.length) return alert('⚠️ لا توجد بيانات للتصدير');
       var ws = XLSX.utils.json_to_sheet(data); var wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, "الضيافة"); XLSX.writeFile(wb, "تقرير_الضيافة_" + new Date().toISOString().split('T')[0].replace(/-/g, '') + ".xlsx");
     }
