@@ -6520,6 +6520,7 @@
         assets: assetsVal
       };
       employees.push(_ts(emp));
+      _logDeletion('excludedEmployees', (rec.code || '') + '|' + (rec.name || '') + '|' + (rec.date || ''));
       excludedEmployees.splice(idx, 1);
       sortEmployeesAlphabetically();
       rebuildDeptTitles();
