@@ -2905,6 +2905,14 @@
         الخطوات: 1) أنشئ جوجل فورم → 2) اربطه بشيت → 3) أضف Apps Script (الملف google-forms-script.gs) → 4) Deploy as Web App → 5) الصق الرابط هنا
       </div>
     </div>
+
+    <div style="margin-top:16px;padding:20px;background:linear-gradient(135deg,#e8f5e9,#c8e6c9);border-radius:12px;text-align:center;border:2px solid #66bb6a;">
+      <div style="font-size:24px;margin-bottom:8px;">📱</div>
+      <div style="font-weight:700;color:#1b5e20;font-size:16px;margin-bottom:8px;">QR Code لتسجيل البلاغات</div>
+      <div style="font-size:12px;color:#2e7d32;margin-bottom:12px;">امسح الكود ده بالموبايل عشان تسجل بلاغ</div>
+      <div id="reports-qrcode" style="display:inline-block;background:white;padding:16px;border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,0.1);"></div>
+      <div style="margin-top:10px;"><a href="report.html" target="_blank" style="color:#1b5e20;font-weight:700;font-size:13px;">🔗 أو افتح الرابط مباشرة</a></div>
+    </div>
   </div>
 
   <div id="tab-data-exchange" class="tab-content">
@@ -4542,6 +4550,13 @@
       var today = new Date().toISOString().split('T')[0];
       XLSX.writeFile(wb, 'بلاغات_الأعطال_' + today.replace(/-/g, '') + '.xlsx');
     }
+
+    function generateReportsQR() {
+      var el = document.getElementById('reports-qrcode');
+      if (!el) return;
+      var url = window.location.origin + window.location.pathname.replace(/index\.html$/, '') + 'report.html';
+      el.innerHTML = '<img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' + encodeURIComponent(url) + '&color=1b5e20" alt="QR Code" style="width:200px;height:200px;border-radius:8px;">';
+    }
     function switchTab(tabId, el) {
       if (!el) el = document.querySelector(`.tab-btn[onclick*="'${tabId}'"]`) || document.querySelector(`.tab-btn[onclick*='"${tabId}"']`);
       document.querySelectorAll('.tab-content').forEach(e => e.classList.remove('active'));
@@ -4567,7 +4582,7 @@
       try { if(tabId === 'tab-vacations') { renderOvertimeCalendar(); } } catch(e) { console.error('tab-vacations error:', e); }
       try { if(tabId === 'tab-evaluations') { populateEvalEmployees(); renderEvaluations(); } } catch(e) { console.error('tab-evaluations error:', e); }
       try { if(tabId === 'tab-finance') { renderFinanceTab(); } } catch(e) { console.error('tab-finance error:', e); }
-      try { if(tabId === 'tab-reports') { if(_reportsApiUrl) { document.getElementById('reports-api-url').value = _reportsApiUrl; fetchReports(); } else { document.getElementById('reports-loading').style.display = 'none'; } } } catch(e) { console.error('tab-reports error:', e); }
+      try { if(tabId === 'tab-reports') { if(_reportsApiUrl) { document.getElementById('reports-api-url').value = _reportsApiUrl; fetchReports(); } else { document.getElementById('reports-loading').style.display = 'none'; } generateReportsQR(); } } catch(e) { console.error('tab-reports error:', e); }
     }
 
     function printActiveTab() {

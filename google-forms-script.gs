@@ -1,134 +1,93 @@
-// ============================================
-// Google Apps Script - API بلاغات الأعطال
-// ============================================
-// الخطوات:
-// 1. افتح Google Forms → ردود → ربط بشيت
-// 2. في الشيت: Extensions → Apps Script
-// 3. الصق هذا الكود بالكامل
-// 4. اضغط Deploy → New Deployment → Web app
-// 5. Execute as: Me
-// 6. Who has access: Anyone
-// 7. انسخ الرابط الجديد وحطه في مكان URL_API في index.html
-
 function doGet(e) {
-  var action = e.parameter.action || 'getReports';
+  var action = e.parameter.action || "getReports";
   var ss = SpreadsheetApp.getActiveSpreadsheet();
-  
-  if (action === 'getReports') {
-    return getReports(ss);
-  } else if (action === 'updateStatus') {
-    return updateReportStatus(ss, e.parameter.id, e.parameter.status);
-  } else if (action === 'getStats') {
-    return getReportStats(ss);
-  }
-  
-  return ContentService.createTextOutput(
-    JSON.stringify({error: 'Invalid action'})
-  ).setMimeType(ContentService.MimeType.JSON);
-}
-
-function getReports(ss) {
   var sheet = ss.getSheets()[0];
-  var data = sheet.getDataRange().getValues();
-  if (data.length < 2) {
-    return ContentService.createTextOutput(
-      JSON.stringify({success: true, count: 0, reports: [], headers: []})
-    ).setMimeType(ContentService.MimeType.JSON);
-  }
-  var headers = data[0].map(function(h) { return String(h).trim(); });
-  var reports = [];
   
-  for (var i = 1; i < data.length; i++) {
-    var row = data[i];
-    var report = { _row: i };
-    for (var j = 0; j < headers.length; j++) {
-      if (headers[j]) {
-        report[headers[j]] = row[j] != null ? String(row[j]) : '';
+  if (action == "getReports") {
+    var data = sheet.getDataRange().getValues();
+    if (data.length < 2) {
+      return ContentService.createTextOutput(JSON.stringify({success:true,count:0,reports:[],headers:[]})).setMimeType(ContentService.MimeType.JSON);
+    }
+    var headers = [];
+    for (var j = 0; j < data[0].length; j++) {
+      headers.push(String(data[0][j]).trim());
+    }
+    var reports = [];
+    for (var i = 1; i < data.length; i++) {
+      var report = {_row: i};
+      for (var j = 0; j < headers.length; j++) {
+        if (headers[j]) {
+          report[headers[j]] = data[i][j] != null ? String(data[i][j]) : "";
+        }
       }
+      reports.push(report);
     }
-    reports.push(report);
+    reports.reverse();
+    return ContentService.createTextOutput(JSON.stringify({success:true,count:reports.length,headers:headers,reports:reports})).setMimeType(ContentService.MimeType.JSON);
   }
   
-  reports.reverse();
-  
-  return ContentService.createTextOutput(
-    JSON.stringify({success: true, count: reports.length, headers: headers, reports: reports})
-  ).setMimeType(ContentService.MimeType.JSON);
-}
-
-function updateReportStatus(ss, rowId, newStatus) {
-  var sheet = ss.getSheets()[0];
-  var data = sheet.getDataRange().getValues();
-  var headers = data[0].map(function(h) { return String(h).trim(); });
-  
-  var statusCol = -1;
-  for (var j = 0; j < headers.length; j++) {
-    if (headers[j].includes('الحالة') || headers[j].includes('Status') || headers[j].includes('حالة البلاغ')) {
-      statusCol = j;
-      break;
-    }
-  }
-  
-  if (statusCol === -1) {
-    statusCol = headers.length;
-    sheet.getRange(1, statusCol + 1).setValue('الحالة');
-  }
-  
-  var rowNum = parseInt(rowId);
-  if (rowNum >= 1 && rowNum < data.length) {
-    sheet.getRange(rowNum + 1, statusCol + 1).setValue(newStatus);
-    return ContentService.createTextOutput(
-      JSON.stringify({success: true, message: 'Status updated'})
-    ).setMimeType(ContentService.MimeType.JSON);
-  }
-  
-  return ContentService.createTextOutput(
-    JSON.stringify({success: false, error: 'Report not found'})
-  ).setMimeType(ContentService.MimeType.JSON);
-}
-
-function getReportStats(ss) {
-  var sheet = ss.getSheets()[0];
-  var data = sheet.getDataRange().getValues();
-  if (data.length < 2) {
-    return ContentService.createTextOutput(
-      JSON.stringify({success: true, stats: {total: 0, byType: {}, byStatus: {}}})
-    ).setMimeType(ContentService.MimeType.JSON);
-  }
-  var headers = data[0].map(function(h) { return String(h).trim(); });
-  
-  var stats = { total: data.length - 1, byType: {}, byStatus: {} };
-  
-  var typeCol = -1, statusCol = -1;
-  for (var j = 0; j < headers.length; j++) {
-    var h = headers[j];
-    if (h.includes('القسم') || h.includes('نوع') || h.includes('الطلب')) typeCol = j;
-    if (h.includes('الحالة') || h.includes('Status')) statusCol = j;
-  }
-  
-  for (var i = 1; i < data.length; i++) {
-    if (typeCol >= 0) {
-      var type = String(data[i][typeCol] || 'غير محدد');
-      stats.byType[type] = (stats.byType[type] || 0) + 1;
-    }
-    if (statusCol >= 0) {
-      var status = String(data[i][statusCol] || 'جديد');
-      stats.byStatus[status] = (stats.byStatus[status] || 0) + 1;
-    }
-  }
-  
-  return ContentService.createTextOutput(
-    JSON.stringify({success: true, stats: stats})
-  ).setMimeType(ContentService.MimeType.JSON);
+  return ContentService.createTextOutput(JSON.stringify({error:"Invalid action"})).setMimeType(ContentService.MimeType.JSON);
 }
 
 function doPost(e) {
-  var data = JSON.parse(e.postData.contents);
-  if (data.action === 'updateStatus') {
-    var ss = SpreadsheetApp.getActiveSpreadsheet();
-    return updateReportStatus(ss, data.id, data.status);
+  var data;
+  try {
+    data = JSON.parse(e.postData.contents);
+  } catch(ex) {
+    var params = {};
+    var parts = e.postData.contents.split("&");
+    for (var i = 0; i < parts.length; i++) {
+      var kv = parts[i].split("=");
+      params[decodeURIComponent(kv[0])] = decodeURIComponent(kv[1] || "");
+    }
+    data = params;
   }
-  return ContentService.createTextOutput(
-    JSON.stringify({error: 'Invalid action'})
-  ).setMimeType(ContentService.MimeType.JSON);
+  
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheets()[0];
+  
+  if (data.action == "addReport") {
+    var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+    if (headers.length == 0 || !headers[0]) {
+      sheet.getRange(1, 1, 1, 7).setValues([["Timestamp", "رقم الموبايل", "اسم العامل", "نوع العطل", "وصف العطل", "الموقع", "الأولوية"]]);
+      headers = sheet.getRange(1, 1, 1, 7).getValues()[0];
+    }
+    var row = [];
+    for (var j = 0; j < headers.length; j++) {
+      var h = headers[j];
+      if (h == "Timestamp" || h == "التاريخ") row.push(data.date || new Date().toLocaleString());
+      else if (h.indexOf("موبايل") >= 0 || h.indexOf("هاتف") >= 0 || h.indexOf("phone") >= 0) row.push(data.phone || "");
+      else if (h.indexOf("اسم") >= 0 || h.indexOf("الاسم") >= 0 || h.indexOf("name") >= 0) row.push(data.name || "");
+      else if (h.indexOf("نوع") >= 0 || h.indexOf("الطلب") >= 0 || h.indexOf("type") >= 0) row.push(data.type || "");
+      else if (h.indexOf("وصف") >= 0 || h.indexOf("البيان") >= 0 || h.indexOf("desc") >= 0) row.push(data.desc || "");
+      else if (h.indexOf("موقع") >= 0 || h.indexOf("المبنى") >= 0 || h.indexOf("location") >= 0) row.push(data.location || "");
+      else if (h.indexOf("أولوية") >= 0 || h.indexOf("priorit") >= 0) row.push(data.priority || "");
+      else if (h.indexOf("الحالة") >= 0 || h.indexOf("Status") >= 0) row.push("جديد");
+      else row.push("");
+    }
+    sheet.appendRow(row);
+    return ContentService.createTextOutput(JSON.stringify({success:true})).setMimeType(ContentService.MimeType.JSON);
+  }
+  
+  if (data.action == "updateStatus") {
+    var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+    var statusCol = -1;
+    for (var j = 0; j < headers.length; j++) {
+      if (String(headers[j]).indexOf("الحالة") >= 0) {
+        statusCol = j;
+        break;
+      }
+    }
+    if (statusCol == -1) {
+      statusCol = headers.length;
+      sheet.getRange(1, statusCol + 1).setValue("الحالة");
+    }
+    var rowNum = parseInt(data.id);
+    if (rowNum >= 1 && rowNum < sheet.getLastRow()) {
+      sheet.getRange(rowNum + 1, statusCol + 1).setValue(data.status);
+      return ContentService.createTextOutput(JSON.stringify({success:true})).setMimeType(ContentService.MimeType.JSON);
+    }
+  }
+  
+  return ContentService.createTextOutput(JSON.stringify({error:"Invalid"})).setMimeType(ContentService.MimeType.JSON);
 }

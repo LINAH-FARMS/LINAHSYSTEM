@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>بلاغ أعطال - لينه فارمز</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Cairo',sans-serif;background:linear-gradient(135deg,#1b5e20,#4caf50);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+.card{background:white;border-radius:20px;padding:30px;max-width:400px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,0.3);text-align:center}
+.logo{font-size:40px;margin-bottom:10px}
+h1{color:#1b5e20;font-size:22px;margin-bottom:6px}
+.sub{color:#666;font-size:13px;margin-bottom:20px}
+.form-group{margin-bottom:16px;text-align:right}
+label{display:block;font-weight:700;color:#333;margin-bottom:6px;font-size:14px}
+input,select,textarea{width:100%;padding:12px;border:2px solid #e0e0e0;border-radius:10px;font-size:14px;font-family:'Cairo',sans-serif;transition:border 0.3s}
+input:focus,select:focus,textarea:focus{border-color:#1b5e20;outline:none}
+.btn{width:100%;padding:14px;background:linear-gradient(135deg,#1b5e20,#2e7d32);color:white;border:none;border-radius:10px;font-size:18px;font-weight:700;cursor:pointer;font-family:'Cairo',sans-serif;margin-top:10px;transition:transform 0.2s}
+.btn:hover{transform:scale(1.02)}
+.btn:active{transform:scale(0.98)}
+.btn:disabled{background:#ccc;cursor:not-allowed}
+.success{display:none;text-align:center;padding:40px 20px}
+.success .icon{font-size:60px;margin-bottom:15px}
+.success h2{color:#1b5e20;font-size:20px;margin-bottom:10px}
+.success p{color:#666;font-size:14px}
+.required{color:red}
+</style>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+<div class="card">
+  <div class="logo">🚨</div>
+  <h1>بلاغ أعطال</h1>
+  <div class="sub">لينه فارمز - واحة البهارية</div>
+  
+  <div id="report-form">
+    <div class="form-group">
+      <label>رقم الموبايل <span class="required">*</span></label>
+      <input type="tel" id="phone" placeholder="01xxxxxxxxx" required pattern="01[0-9]{9}" maxlength="11">
+    </div>
+    <div class="form-group">
+      <label>اسم العامل <span class="required">*</span></label>
+      <input type="text" id="name" placeholder="الاسم الكامل" required>
+    </div>
+    <div class="form-group">
+      <label>نوع العطل <span class="required">*</span></label>
+      <select id="type" required>
+        <option value="">-- اختر نوع العطل --</option>
+        <option value="كهرباء">كهرباء</option>
+        <option value="سباكة">سباكة</option>
+        <option value="أجهزة">أجهزة</option>
+        <option value="بناء">بناء</option>
+        <option value="نظافة">نظافة</option>
+        <option value="أخرى">أخرى</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>وصف العطل <span class="required">*</span></label>
+      <textarea id="desc" rows="3" placeholder="اوصف العطل بالتفصيل..." required></textarea>
+    </div>
+    <div class="form-group">
+      <label>الموقع (المبنى / الغرفة)</label>
+      <input type="text" id="location" placeholder="مثال: مبنى A غرفة 3">
+    </div>
+    <div class="form-group">
+      <label>الأولوية</label>
+      <select id="priority">
+        <option value="متوسط">🟡 متوسط</option>
+        <option value="عاجل">🔴 عاجل</option>
+        <option value="منخفض">🟢 منخفض</option>
+      </select>
+    </div>
+    <button class="btn" id="submit-btn" onclick="submitReport()">📨 إرسال البلاغ</button>
+  </div>
+
+  <div class="success" id="success-msg">
+    <div class="icon">✅</div>
+    <h2>تم إرسال البلاغ بنجاح</h2>
+    <p>شكراً لك — سيتم مراجعة البلاغ من قسم الشئون الإدارية</p>
+    <button class="btn" onclick="resetForm()" style="margin-top:20px;background:linear-gradient(135deg,#1565c0,#1976d2);">📝 بلاغ جديد</button>
+  </div>
+</div>
+
+<script>
+var SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxGpp38cMYQXxer-K-7XqjyS0wzddx1BGMTw7CUVZhWE1BAvYhKK_dl6qXE9TbPa0ZM/exec';
+
+function submitReport() {
+  var phone = document.getElementById('phone').value.trim();
+  var name = document.getElementById('name').value.trim();
+  var type = document.getElementById('type').value;
+  var desc = document.getElementById('desc').value.trim();
+  var location = document.getElementById('location').value.trim();
+  var priority = document.getElementById('priority').value;
+
+  if (!phone || !name || !type || !desc) {
+    alert('⚠️ من فضلك ملأ جميع الحقول الإجبارية');
+    return;
+  }
+
+  if (!/^01[0-9]{9}$/.test(phone)) {
+    alert('⚠️ رقم الموبايل لازم يبدأ بـ 01 ويكون 11 رقم');
+    return;
+  }
+
+  var btn = document.getElementById('submit-btn');
+  btn.disabled = true;
+  btn.textContent = '⏳ جاري الإرسال...';
+
+  var now = new Date();
+  var dateStr = now.getFullYear() + '/' + ('0'+(now.getMonth()+1)).slice(-2) + '/' + ('0'+now.getDate()).slice(-2) + ' ' + ('0'+now.getHours()).slice(-2) + ':' + ('0'+now.getMinutes()).slice(-2);
+
+  var params = new URLSearchParams();
+  params.append('action', 'addReport');
+  params.append('phone', phone);
+  params.append('name', name);
+  params.append('type', type);
+  params.append('desc', desc);
+  params.append('location', location);
+  params.append('priority', priority);
+  params.append('date', dateStr);
+
+  fetch(SCRIPT_URL, {
+    method: 'POST',
+    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+    body: params.toString()
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(d) {
+    if (d.success) {
+      document.getElementById('report-form').style.display = 'none';
+      document.getElementById('success-msg').style.display = 'block';
+    } else {
+      throw new Error('Failed');
+    }
+  })
+  .catch(function(e) {
+    alert('❌ فشل الإرسال — جرب تاني');
+    btn.disabled = false;
+    btn.textContent = '📨 إرسال البلاغ';
+  });
+}
+
+function resetForm() {
+  document.getElementById('phone').value = '';
+  document.getElementById('name').value = '';
+  document.getElementById('type').value = '';
+  document.getElementById('desc').value = '';
+  document.getElementById('location').value = '';
+  document.getElementById('priority').value = 'متوسط';
+  document.getElementById('report-form').style.display = 'block';
+  document.getElementById('success-msg').style.display = 'none';
+  document.getElementById('submit-btn').disabled = false;
+  document.getElementById('submit-btn').textContent = '📨 إرسال البلاغ';
+}
+</script>
+</body>
+</html>
