@@ -2894,24 +2894,12 @@
       لا توجد بلاغات حالياً
     </div>
 
-    <div style="margin-top:16px;padding:16px;background:#f5f5f5;border-radius:10px;">
-      <div style="font-weight:700;color:#333;margin-bottom:8px;">📋 إعدادات الاتصال</div>
-      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-        <input type="text" id="reports-api-url" placeholder="رابط Google Apps Script API" style="flex:1;min-width:300px;padding:8px;border:2px solid #e0e0e0;border-radius:6px;font-size:12px;font-family:monospace;">
-        <button class="btn btn-primary" onclick="saveReportsApiUrl()" style="padding:8px 16px;">💾 حفظ الرابط</button>
-        <button class="btn btn-secondary" onclick="testReportsApi()" style="padding:8px 16px;">🔍 اختبار</button>
-      </div>
-      <div style="font-size:11px;color:#888;margin-top:6px;">
-        الخطوات: 1) أنشئ جوجل فورم → 2) اربطه بشيت → 3) أضف Apps Script (الملف google-forms-script.gs) → 4) Deploy as Web App → 5) الصق الرابط هنا
-      </div>
-    </div>
-
     <div style="margin-top:16px;padding:20px;background:linear-gradient(135deg,#e8f5e9,#c8e6c9);border-radius:12px;text-align:center;border:2px solid #66bb6a;">
       <div style="font-size:24px;margin-bottom:8px;">📱</div>
       <div style="font-weight:700;color:#1b5e20;font-size:16px;margin-bottom:8px;">QR Code لتسجيل البلاغات</div>
-      <div style="font-size:12px;color:#2e7d32;margin-bottom:12px;">امسح الكود ده بالموبايل عشان تسجل بلاغ</div>
+      <div style="font-size:12px;color:#2e7d32;margin-bottom:12px;">امسح الكود بالموبايل عشان تسجل بلاغ — يفتح صفحة البلاغ مباشرة</div>
       <div id="reports-qrcode" style="display:inline-block;background:white;padding:16px;border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,0.1);"></div>
-      <div style="margin-top:10px;"><a href="report.html" target="_blank" style="color:#1b5e20;font-weight:700;font-size:13px;">🔗 أو افتح الرابط مباشرة</a></div>
+      <div style="margin-top:10px;"><a href="report.html" target="_blank" style="color:#1b5e20;font-weight:700;font-size:13px;">او افتح الرابط مباشرة</a></div>
     </div>
   </div>
 
@@ -4325,28 +4313,41 @@
 
     function fetchReports() {
       var url = _reportsApiUrl || document.getElementById('reports-api-url').value;
-      if (!url) {
-        document.getElementById('reports-loading').innerHTML = '<div style="color:#c62828;font-size:16px;">⚠️ أدخل رابط API أولاً<br><span style="font-size:12px;color:#888;">ادخل الرابط في قسم الإعدادات في الأسفل</span></div>';
-        return;
-      }
       document.getElementById('reports-loading').style.display = 'block';
       document.getElementById('reports-table-container').style.display = 'none';
       document.getElementById('reports-empty').style.display = 'none';
-      fetch(url + '?action=getReports')
-        .then(function(r) { return r.json(); })
-        .then(function(data) {
-          if (data.success && data.reports) {
-            _reportsData = data.reports;
-            _reportsHeaders = data.headers || [];
-            renderReportsTable(_reportsData);
-            updateReportsStats(_reportsData);
-          } else {
-            document.getElementById('reports-loading').innerHTML = '<div style="color:#c62828;">❌ خطأ في البيانات</div>';
-          }
-        })
-        .catch(function(err) {
-          document.getElementById('reports-loading').innerHTML = '<div style="color:#c62828;">❌ فشل الاتصال بالخادم<br><span style="font-size:12px;">' + (err.message || '') + '</span></div>';
-        });
+
+      fetch(SUPABASE_URL + '/rest/v1/incident_reports?select=*&order=id.desc', {
+        method: 'GET',
+        headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
+      })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (Array.isArray(data)) {
+          _reportsHeaders = ['id', 'phone', 'name', 'type', 'description', 'location', 'priority', 'status', 'created_at'];
+          _reportsData = data.map(function(r, i) {
+            return {
+              _row: r.id,
+              'رقم التليفون': r.phone || '',
+              'اسم العامل': r.name || '',
+              'نوع العطل': r.type || '',
+              'وصف العطل': r.description || '',
+              'الموقع': r.location || '',
+              'الأولوية': r.priority || '',
+              'الحالة': r.status || 'جديد',
+              'التاريخ': r.created_at || ''
+            };
+          });
+          _reportsHeaders = ['رقم التليفون', 'اسم العامل', 'نوع العطل', 'وصف العطل', 'الموقع', 'الأولوية', 'الحالة', 'التاريخ'];
+          renderReportsTable(_reportsData);
+          updateReportsStats(_reportsData);
+        } else {
+          document.getElementById('reports-loading').innerHTML = '<div style="color:#c62828;">خطا في البيانات</div>';
+        }
+      })
+      .catch(function(err) {
+        document.getElementById('reports-loading').innerHTML = '<div style="color:#c62828;">فشل الاتصال<br><span style="font-size:12px;">' + (err.message || '') + '</span></div>';
+      });
     }
 
     function renderReportsTable(reports) {
@@ -4491,22 +4492,22 @@
     }
 
     function updateReportStatusFromList(index, newStatus) {
-      var url = _reportsApiUrl || document.getElementById('reports-api-url').value;
       var report = _reportsData[index];
-      if (!report || !url) return;
-      var id = report._row || (index + 1);
-      fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'updateStatus', id: String(id), status: newStatus })
+      if (!report) return;
+      var id = report._row;
+      fetch(SUPABASE_URL + '/rest/v1/incident_reports?id=eq.' + id, {
+        method: 'PATCH',
+        headers: {
+          'apikey': SUPABASE_KEY,
+          'Authorization': 'Bearer ' + SUPABASE_KEY,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ status: newStatus })
       }).then(function(r) { return r.json(); })
         .then(function(d) {
-          if (d.success) {
-            var colStatus = _findReportCol(_reportsHeaders, ['الحالة', 'status']);
-            if (colStatus) report[colStatus] = newStatus;
-            updateReportsStats(_reportsData);
-            logAction('تعديل', 'حالة بلاغ', report[_findReportCol(_reportsHeaders, ['اسم', 'الاسم'])] || '', 'إلى ' + newStatus);
-          }
+          report['الحالة'] = newStatus;
+          updateReportsStats(_reportsData);
+          logAction('تعديل', 'حالة بلاغ', report['اسم العامل'] || '', 'الى ' + newStatus);
         }).catch(function(e) { console.error('Status update error:', e); });
     }
 
@@ -4520,17 +4521,16 @@
     }
 
     function testReportsApi() {
-      var url = document.getElementById('reports-api-url').value.trim() || _reportsApiUrl;
-      if (!url) return alert('⚠️ أدخل رابط API أولاً');
-      fetch(url + '?action=getReports')
-        .then(function(r) { return r.json(); })
-        .then(function(d) {
-          if (d.success) {
-            var msg = '✅ الاتصال ناجح!\n\nعدد البلاغات: ' + d.count + '\n\nالأعمدة: ' + (d.headers || []).filter(function(h){return h&&h!=='_row';}).join(', ');
-            alert(msg);
-          } else alert('❌ خطأ في البيانات');
-        })
-        .catch(function(e) { alert('❌ فشل الاتصال: ' + e.message); });
+      fetch(SUPABASE_URL + '/rest/v1/incident_reports?select=id', {
+        method: 'GET',
+        headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
+      })
+      .then(function(r) { return r.json(); })
+      .then(function(d) {
+        if (Array.isArray(d)) alert('الاتصال ناجح! عدد البلاغات: ' + d.length);
+        else alert('خطا في البيانات');
+      })
+      .catch(function(e) { alert('فشل الاتصال: ' + e.message); });
     }
 
     function exportReportsToExcel() {
@@ -4554,7 +4554,7 @@
     function generateReportsQR() {
       var el = document.getElementById('reports-qrcode');
       if (!el) return;
-      var url = window.location.origin + window.location.pathname.replace(/index\.html$/, '') + 'report.html';
+      var url = 'https://linah-farms.github.io/LINAHSYSTEM/report.html';
       el.innerHTML = '<img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' + encodeURIComponent(url) + '&color=1b5e20" alt="QR Code" style="width:200px;height:200px;border-radius:8px;">';
     }
     function switchTab(tabId, el) {

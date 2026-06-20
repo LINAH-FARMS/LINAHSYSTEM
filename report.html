@@ -2,30 +2,32 @@
 <html dir="rtl" lang="ar">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>بلاغ أعطال - لينه فارمز</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:'Cairo',sans-serif;background:linear-gradient(135deg,#1b5e20,#4caf50);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
-.card{background:white;border-radius:20px;padding:30px;max-width:400px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,0.3);text-align:center}
-.logo{font-size:40px;margin-bottom:10px}
-h1{color:#1b5e20;font-size:22px;margin-bottom:6px}
-.sub{color:#666;font-size:13px;margin-bottom:20px}
-.form-group{margin-bottom:16px;text-align:right}
-label{display:block;font-weight:700;color:#333;margin-bottom:6px;font-size:14px}
-input,select,textarea{width:100%;padding:12px;border:2px solid #e0e0e0;border-radius:10px;font-size:14px;font-family:'Cairo',sans-serif;transition:border 0.3s}
+body{font-family:'Cairo',sans-serif;background:linear-gradient(135deg,#1b5e20,#4caf50);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:16px}
+.card{background:white;border-radius:20px;padding:28px 24px;max-width:420px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,0.3);text-align:center}
+.logo{font-size:48px;margin-bottom:8px}
+h1{color:#1b5e20;font-size:22px;margin-bottom:4px}
+.sub{color:#888;font-size:12px;margin-bottom:20px}
+.form-group{margin-bottom:14px;text-align:right}
+label{display:block;font-weight:700;color:#333;margin-bottom:5px;font-size:13px}
+input,select,textarea{width:100%;padding:11px;border:2px solid #e0e0e0;border-radius:10px;font-size:14px;font-family:'Cairo',sans-serif;transition:border 0.3s;-webkit-appearance:none}
 input:focus,select:focus,textarea:focus{border-color:#1b5e20;outline:none}
-.btn{width:100%;padding:14px;background:linear-gradient(135deg,#1b5e20,#2e7d32);color:white;border:none;border-radius:10px;font-size:18px;font-weight:700;cursor:pointer;font-family:'Cairo',sans-serif;margin-top:10px;transition:transform 0.2s}
+textarea{resize:vertical;min-height:70px}
+.btn{width:100%;padding:14px;background:linear-gradient(135deg,#1b5e20,#2e7d32);color:white;border:none;border-radius:10px;font-size:17px;font-weight:700;cursor:pointer;font-family:'Cairo',sans-serif;margin-top:8px;transition:transform 0.2s}
 .btn:hover{transform:scale(1.02)}
 .btn:active{transform:scale(0.98)}
 .btn:disabled{background:#ccc;cursor:not-allowed}
-.success{display:none;text-align:center;padding:40px 20px}
-.success .icon{font-size:60px;margin-bottom:15px}
-.success h2{color:#1b5e20;font-size:20px;margin-bottom:10px}
-.success p{color:#666;font-size:14px}
+.success{display:none;text-align:center;padding:30px 16px}
+.success .icon{font-size:56px;margin-bottom:12px}
+.success h2{color:#1b5e20;font-size:18px;margin-bottom:8px}
+.success p{color:#666;font-size:13px;line-height:1.6}
 .required{color:red}
+.footer{margin-top:16px;font-size:10px;color:#aaa}
 </style>
-<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
 </head>
 <body>
 <div class="card">
@@ -36,7 +38,7 @@ input:focus,select:focus,textarea:focus{border-color:#1b5e20;outline:none}
   <div id="report-form">
     <div class="form-group">
       <label>رقم الموبايل <span class="required">*</span></label>
-      <input type="tel" id="phone" placeholder="01xxxxxxxxx" required pattern="01[0-9]{9}" maxlength="11">
+      <input type="tel" id="phone" placeholder="01xxxxxxxxx" required pattern="01[0-9]{9}" maxlength="11" inputmode="numeric">
     </div>
     <div class="form-group">
       <label>اسم العامل <span class="required">*</span></label>
@@ -45,7 +47,7 @@ input:focus,select:focus,textarea:focus{border-color:#1b5e20;outline:none}
     <div class="form-group">
       <label>نوع العطل <span class="required">*</span></label>
       <select id="type" required>
-        <option value="">-- اختر نوع العطل --</option>
+        <option value="">-- اختر --</option>
         <option value="كهرباء">كهرباء</option>
         <option value="سباكة">سباكة</option>
         <option value="أجهزة">أجهزة</option>
@@ -56,7 +58,7 @@ input:focus,select:focus,textarea:focus{border-color:#1b5e20;outline:none}
     </div>
     <div class="form-group">
       <label>وصف العطل <span class="required">*</span></label>
-      <textarea id="desc" rows="3" placeholder="اوصف العطل بالتفصيل..." required></textarea>
+      <textarea id="desc" rows="3" placeholder="اوصف العطل..." required></textarea>
     </div>
     <div class="form-group">
       <label>الموقع (المبنى / الغرفة)</label>
@@ -65,24 +67,26 @@ input:focus,select:focus,textarea:focus{border-color:#1b5e20;outline:none}
     <div class="form-group">
       <label>الأولوية</label>
       <select id="priority">
-        <option value="متوسط">🟡 متوسط</option>
-        <option value="عاجل">🔴 عاجل</option>
-        <option value="منخفض">🟢 منخفض</option>
+        <option value="متوسط">متوسط</option>
+        <option value="عاجل">عاجل</option>
+        <option value="منخفض">منخفض</option>
       </select>
     </div>
-    <button class="btn" id="submit-btn" onclick="submitReport()">📨 إرسال البلاغ</button>
+    <button class="btn" id="submit-btn" onclick="submitReport()">ارسال البلاغ</button>
   </div>
 
   <div class="success" id="success-msg">
     <div class="icon">✅</div>
-    <h2>تم إرسال البلاغ بنجاح</h2>
-    <p>شكراً لك — سيتم مراجعة البلاغ من قسم الشئون الإدارية</p>
-    <button class="btn" onclick="resetForm()" style="margin-top:20px;background:linear-gradient(135deg,#1565c0,#1976d2);">📝 بلاغ جديد</button>
+    <h2>تم الارسال بنجاح</h2>
+    <p>شكراً لك — سيتم مراجعة البلاغ من قسم الشئون الادارية</p>
+    <button class="btn" onclick="resetForm()" style="margin-top:16px;background:linear-gradient(135deg,#1565c0,#1976d2);">بلاغ جديد</button>
   </div>
+  <div class="footer">LINAH FARMS - Baharia Oasis</div>
 </div>
 
 <script>
-var SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxGpp38cMYQXxer-K-7XqjyS0wzddx1BGMTw7CUVZhWE1BAvYhKK_dl6qXE9TbPa0ZM/exec';
+var SB_URL = 'https://cwqghiqykohefaggedjl.supabase.co';
+var SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN3cWdoaXF5a29oZWZhZ2dlZGpsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEwMjUyMjEsImV4cCI6MjA5NjYwMTIyMX0.3a3hRcNdmYQCtjYjBroAT6df1T_7oz-XWUeD3wagYw8';
 
 function submitReport() {
   var phone = document.getElementById('phone').value.trim();
@@ -93,50 +97,47 @@ function submitReport() {
   var priority = document.getElementById('priority').value;
 
   if (!phone || !name || !type || !desc) {
-    alert('⚠️ من فضلك ملأ جميع الحقول الإجبارية');
+    alert('من فضلك ملأ جميع الحقول المطلوبة');
     return;
   }
-
   if (!/^01[0-9]{9}$/.test(phone)) {
-    alert('⚠️ رقم الموبايل لازم يبدأ بـ 01 ويكون 11 رقم');
+    alert('رقم الموبايل لازم يبدأ بـ 01 ويكون 11 رقم');
     return;
   }
 
   var btn = document.getElementById('submit-btn');
   btn.disabled = true;
-  btn.textContent = '⏳ جاري الإرسال...';
+  btn.textContent = 'جاري الارسال...';
 
-  var now = new Date();
-  var dateStr = now.getFullYear() + '/' + ('0'+(now.getMonth()+1)).slice(-2) + '/' + ('0'+now.getDate()).slice(-2) + ' ' + ('0'+now.getHours()).slice(-2) + ':' + ('0'+now.getMinutes()).slice(-2);
+  var payload = {
+    phone: phone,
+    name: name,
+    type: type,
+    description: desc,
+    location: location,
+    priority: priority,
+    status: 'جديد'
+  };
 
-  var params = new URLSearchParams();
-  params.append('action', 'addReport');
-  params.append('phone', phone);
-  params.append('name', name);
-  params.append('type', type);
-  params.append('desc', desc);
-  params.append('location', location);
-  params.append('priority', priority);
-  params.append('date', dateStr);
-
-  fetch(SCRIPT_URL, {
+  fetch(SB_URL + '/rest/v1/incident_reports', {
     method: 'POST',
-    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-    body: params.toString()
+    headers: {
+      'apikey': SB_KEY,
+      'Authorization': 'Bearer ' + SB_KEY,
+      'Content-Type': 'application/json',
+      'Prefer': 'return=representation'
+    },
+    body: JSON.stringify(payload)
   })
   .then(function(r) { return r.json(); })
   .then(function(d) {
-    if (d.success) {
-      document.getElementById('report-form').style.display = 'none';
-      document.getElementById('success-msg').style.display = 'block';
-    } else {
-      throw new Error('Failed');
-    }
+    document.getElementById('report-form').style.display = 'none';
+    document.getElementById('success-msg').style.display = 'block';
   })
   .catch(function(e) {
-    alert('❌ فشل الإرسال — جرب تاني');
+    alert('فشل الارسال — جرب تاني');
     btn.disabled = false;
-    btn.textContent = '📨 إرسال البلاغ';
+    btn.textContent = 'ارسال البلاغ';
   });
 }
 
@@ -150,7 +151,7 @@ function resetForm() {
   document.getElementById('report-form').style.display = 'block';
   document.getElementById('success-msg').style.display = 'none';
   document.getElementById('submit-btn').disabled = false;
-  document.getElementById('submit-btn').textContent = '📨 إرسال البلاغ';
+  document.getElementById('submit-btn').textContent = 'ارسال البلاغ';
 }
 </script>
 </body>
