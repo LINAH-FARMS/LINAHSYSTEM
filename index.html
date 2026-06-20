@@ -5153,15 +5153,23 @@
     var _breadSuggestionIdCounter = 0;
     function suggestBreadForTomorrow() {
       var today = new Date();
-      var dateInput = today.getFullYear()+'-'+('0'+(today.getMonth()+1)).slice(-2)+'-'+('0'+today.getDate()).slice(-2);
-      var pCount = employees.filter(function(e) { return e.status === 'P'; }).length;
-      var workerLoaves = pCount * 6;
+      var tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      var dateInput = tomorrow.getFullYear()+'-'+('0'+(tomorrow.getMonth()+1)).slice(-2)+'-'+('0'+tomorrow.getDate()).slice(-2);
+      var pCount = getPresentCountOnDate(dateInput);
       var todayGuests = hospitalities.filter(function(h) {
         if (!h.arrival) return false;
         var a = new Date(h.arrival + 'T00:00:00');
         var d = h.departure ? new Date(h.departure + 'T00:00:00') : a;
         var target = new Date(dateInput + 'T00:00:00');
         return target >= a && target <= d;
+      });
+      var womenCount = 0, studentCount = 0, otherGuestsCount = 0;
+      todayGuests.forEach(function(h) {
+        var g = h.guests || 1;
+        if (h.type === 'سيدات') womenCount += g;
+        else if (h.type === 'طلبة مدرسة') studentCount += g;
+        else otherGuestsCount += g;
       });
       var womenCount = 0, studentCount = 0, otherGuestsCount = 0;
       todayGuests.forEach(function(h) {
@@ -5187,9 +5195,9 @@
         ctrRowsHtml += '<tr id="row-' + id + '"><td style="border:1px solid #e0e0e0;padding:4px;"><input type="text" value="' + (c.name || '') + '" id="name-' + id + '" style="width:100%;border:none;padding:6px;font-size:13px;font-family:Cairo,sans-serif;background:transparent;" placeholder="اسم المقاول"></td><td style="border:1px solid #e0e0e0;padding:4px;width:100px;"><input type="number" id="qty-' + id + '" min="0" value="0" style="width:80px;border:none;padding:6px;font-size:13px;font-family:Cairo,sans-serif;text-align:center;" oninput="updateBreadSuggestionTotal()"></td><td style="border:1px solid #e0e0e0;padding:4px;width:40px;"><button onclick="removeBreadCtrRow(\'row-' + id + '\')" style="background:none;border:none;color:#d32f2f;cursor:pointer;font-size:16px;">✖</button></td></tr>';
       });
       box.innerHTML = '<div style="font-size:32px;margin-bottom:6px;">🥖</div>' +
-        '<div style="font-size:13px;color:#555;margin:0 0 2px;">📅 ' + dateInput + '</div>' +
         '<h3 style="margin:0 0 2px;color:#1b5e20;font-size:18px;">اقتراح اعداد الخبز</h3>' +
-        '<p style="font-size:12px;color:#888;margin:0 0 14px;">قيم افتراضية — عدل فيها براحتك زائد أو ناقص</p>' +
+        '<div style="margin:6px 0 10px;display:flex;align-items:center;justify-content:center;gap:8px;"><label style="font-size:13px;color:#555;">📅 التاريخ:</label><input type="date" id="bsug-date-select" value="' + dateInput + '" style="padding:6px 10px;border:2px solid #2e7d32;border-radius:8px;font-size:14px;font-family:Cairo,sans-serif;" onchange="recalcBreadSuggestionForDate()"></div>' +
+        '<p style="font-size:12px;color:#888;margin:0 0 14px;">قيم افتراضية — عدل التاريخ والأرقام براحتك</p>' +
         '<div style="text-align:right;">' +
         '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:#e8f5e9;border-radius:8px;margin-bottom:6px;border-right:4px solid #2e7d32;font-size:14px;"><span>👤 العمال (الحضور ' + pCount + ')</span><span style="display:flex;align-items:center;gap:6px;"><span style="font-size:11px;color:#888;">× 6</span><input type="number" id="bsug-workers" min="0" value="' + workerLoaves + '" style="width:70px;padding:4px 6px;border:1px solid #a5d6a7;border-radius:4px;font-size:13px;font-family:Cairo,sans-serif;text-align:center;" oninput="updateBreadSuggestionTotal()"></span></div>' +
         '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:#fce4ec;border-radius:8px;margin-bottom:6px;border-right:4px solid #e91e63;font-size:14px;"><span>👩 السيدات (' + womenCount + ')</span><span style="display:flex;align-items:center;gap:6px;"><span style="font-size:11px;color:#888;">افتراضي 2</span><input type="number" id="bsug-women" min="0" value="' + womenLoaves + '" style="width:70px;padding:4px 6px;border:1px solid #f48fb1;border-radius:4px;font-size:13px;font-family:Cairo,sans-serif;text-align:center;" oninput="updateBreadSuggestionTotal()"></span></div>' +
@@ -5207,6 +5215,30 @@
         '</div>';
       modal.appendChild(box);
       document.body.appendChild(modal);
+    }
+    function recalcBreadSuggestionForDate() {
+      var dateVal = document.getElementById('bsug-date-select').value;
+      if (!dateVal) return;
+      var pCount = getPresentCountOnDate(dateVal);
+      var planGuests = hospitalities.filter(function(h) {
+        if (!h.arrival) return false;
+        var a = new Date(h.arrival + 'T00:00:00');
+        var d = h.departure ? new Date(h.departure + 'T00:00:00') : a;
+        var target = new Date(dateVal + 'T00:00:00');
+        return target >= a && target <= d;
+      });
+      var womenCount = 0, studentCount = 0, otherGuestsCount = 0;
+      planGuests.forEach(function(h) {
+        var g = h.guests || 1;
+        if (h.type === 'سيدات') womenCount += g;
+        else if (h.type === 'طلبة مدرسة') studentCount += g;
+        else otherGuestsCount += g;
+      });
+      document.getElementById('bsug-workers').value = pCount * 6;
+      document.getElementById('bsug-women').value = womenCount * 2;
+      document.getElementById('bsug-students').value = studentCount * 2;
+      document.getElementById('bsug-other').value = otherGuestsCount * 2;
+      updateBreadSuggestionTotal();
     }
     function addBreadCtrRow() {
       var id = 'ctr-' + (++_breadSuggestionIdCounter);
@@ -5259,21 +5291,39 @@
       estimateBprodIngredients();
       alert('✅ تم تعبئة عدد الأرغفة: ' + val);
     }
-    function openBreadPlanReport() {
+    function getPresentCountOnDate(targetDateStr) {
+      var totalEmps = employees.length;
+      var onVacation = employees.filter(function(e) {
+        var empVacations = vacations.filter(function(v) {
+          return v.code === e.code || v.name === e.name;
+        });
+        for (var i = 0; i < empVacations.length; i++) {
+          var v = empVacations[i];
+          var vStart = v.start || '';
+          var vEnd = v.end || '';
+          if (vStart && vEnd && targetDateStr >= vStart && targetDateStr <= vEnd) return true;
+          if (vStart && !vEnd && targetDateStr >= vStart) return true;
+        }
+        return false;
+      });
+      return totalEmps - onVacation.length;
+    }
+
+    function openBreadPlanReport(selectedDate) {
       var tomorrow = new Date();
       tomorrow.setDate(tomorrow.getDate() + 1);
       var tomorrowStr = tomorrow.getFullYear()+'-'+('0'+(tomorrow.getMonth()+1)).slice(-2)+'-'+('0'+tomorrow.getDate()).slice(-2);
-      var todayStr = new Date().toISOString().split('T')[0];
-      var pCount = employees.filter(function(e) { return e.status === 'P'; }).length;
-      var todayGuests = hospitalities.filter(function(h) {
+      var planDate = selectedDate || tomorrowStr;
+      var pCount = getPresentCountOnDate(planDate);
+      var planGuests = hospitalities.filter(function(h) {
         if (!h.arrival) return false;
         var a = new Date(h.arrival + 'T00:00:00');
         var d = h.departure ? new Date(h.departure + 'T00:00:00') : a;
-        var target = new Date(todayStr + 'T00:00:00');
+        var target = new Date(planDate + 'T00:00:00');
         return target >= a && target <= d;
       });
       var womenCount = 0, studentCount = 0, otherGuestsCount = 0;
-      todayGuests.forEach(function(h) {
+      planGuests.forEach(function(h) {
         var g = h.guests || 1;
         if (h.type === 'سيدات') womenCount += g;
         else if (h.type === 'طلبة مدرسة') studentCount += g;
@@ -5293,9 +5343,9 @@
       var box = document.createElement('div');
       box.style.cssText = 'background:#fff;padding:24px;border-radius:16px;width:520px;max-width:96%;text-align:center;box-shadow:0 12px 40px rgba(0,0,0,.3);direction:rtl;font-family:Cairo,sans-serif;max-height:90vh;overflow-y:auto;';
       box.innerHTML = '<div style="font-size:32px;margin-bottom:6px;">🥖</div>' +
-        '<h3 style="margin:0 0 2px;color:#e65100;font-size:18px;">اعداد الخبز للغد</h3>' +
-        '<div style="font-size:13px;color:#555;margin:0 0 4px;">📅 ' + tomorrowStr + '</div>' +
-        '<p style="font-size:11px;color:#999;margin:0 0 14px;">عدّل الأرقام براحتك — التقرير يطلع باللي تكتبه</p>' +
+        '<h3 style="margin:0 0 2px;color:#e65100;font-size:18px;">اعداد الخبز</h3>' +
+        '<div style="margin:6px 0 10px;display:flex;align-items:center;justify-content:center;gap:8px;"><label style="font-size:13px;color:#555;">📅 التاريخ:</label><input type="date" id="bp-date-select" value="' + planDate + '" style="padding:6px 10px;border:2px solid #e65100;border-radius:8px;font-size:14px;font-family:Cairo,sans-serif;" onchange="recalcBreadPlanForDate()"></div>' +
+        '<p style="font-size:11px;color:#999;margin:0 0 14px;">عدّل التاريخ والأرقام براحتك — التقرير يطلع باللي تكتبه</p>' +
         '<div style="text-align:right;">' +
         '<div style="background:#e8f5e9;border-radius:10px;padding:12px;margin-bottom:10px;border:1px solid #c8e6c9;">' +
         '<div style="font-weight:700;color:#1b5e20;margin-bottom:8px;font-size:14px;">📊 عدد الأشخاص (عدّل حسب الحاجة)</div>' +
@@ -5327,6 +5377,30 @@
         '</div>';
       modal.appendChild(box);
       document.body.appendChild(modal);
+    }
+    function recalcBreadPlanForDate() {
+      var dateVal = document.getElementById('bp-date-select').value;
+      if (!dateVal) return;
+      var pCount = getPresentCountOnDate(dateVal);
+      var planGuests = hospitalities.filter(function(h) {
+        if (!h.arrival) return false;
+        var a = new Date(h.arrival + 'T00:00:00');
+        var d = h.departure ? new Date(h.departure + 'T00:00:00') : a;
+        var target = new Date(dateVal + 'T00:00:00');
+        return target >= a && target <= d;
+      });
+      var womenCount = 0, studentCount = 0, otherGuestsCount = 0;
+      planGuests.forEach(function(h) {
+        var g = h.guests || 1;
+        if (h.type === 'سيدات') womenCount += g;
+        else if (h.type === 'طلبة مدرسة') studentCount += g;
+        else otherGuestsCount += g;
+      });
+      document.getElementById('bp-workers').value = pCount;
+      document.getElementById('bp-women').value = womenCount;
+      document.getElementById('bp-students').value = studentCount;
+      document.getElementById('bp-other').value = otherGuestsCount;
+      updateBreadPlanTotal();
     }
     var _breadPlanCtrCounter = 0;
     function addBreadPlanCtrRow() {
@@ -5371,21 +5445,24 @@
       if (et) et.textContent = total + ' رغيف';
     }
     function generateBreadPlanReport() {
-      var tomorrow = new Date();
-      tomorrow.setDate(tomorrow.getDate() + 1);
-      var tomorrowStr = tomorrow.getFullYear()+'-'+('0'+(tomorrow.getMonth()+1)).slice(-2)+'-'+('0'+tomorrow.getDate()).slice(-2);
-      var dateArabic = tomorrow.toLocaleDateString('ar-EG');
-      var todayStr = new Date().toISOString().split('T')[0];
-      var pCount = employees.filter(function(e) { return e.status === 'P'; }).length;
-      var todayGuests = hospitalities.filter(function(h) {
+      var dateEl = document.getElementById('bp-date-select');
+      var planDate = dateEl ? dateEl.value : '';
+      if (!planDate) {
+        var tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        planDate = tomorrow.getFullYear()+'-'+('0'+(tomorrow.getMonth()+1)).slice(-2)+'-'+('0'+tomorrow.getDate()).slice(-2);
+      }
+      var dateArabic = new Date(planDate + 'T00:00:00').toLocaleDateString('ar-EG');
+      var pCount = getPresentCountOnDate(planDate);
+      var planGuests = hospitalities.filter(function(h) {
         if (!h.arrival) return false;
         var a = new Date(h.arrival + 'T00:00:00');
         var d = h.departure ? new Date(h.departure + 'T00:00:00') : a;
-        var target = new Date(todayStr + 'T00:00:00');
+        var target = new Date(planDate + 'T00:00:00');
         return target >= a && target <= d;
       });
       var womenCount = 0, studentCount = 0, otherGuestsCount = 0;
-      todayGuests.forEach(function(h) {
+      planGuests.forEach(function(h) {
         var g = h.guests || 1;
         if (h.type === 'سيدات') womenCount += g;
         else if (h.type === 'طلبة مدرسة') studentCount += g;
