@@ -12612,6 +12612,7 @@ function toggleEmployeeStatus(empId) {
             renderMealLogTable(); autoSaveTodayMeal(); renderContractorsTable(); renderDashboard(); renderQuickActions(); updateEmployeeVacationStatuses();
             setTimeout(function() {
               (function(){ var from=document.getElementById('dailyStatsFrom'); var to=document.getElementById('dailyStatsTo'); if(dailyStats.length){var dates=dailyStats.map(function(s){return s.date}).sort();if(from)from.value=dates[0];if(to)to.value=dates[dates.length-1];}else{var t=new Date().toISOString().split('T')[0];if(from)from.value=t;if(to)to.value=t;} renderDailyStatsTable(); })(); initAllSortableTables();
+              try { fetchReports(); } catch(e) {}
             }, 0);
           }, 0);
         }, 0);
