@@ -126,7 +126,8 @@ function submitReport() {
     location: location || 'غير محدد',
     priority: priority,
     status: 'جديد',
-    date: dateStr
+    opened_at: dateStr,
+    closed_at: ''
   };
 
   fetch(SB + '/rest/v1/sync_data?id=eq.incident_reports', {

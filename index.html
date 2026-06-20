@@ -4331,7 +4331,7 @@
           if (!exists) reports.push(lr);
         });
 
-        _reportsHeaders = ['رقم التليفون', 'اسم العامل', 'نوع العطل', 'وصف العطل', 'الموقع', 'الأولوية', 'الحالة', 'التاريخ'];
+        _reportsHeaders = ['رقم التليفون', 'اسم العامل', 'نوع العطل', 'وصف العطل', 'الموقع', 'الأولوية', 'الحالة', 'تاريخ الابلاغ', 'وقت الاغلاق'];
         _reportsData = reports.map(function(r) {
           return {
             _row: r.id || Date.now(),
@@ -4342,7 +4342,8 @@
             'الموقع': r.location || '',
             'الأولوية': r.priority || '',
             'الحالة': r.status || 'جديد',
-            'التاريخ': r.date || r.created_at || ''
+            'تاريخ الابلاغ': r.opened_at || r.date || r.created_at || '',
+            'وقت الاغلاق': r.closed_at || ''
           };
         }).reverse();
         renderReportsTable(_reportsData);
@@ -4350,7 +4351,7 @@
       })
       .catch(function(err) {
         var local = JSON.parse(localStorage.getItem('linah_reports') || '[]');
-        _reportsHeaders = ['رقم التليفون', 'اسم العامل', 'نوع العطل', 'وصف العطل', 'الموقع', 'الأولوية', 'الحالة', 'التاريخ'];
+        _reportsHeaders = ['رقم التليفون', 'اسم العامل', 'نوع العطل', 'وصف العطل', 'الموقع', 'الأولوية', 'الحالة', 'تاريخ الابلاغ', 'وقت الاغلاق'];
         _reportsData = local.map(function(r) {
           return {
             _row: r.id || Date.now(),
@@ -4361,7 +4362,8 @@
             'الموقع': r.location || '',
             'الأولوية': r.priority || '',
             'الحالة': r.status || 'جديد',
-            'التاريخ': r.date || r.created_at || ''
+            'تاريخ الابلاغ': r.opened_at || r.date || r.created_at || '',
+            'وقت الاغلاق': r.closed_at || ''
           };
         }).reverse();
         renderReportsTable(_reportsData);
@@ -4515,10 +4517,15 @@
       var report = _reportsData[index];
       if (!report) return;
       report['الحالة'] = newStatus;
+      if (newStatus === 'مغلق') {
+        var now = new Date();
+        report['وقت الاغلاق'] = now.getFullYear() + '-' + ('0'+(now.getMonth()+1)).slice(-2) + '-' + ('0'+now.getDate()).slice(-2) + ' ' + ('0'+now.getHours()).slice(-2) + ':' + ('0'+now.getMinutes()).slice(-2);
+      }
       var local = JSON.parse(localStorage.getItem('linah_reports') || '[]');
       for (var i = 0; i < local.length; i++) {
         if ((local[i].id || i) == report._row) {
           local[i].status = newStatus;
+          if (newStatus === 'مغلق') local[i].closed_at = report['وقت الاغلاق'];
           break;
         }
       }
@@ -4535,6 +4542,7 @@
           for (var j = 0; j < reports.length; j++) {
             if (reports[j].id == report._row) {
               reports[j].status = newStatus;
+              if (newStatus === 'مغلق') reports[j].closed_at = report['وقت الاغلاق'];
               break;
             }
           }
