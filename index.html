@@ -6662,6 +6662,7 @@ function toggleEmployeeStatus(empId) {
               ${roomUsers.length === 0 ? '<span style="color:#b0bec5; font-size:12px; font-style:italic;">غرفة شاغرة بالكامل</span>' : ''}
             </div>
             <div style="display:flex;gap:4px;margin-top:6px;">
+              <button class="btn btn-sm" style="padding:2px 8px;font-size:11px;background:#1565c0;color:#fff;" onclick="editRoomName('${sector}','${room.number}')">✏️ تعديل اسم</button>
               <button class="btn btn-sm" style="padding:2px 8px;font-size:11px;background:#e65100;color:#fff;" onclick="editRoomBeds('${sector}','${room.number}',${room.beds})">🛏️ تعديل السعة</button>
               <button class="btn btn-sm" style="padding:2px 8px;font-size:11px;background:#6a1b9a;color:#fff;" onclick="openRoomAssets('${sector}','${room.number}')">📦 أصول الغرفة</button>
             </div>
@@ -6789,6 +6790,28 @@ function toggleEmployeeStatus(empId) {
       syncStorage();
       renderHousingLayout();
       alert('✅ تم تعديل سعة غرفة ' + roomNumber + ' إلى ' + newBeds + ' سرير');
+    }
+
+    function editRoomName(sector, roomNumber) {
+      let newName = prompt('تعديل اسم غرفة "' + roomNumber + '" في مبنى "' + sector + '"\nأدخل الاسم الجديد:', roomNumber);
+      if (newName === null || !newName.trim()) return;
+      newName = newName.trim();
+      if (newName === roomNumber) return;
+      let exists = roomsCapacity.find(r => r.sector === sector && r.number === newName && r.number !== roomNumber);
+      if (exists) return alert('⚠️ يوجد غرفة بنفس الاسم "' + newName + '" في هذا المبنى');
+      let room = roomsCapacity.find(r => r.sector === sector && r.number === roomNumber);
+      if (room) {
+        room.number = newName;
+        room.modifiedAt = new Date().toISOString();
+      }
+      employees.forEach(function(e) {
+        if (e.sector === sector && e.room === roomNumber) e.room = newName;
+      });
+      _logDeletion('roomsCapacity', sector + '|' + roomNumber);
+      syncStorage();
+      renderHousingLayout();
+      renderTable();
+      alert('✅ تم تغيير اسم الغرفة من "' + roomNumber + '" إلى "' + newName + '"');
     }
 
     function printHousing() {
