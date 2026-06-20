@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ملصق بلاغات الأعطال - الواحات البحريه</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Cairo', sans-serif; background: #f0f0f0; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        .a4-page { width: 210mm; height: 297mm; padding: 18mm; border: 3px double #1e4620; outline: 12px solid #1e4620; outline-offset: -8px; background: #fafdfa; display: flex; flex-direction: column; justify-content: space-between; align-items: center; }
+        .header { text-align: center; width: 100%; }
+        .header-top { display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 12px; }
+        .logo-area { display: flex; align-items: center; gap: 12px; }
+        .logo-circle { width: 60px; height: 60px; border-radius: 50%; background: linear-gradient(135deg,#1e4620,#4caf50); display: flex; align-items: center; justify-content: center; box-shadow: 0 3px 10px rgba(30,70,32,0.3); }
+        .admin-title { font-size: 20px; font-weight: 900; color: #1e4620; text-align: right; }
+        .admin-sub { font-size: 13px; color: #777; font-weight: 700; text-align: right; }
+        .system-badge { background: #1e4620; color: #fff; padding: 6px 20px; font-size: 14px; font-weight: 700; border-radius: 20px; letter-spacing: 1px; }
+        .main-title { font-size: 40px; font-weight: 900; color: #1e4620; margin: 10px 0; display: flex; align-items: center; justify-content: center; gap: 10px; }
+        .divider { width: 80%; height: 2px; background: linear-gradient(to left, transparent, #1e4620, transparent); margin: 15px auto; }
+        .content-body { text-align: center; width: 100%; flex-grow: 1; display: flex; flex-direction: column; justify-content: center; }
+        .welcome-text { font-size: 18px; line-height: 1.8; margin-bottom: 25px; font-weight: 700; color: #333; }
+        .categories { display: flex; justify-content: center; gap: 12px; margin-bottom: 30px; flex-wrap: wrap; }
+        .cat-card { background: #fff; border: 2px solid #e2ece2; border-radius: 12px; padding: 10px 20px; font-size: 17px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+        .qr-section { background: #fff; border: 3px dashed #1e4620; border-radius: 20px; padding: 25px; display: inline-block; margin: 0 auto 20px; text-align: center; }
+        .qr-image { width: 200px; height: 200px; display: block; margin: 0 auto 12px; border-radius: 8px; }
+        .qr-instruction { font-size: 20px; font-weight: 900; color: #1e4620; }
+        .steps { font-size: 15px; color: #666; margin-top: 12px; font-weight: 700; }
+        .footer { text-align: center; width: 100%; font-size: 14px; font-weight: 700; color: #777; border-top: 1px solid #e2ece2; padding-top: 12px; }
+        @media print {
+            body { background: #fff; }
+            .a4-page { border: 3px double #1e4620; outline: 12px solid #1e4620; width: 210mm; height: 297mm; page-break-after: avoid; page-break-before: avoid; }
+        }
+    </style>
+</head>
+<body>
+    <div class="a4-page">
+        <div class="header">
+            <div class="header-top">
+                <div class="logo-area">
+                    <div class="logo-circle">
+                        <svg width="36" height="36" viewBox="0 0 100 100" fill="none">
+                            <circle cx="50" cy="35" r="12" fill="#8bc34a"/>
+                            <ellipse cx="35" cy="45" rx="10" ry="14" fill="#66bb6a" transform="rotate(-20 35 45)"/>
+                            <ellipse cx="65" cy="45" rx="10" ry="14" fill="#66bb6a" transform="rotate(20 65 45)"/>
+                            <ellipse cx="50" cy="50" rx="9" ry="16" fill="#4caf50"/>
+                            <rect x="46" y="62" width="8" height="25" rx="3" fill="#795548"/>
+                            <path d="M30 80 Q50 60 70 80" stroke="#388e3c" stroke-width="3" fill="none"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <div class="admin-title">إدارة الشئون الإدارية</div>
+                        <div class="admin-sub">الواحات البحريه</div>
+                    </div>
+                </div>
+                <div class="system-badge">LINAH SYSTEM</div>
+            </div>
+            <h1 class="main-title">🚨 بلاغات الأعطال والشكاوى</h1>
+            <div class="divider"></div>
+        </div>
+        <div class="content-body">
+            <p class="welcome-text">
+                زميلنا العزيز، لضمان استمرارية العمل بكفاءة وسرعة إصلاح الأعطال فور حدوثها،<br>
+                يرجى استخدام النظام الرقمي للإرسال والمتابعة الفورية للأقسام التالية:
+            </p>
+            <div class="categories">
+                <div class="cat-card">⚡ كهرباء</div>
+                <div class="cat-card">🚰 سباكة</div>
+                <div class="cat-card">💻 أجهزة</div>
+                <div class="cat-card">🏗️ بناء</div>
+                <div class="cat-card">🧹 نظافة</div>
+            </div>
+            <div class="qr-section">
+                <img src="https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=https://linah-farms.github.io/LINAHSYSTEM/report.html&color=1e4620&bgcolor=ffffff" alt="QR Code" class="qr-image">
+                <div class="qr-instruction">👇 امسح الكود هنا للإبلاغ فوراً 👇</div>
+            </div>
+            <div class="steps">
+                <span>افتح الكاميرا</span> • <span>وجهها نحو الرمز</span> • <span>حدد درجة الأهمية (عاجل/متوسط) وأرسل</span>
+            </div>
+        </div>
+        <div class="footer">
+            <p>صوتك وملاحظاتك تساهم في تطوير مزارعنا وتأمين بيئة عمل مثالية للجميع.</p>
+        </div>
+    </div>
+</body>
+</html>
