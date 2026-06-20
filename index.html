@@ -6441,7 +6441,7 @@
       excludedRecord.assetsStr = (emp.assets && emp.assets.length > 0) ? emp.assets.map(a => `${a.item} (${a.qty})`).join('، ') : "لا يوجد";
 
       excludedEmployees.push(excludedRecord);
-      _logDeletion('employees', excludedRecord.code || excludedRecord.name);
+      _logDeletion('employees', emp.id);
       employees.splice(idx, 1);
 
       rebuildDeptTitles();
