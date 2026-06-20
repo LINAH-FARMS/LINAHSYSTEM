@@ -8249,6 +8249,7 @@ function toggleEmployeeStatus(empId) {
           "الوظيفة": stripEmoji(e.title),
           "المبنى": e.sector || "",
           "الغرفة": e.room || "",
+          "الحالة": e.status === 'V' ? 'إجازة V' : 'تواجد P',
           "تاريخ التعيين": e.hireDate || "",
           "رقم الموبايل": e.nationalId || ""
         };
@@ -8264,14 +8265,14 @@ function toggleEmployeeStatus(empId) {
 
       function addSection(title, emps, bgColor) {
         rows.push([{ v: title, t: 's' }]);
-        merges.push({ s: { r: rows.length - 1, c: 0 }, e: { r: rows.length - 1, c: 7 } });
+        merges.push({ s: { r: rows.length - 1, c: 0 }, e: { r: rows.length - 1, c: 8 } });
         if (emps.length === 0) {
           rows.push([{ v: 'لا يوجد', t: 's' }]);
         } else {
-          rows.push([{ v: 'الكود', t: 's' }, { v: 'اسم الموظف', t: 's' }, { v: 'الإدارة', t: 's' }, { v: 'الوظيفة', t: 's' }, { v: 'المبنى', t: 's' }, { v: 'الغرفة', t: 's' }, { v: 'تاريخ التعيين', t: 's' }, { v: 'رقم الموبايل', t: 's' }]);
+          rows.push([{ v: 'الكود', t: 's' }, { v: 'اسم الموظف', t: 's' }, { v: 'الإدارة', t: 's' }, { v: 'الوظيفة', t: 's' }, { v: 'المبنى', t: 's' }, { v: 'الغرفة', t: 's' }, { v: 'الحالة', t: 's' }, { v: 'تاريخ التعيين', t: 's' }, { v: 'رقم الموبايل', t: 's' }]);
           emps.sort(function(a, b) { return (a.name || '').localeCompare(b.name || '', 'ar'); }).forEach(function(e) {
             var r = empRow(e);
-            rows.push([r["الكود"], r["اسم الموظف"], r["الإدارة"], r["الوظيفة"], r["المبنى"], r["الغرفة"], r["تاريخ التعيين"], r["رقم الموبايل"]]);
+            rows.push([r["الكود"], r["اسم الموظف"], r["الإدارة"], r["الوظيفة"], r["المبنى"], r["الغرفة"], r["الحالة"], r["تاريخ التعيين"], r["رقم الموبايل"]]);
           });
         }
         rows.push([]);
@@ -8318,7 +8319,7 @@ function toggleEmployeeStatus(empId) {
       ]);
 
       var ws = XLSX.utils.aoa_to_sheet(rows);
-      ws['!cols'] = [{ wch: 18 }, { wch: 22 }, { wch: 18 }, { wch: 18 }, { wch: 14 }, { wch: 10 }, { wch: 14 }, { wch: 14 }];
+      ws['!cols'] = [{ wch: 18 }, { wch: 22 }, { wch: 18 }, { wch: 18 }, { wch: 14 }, { wch: 10 }, { wch: 12 }, { wch: 14 }, { wch: 14 }];
       if (merges.length) ws['!merges'] = merges;
       XLSX.utils.book_append_sheet(wb, ws, "تقرير القوة المفصل");
       XLSX.writeFile(wb, "تقرير_القوة_" + today.replace(/-/g, '') + ".xlsx");
