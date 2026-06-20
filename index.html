@@ -5341,21 +5341,29 @@
       wl.style.background = isWeekly ? '#e8f5e9' : '#fff';
     }
     function checkDailyReportPass() {
-      var pass = document.getElementById('daily-report-pass').value;
+      var passEl = document.getElementById('daily-report-pass');
+      var pass = passEl ? passEl.value : '';
       if (pass !== '0000') {
-        document.getElementById('daily-report-pass-error').innerText = 'خطأ كلمة السر';
+        var errEl = document.getElementById('daily-report-pass-error');
+        if (errEl) errEl.innerText = 'خطأ كلمة السر';
         return;
       }
-      var isWeekly = document.querySelector('input[name="rpt-type"]:checked').value === 'weekly';
+      var isWeekly = document.querySelector('input[name="rpt-type"]:checked');
+      if (!isWeekly) { alert('⚠️ حدد نوع التقرير'); return; }
+      isWeekly = isWeekly.value === 'weekly';
       var dateInput;
       if (isWeekly) {
-        dateInput = document.getElementById('weekly-report-from').value;
+        var fromEl = document.getElementById('weekly-report-from');
+        dateInput = fromEl ? fromEl.value : '';
       } else {
-        dateInput = document.getElementById('daily-report-date').value;
+        var dailyEl = document.getElementById('daily-report-date');
+        dateInput = dailyEl ? dailyEl.value : '';
       }
+      if (!dateInput) { alert('⚠️ حدد التاريخ'); return; }
       var opts = {};
       ['rpt-workforce','rpt-housing','rpt-meals','rpt-guests','rpt-vacations','rpt-maintenance','rpt-septic','rpt-bakery-prod','rpt-bakery-supply','rpt-inventory','rpt-tea','rpt-pm','rpt-contractors','rpt-excluded'].forEach(function(id) {
-        opts[id] = document.getElementById(id).checked;
+        var el = document.getElementById(id);
+        opts[id] = el ? el.checked : false;
       });
       if (isWeekly) {
         var dateTo = document.getElementById('weekly-report-to').value;
@@ -5482,10 +5490,17 @@
         var url = URL.createObjectURL(blob);
         var a = document.createElement('a');
         a.href = url; a.download = 'التقرير_اليومي_' + dateInput + '.html';
-        document.body.appendChild(a); a.click();
-        document.body.removeChild(a);
-        setTimeout(function() { URL.revokeObjectURL(url); }, 5000);
-      } catch(e) { alert('خطأ: ' + e.message); }
+        a.style.display = 'none';
+        document.body.appendChild(a);
+        setTimeout(function() { a.click(); }, 100);
+        setTimeout(function() { document.body.removeChild(a); URL.revokeObjectURL(url); }, 5000);
+      } catch(e) {
+        try {
+          var w = window.open('', '_blank');
+          if (w) { w.document.write(fullHtml); w.document.close(); }
+          else { alert('⚠️ افتح البوب أب بلوكер وجرّب تاني'); }
+        } catch(e2) { alert('خطأ في إنشاء التقرير: ' + e.message); }
+      }
     }
     function generateWeeklyReport(fromDate, toDate, opts) {
       try {
