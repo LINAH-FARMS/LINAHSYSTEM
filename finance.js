@@ -97,22 +97,25 @@ function finImportReport(evt) {
   if (!files || !files.length) return;
   var fileArr = Array.from(files);
   var totalImported = 0, totalBudget = 0, totalFiles = fileArr.length, done = 0;
+  var debugLog = [];
   fileArr.forEach(function(file) {
     var reader = new FileReader();
     reader.onload = function(e) {
       try {
         var data = new Uint8Array(e.target.result);
         var workbook = XLSX.read(data, { type: 'array' });
-        var result = finProcessWorkbook(workbook);
+        var result = finProcessWorkbook(workbook, file.name);
         totalImported += result.imported;
         totalBudget += result.budgetSheets;
-      } catch(err) { console.error('Import error:', file.name, err); }
+        debugLog.push(file.name + ': sheets=' + workbook.SheetNames.join(',') + (result.budgetInfo ? ' | month=' + result.budgetInfo.month + ' year=' + result.budgetInfo.year : ''));
+      } catch(err) { console.error('Import error:', file.name, err); debugLog.push(file.name + ': ERROR ' + err.message); }
       done++;
       if (done === totalFiles) {
         finSave();
         finPopulateYearSelect();
         finRenderAll();
-        alert('✅ تم استيراد ' + totalFiles + ' ملفات\n📦 ' + totalImported + ' معاملة\n📊 ' + totalBudget + ' شيت ميزانية');
+        var msg = '✅ تم استيراد ' + totalFiles + ' ملفات\n📦 ' + totalImported + ' معاملة\n📊 ' + totalBudget + ' شيت ميزانية\n\n--- تفاصيل ---\n' + debugLog.join('\n');
+        alert(msg);
       }
     };
     reader.readAsArrayBuffer(file);
@@ -120,8 +123,9 @@ function finImportReport(evt) {
   evt.target.value = '';
 }
 
-function finProcessWorkbook(workbook) {
+function finProcessWorkbook(workbook, fileName) {
   var imported = 0, budgetSheets = 0;
+  var budgetInfo = null;
   try {
     var importedBudget = 0;
     var _dbgKeys = [];
@@ -238,6 +242,7 @@ function finProcessWorkbook(workbook) {
             if (existingIdx >= 0) finBudgets[existingIdx] = entry; else finBudgets.push(entry);
           }
           importedBudget++;
+          budgetInfo = { month: detectedMonth, year: detectedYear, sheet: sheetName };
         }
 
         /* ── Transactions sheet (المصروفات) ── AGGREGATE by task+item+month ── */
@@ -304,7 +309,7 @@ function finProcessWorkbook(workbook) {
         }
       });
       budgetSheets = importedBudget;
-    return { imported: imported, budgetSheets: budgetSheets };
+    return { imported: imported, budgetSheets: budgetSheets, budgetInfo: budgetInfo };
   } catch(err) { console.error('finProcessWorkbook error:', err); return { imported: 0, budgetSheets: 0 }; }
 }
 
