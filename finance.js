@@ -92,6 +92,7 @@ function finImportReport(evt) {
       var data = new Uint8Array(e.target.result);
       var workbook = XLSX.read(data, { type: 'array' });
       var imported = 0;
+      var importedBudget = 0;
       var _dbgDates = [];
       var _dbgKeys = [];
       workbook.SheetNames.forEach(function(sheetName) {
@@ -101,91 +102,125 @@ function finImportReport(evt) {
         var firstRow = json[0];
         var keys = Object.keys(firstRow);
         if (_dbgKeys.length === 0) _dbgKeys = keys.slice(0, 20);
-        if (_dbgDates.length === 0 && keys.length > 0) _dbgDates.push('Sheet: ' + sheetName + ' | Rows: ' + json.length + ' | Keys: ' + JSON.stringify(keys));
-        var hasTaskCol = keys.some(function(k) { return k.toLowerCase().indexOf('task') >= 0 && k.toLowerCase().indexOf('desc') < 0; });
-        var hasValueCol = keys.some(function(k) { return k === 'القيمة' || k.toLowerCase() === 'value'; });
+
+        /* ── trim whitespace from keys for matching ── */
+        var trimmedKeys = keys.map(function(k) { return k.trim(); });
+
+        /* ── Transactions (المصروفات) ── */
+        var hasTaskCol = trimmedKeys.some(function(k) { return k === 'Task'; });
+        var hasValueCol = trimmedKeys.some(function(k) { return k === 'القيمة' || k === 'Value'; });
         if (hasTaskCol && hasValueCol) {
           json.forEach(function(row, _ri) {
-            var taskVal = row['Task'] || row['task'] || '';
+            /* find key with trimmed match */
+            var taskVal = '';
+            var dateVal = '';
+            var orderNum = '', itemName = '', itemCode = '', storeName = '', unit = '';
+            var qty = 0, price = 0, value = 0, costCenter = '', costCenterDesc = '', segment = '', taskDesc = '', notes = '';
+            for (var origK in row) {
+              var tk = origK.trim();
+              if (tk === 'Task') taskVal = row[origK];
+              if (tk === 'التاريخ' || tk === 'Date') dateVal = row[origK];
+              if (tk === 'رقم اذن الصرف' || tk === 'رقم البون') orderNum = row[origK];
+              if (tk === 'اسم الصـــنف' || tk === 'اسم الصنف') itemName = row[origK];
+              if (tk === 'كود الصنف') itemCode = row[origK];
+              if (tk === 'اسم المخزن') storeName = row[origK];
+              if (tk === 'الوحدة') unit = row[origK];
+              if (tk === 'كمية الصرف' || tk === 'الكمية' || tk === 'Qty') qty = parseFloat(row[origK]) || 0;
+              if (tk === 'السعر' || tk === 'Price') price = parseFloat(row[origK]) || 0;
+              if (tk === 'القيمة' || tk === 'Value') value = parseFloat(row[origK]) || 0;
+              if (tk === 'Cost center' || tk === 'Cost Center') costCenter = row[origK];
+              if (tk === 'Cost center Description' || tk === 'Cost Center Description') costCenterDesc = row[origK];
+              if (tk === 'Segment') segment = row[origK];
+              if (tk === 'Task Description') taskDesc = row[origK];
+              if (tk === 'ملاحظات') notes = row[origK];
+            }
             var overheadCode = String(taskVal).trim();
-            var dateVal = row['التاريخ'] || row['Date'] || '';
             var parsed = finParseDate(dateVal);
             var txMonth = finMonthFromExcelDate(parsed);
             var txYear = finYearFromExcelDate(parsed);
             var txDate = finExcelDate(parsed);
-            if (_ri < 3) _dbgDates.push('raw=' + JSON.stringify(dateVal) + ' type=' + typeof dateVal + ' parsed=' + (parsed ? parsed.toISOString() : 'NULL') + ' y=' + txYear + ' m=' + txMonth);
-            var orderNum = String(row['رقم اذن الصرف'] || row['رقم البون'] || '').trim();
-            var itemName = String(row['اسم الصـــنف'] || row['اسم الصنف'] || '').trim();
-            var existsIdx = finTransactions.findIndex(function(t) { return t.date === txDate && t.task === overheadCode && t.orderNum === orderNum && t.itemName === itemName; });
-            var qty = parseFloat(row['كمية الصرف'] || row['الكمية'] || row['Qty'] || 0);
-            var price = parseFloat(row['السعر'] || row['Price'] || 0);
-            var value = parseFloat(row['القيمة'] || row['Value'] || 0);
-            if (isNaN(value)) value = qty * price;
+            if (!txDate && !overheadCode) return; /* skip empty rows */
+            orderNum = String(orderNum || '').trim();
+            itemName = String(itemName || '').trim();
+            if (isNaN(value) || value === 0) value = qty * price;
             var txObj = {
               date: txDate, month: txMonth, year: txYear,
               orderNum: orderNum,
-              itemCode: String(row['كود الصنف'] || '').trim(),
-              storeName: String(row['اسم المخزن'] || '').trim(),
+              itemCode: String(itemCode || '').trim(),
+              storeName: String(storeName || '').trim(),
               itemName: itemName,
-              unit: String(row['الوحدة'] || '').trim(),
+              unit: String(unit || '').trim(),
               qty: qty,
-              costCenter: String(row['Cost center'] || row['Cost Center'] || '').trim(),
-              costCenterDesc: String(row['Cost center Description'] || row['Cost Center Description'] || '').trim(),
-              segment: String(row['Segment'] || '').trim(),
+              costCenter: String(costCenter || '').trim(),
+              costCenterDesc: String(costCenterDesc || '').trim(),
+              segment: String(segment || '').trim(),
               task: overheadCode,
-              taskDesc: String(row['Task Description'] || '').trim(),
-              notes: String(row['ملاحظات'] || '').trim(),
+              taskDesc: String(taskDesc || '').trim(),
+              notes: String(notes || '').trim(),
               price: price, value: value,
               modifiedAt: new Date().toISOString()
             };
+            var existsIdx = finTransactions.findIndex(function(t) { return t.date === txDate && t.task === overheadCode && t.orderNum === orderNum && t.itemName === itemName; });
             if (existsIdx >= 0) finTransactions[existsIdx] = txObj; else finTransactions.push(txObj);
           });
           imported += json.length;
         }
-        var hasBudgetCol = keys.some(function(k) { return k === 'Overhead' || k.indexOf('Overhead') >= 0; });
-        var hasBudgetAmt = keys.some(function(k) { return k === 'Budget'; });
+
+        /* ── Budget (Sheet2 / ملخص الميزانية) ── */
+        var hasBudgetCol = trimmedKeys.some(function(k) { return k === 'Overhead'; });
+        var hasBudgetAmt = trimmedKeys.some(function(k) { return k === 'Budget'; });
         if (hasBudgetCol && hasBudgetAmt) {
-          var overheadRow = null;
+          /* detect month from column names (e.g. " Apr", "Apr Budget", etc.) */
+          var monthMap = {'Jan':1,'Feb':2,'Mar':3,'Apr':4,'May':5,'Jun':6,'Jul':7,'Aug':8,'Sep':9,'Oct':10,'Nov':11,'Dec':12};
+          var detectedMonth = 1;
+          var detectedYear = 2026;
+          for (var mk in monthMap) {
+            if (trimmedKeys.some(function(k) { return k.indexOf(mk) >= 0; })) { detectedMonth = monthMap[mk]; break; }
+          }
+          var yearMatch = sheetName.match(/(\d{4})/);
+          if (yearMatch) detectedYear = parseInt(yearMatch[1]);
+
           json.forEach(function(row) {
-            if (row['Overhead'] === 'Total' || row['Overhead'] === 'total') { overheadRow = row; return; }
-            var code = String(row[keys[0]] || '').trim();
-            var name = String(row['Overhead'] || '').trim();
-            if (!code || !name || code === 'Total') return;
-            var budget = parseFloat(row['Budget']) || 0;
-            var actual = parseFloat(row['Actual']) || 0;
-            var variance = parseFloat(row['Variance']) || (budget - actual);
+            /* map trimmed keys to values */
+            var mapped = {};
+            for (var origK in row) { mapped[origK.trim()] = row[origK]; }
+            var overheadName = String(mapped['Overhead'] || '').trim();
+            if (!overheadName || overheadName === 'Total' || overheadName === 'total') return;
+            var code = String(mapped[keys[0]] || '').trim();
+            if (!code || code === 'Total') return;
+            var budget = parseFloat(mapped['Budget']) || 0;
+            var actual = parseFloat(mapped['Actual']) || 0;
+            var variance = parseFloat(mapped['Variance']) || (budget - actual);
             var pct = budget ? Math.round((actual / budget) * 100) : 0;
-            var ytdB = parseFloat(row['YTD Budget']) || 0;
-            var ytdA = parseFloat(row['YTD Actual']) || 0;
-            var ytdV = parseFloat(row['YTD Variance']) || (ytdB - ytdA);
+            var ytdB = 0, ytdA = 0, ytdV = 0;
+            /* find YTD columns by trimmed key */
+            for (var origK in row) {
+              var tk = origK.trim();
+              if (tk === 'YTD Budget' || tk.indexOf('YTD') >= 0 && tk.indexOf('Budget') >= 0) ytdB = parseFloat(row[origK]) || 0;
+              if (tk === 'YTD Actual' || tk.indexOf('YTD') >= 0 && tk.indexOf('Actual') >= 0) ytdA = parseFloat(row[origK]) || 0;
+              if (tk === 'YTD Variance' || tk.indexOf('YTD') >= 0 && tk.indexOf('Variance') >= 0) ytdV = parseFloat(row[origK]) || 0;
+            }
+            if (!ytdV) ytdV = ytdB - ytdA;
             var ytdP = ytdB ? Math.round((ytdA / ytdB) * 100) : 0;
-            var monthLabel = '';
-            var aprKeys = keys.filter(function(k) { return k.indexOf('Apr') >= 0 || k.indexOf('Jan') >= 0 || k.indexOf('Feb') >= 0 || k.indexOf('Mar') >= 0 || k.indexOf('May') >= 0 || k.indexOf('Jun') >= 0 || k.indexOf('Jul') >= 0 || k.indexOf('Aug') >= 0 || k.indexOf('Sep') >= 0 || k.indexOf('Oct') >= 0 || k.indexOf('Nov') >= 0 || k.indexOf('Dec') >= 0; });
-            if (aprKeys.length > 0) monthLabel = aprKeys[0];
-            var monthMap = {'Jan':1,'Feb':2,'Mar':3,'Apr':4,'May':5,'Jun':6,'Jul':7,'Aug':8,'Sep':9,'Oct':10,'Nov':11,'Dec':12};
-            var detectedMonth = 1;
-            for (var mk in monthMap) { if (monthLabel.indexOf(mk) >= 0) { detectedMonth = monthMap[mk]; break; } }
-            var detectedYear = 2026;
-            var yearMatch = sheetName.match(/(\d{4})/);
-            if (yearMatch) detectedYear = parseInt(yearMatch[1]);
             var existingIdx = finBudgets.findIndex(function(b) { return b.code === code && b.month === detectedMonth && b.year === detectedYear; });
             var entry = {
-              code: code, name: name, month: detectedMonth, year: detectedYear,
+              code: code, name: overheadName, month: detectedMonth, year: detectedYear,
               budget: budget, actual: actual, variance: variance, percent: pct,
               ytdBudget: ytdB, ytdActual: ytdA, ytdVariance: ytdV, ytdPercent: ytdP,
               modifiedAt: new Date().toISOString()
             };
             if (existingIdx >= 0) finBudgets[existingIdx] = entry; else finBudgets.push(entry);
           });
+          importedBudget++;
         }
       });
       finSave();
       finPopulateYearSelect();
       finRenderAll();
       var _dbgMsg = '📦 الشيتات: ' + workbook.SheetNames.join(', ');
-      _dbgMsg += '\n\n' + _dbgDates.join('\n');
       _dbgMsg += '\n\nColumns: ' + JSON.stringify(_dbgKeys);
       _dbgMsg += '\n✅ تم استيراد ' + imported + ' معاملة.';
+      if (importedBudget > 0) _dbgMsg += '\n📊 تم استيراد ' + importedBudget + ' شيت ميزانية.';
       alert(_dbgMsg);
     } catch(err) { alert('❌ خطأ في الاستيراد: ' + err.message); }
   };
