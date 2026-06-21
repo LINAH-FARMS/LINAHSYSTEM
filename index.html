@@ -10158,12 +10158,59 @@ function toggleEmployeeStatus(empId) {
           if (rows && rows.length > 0 && rows[0].data) {
             try { bakeryDailyReports = typeof rows[0].data === 'string' ? JSON.parse(rows[0].data) : rows[0].data; } catch(e) { bakeryDailyReports = []; }
           }
+          importDailyReportsToProduction();
           renderBakeryDailyReports();
         })
         .catch(function(e){
           bakeryDailyReports = JSON.parse(localStorage.getItem('linah_bakery_reports') || '[]');
+          importDailyReportsToProduction();
           renderBakeryDailyReports();
         });
+    }
+    function importDailyReportsToProduction() {
+      var imported = 0;
+      bakeryDailyReports.forEach(function(r) {
+        var p = r.production || {};
+        if (!p.date || !p.breadCount) return;
+        var exists = bakeryProductions.some(function(bp) { return bp.date === p.date && bp.breadCount == p.breadCount; });
+        if (!exists) {
+          bakeryProductions.push({
+            date: p.date,
+            breadCount: p.breadCount,
+            flourUsed: p.flourUsed || 0,
+            yeastUsed: p.yeastUsed || 0,
+            saltUsed: p.saltUsed || 0,
+            branUsed: p.branUsed || 0,
+            dieselUsed: p.dieselUsed || 0,
+            opCost: p.operatingCost || 1200,
+            notes: (p.bakerName ? 'الخباز: ' + p.bakerName : '') + (p.notes ? ' | ' + p.notes : '')
+          });
+          imported++;
+        }
+        (r.contractors || []).forEach(function(ct) {
+          if (!ct.name || !ct.count) return;
+          var cExists = bakeryContractorSupplies.some(function(bc) { return bc.date === p.date && bc.name === ct.name && bc.count == ct.count; });
+          if (!cExists) {
+            bakeryContractorSupplies.push({
+              date: p.date,
+              name: ct.name,
+              count: ct.count,
+              price: ct.price || 2,
+              paid: 0,
+              responsible: ct.responsible || '',
+              notes: ''
+            });
+            imported++;
+          }
+        });
+      });
+      if (imported > 0) {
+        syncStorage();
+        renderBakeryProductions();
+        updateBakeryStats();
+        renderBakeryContractorSupplies();
+        updateBreadSupplyStats();
+      }
     }
     function renderBakeryDailyReports() {
       var el = document.getElementById('bakery-daily-list');
