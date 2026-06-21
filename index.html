@@ -12751,8 +12751,8 @@ function toggleEmployeeStatus(empId) {
         }, 0);
       }, 0);
 
-      // ✅ تحميل من D: drive لو localStorage فاضية
-      (async function(){try{if(backupDirHandle){var _dok=await verifyDirPermission(false);if(_dok&&((!employees||employees.length===0)||(!hospitalities||hospitalities.length===0))){var _dl=await loadLatestBackup();if(_dl)syncLog('restored from D:');}}}catch(e){}})();
+      // ❌ تعطيل التحميل التلقائي من D: drive — الباك أب يدوي من ➕ الإدارة المرنة
+      // D: drive restore now only available via manual button
       function updateDashClock() {
         let el = document.getElementById('dash-clock');
         if (el) el.innerText = '⏱️ ' + new Date().toLocaleString('ar-EG') + ' | لينه فارمز - منظومة الشئون الإدارية';
