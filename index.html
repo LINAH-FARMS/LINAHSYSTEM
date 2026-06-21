@@ -11531,6 +11531,11 @@ function toggleEmployeeStatus(empId) {
     // load from _pushedHashes (new), otherwise leave empty
     try { _dataHashes = _safeJsonParse(localStorage.getItem('_pushedHashes'), {}); } catch(e) {}
     if (!_dataHashes || typeof _dataHashes !== 'object') _dataHashes = {};
+    // If old format (values are long JSON strings), reset to compact format
+    var _dhKeys = Object.keys(_dataHashes);
+    for (var _dhk = 0; _dhk < _dhKeys.length; _dhk++) {
+      if (_dataHashes[_dhKeys[_dhk]] && _dataHashes[_dhKeys[_dhk]].length > 100) { _dataHashes = {}; localStorage.removeItem('_pushedHashes'); break; }
+    }
     var _pushInProgress = false;
 
     // Deletion + Update sync: tracks what was deleted/modified across devices
@@ -11757,7 +11762,8 @@ function toggleEmployeeStatus(empId) {
         else if (Array.isArray(arr) && !arr.length) continue;
         else if (typeof arr === 'object' && !Object.keys(arr).length) continue;
         var str = JSON.stringify(arr);
-        if (_dataHashes[key] !== str) {
+        var shortHash = arr.length + ':' + (arr.length > 0 ? (arr[0].id || arr[0].name || arr[0].code || '') + ':' + (arr[arr.length-1].id || arr[arr.length-1].name || arr[arr.length-1].code || '') : '');
+        if (_dataHashes[key] !== shortHash) {
           changed.push(key);
           try {
             var resp = await fetch(_sbEndpoint, {
@@ -11766,7 +11772,7 @@ function toggleEmployeeStatus(empId) {
               body: JSON.stringify({ id: key, data: entities[key], updated_at: ts })
             });
             if (!resp.ok) { syncLog('⚠️ فشل دفع ' + key + ' - ' + resp.status); hasError = true; continue; }
-            _dataHashes[key] = str;
+            _dataHashes[key] = shortHash;
             // Update global variable to match merged data
             setEntityVar(key, entities[key]);
           } catch(e) { syncLog('⚠️ فشل دفع ' + key); hasError = true; continue; }
