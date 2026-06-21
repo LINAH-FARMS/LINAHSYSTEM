@@ -11906,10 +11906,10 @@ function toggleEmployeeStatus(empId) {
         updateLastSyncTime();
         startPresence();
         document.getElementById('cloud-status').textContent = '☁️ متصل';
-        // سحب أولي (يجيب آخر تعديلات الزمايل)
-        _pulledAt = {};
-        localStorage.setItem('_pulledAt', JSON.stringify({}));
-        await pullFromSupabase();
+        // ❌ تم تعطيل السحب الأولي — يعتمد على السحب اليدوي فقط
+        // _pulledAt = {};
+        // localStorage.setItem('_pulledAt', JSON.stringify({}));
+        // await pullFromSupabase();
         // ❌ تم تعطيل السحب الدوري — يعتمد على السحب اليدوي فقط
         // if (_syncTimer) clearInterval(_syncTimer);
         // _syncTimer = setInterval(function() { pullFromSupabase(); }, 30000);
