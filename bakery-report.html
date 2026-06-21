@@ -120,6 +120,26 @@ textarea{resize:vertical;min-height:60px}
     <div class="error-msg" id="error-msg"></div>
   </div>
 
+  <datalist id="ctr-names-list">
+    <option value="عبد الرازق جبر">
+    <option value="ابراهيم شحاته">
+    <option value="البدري">
+    <option value="مصطفى عبد الكريم">
+    <option value="كرم الزيات">
+    <option value="اسامه سمير">
+    <option value="محمود قاسم">
+    <option value="ممدوح">
+    <option value="كامل احمد">
+    <option value="محمد شعبان">
+    <option value="ابوعمار">
+    <option value="محمد حسنى">
+    <option value="اسامه عبد الرازق">
+    <option value="ناجح">
+    <option value="فارس">
+    <option value="اسعد اسماعيل">
+    <option value="ام جبريل">
+  </datalist>
+
   <div class="success" id="success-msg">
     <div class="icon">🎉</div>
     <h2>تم حفظ بيانات اليوم بنجاح!</h2>
@@ -165,28 +185,52 @@ function addContractor() {
     '</div>' +
 
     '<div class="form-group">' +
-    '<label>اسم المقاول (الاسم ثنائي)</label>' +
-    '<input type="text" id="ctr-name-' + n + '" placeholder="الاسم الأول واللقب">' +
+    '<label>اسم المقاول</label>' +
+    '<input type="text" id="ctr-name-' + n + '" placeholder="اختر أو اكتب الاسم" list="ctr-names-list">' +
     '</div>' +
 
     '<div class="form-row">' +
     '<div class="form-group">' +
-    '<label>عدد الأرغفة المسلمة <span class="unit">(رغيف)</span></label>' +
-    '<input type="number" id="ctr-count-' + n + '" placeholder="0" min="0" inputmode="numeric">' +
+    '<label>عدد الأرغفة <span class="unit">(رغيف)</span></label>' +
+    '<input type="number" id="ctr-count-' + n + '" placeholder="0" min="0" inputmode="numeric" oninput="calcCtrIng(' + n + ')">' +
     '</div>' +
-    '<div class="form-group">' +
-    '<label>سعر الرغفة <span class="unit">(ج.م — افتراضي 2)</span></label>' +
-    '<input type="number" id="ctr-price-' + n + '" value="2" min="0" step="0.25" inputmode="decimal">' +
-    '</div>' +
-    '</div>' +
-
     '<div class="form-group">' +
     '<label>المسؤول عن التوريد</label>' +
     '<input type="text" id="ctr-resp-' + n + '" placeholder="اسم المسؤول">' +
     '</div>' +
+    '</div>' +
+
+    '<div style="background:#e8f5e9;border-radius:8px;padding:8px;margin-top:6px;">' +
+    '<div style="font-size:11px;font-weight:700;color:#2e7d32;margin-bottom:4px;">📦 الخامات المستخدمة (تتحسب اوتوماتيك)</div>' +
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;font-size:11px;">' +
+    '<div>🌾 دقيق: <b id="ctr-ing-' + n + '-flour">0</b> كجم</div>' +
+    '<div>🧫 خميرة: <b id="ctr-ing-' + n + '-yeast">0</b> كجم</div>' +
+    '<div>🧂 ملح: <b id="ctr-ing-' + n + '-salt">0</b> كجم</div>' +
+    '<div>🌾 ردة: <b id="ctr-ing-' + n + '-bran">0</b> كجم</div>' +
+    '<div>⛽ سولار: <b id="ctr-ing-' + n + '-diesel">0</b> لتر</div>' +
+    '<div>💷 التكلفة: <b id="ctr-cost-' + n + '">0</b> ج.م</div>' +
+    '</div>' +
+    '</div>' +
 
     '</div>';
   document.getElementById('contractors-list').insertAdjacentHTML('beforeend', html);
+}
+
+function calcCtrIng(n) {
+  var count = parseInt(document.getElementById('ctr-count-' + n).value) || 0;
+  if (count <= 0) return;
+  var flourKg = count / 21;
+  var yeast = Math.round(flourKg * 4 / 450 * 1000) / 1000;
+  var salt = Math.round(flourKg * 0.00924 * 1000) / 1000;
+  var bran = Math.round(flourKg * 0.0792 * 100) / 100;
+  var diesel = Math.round(flourKg * 0.2112 * 100) / 100;
+  var cost = Math.round((flourKg * 13 + yeast * 30 + salt * 5 + bran * 3 + diesel * 23) * 100) / 100;
+  document.getElementById('ctr-ing-' + n + '-flour').textContent = flourKg.toFixed(1);
+  document.getElementById('ctr-ing-' + n + '-yeast').textContent = yeast.toFixed(3);
+  document.getElementById('ctr-ing-' + n + '-salt').textContent = salt.toFixed(3);
+  document.getElementById('ctr-ing-' + n + '-bran').textContent = bran.toFixed(1);
+  document.getElementById('ctr-ing-' + n + '-diesel').textContent = diesel.toFixed(1);
+  document.getElementById('ctr-cost-' + n).textContent = cost.toFixed(2);
 }
 
 function removeContractor(n) {
@@ -232,12 +276,20 @@ function submitBakeryData() {
     var price = parseFloat((document.getElementById('ctr-price-' + n) || {}).value) || 2;
     var resp = (document.getElementById('ctr-resp-' + n) || {}).value || '';
     if (name && count > 0) {
+      var flourKg = count / 21;
       contractors.push({
         name: name,
         count: count,
-        price: price,
-        total: count * price,
-        responsible: resp
+        price: 2,
+        total: count * 2,
+        responsible: resp,
+        ingredients: {
+          flour: Math.round(flourKg * 100) / 100,
+          yeast: Math.round(flourKg * 4 / 450 * 1000) / 1000,
+          salt: Math.round(flourKg * 0.00924 * 1000) / 1000,
+          bran: Math.round(flourKg * 0.0792 * 100) / 100,
+          diesel: Math.round(flourKg * 0.2112 * 100) / 100
+        }
       });
     }
   });

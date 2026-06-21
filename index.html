@@ -2505,7 +2505,6 @@
     <div class="bakery-sub-tabs no-print">
       <button class="bakery-sub-tab active" onclick="switchBakerySub('bsub-production',this)" style="background:#e65100;color:white;font-size:16px;padding:10px 24px;">🏭 الإنتاج</button>
       <button class="bakery-sub-tab" onclick="switchBakerySub('bsub-materials',this)">🥫 الخامات</button>
-      <button class="bakery-sub-tab" onclick="switchBakerySub('bsub-daily',this);loadBakeryDailyReports();">📋 بيانات يومية</button>
     </div>
 
     <!-- 🥫 Materials (Ingredients + Stock Log) -->
@@ -2626,15 +2625,6 @@
           <tbody id="bakery-production-body"></tbody>
         </table>
       </div>
-    </div>
-
-    <!-- 📋 Daily Bakery Reports (from mobile form) -->
-    <div id="bsub-daily" class="bakery-sub-content">
-      <div class="control-panel no-print" style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
-        <button class="btn btn-primary" onclick="loadBakeryDailyReports()" style="background:#e65100;">🔄 تحديث</button>
-        <button class="btn btn-excel" onclick="exportBakeryDailyReports()" style="background:#1565c0;color:white;">📤 تصدير Excel</button>
-      </div>
-      <div id="bakery-daily-list" style="margin-top:10px;"></div>
     </div>
 
   </div>
@@ -4724,7 +4714,7 @@
       try { if(tabId === 'tab-tea-sugar') { renderTeaSugarTable(); } } catch(e) { console.error('tab-tea-sugar error:', e); }
       try { if(tabId === 'tab-meal-log') { renderMealLogTable(); if(!document.getElementById('meal-date').value) document.getElementById('meal-date').value = new Date().toISOString().split('T')[0]; } } catch(e) { console.error('tab-meal-log error:', e); }
       try { if(tabId === 'tab-contractors') { populateContractorSectorDropdown(); renderContractorsTable(); } } catch(e) { console.error('tab-contractors error:', e); }
-      try { if(tabId === 'tab-bakery') { renderBakeryProductions(); renderBakeryIngredients(); updateBakeryStats(); populateBakeryDropdowns(); updateBakeryProductionIngredientStocks(); generateBakeryQR(); autoLoadBakeryDaily(); } } catch(e) { console.error('tab-bakery error:', e); }
+      try { if(tabId === 'tab-bakery') { renderBakeryProductions(); renderBakeryIngredients(); updateBakeryStats(); populateBakeryDropdowns(); updateBakeryProductionIngredientStocks(); generateBakeryQR(); importBakeryFormData(); } } catch(e) { console.error('tab-bakery error:', e); }
       try { if(tabId === 'tab-bread-supply') { renderBakeryContractorSupplies(); renderBakeryInvoices(); updateBreadSupplyStats(); populateBakeryDropdowns(); } } catch(e) { console.error('tab-bread-supply error:', e); }
       try { if(tabId === 'tab-maintenance') { searchMaintMaterial(); renderMaintMaterialsList(); } } catch(e) { console.error('tab-maintenance error:', e); }
       try { if(tabId === 'tab-vacations') { renderOvertimeCalendar(); } } catch(e) { console.error('tab-vacations error:', e); }
@@ -10135,7 +10125,6 @@ function toggleEmployeeStatus(empId) {
       if (btn) btn.classList.add('active');
       if (id === 'bsub-materials') { renderBakeryIngredients(); renderBakeryStockLog(); populateStockMaterialFilter(); }
       if (id === 'bsub-production') { renderBakeryProductions(); updateBakeryStats(); populateBakeryDropdowns(); updateBakeryProductionIngredientStocks(); }
-      if (id === 'bsub-daily') { loadBakeryDailyReports(); }
     }
 
     function populateStockMaterialFilter() {
@@ -10146,145 +10135,67 @@ function toggleEmployeeStatus(empId) {
       sel.value = cur;
     }
 
-    var bakeryDailyReports = [];
-    var _bakeryDailyLoaded = false;
-    function autoLoadBakeryDaily() {
-      if (_bakeryDailyLoaded) return;
+    var _bakeryFormImported = false;
+    function importBakeryFormData() {
+      if (_bakeryFormImported) return;
       fetch(SUPABASE_URL+'/rest/v1/sync_data?id=eq.bakery_daily_reports&select=data', { headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY} })
         .then(function(r){return r.json();})
         .then(function(rows){
+          var reports = [];
           if (rows && rows.length > 0 && rows[0].data) {
-            try { bakeryDailyReports = typeof rows[0].data === 'string' ? JSON.parse(rows[0].data) : rows[0].data; } catch(e) { bakeryDailyReports = []; }
+            try { reports = typeof rows[0].data === 'string' ? JSON.parse(rows[0].data) : rows[0].data; } catch(e) { reports = []; }
           }
-          importDailyReportsToProduction();
-          _bakeryDailyLoaded = true;
-        })
-        .catch(function(){});
-    }
-    function loadBakeryDailyReports() {
-      var el = document.getElementById('bakery-daily-list');
-      if (!el) return;
-      el.innerHTML = '<div style="text-align:center;color:#888;padding:20px;">جاري التحميل...</div>';
-      fetch(SUPABASE_URL+'/rest/v1/sync_data?id=eq.bakery_daily_reports&select=data', { headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY} })
-        .then(function(r){return r.json();})
-        .then(function(rows){
-          bakeryDailyReports = [];
-          if (rows && rows.length > 0 && rows[0].data) {
-            try { bakeryDailyReports = typeof rows[0].data === 'string' ? JSON.parse(rows[0].data) : rows[0].data; } catch(e) { bakeryDailyReports = []; }
-          }
-          importDailyReportsToProduction();
-          renderBakeryDailyReports();
-        })
-        .catch(function(e){
-          bakeryDailyReports = JSON.parse(localStorage.getItem('linah_bakery_reports') || '[]');
-          importDailyReportsToProduction();
-          renderBakeryDailyReports();
-        });
-    }
-    function importDailyReportsToProduction() {
-      var imported = 0;
-      bakeryDailyReports.forEach(function(r) {
-        var p = r.production || {};
-        if (!p.date || !p.breadCount) return;
-        var exists = bakeryProductions.some(function(bp) { return bp.date === p.date && bp.breadCount == p.breadCount; });
-        if (!exists) {
-          bakeryProductions.push({
-            date: p.date,
-            breadCount: p.breadCount,
-            flourUsed: p.flourUsed || 0,
-            yeastUsed: p.yeastUsed || 0,
-            saltUsed: p.saltUsed || 0,
-            branUsed: p.branUsed || 0,
-            dieselUsed: p.dieselUsed || 0,
-            opCost: p.operatingCost || 1200,
-            notes: (p.bakerName ? 'الخباز: ' + p.bakerName : '') + (p.notes ? ' | ' + p.notes : '')
-          });
-          imported++;
-        }
-        (r.contractors || []).forEach(function(ct) {
-          if (!ct.name || !ct.count) return;
-          var cExists = bakeryContractorSupplies.some(function(bc) { return bc.date === p.date && bc.name === ct.name && bc.count == ct.count; });
-          if (!cExists) {
-            bakeryContractorSupplies.push({
-              date: p.date,
-              name: ct.name,
-              count: ct.count,
-              price: ct.price || 2,
-              paid: 0,
-              responsible: ct.responsible || '',
-              notes: ''
+          if (!reports.length) return;
+          var imported = 0;
+          reports.forEach(function(r) {
+            var p = r.production || {};
+            if (!p.date || !p.breadCount) return;
+            var pExists = bakeryProductions.some(function(bp) { return bp.date === p.date && bp.breadCount == p.breadCount; });
+            if (!pExists) {
+              bakeryProductions.push(_ts({
+                id: getBakeryNextId('PROD', bakeryProductions),
+                date: p.date,
+                breadCount: p.breadCount,
+                flourUsed: p.flourUsed || 0,
+                yeastUsed: p.yeastUsed || 0,
+                saltUsed: p.saltUsed || 0,
+                branUsed: p.branUsed || 0,
+                dieselUsed: p.dieselUsed || 0,
+                opCost: p.operatingCost || 1200,
+                notes: (p.bakerName ? 'الخباز: ' + p.bakerName : '') + (p.notes ? ' | ' + p.notes : '')
+              }));
+              imported++;
+            }
+            (r.contractors || []).forEach(function(ct) {
+              if (!ct.name || !ct.count) return;
+              var cExists = bakeryContractorSupplies.some(function(bc) { return bc.date === p.date && bc.name === ct.name && bc.count == ct.count; });
+              if (!cExists) {
+                var ing = ct.ingredients || {};
+                bakeryContractorSupplies.push(_ts({
+                  id: getBakeryNextId('CTR', bakeryContractorSupplies),
+                  date: p.date,
+                  name: ct.name,
+                  count: ct.count,
+                  price: ct.price || 2,
+                  paid: 0,
+                  responsible: ct.responsible || '',
+                  notes: '',
+                  ingredients: ing
+                }));
+                imported++;
+              }
             });
-            imported++;
-          }
-        });
-      });
-      if (imported > 0) {
-        syncStorage();
-        renderBakeryProductions();
-        updateBakeryStats();
-        renderBakeryContractorSupplies();
-        updateBreadSupplyStats();
-      }
-    }
-    function renderBakeryDailyReports() {
-      var el = document.getElementById('bakery-daily-list');
-      if (!el) return;
-      if (!bakeryDailyReports.length) { el.innerHTML = '<div style="text-align:center;color:#888;padding:40px;background:white;border-radius:12px;">📭 لا توجد بيانات يومية بعد<br><small>الخباز بيدخل البيانات من الموبايل من خلال الفورم</small></div>'; return; }
-      var html = '';
-      var sorted = bakeryDailyReports.slice().sort(function(a,b){ return (b.production.date||'').localeCompare(a.production.date||''); });
-      sorted.forEach(function(r, idx) {
-        var p = r.production || {};
-        var c = r.contractors || [];
-        html += '<div style="background:white;border-radius:12px;padding:14px;margin-bottom:12px;box-shadow:0 2px 8px rgba(0,0,0,.06);border:1px solid #eee;">';
-        html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">';
-        html += '<div style="font-weight:800;color:#e65100;font-size:15px;">📅 ' + (p.date||'بدون تاريخ') + '</div>';
-        html += '<div style="font-size:12px;color:#888;">🕐 ' + (p.submitted_at||'') + '</div>';
-        html += '</div>';
-        html += '<div style="background:#fff3e0;border-radius:8px;padding:10px;margin-bottom:8px;">';
-        html += '<div style="font-weight:700;color:#333;margin-bottom:6px;">👨‍🍳 الخباز: ' + (p.bakerName||'غير محدد') + '</div>';
-        html += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:6px;font-size:13px;">';
-        html += '<div>🍞 الأرغفة: <b>' + (p.breadCount||0) + '</b></div>';
-        html += '<div>🌾 دقيق: <b>' + (p.flourUsed||0) + ' كجم</b></div>';
-        html += '<div>🧫 خميرة: <b>' + (p.yeastUsed||0) + '</div>';
-        html += '<div>🧂 ملح: <b>' + (p.saltUsed||0) + ' كجم</b></div>';
-        html += '<div>🌾 ردة: <b>' + (p.branUsed||0) + ' كجم</b></div>';
-        html += '<div>⛽ سولار: <b>' + (p.dieselUsed||0) + ' لتر</b></div>';
-        html += '<div>💷 تكلفة التشغيل: <b>' + (p.operatingCost||0) + ' ج.م</b></div>';
-        html += '</div>';
-        if (p.notes) html += '<div style="margin-top:6px;font-size:12px;color:#666;">📝 ' + p.notes + '</div>';
-        html += '</div>';
-        if (c.length) {
-          html += '<div style="font-weight:700;color:#1565c0;font-size:13px;margin-bottom:6px;">🚚 توريدات المقاولين (' + c.length + ')</div>';
-          c.forEach(function(ct) {
-            html += '<div style="background:#f0f7ff;border-radius:8px;padding:8px 10px;margin-bottom:6px;font-size:12px;border:1px solid #bbdefb;">';
-            html += '<b>' + ct.name + '</b> — ' + (ct.count||0) + ' رغيف × ' + (ct.price||2) + ' ج.م = <b>' + ((ct.count||0)*(ct.price||2)) + ' ج.م</b>';
-            if (ct.responsible) html += ' | المسؤول: ' + ct.responsible;
-            html += '</div>';
           });
-        }
-        html += '</div>';
-      });
-      el.innerHTML = html;
-    }
-    function exportBakeryDailyReports() {
-      if (!bakeryDailyReports.length) { alert('لا توجد بيانات للتصدير'); return; }
-      var rows = [['التاريخ','الخباز','الأرغفة','دقيق','خميرة','ملح','ردة','سولار','تكلفة التشغيل','ملاحظات']];
-      bakeryDailyReports.forEach(function(r) {
-        var p = r.production || {};
-        rows.push([p.date||'',p.bakerName||'',p.breadCount||0,p.flourUsed||0,p.yeastUsed||0,p.saltUsed||0,p.branUsed||0,p.dieselUsed||0,p.operatingCost||0,p.notes||'']);
-      });
-      rows.push([]);
-      rows.push(['--- توريدات المقاولين ---']);
-      rows.push(['التاريخ','المقاول','الرغفة','السعر','الإجمالي','المسؤول']);
-      bakeryDailyReports.forEach(function(r) {
-        (r.contractors||[]).forEach(function(ct) {
-          rows.push([r.production.date,ct.name,ct.count,ct.price,(ct.count*ct.price),ct.responsible]);
-        });
-      });
-      var ws = XLSX.utils.aoa_to_sheet(rows);
-      var wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, 'بيانات المخبز اليومية');
-      XLSX.writeFile(wb, 'بيانات_المخبز_' + new Date().toISOString().split('T')[0].replace(/-/g,'') + '.xlsx');
+          if (imported > 0) {
+            syncStorage();
+            renderBakeryProductions();
+            updateBakeryStats();
+            renderBakeryContractorSupplies();
+            updateBreadSupplyStats();
+          }
+          _bakeryFormImported = true;
+        })
+        .catch(function(){ _bakeryFormImported = true; });
     }
 
     function switchBreadSupplySub(id, btn) {
