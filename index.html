@@ -1149,6 +1149,7 @@
           <span>Daily Statistics</span>
           <div style="display:flex;align-items:center;gap:8px;">
             <span style="font-size:11px;color:#888;">Auto-saved at 11:59 PM</span>
+            <button class="btn" style="padding:3px 10px;font-size:11px;background:#e65100;color:white;" onclick="recalcAllDailyStats()">🔄 إعادة حساب الضيوف</button>
             <button class="btn btn-excel" style="padding:3px 10px;font-size:11px;background:#1565c0;color:white;" onclick="exportDailyStatsToExcel()">📤 تصدير Excel</button>
           </div>
         </div>
@@ -6106,12 +6107,7 @@
       var permP = perm.filter(function(e) { return e.status === 'P'; }).length;
       var permV = perm.filter(function(e) { return e.status === 'V'; }).length;
       var casP = casual.filter(function(e) { return e.status === 'P'; }).length;
-      var activeHosp = hospitalities.filter(function(h) {
-        if (!h.arrival) return false;
-        var dep = h.departure || h.arrival;
-        return h.arrival <= today && dep >= today;
-      });
-      var hospTotal = activeHosp.reduce(function(s, h) { return s + (h.guests || 1); }, 0);
+      var hospTotal = calcGuestsForDate(today);
       var p = function(n) { return total > 0 ? Math.round(n / total * 100) : 0; };
       var snap = {
         date: today,
@@ -6130,6 +6126,25 @@
       if (toEl && !toEl.value) toEl.value = today;
       renderDailyStatsTable();
       alert('Saved: ' + today);
+    }
+
+    function calcGuestsForDate(dateStr) {
+      var active = hospitalities.filter(function(h) {
+        if (!h.arrival) return false;
+        var dep = h.departure || h.arrival;
+        return h.arrival <= dateStr && dep >= dateStr;
+      });
+      return active.reduce(function(s, h) { return s + (h.guests || 1); }, 0);
+    }
+
+    function recalcAllDailyStats() {
+      dailyStats.forEach(function(s) {
+        s.hospGuests = calcGuestsForDate(s.date);
+      });
+      dailyStats.sort(function(a, b) { return b.date.localeCompare(a.date); });
+      syncStorage();
+      renderDailyStatsTable();
+      alert('تم إعادة حساب الضيوف لكل الأيام');
     }
 
     function renderDailyStatsTable() {
@@ -6195,6 +6210,7 @@
       XLSX.writeFile(wb, 'DailyStats_' + range.replace(/-/g, '') + '_' + new Date().toISOString().split('T')[0].replace(/-/g, '') + '.xlsx');
     }
     window.captureDailyStats = captureDailyStats;
+    window.recalcAllDailyStats = recalcAllDailyStats;
     window.renderDailyStatsTable = renderDailyStatsTable;
     window.exportDailyStatsToExcel = exportDailyStatsToExcel;
 
