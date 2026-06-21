@@ -11387,7 +11387,8 @@ function toggleEmployeeStatus(empId) {
     var _sbEndpoint = SUPABASE_URL + '/rest/v1/sync_data';
     var _syncTimer = null;
     var _pulledAt = {};
-    var _CODE_VERSION = '2.1';
+    var _forcePull = false;
+    var _CODE_VERSION = '2.2';
     (function() {
       var stored = localStorage.getItem('_codeVersion');
       if (stored && stored !== _CODE_VERSION) {
@@ -11982,6 +11983,52 @@ function toggleEmployeeStatus(empId) {
         syncDeletions = syncDeletions.filter(function(d) { return d.deletedAt > cutoff; });
         localStorage.setItem('lineh_sync_deletions', JSON.stringify(syncDeletions));
       }
+      // If _forcePull is true, just REPLACE all data directly from server
+      if (_forcePull) {
+        if (d.employees) { employees = d.employees || []; }
+        if (d.roomsCapacity) { roomsCapacity = d.roomsCapacity || []; }
+        if (d.vacations) { vacations = d.vacations || []; }
+        if (d.hospitalities) { hospitalities = d.hospitalities || []; }
+        if (d.maintenanceRecords) { maintenanceRecords = d.maintenanceRecords || []; }
+        if (d.septicRecords) { septicRecords = d.septicRecords || []; }
+        if (d.inventoryVouchers) { inventoryVouchers = d.inventoryVouchers || []; }
+        if (d.excludedEmployees) { excludedEmployees = d.excludedEmployees || []; }
+        if (d.periodicMaintenance) { periodicMaintenance = d.periodicMaintenance || []; }
+        if (d.teaSugarDisbursements) { teaSugarDisbursements = d.teaSugarDisbursements || []; }
+        if (d.teaSugarBatches) { teaSugarBatches = d.teaSugarBatches || []; }
+        if (d.mealLogs) { mealLogs = d.mealLogs || []; }
+        if (d.inventoryItems) { inventoryItems = d.inventoryItems || []; }
+        if (d.contractors) { contractors = d.contractors || []; }
+        if (d.dynamicSectors) { dynamicSectors = d.dynamicSectors || []; }
+        if (d.dynamicRooms) { dynamicRooms = d.dynamicRooms || []; }
+        if (d.dynamicSeptics) { dynamicSeptics = d.dynamicSeptics || []; }
+        if (d.dynamicDepts) { dynamicDepts = d.dynamicDepts || []; }
+        if (d.dynamicTitles) { dynamicTitles = d.dynamicTitles || []; }
+        if (d.deptTitles) { deptTitles = d.deptTitles || {}; }
+        if (d.appUsers) { appUsers = filterLatinUsers(d.appUsers || []); }
+        if (d.bakeryIngredients) { bakeryIngredients = d.bakeryIngredients || []; }
+        if (d.bakeryProductions) { bakeryProductions = d.bakeryProductions || []; }
+        if (d.bakeryContractorSupplies) { bakeryContractorSupplies = d.bakeryContractorSupplies || []; }
+        if (d.bakeryInvoices) { bakeryInvoices = d.bakeryInvoices || []; }
+        if (d.bakeryStockLog) { bakeryStockLog = d.bakeryStockLog || []; }
+        if (d.adminOvertime) { adminOvertime = d.adminOvertime || []; }
+        if (typeof d.manualTotalBeds === 'number') { manualTotalBeds = d.manualTotalBeds; }
+        if (d.roomAssets) { roomAssets = d.roomAssets || []; }
+        if (d.archiveData) { archiveData = d.archiveData || []; }
+        if (d.quickActions) { quickActions = d.quickActions || []; }
+        if (d.dailyStats) { dailyStats = d.dailyStats || []; }
+        if (d.finTransactions) { finTransactions = d.finTransactions || []; }
+        if (d.finBudgets) { finBudgets = d.finBudgets || []; }
+        if (d.finTransactions || d.finBudgets) { try { if (typeof finSave === 'function') finSave(); } catch(e) {} }
+        if (d.contractorSectors) { contractorSectors = d.contractorSectors || []; }
+        if (d.contractorRooms) { contractorRooms = d.contractorRooms || []; }
+        if (d.evaluations) { evaluations = d.evaluations || []; }
+        if (d.evalTemplates) { evalTemplates = d.evalTemplates || {}; }
+        if (d.auditLog) { auditLog = d.auditLog || []; }
+        normalizeBakeryDates(true);
+        deduplicateAfterSync();
+        return;
+      }
       if (d.employees) {
         employees = _smartMerge(employees, d.employees, function(e) { return e.code || e.name || JSON.stringify(e); }, 'employees');
         // إعادة تطبيق فلتر المستبعدين بعد الدمج لمنع ظهورهم مجدداً
@@ -12121,8 +12168,9 @@ function toggleEmployeeStatus(empId) {
         supabaseConnected = false;
         document.getElementById('supabase-status').textContent = '🔄 قيد الاتصال...';
         document.getElementById('cloud-status').textContent = '☁️ قيد الاتصال...';
+        _forcePull = true;
         await connectSupabase();
-        if (!supabaseConnected) { showSyncToast('❌ فشل الاتصال بـ Supabase'); btn.textContent = orig; btn.disabled = false; return; }
+        if (!supabaseConnected) { showSyncToast('❌ فشل الاتصال بـ Supabase'); btn.textContent = orig; btn.disabled = false; _forcePull = false; return; }
         // إجبار سحب كامل
         _pulledAt = {};
         localStorage.setItem('_pulledAt', JSON.stringify({}));
@@ -12131,6 +12179,7 @@ function toggleEmployeeStatus(empId) {
       } catch(e) {
         showSyncToast('❌ فشل السحب');
       }
+      _forcePull = false;
       btn.textContent = orig;
       btn.disabled = false;
     }
