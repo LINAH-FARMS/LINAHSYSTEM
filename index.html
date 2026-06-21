@@ -2995,6 +2995,7 @@
       <button class="btn" style="background:#2e7d32;color:#fff;" onclick="finExportChoice()">📤 تصدير التقرير</button>
       <button class="btn" style="background:#0d47a1;color:#fff;" onclick="finShowYearlyBudget()">📐 ميزانية العام الجديد</button>
       <button class="btn" style="background:#37474f;color:#fff;" onclick="finShowOverview()">📋 ملخص شامل للسنة</button>
+      <button class="btn" style="background:#00695c;color:#fff;" onclick="finShowDeptConsumption()">🏢 استهلاك الإدارات</button>
     </div>
     <div id="fin-compare-section" style="display:none;background:#f3e5f5;border-radius:10px;padding:15px;margin-bottom:15px;">
       <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px;">
@@ -3087,6 +3088,20 @@
           <div id="fin-detail-top-items" style="max-height:250px;overflow:auto;"></div>
         </div>
         <div class="table-container" id="fin-detail-table-wrap"></div>
+      </div>
+    </div>
+    <div id="fin-dept-section" style="display:none;margin-top:20px;">
+      <div style="background:#fff;border-radius:14px;padding:16px;box-shadow:0 2px 12px rgba(0,0,0,0.06);border:1px solid #f0f0f0;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+          <div style="font-weight:700;font-size:16px;color:#00695c;">🏢 استهلاك الإدارات حسب البند</div>
+          <button class="btn" style="background:#999;color:#fff;font-size:12px;" onclick="document.getElementById('fin-dept-section').style.display='none'">✖ إغلاق</button>
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:12px;">
+          <div class="form-group"><label style="font-size:12px;font-weight:600;">الإدارة / البند</label><select id="fin-dept-select" style="padding:6px 10px;border:1px solid #ccc;border-radius:6px;font-size:13px;min-width:180px;" onchange="finRenderDeptConsumption()"></select></div>
+          <div class="form-group"><label style="font-size:12px;font-weight:600;">من</label><input type="date" id="fin-dept-from" style="padding:6px 10px;border:1px solid #ccc;border-radius:6px;font-size:13px;" onchange="finRenderDeptConsumption()"></div>
+          <div class="form-group"><label style="font-size:12px;font-weight:600;">إلى</label><input type="date" id="fin-dept-to" style="padding:6px 10px;border:1px solid #ccc;border-radius:6px;font-size:13px;" onchange="finRenderDeptConsumption()"></div>
+        </div>
+        <div id="fin-dept-result"></div>
       </div>
     </div>
   </div>

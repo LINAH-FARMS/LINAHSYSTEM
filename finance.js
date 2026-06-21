@@ -837,3 +837,63 @@ function finExportPDF() {
 }
 
 setTimeout(finInit, 200);
+
+function finShowDeptConsumption() {
+  var sec = document.getElementById('fin-dept-section');
+  if (!sec) return;
+  sec.style.display = 'block';
+  var sel = document.getElementById('fin-dept-select');
+  if (!sel) return;
+  var tasks = {};
+  finTransactions.forEach(function(t) {
+    var code = t.task || 'غير محدد';
+    if (!tasks[code]) tasks[code] = t.taskDesc || code;
+  });
+  sel.innerHTML = '<option value="">الكل</option>';
+  Object.keys(tasks).sort().forEach(function(code) {
+    sel.innerHTML += '<option value="' + code + '">' + code + ' — ' + tasks[code] + '</option>';
+  });
+  var dates = finTransactions.map(function(t) { return t.date || ''; }).filter(Boolean).sort();
+  if (dates.length) {
+    document.getElementById('fin-dept-from').value = dates[0];
+    document.getElementById('fin-dept-to').value = dates[dates.length - 1];
+  }
+  finRenderDeptConsumption();
+}
+
+function finRenderDeptConsumption() {
+  var el = document.getElementById('fin-dept-result');
+  if (!el) return;
+  var taskCode = document.getElementById('fin-dept-select').value;
+  var from = document.getElementById('fin-dept-from').value || '';
+  var to = document.getElementById('fin-dept-to').value || '';
+  var filtered = finTransactions.filter(function(t) {
+    if (taskCode && t.task !== taskCode) return false;
+    if (from && t.date && t.date < from) return false;
+    if (to && t.date && t.date > to) return false;
+    return true;
+  });
+  if (!filtered.length) { el.innerHTML = '<div style="text-align:center;padding:20px;color:#888;">لا توجد بيانات في هذه الفترة</div>'; return; }
+  var items = {};
+  filtered.forEach(function(t) {
+    var name = t.itemName || 'غير محدد';
+    if (!items[name]) items[name] = { name: name, total: 0, count: 0, task: t.task || '' };
+    items[name].total += t.value || 0;
+    items[name].count += t.count || 0;
+  });
+  var rows = Object.values(items).sort(function(a, b) { return b.total - a.total; });
+  var grandTotal = rows.reduce(function(s, r) { return s + r.total; }, 0);
+  var html = '<div style="background:#e0f2f1;border-radius:8px;padding:10px;margin-bottom:12px;font-size:13px;">';
+  html += '<b>إجمالي الاستهلاك:</b> <span style="color:#00695c;font-weight:700;font-size:16px;">' + grandTotal.toLocaleString(undefined, {maximumFractionDigits: 0}) + ' ج.م</span>';
+  html += ' | <b>عدد البندات:</b> ' + rows.length;
+  html += ' | <b>عدد المعاملات:</b> ' + filtered.length;
+  html += '</div>';
+  html += '<table style="width:100%;border-collapse:collapse;font-size:13px;">';
+  html += '<thead><tr style="background:#00695c;color:white;"><th style="padding:8px;text-align:right;">البند</th><th style="padding:8px;">الإدارة</th><th style="padding:8px;">العدد</th><th style="padding:8px;">الإجمالي</th><th style="padding:8px;">النسبة</th></tr></thead><tbody>';
+  rows.forEach(function(r) {
+    var pct = grandTotal > 0 ? Math.round(r.total / grandTotal * 100) : 0;
+    html += '<tr style="border-bottom:1px solid #eee;"><td style="padding:8px;font-weight:600;">' + r.name + '</td><td style="padding:8px;color:#666;">' + r.task + '</td><td style="padding:8px;text-align:center;">' + r.count + '</td><td style="padding:8px;text-align:center;font-weight:700;color:#00695c;">' + r.total.toLocaleString(undefined, {maximumFractionDigits: 0}) + '</td><td style="padding:8px;text-align:center;"><div style="display:flex;align-items:center;gap:4px;justify-content:center;"><div style="width:50px;height:6px;background:#e0e0e0;border-radius:3px;overflow:hidden;"><div style="width:' + pct + '%;height:100%;background:#00695c;border-radius:3px;"></div></div>' + pct + '%</div></td></tr>';
+  });
+  html += '</tbody></table>';
+  el.innerHTML = html;
+}
