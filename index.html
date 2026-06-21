@@ -5174,7 +5174,7 @@
       u.passHash = hashPass(newPass);
       delete u.noPass;
       saveUsers();
-      debouncedSyncToSupabase();
+      // ❌ تعطيل الدفع التلقائي — المستخدم يدفع يدوياً
       renderUsersList();
     }
 
@@ -5192,7 +5192,6 @@
       u.passHash = hashPass(newPass);
       delete u.noPass;
       saveUsers();
-      debouncedSyncToSupabase();
       alert('✅ تم تغيير كلمة المرور بنجاح');
     }
 
@@ -5209,7 +5208,6 @@
       else if (pass !== null && pass.length > 0 && pass.length < 3) { alert('⚠️ كلمة المرور قصيرة جداً (3 أحرف على الأقل). هتتضاف بدون باسورد.'); }
       appUsers.push(userObj);
       saveUsers();
-      debouncedSyncToSupabase();
       document.getElementById('new-user-name').value = '';
       renderUsersList();
       populateLoginDropdown();
@@ -5222,7 +5220,6 @@
       if (!u) return;
       u.role = newRole;
       saveUsers();
-      debouncedSyncToSupabase();
       renderUsersList();
       populateLoginDropdown();
     }
@@ -5237,7 +5234,6 @@
       if (deleted.indexOf(name) === -1) deleted.push(name);
       localStorage.setItem('lineh_deleted_users', JSON.stringify(deleted));
       saveUsers();
-      debouncedSyncToSupabase();
       renderUsersList();
       populateLoginDropdown();
     }
