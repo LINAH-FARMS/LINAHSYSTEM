@@ -10138,6 +10138,14 @@ function toggleEmployeeStatus(empId) {
       if (id === 'bsub-daily') { loadBakeryDailyReports(); }
     }
 
+    function populateStockMaterialFilter() {
+      let sel = document.getElementById('filt-stock-material');
+      if (!sel) return;
+      let cur = sel.value;
+      sel.innerHTML = '<option value="">الكل</option>' + bakeryIngredients.map(i => '<option value="' + i.id + '">' + i.name + '</option>').join('');
+      sel.value = cur;
+    }
+
     var bakeryDailyReports = [];
     function loadBakeryDailyReports() {
       var el = document.getElementById('bakery-daily-list');
@@ -10217,12 +10225,6 @@ function toggleEmployeeStatus(empId) {
       var wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, 'بيانات المخبز اليومية');
       XLSX.writeFile(wb, 'بيانات_المخبز_' + new Date().toISOString().split('T')[0].replace(/-/g,'') + '.xlsx');
-    }
-      let sel = document.getElementById('filt-stock-material');
-      if (!sel) return;
-      let cur = sel.value;
-      sel.innerHTML = '<option value="">الكل</option>' + bakeryIngredients.map(i => '<option value="' + i.id + '">' + i.name + '</option>').join('');
-      sel.value = cur;
     }
 
     function switchBreadSupplySub(id, btn) {
