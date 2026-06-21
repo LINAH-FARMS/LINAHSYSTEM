@@ -6106,7 +6106,11 @@
       var permP = perm.filter(function(e) { return e.status === 'P'; }).length;
       var permV = perm.filter(function(e) { return e.status === 'V'; }).length;
       var casP = casual.filter(function(e) { return e.status === 'P'; }).length;
-      var activeHosp = hospitalities.filter(function(h) { return h.arrival && h.arrival <= today && (h.departure || '2099-12-31') >= today; });
+      var activeHosp = hospitalities.filter(function(h) {
+        if (!h.arrival) return false;
+        var dep = h.departure || h.arrival;
+        return h.arrival <= today && dep >= today;
+      });
       var hospTotal = activeHosp.reduce(function(s, h) { return s + (h.guests || 1); }, 0);
       var p = function(n) { return total > 0 ? Math.round(n / total * 100) : 0; };
       var snap = {
