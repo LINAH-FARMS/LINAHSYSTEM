@@ -10427,6 +10427,178 @@ function toggleEmployeeStatus(empId) {
       }).join('');
     }
 
+    function saAnalyze() {
+      var msg = (document.getElementById('sa-input').value || '').trim();
+      if (!msg) { document.getElementById('sa-result').innerHTML = '<div style="color:#c62828;font-size:12px;padding:4px;">⚠️ الصق رسالة واتساب أولاً</div>'; return; }
+
+      function parseFrac(s) {
+        s = (s||'').trim();
+        if (/نص/.test(s)) return 0.5;
+        if (/ربع/.test(s)) return 0.25;
+        if (/تلت/.test(s)) return 1/3;
+        if (/نص و تلت/.test(s)) return 5/6;
+        var m = s.match(/([\d.\/]+)/);
+        if (!m) return 0;
+        if (m[1].indexOf('/')!==-1) { var p=m[1].split('/'); return parseFloat(p[0])/parseFloat(p[1]); }
+        return parseFloat(m[1])||0;
+      }
+      function N(s) { return parseFloat((s||'').replace(/[^\d.]/g,''))||0; }
+      function extractSalt(text) {
+        var pats = [
+          { r: /(\d+)\s*كيلو\s*ملح/, fn: function(m){return N(m[1]);} },
+          { r: /نص\s*(?:كيلو\s*)?ملح/, fn: function(){return 0.5;} },
+          { r: /ربع\s*(?:كيلو\s*)?ملح/, fn: function(){return 0.25;} },
+          { r: /تلت\s*(?:كيلو\s*)?ملح/, fn: function(){return 1/3;} },
+          { r: /كيلو\s*ملح/, fn: function(){return 1;} },
+          { r: /(\d+)\s*ملح/, fn: function(m){return N(m[1]);} },
+        ];
+        for (var i=0;i<pats.length;i++) { var mm=text.match(pats[i].r); if(mm) return pats[i].fn(mm); }
+        return 0;
+      }
+      function extractYeast(text) {
+        var m = text.match(/((?:نص|ربع|تلت|\d+(?:\.\d+)?)\s*(?:باكو\s*)?)?خم[يى]р[ةه]/);
+        if (!m) return 0;
+        var q = parseFrac(m[1]||'1');
+        return q * 45;
+      }
+
+      /* ── date ── */
+      var dateMatch = msg.match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})/);
+      var dateStr = '';
+      if (dateMatch) {
+        var dd=dateMatch[1].padStart(2,'0'), mm=dateMatch[2].padStart(2,'0'), yy=dateMatch[3];
+        if(yy.length===2) yy='20'+yy;
+        dateStr=yy+'-'+mm+'-'+dd;
+      }
+
+      /* ── split into two sections: before and after "للمقاولين" ── */
+      var ctrIdx = msg.indexOf('للمقاولين');
+      var mainSection = ctrIdx !== -1 ? msg.substring(0, ctrIdx) : msg;
+      var ctrSection = ctrIdx !== -1 ? msg.substring(ctrIdx) : '';
+
+      /* ── main production ── */
+      var mainFlour=0, mainBread=0, delivered=0, inOven=0;
+      var mf = mainSection.match(/(\d+)\s*(?:كيلو\s*)?دقيق\s*=\s*(\d+)/);
+      if (mf) { mainFlour=N(mf[1]); mainBread=N(mf[2]); }
+      var dl = mainSection.match(/تم\s*تسليم\s*(?:المطبخ|المطباخ)\s*(\d+)/);
+      if (dl) delivered=N(dl[1]);
+      var ov = mainSection.match(/يوجد\s*(?:داخل|في)\s*الفرن\s*(\d+)/);
+      if (ov) inOven=N(ov[1]);
+      if (!dl && !ov) { var ov2=mainSection.match(/(?:داخل|في)\s*الفرن\s*(\d+)/); if(ov2) inOven=N(ov2[1]); }
+
+      /* ── main materials ── */
+      var mYeast = extractYeast(mainSection);
+      var mSalt = extractSalt(mainSection);
+      var mBran = N((mainSection.match(/(\d+)\s*كيلو\s*ر[دض]/)||[])[1]);
+      var mHalak = N((mainSection.match(/(\d+)\s*هالك/)||[])[1]);
+
+      /* ── contractor production ── */
+      var ctrFlour=0, ctrBread=0;
+      if (ctrSection) {
+        var ctf = ctrSection.match(/(\d+)\s*(?:كيلو\s*)?دقيق\s*=\s*(\d+)/);
+        if (ctf) { ctrFlour=N(ctf[1]); ctrBread=N(ctf[2]); }
+      }
+
+      /* ── individual contractors ── */
+      var contractors = [];
+      var knownNames = [
+        { regex: /م\.?\s*شعبان/, name: 'م. شعبان' },
+        { regex: /ممدوح/, name: 'ممدوح' },
+        { regex: /مصطفى/, name: 'مصطفى' },
+        { regex: /اسام[هة]/, name: 'اسامه' },
+        { regex: /ابراه[يى]م/, name: 'ابراهيم' },
+        { regex: /فارس/, name: 'فارس' },
+        { regex: /كامل/, name: 'كامل' },
+        { regex: /ابوعمار/, name: 'ابوعمار' },
+        { regex: /محمد\s*حسنى/, name: 'محمد حسنى' },
+        { regex: /محمد\s*شعبان/, name: 'محمد شعبان' },
+        { regex: /ناجح/, name: 'ناجح' },
+        { regex: /اسعد/, name: 'اسعد' },
+        { regex: /ام\s*جبريل/, name: 'ام جبريل' },
+      ];
+      knownNames.forEach(function(p) {
+        var re = new RegExp(p.regex.source + '\\s*(\\d+)','i');
+        var m = msg.match(re);
+        if (m) contractors.push({ name: p.name, count: N(m[1]) });
+      });
+
+      /* ── contractor materials (second section) ── */
+      var ctYeast=0, ctSalt=0, ctBran=0;
+      if (ctrSection) {
+        ctYeast = extractYeast(ctrSection);
+        ctSalt = extractSalt(ctrSection);
+        ctBran = N((ctrSection.match(/(\d+)\s*كيلو\s*ر[دض]/)||[])[1]);
+      }
+
+      /* ── fill production form ── */
+      window._saFilling = true;
+      if (dateStr) document.getElementById('bprod-date').value = dateStr;
+      document.getElementById('bprod-count').value = mainBread||0;
+      if(mainFlour) document.getElementById('bprod-ing-ING001').value = mainFlour;
+      document.getElementById('bprod-ing-ING002').value = mYeast||0;
+      document.getElementById('bprod-ing-ING003').value = mSalt||0;
+      document.getElementById('bprod-ing-ING004').value = mBran||0;
+      document.getElementById('bprod-notes').value = 'تحليل واتساب' + (delivered?' | تسليم: '+delivered:'') + (inOven?' | في الفرن: '+inOven:'') + (mHalak?' | هالك: '+mHalak:'');
+      window._saFilling = false;
+
+      /* ── fill contractor supply form ── */
+      if (ctrBread > 0) {
+        document.getElementById('bctr-date').value = dateStr;
+        document.getElementById('bctr-count').value = ctrBread;
+        document.getElementById('bctr-ing-ING001').value = ctrFlour||0;
+        document.getElementById('bctr-ing-ING002').value = ctYeast||0;
+        document.getElementById('bctr-ing-ING003').value = ctSalt||0;
+        document.getElementById('bctr-ing-ING004').value = ctBran||0;
+      }
+
+      /* ── build result ── */
+      var actualTotal = delivered + inOven;
+      var diff = mainBread > 0 ? mainBread - actualTotal : 0;
+      var flourPerLoaf = mainBread>0 ? ((mainFlour*1000)/mainBread).toFixed(1) : '—';
+      var ctrFlourPerLoaf = ctrBread>0 ? ((ctrFlour*1000)/ctrBread).toFixed(1) : '—';
+      var totalFlour = mainFlour+ctrFlour, totalBread = mainBread+ctrBread;
+
+      var h = '';
+      h += '<div style="background:#e8f5e9;border-radius:8px;padding:8px;margin-bottom:6px;font-size:12px;">';
+      h += '<div style="font-weight:700;color:#1b5e20;margin-bottom:4px;">✅ تم التحليل بنجاح — اضغط "🏭 تسجيل الإنتاج" أو "🚚 تسجيل التوريد" للحفظ</div>';
+      h += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;">';
+      h += '<div>📅 <b>التاريخ:</b> '+(dateStr||'—')+'</div>';
+      h += '<div>🌾 <b>الدقيق (مزرعة):</b> '+mainFlour+' كجم</div>';
+      h += '<div>🍞 <b>الأرغفة:</b> '+mainBread+'</div>';
+      h += '<div>📦 <b>تم التسليم:</b> '+(delivered||'—')+'</div>';
+      h += '<div>🔥 <b>داخل الفرن:</b> '+(inOven||'—')+'</div>';
+      h += '<div>📊 <b>المحصلة:</b> '+(actualTotal||'—')+'</div>';
+      h += '</div></div>';
+
+      if (mainBread>0 && diff!==0) {
+        var dc=diff>0?'#c62828':'#1565c0';
+        h += '<div style="background:'+(diff>0?'#ffebee':'#e3f2fd')+';border-radius:6px;padding:6px;margin-bottom:6px;font-size:12px;">';
+        h += '<b style="color:'+dc+';">⚠️ فرق '+(diff>0?'+':'')+diff+' رغيف (المنتج: '+mainBread+' — المحصلة: '+actualTotal+')</b></div>';
+      }
+
+      h += '<div style="background:#fff3e0;border-radius:8px;padding:6px;margin-bottom:6px;font-size:11px;">';
+      h += '<div style="font-weight:700;color:#e65100;margin-bottom:3px;">🧮 المزرعة</div>';
+      h += '<div>🌾 دقيق: '+mainFlour+' كجم | 🍞 أرغفة: '+mainBread+' | ⚖️ دقيق/رغيف: <b>'+flourPerLoaf+' جرام</b></div>';
+      h += '<div>🧫 خميرة: '+(mYeast||0).toFixed(1)+' كجم | 🧂 ملح: '+(mSalt||0)+' كجم | 🌾 ردة: '+(mBran||0)+' كجم'+(mHalak?' | ⚠️ هالك: '+mHalak+' كجم':'')+'</div>';
+      h += '</div>';
+
+      if (contractors.length>0) {
+        h += '<div style="background:#e3f2fd;border-radius:8px;padding:6px;margin-bottom:6px;font-size:11px;">';
+        h += '<div style="font-weight:700;color:#1565c0;margin-bottom:3px;">🚚 المقاولين — '+ctrBread+' رغيف من '+ctrFlour+' كجم دقيق</div>';
+        contractors.forEach(function(c){ h+='<div>• '+c.name+': <b>'+c.count+'</b> رغيف</div>'; });
+        h += '<div style="margin-top:3px;">⚖️ دقيق/رغيف: <b>'+ctrFlourPerLoaf+' جرام</b></div>';
+        h += '<div>🧫 خميرة: '+(ctYeast||0).toFixed(1)+' كجم | 🧂 ملح: '+(ctSalt||0)+' كجم | 🌾 ردة: '+(ctBran||0)+' كجم</div>';
+        h += '</div>';
+      }
+
+      h += '<div style="background:#f3e5f5;border-radius:8px;padding:6px;font-size:11px;">';
+      h += '<div style="font-weight:700;color:#6a1b9a;margin-bottom:3px;">📋 الإجمالي الكلي</div>';
+      h += '<div>🌾 دقيق: <b>'+totalFlour+' كجم</b> | 🍞 أرغفة: <b>'+totalBread+'</b> | ⚖️ متوسط: <b>'+(totalBread>0?((totalFlour*1000)/totalBread).toFixed(1):'—')+' جرام/رغيف</div>';
+      h += '</div>';
+
+      document.getElementById('sa-result').innerHTML = h;
+    }
+
     function updateBakeryProductionIngredientStocks() {
       ['ING001','ING002','ING003','ING004','ING007'].forEach(function(id) {
         var ing = bakeryIngredients.find(function(i) { return i.id === id; });
