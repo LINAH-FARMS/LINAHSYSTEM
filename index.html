@@ -3,6 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <title>منظومة الشئون الإدارية المتكاملة – لينه فارمز</title>
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -11384,6 +11387,15 @@ function toggleEmployeeStatus(empId) {
     var _sbEndpoint = SUPABASE_URL + '/rest/v1/sync_data';
     var _syncTimer = null;
     var _pulledAt = {};
+    var _CODE_VERSION = '2.1';
+    (function() {
+      var stored = localStorage.getItem('_codeVersion');
+      if (stored && stored !== _CODE_VERSION) {
+        localStorage.removeItem('_pulledAt');
+        _pulledAt = {};
+      }
+      localStorage.setItem('_codeVersion', _CODE_VERSION);
+    })();
 
 
     function updateSupabaseStatus(status) {
@@ -11450,8 +11462,7 @@ function toggleEmployeeStatus(empId) {
         if (!remoteItem) return item;
         var lt = item.modifiedAt || '';
         var rt = remoteItem.modifiedAt || '';
-        if (rt === '' && lt === '') return remoteItem;
-        return (rt > lt) ? remoteItem : item;
+        return (rt >= lt) ? remoteItem : item;
       });
       // Add remote items not in local (unless deleted locally)
       var resultKeys = {};
