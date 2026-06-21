@@ -55,7 +55,10 @@ textarea{resize:vertical;min-height:60px}
     <h1>بيانات المخبز اليومية</h1>
     <div class="sub">أدخل بيانات إنتاج اليوم بالتفصيل</div>
   </div>
-  <div class="date-bar" id="today-date"></div>
+  <div class="date-bar" id="today-date">
+    <input type="date" id="report-date" style="padding:8px 12px;border:2px solid #e65100;border-radius:8px;font-size:14px;font-weight:700;color:#e65100;background:white;width:100%;font-family:Cairo;text-align:center;cursor:pointer;">
+    <div style="font-size:11px;color:#999;margin-top:4px;">📅 اختار التاريخ — افتراضي: تاريخ اليوم</div>
+  </div>
 
   <div id="bakery-form">
 
@@ -158,14 +161,15 @@ var ctrCount = 0;
 // تاريخ اليوم
 (function() {
   var now = new Date();
-  var days = ['الأحد','الإثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
-  var months = ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
-  document.getElementById('today-date').textContent = '📅 ' + days[now.getDay()] + ' ' + now.getDate() + ' ' + months[now.getMonth()] + ' ' + now.getFullYear();
+  var todayStr = now.getFullYear() + '-' + ('0'+(now.getMonth()+1)).slice(-2) + '-' + ('0'+now.getDate()).slice(-2);
+  document.getElementById('report-date').value = todayStr;
 
   // قراءة معاملات من الرابط
   var params = new URLSearchParams(window.location.search);
   var bread = params.get('bread');
   if (bread) document.getElementById('breadCount').value = bread;
+  var date = params.get('date');
+  if (date) document.getElementById('report-date').value = date;
 })();
 
 function addContractor() {
@@ -225,7 +229,7 @@ function submitBakeryData() {
   document.getElementById('error-msg').style.display = 'none';
 
   var now = new Date();
-  var dateStr = now.getFullYear() + '-' + ('0'+(now.getMonth()+1)).slice(-2) + '-' + ('0'+now.getDate()).slice(-2);
+  var dateStr = document.getElementById('report-date').value || now.getFullYear() + '-' + ('0'+(now.getMonth()+1)).slice(-2) + '-' + ('0'+now.getDate()).slice(-2);
   var timeStr = ('0'+now.getHours()).slice(-2) + ':' + ('0'+now.getMinutes()).slice(-2);
 
   var production = {
