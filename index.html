@@ -12151,7 +12151,7 @@ function toggleEmployeeStatus(empId) {
       var _empMap = {};
       employees.forEach(function(e) { _empMap[e.code || e.name] = true; });
       excludedEmployees = excludedEmployees.filter(function(e) { return !_empMap[e.code || e.name]; });
-      if (d.periodicMaintenance) periodicMaintenance = _smartMerge(periodicMaintenance, d.periodicMaintenance, function(p) { return (p.task || '') + '|' + (p.sector || '') + '|' + (p.frequency || ''); }, 'periodicMaintenance');
+      if (d.periodicMaintenance) periodicMaintenance = _smartMerge(periodicMaintenance, d.periodicMaintenance, function(p) { return (p.name || p.task || '') + '|' + (p.id || '') + '|' + (p.freq || p.frequency || ''); }, 'periodicMaintenance');
       if (d.teaSugarDisbursements) teaSugarDisbursements = _smartMerge(teaSugarDisbursements, d.teaSugarDisbursements, function(t) { return (t.date || '') + '|' + (t.period || t.type || '') + '|' + (t.empCode || t.empId || '') + '|' + (t.teaPacks || t.quantity || '') + '|' + (t.sugarKg || ''); }, 'teaSugarDisbursements');
       if (d.teaSugarBatches) teaSugarBatches = _smartMerge(teaSugarBatches, d.teaSugarBatches, function(t) { return t.id || t._id || JSON.stringify(t); }, 'teaSugarBatches');
       if (d.mealLogs) mealLogs = _smartMerge(mealLogs, d.mealLogs, function(m) { return m.date || JSON.stringify(m); }, 'mealLogs');
