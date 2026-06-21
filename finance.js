@@ -842,6 +842,7 @@ function finShowDeptConsumption() {
   var sec = document.getElementById('fin-dept-section');
   if (!sec) return;
   sec.style.display = 'block';
+  sec.scrollIntoView({ behavior: 'smooth', block: 'start' });
   var sel = document.getElementById('fin-dept-select');
   if (!sel) return;
   var tasks = {};
@@ -853,47 +854,72 @@ function finShowDeptConsumption() {
   Object.keys(tasks).sort().forEach(function(code) {
     sel.innerHTML += '<option value="' + code + '">' + code + ' — ' + tasks[code] + '</option>';
   });
-  var dates = finTransactions.map(function(t) { return t.date || ''; }).filter(Boolean).sort();
-  if (dates.length) {
-    document.getElementById('fin-dept-from').value = dates[0];
-    document.getElementById('fin-dept-to').value = dates[dates.length - 1];
+  var years = finTransactions.map(function(t) { return t.year || 0; }).filter(Boolean);
+  if (years.length) {
+    var minY = Math.min.apply(null, years), maxY = Math.max.apply(null, years);
+    document.getElementById('fin-dept-from').value = minY;
+    document.getElementById('fin-dept-to').value = maxY;
   }
   finRenderDeptConsumption();
 }
+
+var _monthNames = ['','يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
 
 function finRenderDeptConsumption() {
   var el = document.getElementById('fin-dept-result');
   if (!el) return;
   var taskCode = document.getElementById('fin-dept-select').value;
-  var from = document.getElementById('fin-dept-from').value || '';
-  var to = document.getElementById('fin-dept-to').value || '';
+  var fromYear = parseInt(document.getElementById('fin-dept-from').value) || 0;
+  var toYear = parseInt(document.getElementById('fin-dept-to').value) || 0;
   var filtered = finTransactions.filter(function(t) {
     if (taskCode && t.task !== taskCode) return false;
-    if (from && t.date && t.date < from) return false;
-    if (to && t.date && t.date > to) return false;
+    if (fromYear && t.year && t.year < fromYear) return false;
+    if (toYear && t.year && t.year > toYear) return false;
     return true;
   });
   if (!filtered.length) { el.innerHTML = '<div style="text-align:center;padding:20px;color:#888;">لا توجد بيانات في هذه الفترة</div>'; return; }
   var items = {};
   filtered.forEach(function(t) {
     var name = t.itemName || 'غير محدد';
-    if (!items[name]) items[name] = { name: name, total: 0, count: 0, task: t.task || '' };
+    var dept = t.costCenterDesc || t.taskDesc || t.task || '';
+    if (!items[name]) items[name] = { name: name, total: 0, count: 0, qty: 0, dept: dept, months: {} };
     items[name].total += t.value || 0;
     items[name].count += t.count || 0;
+    items[name].qty += t.qty || 0;
+    if (t.year && t.month) {
+      var mk = t.year + '-' + String(t.month).padStart(2, '0');
+      if (!items[name].months[mk]) items[name].months[mk] = 0;
+      items[name].months[mk] += t.qty || 0;
+    }
   });
-  var rows = Object.values(items).sort(function(a, b) { return b.total - a.total; });
+  var rows = Object.values(items).sort(function(a, b) { return b.qty - a.qty; });
   var grandTotal = rows.reduce(function(s, r) { return s + r.total; }, 0);
+  var grandQty = rows.reduce(function(s, r) { return s + r.qty; }, 0);
   var html = '<div style="background:#e0f2f1;border-radius:8px;padding:10px;margin-bottom:12px;font-size:13px;">';
   html += '<b>إجمالي الاستهلاك:</b> <span style="color:#00695c;font-weight:700;font-size:16px;">' + grandTotal.toLocaleString(undefined, {maximumFractionDigits: 0}) + ' ج.م</span>';
+  html += ' | <b>إجمالي الكمية:</b> ' + grandQty.toLocaleString(undefined, {maximumFractionDigits: 0});
   html += ' | <b>عدد البندات:</b> ' + rows.length;
   html += ' | <b>عدد المعاملات:</b> ' + filtered.length;
   html += '</div>';
-  html += '<table style="width:100%;border-collapse:collapse;font-size:13px;">';
-  html += '<thead><tr style="background:#00695c;color:white;"><th style="padding:8px;text-align:right;">البند</th><th style="padding:8px;">الإدارة</th><th style="padding:8px;">العدد</th><th style="padding:8px;">الإجمالي</th><th style="padding:8px;">النسبة</th></tr></thead><tbody>';
-  rows.forEach(function(r) {
+  html += '<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:13px;">';
+  html += '<thead><tr style="background:#00695c;color:white;"><th style="padding:8px;">#</th><th style="padding:8px;text-align:right;">الصنف</th><th style="padding:8px;">الكمية</th><th style="padding:8px;">عدد مرات الصرف</th><th style="padding:8px;">إجمالي القيمة</th><th style="padding:8px;">مركز التكلفة / شهور الصرف</th></tr></thead><tbody>';
+  rows.forEach(function(r, i) {
     var pct = grandTotal > 0 ? Math.round(r.total / grandTotal * 100) : 0;
-    html += '<tr style="border-bottom:1px solid #eee;"><td style="padding:8px;font-weight:600;">' + r.name + '</td><td style="padding:8px;color:#666;">' + r.task + '</td><td style="padding:8px;text-align:center;">' + r.count + '</td><td style="padding:8px;text-align:center;font-weight:700;color:#00695c;">' + r.total.toLocaleString(undefined, {maximumFractionDigits: 0}) + '</td><td style="padding:8px;text-align:center;"><div style="display:flex;align-items:center;gap:4px;justify-content:center;"><div style="width:50px;height:6px;background:#e0e0e0;border-radius:3px;overflow:hidden;"><div style="width:' + pct + '%;height:100%;background:#00695c;border-radius:3px;"></div></div>' + pct + '%</div></td></tr>';
+    var monthLabels = Object.keys(r.months).sort().map(function(mk) {
+      var parts = mk.split('-');
+      var mName = _monthNames[parseInt(parts[1])] || parts[1];
+      return mName + ' ' + parts[0] + ': ' + r.months[mk].toLocaleString(undefined, {maximumFractionDigits: 0});
+    }).join('، ');
+    if (!monthLabels) monthLabels = '-';
+    html += '<tr style="border-bottom:1px solid #eee;">';
+    html += '<td style="padding:6px;color:#999;font-size:12px;">' + (i + 1) + '</td>';
+    html += '<td style="padding:8px;font-weight:600;">' + r.name + '</td>';
+    html += '<td style="padding:8px;text-align:center;">' + r.qty.toLocaleString(undefined, {maximumFractionDigits: 0}) + '</td>';
+    html += '<td style="padding:8px;text-align:center;">' + r.count + '</td>';
+    html += '<td style="padding:8px;text-align:center;font-weight:700;color:#00695c;">' + r.total.toLocaleString(undefined, {maximumFractionDigits: 0}) + ' ج.م</td>';
+    html += '<td style="padding:8px;color:#555;font-size:12px;"><span style="font-weight:600;color:#333;">' + r.dept + '</span><br><span style="color:#888;">' + monthLabels + '</span></td>';
+    html += '</tr>';
   });
-  html += '</tbody></table>';
+  html += '</tbody></table></div>';
   el.innerHTML = html;
 }

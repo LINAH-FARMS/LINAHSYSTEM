@@ -3098,8 +3098,8 @@
         </div>
         <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:12px;">
           <div class="form-group"><label style="font-size:12px;font-weight:600;">الإدارة / البند</label><select id="fin-dept-select" style="padding:6px 10px;border:1px solid #ccc;border-radius:6px;font-size:13px;min-width:180px;" onchange="finRenderDeptConsumption()"></select></div>
-          <div class="form-group"><label style="font-size:12px;font-weight:600;">من</label><input type="date" id="fin-dept-from" style="padding:6px 10px;border:1px solid #ccc;border-radius:6px;font-size:13px;" onchange="finRenderDeptConsumption()"></div>
-          <div class="form-group"><label style="font-size:12px;font-weight:600;">إلى</label><input type="date" id="fin-dept-to" style="padding:6px 10px;border:1px solid #ccc;border-radius:6px;font-size:13px;" onchange="finRenderDeptConsumption()"></div>
+          <div class="form-group"><label style="font-size:12px;font-weight:600;">من سنة</label><input type="number" id="fin-dept-from" min="2020" max="2030" style="padding:6px 10px;border:1px solid #ccc;border-radius:6px;font-size:13px;width:90px;" onchange="finRenderDeptConsumption()"></div>
+          <div class="form-group"><label style="font-size:12px;font-weight:600;">لسنة</label><input type="number" id="fin-dept-to" min="2020" max="2030" style="padding:6px 10px;border:1px solid #ccc;border-radius:6px;font-size:13px;width:90px;" onchange="finRenderDeptConsumption()"></div>
         </div>
         <div id="fin-dept-result"></div>
       </div>
@@ -11652,99 +11652,32 @@ function toggleEmployeeStatus(empId) {
       if (!supabaseConnected) return false;
       if (_pushInProgress) return true;
       _pushInProgress = true;
-      var ts = new Date().toISOString();
-      var entities = {
-        employees: JSON.parse(JSON.stringify(employees)),
-        roomsCapacity: JSON.parse(JSON.stringify(roomsCapacity)),
-        vacations: JSON.parse(JSON.stringify(vacations)),
-        inventoryVouchers: JSON.parse(JSON.stringify(inventoryVouchers)),
-        excludedEmployees: JSON.parse(JSON.stringify(excludedEmployees)),
-        contractors: JSON.parse(JSON.stringify(contractors)),
-        mealLogs: JSON.parse(JSON.stringify(mealLogs)),
-        inventoryItems: JSON.parse(JSON.stringify(inventoryItems)),
-        hospitalities: JSON.parse(JSON.stringify(hospitalities)),
-        adminOvertime: JSON.parse(JSON.stringify(adminOvertime)),
-        maintenanceRecords: JSON.parse(JSON.stringify(maintenanceRecords)),
-        septicRecords: JSON.parse(JSON.stringify(septicRecords)),
-        periodicMaintenance: JSON.parse(JSON.stringify(periodicMaintenance)),
-        teaSugarDisbursements: JSON.parse(JSON.stringify(teaSugarDisbursements)),
-        teaSugarBatches: JSON.parse(JSON.stringify(teaSugarBatches)),
-        dynamicSectors: JSON.parse(JSON.stringify(dynamicSectors)),
-        contractorSectors: JSON.parse(JSON.stringify(contractorSectors)),
-        contractorRooms: JSON.parse(JSON.stringify(contractorRooms)),
-        dynamicRooms: JSON.parse(JSON.stringify(dynamicRooms)),
-        dynamicSeptics: JSON.parse(JSON.stringify(dynamicSeptics)),
-        dynamicDepts: JSON.parse(JSON.stringify(dynamicDepts)),
-        dynamicTitles: JSON.parse(JSON.stringify(dynamicTitles)),
-        evaluations: JSON.parse(JSON.stringify(evaluations)),
-        evalTemplates: JSON.parse(JSON.stringify(evalTemplates)),
-        appUsers: JSON.parse(JSON.stringify(appUsers)),
-        auditLog: JSON.parse(JSON.stringify(auditLog)),
-        bakeryIngredients: JSON.parse(JSON.stringify(bakeryIngredients)),
-        bakeryProductions: JSON.parse(JSON.stringify(bakeryProductions)),
-        bakeryContractorSupplies: JSON.parse(JSON.stringify(bakeryContractorSupplies)),
-        bakeryInvoices: JSON.parse(JSON.stringify(bakeryInvoices)),
-        bakeryStockLog: JSON.parse(JSON.stringify(bakeryStockLog)),
-        roomAssets: JSON.parse(JSON.stringify(roomAssets)),
-        archiveData: JSON.parse(JSON.stringify(archiveData)),
-        quickActions: JSON.parse(JSON.stringify(quickActions)),
-        deptTitles: JSON.parse(JSON.stringify(deptTitles)),
-        manualTotalBeds: typeof manualTotalBeds === 'number' ? manualTotalBeds : 0,
-        dailyStats: JSON.parse(JSON.stringify(dailyStats)),
-        finTransactions: JSON.parse(JSON.stringify(typeof finTransactions !== 'undefined' ? finTransactions : [])),
-        finBudgets: JSON.parse(JSON.stringify(typeof finBudgets !== 'undefined' ? finBudgets : [])),
-        syncDeletions: JSON.parse(JSON.stringify(syncDeletions))
-      };
-      // Fetch remote data to merge before push (prevents overwriting other users' data)
-      var remoteMap = {};
       try {
-        var rr = await fetch(_sbEndpoint + '?select=id,data', { method: 'GET', headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } });
-        if (rr.ok) { var rrRows = await rr.json(); for (var ri = 0; ri < rrRows.length; ri++) remoteMap[rrRows[ri].id] = rrRows[ri].data; }
-      } catch(e) {}
-      // Merge local with remote before push — prevents overwriting other devices' data
-      var _arrayKeyFns = {
-        employees: function(e) { return e.code || e.name || JSON.stringify(e); },
-        roomsCapacity: function(r) { return r.sector + '|' + r.number; },
-        vacations: function(v) { return (v.code || v.employeeCode || v.employeeName || v.name || '') + '|' + (v.start || v.startDate || v.dateFrom || '') + '|' + (v.end || v.endDate || v.dateTo || ''); },
-        inventoryVouchers: function(v) { return v.voucherId || v.id || v._id || JSON.stringify(v); },
-        excludedEmployees: function(e) { return e.code || e.name || JSON.stringify(e); },
-        contractors: function(c) { return c.name || c.id || JSON.stringify(c); },
-        mealLogs: function(m) { return m.date || JSON.stringify(m); },
-        inventoryItems: function(i) { return i.id || i.name || JSON.stringify(i); },
-        hospitalities: function(h) { return (h.name || '') + '|' + (h.arrival || '') + '|' + (h.type || ''); },
-        adminOvertime: function(o) { return (o.date || '') + '|' + (o.empCode || o.name || '') + '|' + (o.hours || ''); },
-        maintenanceRecords: function(m) { return (m.category || '') + '|' + (m.task || '') + '|' + (m.date || m.createdAt || ''); },
-        septicRecords: function(s) { return (s.date || '') + '|' + (s.name || s.sector || '') + '|' + (s.trips || s.quantity || ''); },
-        periodicMaintenance: function(p) { return (p.name || p.task || '') + '|' + (p.id || '') + '|' + (p.freq || p.frequency || ''); },
-        teaSugarDisbursements: function(t) { return (t.date || '') + '|' + (t.period || t.type || '') + '|' + (t.empCode || t.empId || '') + '|' + (t.teaPacks || t.quantity || '') + '|' + (t.sugarKg || ''); },
-        teaSugarBatches: function(t) { return t.id || t._id || JSON.stringify(t); },
-        evaluations: function(e) { return (e.empCode || e.employeeCode || '') + '|' + (e.date || '') + '|' + (e.month || e.type || '') + '|' + (e.year || ''); },
-        appUsers: function(u) { return u.name; },
-        auditLog: function(a) { return a.id || JSON.stringify(a); },
-        bakeryIngredients: function(b) { return b.name || JSON.stringify(b); },
-        bakeryProductions: function(p) { return normalizeDateStr(p.date) + '|' + (p.breadCount || ''); },
-        bakeryContractorSupplies: function(s) { return (s.name || '') + '|' + normalizeDateStr(s.date) + '|' + (s.count || ''); },
-        bakeryInvoices: function(inv) { return inv.id || inv._id || JSON.stringify(inv); },
-        bakeryStockLog: function(s) { return (s.date || '') + '|' + (s.materialName || s.ingredient || '') + '|' + (s.type || '') + '|' + (s.reference || ''); },
-        roomAssets: function(a) { return (a.room || '') + '|' + (a.item || '') + '|' + (a.id || JSON.stringify(a)); },
-        archiveData: function(a) { return a.id || a.date || JSON.stringify(a); },
-        quickActions: function(q) { return q.label || JSON.stringify(q); },
-        dailyStats: function(d) { return d.date || JSON.stringify(d); },
-        finTransactions: function(t) { return (t.date || '') + '|' + (t.task || '') + '|' + (t.orderNum || '') + '|' + (t.itemName || ''); },
-        finBudgets: function(b) { return (b.code || '') + '|' + (b.month || '') + '|' + (b.year || ''); }
-      };
-      for (var mk in entities) {
-        if (!remoteMap[mk]) continue;
-        var localArr = entities[mk];
-        var remoteArr = remoteMap[mk];
-        if (mk === 'currentUser' || mk === 'manualTotalBeds') { continue; }
-        if (mk === 'deptTitles' && typeof localArr === 'object' && typeof remoteArr === 'object' && !Array.isArray(localArr)) {
-          var merged = {};
-          for (var dk in remoteArr) merged[dk] = remoteArr[dk];
-          for (var dk in localArr) merged[dk] = localArr[dk];
-          entities[mk] = merged;
-          continue;
+        var ts = new Date().toISOString();
+        var allData = getAllDataForSync();
+        var payload = { id: 'alldata', data: allData, updated_at: ts, device_id: _deviceId };
+        var resp = await fetch(_sbEndpoint, {
+          method: 'POST',
+          headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/json', 'Prefer': 'resolution=merge-duplicates' },
+          body: JSON.stringify(payload)
+        });
+        if (resp.ok) {
+          _lastUpdatedAt = ts;
+          _pulledAt['alldata'] = ts;
+          localStorage.setItem('_pulledAt', JSON.stringify(_pulledAt));
+          _takeSnapshot();
+          syncStorage(true, true);
+          syncLog('✅ تم دفع جميع البيانات');
+          updateLastSyncTime();
+        } else {
+          syncLog('⚠️ فشل الدفع - ' + resp.status);
         }
+      } catch(e) {
+        syncLog('⚠️ خطأ في الدفع: ' + e.message);
+      }
+      _pushInProgress = false;
+      return true;
+    }
         if (Array.isArray(localArr) && Array.isArray(remoteArr) && _arrayKeyFns[mk]) {
           var remoteKeyed = {};
           remoteArr.forEach(function(item) { remoteKeyed[_arrayKeyFns[mk](item)] = item; });
@@ -11825,10 +11758,6 @@ function toggleEmployeeStatus(empId) {
     async function forceFullSync() {
       if (!supabaseConnected) return alert('❌ غير متصل بـ Supabase');
       if (!confirm('⚡ سيتم دفع كل البيانات من جهازك إلى السحابة.\nجهازك هو المصدر الوحيد. هل أنت متأكد؟')) return;
-      _dataHashes = {};
-      _pulledAt = {};
-      localStorage.setItem('_pushedHashes', '{}');
-      localStorage.setItem('_pulledAt', '{}');
       syncLog('🔄 جاري المزامنة القوية...');
       var ok = await pushToSupabase();
       if (ok) { syncLog('✅ تمت المزامنة القوية بنجاح'); alert('✅ تمت المزامنة القوية بنجاح!'); }
@@ -11837,75 +11766,71 @@ function toggleEmployeeStatus(empId) {
     async function pullFromSupabase() {
       if (!supabaseConnected) return;
       try {
-        var entityKeys = ['employees','roomsCapacity','vacations','inventoryVouchers','excludedEmployees','contractors','mealLogs','inventoryItems','hospitalities','adminOvertime','maintenanceRecords','septicRecords','periodicMaintenance','teaSugarDisbursements','teaSugarBatches','dynamicSectors','contractorSectors','contractorRooms','dynamicRooms','dynamicSeptics','dynamicDepts','dynamicTitles','evaluations','evalTemplates','appUsers','auditLog','bakeryIngredients','bakeryProductions','bakeryContractorSupplies','bakeryInvoices','bakeryStockLog','roomAssets','archiveData','quickActions','deptTitles','manualTotalBeds','dailyStats','finTransactions','finBudgets','syncDeletions'];
-        var resp = await fetch(_sbEndpoint + '?select=id,updated_at', { method: 'GET', headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } });
+        var resp = await fetch(_sbEndpoint + '?id=eq.alldata&select=data,updated_at', { method: 'GET', headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } });
         if (!resp.ok) return;
         var rows = await resp.json();
-        if (!rows || !rows.length) return;
-        // تحويل البيانات القديمة (alldata) إلى النظام الجديد
-        var oldRow = null;
-        for (var ri = 0; ri < rows.length; ri++) { if (rows[ri].id === 'alldata') { oldRow = rows[ri]; break; } }
-        if (oldRow && oldRow.updated_at !== _lastUpdatedAt) {
-          var oldResp = await fetch(_sbEndpoint + '?id=eq.alldata&select=data', { method: 'GET', headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } });
-          if (oldResp.ok) {
-            var oldRows = await oldResp.json();
-            if (oldRows && oldRows.length && oldRows[0].data) {
-              var old = oldRows[0].data;
-              var existingIds = {};
-              for (var ri = 0; ri < rows.length; ri++) { if (rows[ri].id !== 'alldata') existingIds[rows[ri].id] = true; }
-              for (var k in old) { if (entityKeys.indexOf(k) !== -1 && old[k] && !existingIds[k]) {
-                await fetch(_sbEndpoint, {
-                  method: 'POST',
-                  headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/json', 'Prefer': 'resolution=merge-duplicates' },
-                  body: JSON.stringify({ id: k, data: old[k], updated_at: oldRow.updated_at })
-                });
-              }}
-              await fetch(_sbEndpoint + '?id=eq.alldata', { method: 'DELETE', headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } });
-              _lastUpdatedAt = oldRow.updated_at;
-              syncLog('🔄 تم تحويل البيانات القديمة');
-              
-            }
+        if (rows && rows.length > 0) {
+          var remote = rows[0];
+          var localTs = _pulledAt['alldata'] || '';
+          if (remote.updated_at > localTs || _forcePull) {
+            applyRemoteData(remote.data);
+            _pulledAt['alldata'] = remote.updated_at;
+            localStorage.setItem('_pulledAt', JSON.stringify(_pulledAt));
+            _takeSnapshot();
+            syncStorage(true, true);
+            renderAll();
+            syncLog('✅ تم تحديث البيانات من السحابة');
+            showSyncToast('تم استلام البيانات');
+          } else {
+            syncLog('✅ البيانات محدثة');
           }
+        } else {
+          syncLog('ℹ️ لا توجد بيانات في السحابة — جاري التحويل...');
+          await _migrateToAlldata();
         }
-        var local = getAllDataForSync();
-        var mergedData = {};
-        var changedKeys = [];
+      } catch(e) {
+        syncLog('⚠️ خطأ في السحب: ' + e.message);
+      }
+    }
+
+    async function _migrateToAlldata() {
+      try {
+        var entityKeys = ['employees','roomsCapacity','vacations','inventoryVouchers','excludedEmployees','contractors','mealLogs','inventoryItems','hospitalities','adminOvertime','maintenanceRecords','septicRecords','periodicMaintenance','teaSugarDisbursements','teaSugarBatches','dynamicSectors','contractorSectors','contractorRooms','dynamicRooms','dynamicSeptics','dynamicDepts','dynamicTitles','evaluations','evalTemplates','appUsers','auditLog','bakeryIngredients','bakeryProductions','bakeryContractorSupplies','bakeryInvoices','bakeryStockLog','roomAssets','archiveData','quickActions','deptTitles','manualTotalBeds','dailyStats','finTransactions','finBudgets','syncDeletions'];
+        var resp = await fetch(_sbEndpoint + '?select=id,data,updated_at', { method: 'GET', headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } });
+        if (!resp.ok) return;
+        var rows = await resp.json();
+        var merged = {};
+        var latestTs = '';
         for (var i = 0; i < rows.length; i++) {
           var row = rows[i];
-          if (row.id === 'alldata') continue;
-          if (row.updated_at === _pulledAt[row.id]) continue;
-          var dataResp = await fetch(_sbEndpoint + '?id=eq.' + row.id + '&select=data,updated_at&order=updated_at.desc', { method: 'GET', headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } });
-          if (!dataResp.ok) continue;
-          var dataRows = await dataResp.json();
-          if (!dataRows || !dataRows.length) continue;
-          var bestRow = dataRows[0];
-          for (var di = 1; di < dataRows.length; di++) {
-            if ((dataRows[di].updated_at || '') > (bestRow.updated_at || '')) bestRow = dataRows[di];
+          if (row.id === 'alldata' || row.id === 'incident_reports' || row.id === 'bakery_daily_reports') continue;
+          if (entityKeys.indexOf(row.id) !== -1 && row.data) {
+            merged[row.id] = row.data;
+            if (row.updated_at > latestTs) latestTs = row.updated_at;
           }
-          var remoteData = bestRow.data;
-          if (JSON.stringify(remoteData) !== JSON.stringify(local[row.id])) {
-            mergedData[row.id] = remoteData;
-            changedKeys.push(row.id);
-          }
-          _pulledAt[row.id] = row.updated_at;
         }
-        if (changedKeys.length > 0) {
-          applyRemoteData(mergedData, '');
-          syncLog('🔄 تم استقبال تحديثات (' + changedKeys.join(', ') + ')');
+        if (Object.keys(merged).length > 0) {
+          var ts = new Date().toISOString();
+          await fetch(_sbEndpoint, {
+            method: 'POST',
+            headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/json', 'Prefer': 'resolution=merge-duplicates' },
+            body: JSON.stringify({ id: 'alldata', data: merged, updated_at: ts, device_id: _deviceId })
+          });
+          applyRemoteData(merged);
+          _pulledAt['alldata'] = ts;
+          localStorage.setItem('_pulledAt', JSON.stringify(_pulledAt));
           _takeSnapshot();
-          localStorage.setItem('_pulledAt', JSON.stringify(_pulledAt));
           syncStorage(true, true);
-          renderTable(); renderHousingLayout(); renderInventoryTable(); renderInventoryItems(); renderVacationsTable(); renderOvertimeCalendar(); renderHospitalityTable(); renderMaintenanceTable(); renderSepticTable(); renderPeriodicMaintenance(); renderTeaSugarTable(); renderMealLogTable(); renderDashboard(); renderQuickActions(); renderContractorsTable(); renderBakeryIngredients(); renderBakeryProductions(); renderBakeryContractorSupplies(); renderBakeryInvoices(); updateBakeryStats(); updateBreadSupplyStats();
-          rebuildAllDropdowns();
-          updateLastSyncTime();
-          showSyncToast('تم استلام تحديثات من جهاز آخر');
-        } else {
-          localStorage.setItem('_pulledAt', JSON.stringify(_pulledAt));
+          renderAll();
+          syncLog('✅ تم تحويل البيانات القديمة إلى نظام جديد');
         }
-      } catch(e) {}
-      if (!_snapshotKeys || !Object.keys(_snapshotKeys).length) _takeSnapshot();
+      } catch(e) { syncLog('⚠️ خطأ في التحويل: ' + e.message); }
     }
     
+    function renderAll() {
+      try { renderTable(); renderHousingLayout(); renderInventoryTable(); renderInventoryItems(); renderVacationsTable(); renderOvertimeCalendar(); renderHospitalityTable(); renderMaintenanceTable(); renderSepticTable(); renderPeriodicMaintenance(); renderTeaSugarTable(); renderMealLogTable(); renderDashboard(); renderQuickActions(); renderContractorsTable(); renderBakeryIngredients(); renderBakeryProductions(); renderBakeryContractorSupplies(); renderBakeryInvoices(); updateBakeryStats(); updateBreadSupplyStats(); rebuildAllDropdowns(); } catch(e) { console.error('renderAll error:', e); }
+    }
+
     function updateLastSyncTime() {
       var el = document.getElementById('last-sync-time');
       if (!el) return;
@@ -12102,128 +12027,13 @@ function toggleEmployeeStatus(empId) {
       return result;
     }
 
-    function applyRemoteData(d, srcId) {
-      if (srcId && srcId === _deviceId) return;
-      // Merge syncDeletions first (combine both devices' deletion logs)
-      if (d.syncDeletions) {
-        var existingKeys = {};
-        syncDeletions.forEach(function(dl) { existingKeys[dl.entity + '|' + dl.key + '|' + dl.deletedAt] = true; });
-        d.syncDeletions.forEach(function(dl) {
-          if (!existingKeys[dl.entity + '|' + dl.key + '|' + dl.deletedAt]) syncDeletions.push(dl);
-        });
-        var cutoff = new Date(Date.now() - 90 * 86400000).toISOString();
-        syncDeletions = syncDeletions.filter(function(d) { return d.deletedAt > cutoff; });
-        localStorage.setItem('lineh_sync_deletions', JSON.stringify(syncDeletions));
+    function applyRemoteData(d) {
+      if (!d || typeof d !== 'object') return;
+      var keys = Object.keys(d);
+      for (var i = 0; i < keys.length; i++) {
+        setEntityVar(keys[i], d[keys[i]]);
       }
-      // If _forcePull is true, just REPLACE all data directly from server
-      if (_forcePull) {
-        if (d.employees) { employees = d.employees || []; }
-        if (d.roomsCapacity) { roomsCapacity = d.roomsCapacity || []; }
-        if (d.vacations) { vacations = d.vacations || []; }
-        if (d.hospitalities) { hospitalities = d.hospitalities || []; }
-        if (d.maintenanceRecords) { maintenanceRecords = d.maintenanceRecords || []; }
-        if (d.septicRecords) { septicRecords = d.septicRecords || []; }
-        if (d.inventoryVouchers) { inventoryVouchers = d.inventoryVouchers || []; }
-        if (d.excludedEmployees) { excludedEmployees = d.excludedEmployees || []; }
-        if (d.periodicMaintenance) { periodicMaintenance = d.periodicMaintenance || []; }
-        if (d.teaSugarDisbursements) { teaSugarDisbursements = d.teaSugarDisbursements || []; }
-        if (d.teaSugarBatches) { teaSugarBatches = d.teaSugarBatches || []; }
-        if (d.mealLogs) { mealLogs = d.mealLogs || []; }
-        if (d.inventoryItems) { inventoryItems = d.inventoryItems || []; }
-        if (d.contractors) { contractors = d.contractors || []; }
-        if (d.dynamicSectors) { dynamicSectors = d.dynamicSectors || []; }
-        if (d.dynamicRooms) { dynamicRooms = d.dynamicRooms || []; }
-        if (d.dynamicSeptics) { dynamicSeptics = d.dynamicSeptics || []; }
-        if (d.dynamicDepts) { dynamicDepts = d.dynamicDepts || []; }
-        if (d.dynamicTitles) { dynamicTitles = d.dynamicTitles || []; }
-        if (d.deptTitles) { deptTitles = d.deptTitles || {}; }
-        if (d.appUsers) { appUsers = filterLatinUsers(d.appUsers || []); }
-        if (d.bakeryIngredients) { bakeryIngredients = d.bakeryIngredients || []; }
-        if (d.bakeryProductions) { bakeryProductions = d.bakeryProductions || []; }
-        if (d.bakeryContractorSupplies) { bakeryContractorSupplies = d.bakeryContractorSupplies || []; }
-        if (d.bakeryInvoices) { bakeryInvoices = d.bakeryInvoices || []; }
-        if (d.bakeryStockLog) { bakeryStockLog = d.bakeryStockLog || []; }
-        if (d.adminOvertime) { adminOvertime = d.adminOvertime || []; }
-        if (typeof d.manualTotalBeds === 'number') { manualTotalBeds = d.manualTotalBeds; }
-        if (d.roomAssets) { roomAssets = d.roomAssets || []; }
-        if (d.archiveData) { archiveData = d.archiveData || []; }
-        if (d.quickActions) { quickActions = d.quickActions || []; }
-        if (d.dailyStats) { dailyStats = d.dailyStats || []; }
-        if (d.finTransactions) { finTransactions = d.finTransactions || []; }
-        if (d.finBudgets) { finBudgets = d.finBudgets || []; }
-        if (d.finTransactions || d.finBudgets) { try { if (typeof finSave === 'function') finSave(); } catch(e) {} }
-        if (d.contractorSectors) { contractorSectors = d.contractorSectors || []; }
-        if (d.contractorRooms) { contractorRooms = d.contractorRooms || []; }
-        if (d.evaluations) { evaluations = d.evaluations || []; }
-        if (d.evalTemplates) { evalTemplates = d.evalTemplates || {}; }
-        if (d.auditLog) { auditLog = d.auditLog || []; }
-        normalizeBakeryDates(true);
-        deduplicateAfterSync();
-        return;
-      }
-      if (d.employees) {
-        employees = _smartMerge(employees, d.employees, function(e) { return e.code || e.name || JSON.stringify(e); }, 'employees');
-        // إعادة تطبيق فلتر المستبعدين بعد الدمج لمنع ظهورهم مجدداً
-        if (excludedEmployees.length > 0) {
-          var _exclMap = {};
-          excludedEmployees.forEach(function(e) { _exclMap[e.code || e.id || e.name] = true; });
-          employees = employees.filter(function(e) { return !_exclMap[e.code || e.id || e.name]; });
-        }
-      }
-      if (d.roomsCapacity) roomsCapacity = _smartMerge(roomsCapacity, d.roomsCapacity, function(r) { return r.sector + '|' + r.number; }, 'roomsCapacity');
-      if (d.vacations) vacations = _smartMerge(vacations, d.vacations, function(v) { return (v.code || v.employeeCode || v.employeeName || v.name || '') + '|' + (v.start || v.startDate || v.dateFrom || '') + '|' + (v.end || v.endDate || v.dateTo || ''); }, 'vacations');
-      if (d.hospitalities) hospitalities = _smartMerge(hospitalities, d.hospitalities, function(h) { return (h.name || '') + '|' + (h.arrival || '') + '|' + (h.type || ''); }, 'hospitalities');
-      if (d.maintenanceRecords) maintenanceRecords = _smartMerge(maintenanceRecords, d.maintenanceRecords, function(m) { return (m.category || '') + '|' + (m.task || '') + '|' + (m.date || m.createdAt || ''); }, 'maintenanceRecords');
-      if (d.septicRecords) septicRecords = _smartMerge(septicRecords, d.septicRecords, function(s) { return (s.date || '') + '|' + (s.sector || '') + '|' + (s.quantity || ''); }, 'septicRecords');
-      if (d.inventoryVouchers) inventoryVouchers = _smartMerge(inventoryVouchers, d.inventoryVouchers, function(v) { return v.id || v._id || JSON.stringify(v); }, 'inventoryVouchers');
-      if (d.excludedEmployees) excludedEmployees = _smartMerge(excludedEmployees, d.excludedEmployees, function(e) { return e.code || e.name || JSON.stringify(e); }, 'excludedEmployees');
-      // لو موظف رجع في القوة، شيله من المستبعدين
-      var _empMap = {};
-      employees.forEach(function(e) { _empMap[e.code || e.name] = true; });
-      excludedEmployees = excludedEmployees.filter(function(e) { return !_empMap[e.code || e.name]; });
-      if (d.periodicMaintenance) periodicMaintenance = _smartMerge(periodicMaintenance, d.periodicMaintenance, function(p) { return (p.name || p.task || '') + '|' + (p.id || '') + '|' + (p.freq || p.frequency || ''); }, 'periodicMaintenance');
-      if (d.teaSugarDisbursements) teaSugarDisbursements = _smartMerge(teaSugarDisbursements, d.teaSugarDisbursements, function(t) { return (t.date || '') + '|' + (t.period || t.type || '') + '|' + (t.empCode || t.empId || '') + '|' + (t.teaPacks || t.quantity || '') + '|' + (t.sugarKg || ''); }, 'teaSugarDisbursements');
-      if (d.teaSugarBatches) teaSugarBatches = _smartMerge(teaSugarBatches, d.teaSugarBatches, function(t) { return t.id || t._id || JSON.stringify(t); }, 'teaSugarBatches');
-      if (d.mealLogs) mealLogs = _smartMerge(mealLogs, d.mealLogs, function(m) { return m.date || JSON.stringify(m); }, 'mealLogs');
-      if (d.inventoryItems) inventoryItems = _smartMerge(inventoryItems, d.inventoryItems, function(i) { return i.id || i.name || JSON.stringify(i); }, 'inventoryItems');
-      if (d.contractors) contractors = _smartMerge(contractors, d.contractors, function(c) { return c.name || c.id || JSON.stringify(c); }, 'contractors');
-      if (d.dynamicSectors) dynamicSectors = _smartMerge(dynamicSectors, d.dynamicSectors, function(s) { return s.name || JSON.stringify(s); }, 'dynamicSectors');
-      if (d.dynamicRooms) dynamicRooms = _smartMerge(dynamicRooms, d.dynamicRooms, function(r) { return (r.sector || '') + '|' + (r.number || ''); }, 'dynamicRooms');
-      if (d.dynamicSeptics) dynamicSeptics = _smartMerge(dynamicSeptics, d.dynamicSeptics, function(s) { return typeof s === 'string' ? s : ((s.sector || '') + '|' + (s.name || '')); }, 'dynamicSeptics');
-      if (d.dynamicDepts) dynamicDepts = _smartMerge(dynamicDepts, d.dynamicDepts, function(d2) { return d2.name || JSON.stringify(d2); }, 'dynamicDepts');
-      if (d.dynamicTitles) dynamicTitles = _smartMerge(dynamicTitles, d.dynamicTitles, function(t) { return t.name || JSON.stringify(t); }, 'dynamicTitles');
-      if (d.deptTitles) {
-        Object.keys(d.deptTitles).forEach(dept => {
-          if (!deptTitles[dept]) deptTitles[dept] = [];
-          d.deptTitles[dept].forEach(t => { if (!deptTitles[dept].includes(t)) deptTitles[dept].push(t); });
-        });
-      }
-      if (d.appUsers) appUsers = _smartMerge(appUsers, d.appUsers, function(u) { return u.name; }, 'appUsers');
-      appUsers = appUsers.filter(function(u) { return /^[\u0621-\u064A\s]+$/.test(u.name); });
-      if (d.bakeryIngredients) bakeryIngredients = _smartMerge(bakeryIngredients, d.bakeryIngredients, function(b) { return b.name || JSON.stringify(b); }, 'bakeryIngredients');
-      if (d.bakeryProductions) bakeryProductions = _smartMerge(bakeryProductions, d.bakeryProductions, function(p) { return normalizeDateStr(p.date) + '|' + (p.breadCount || ''); }, 'bakeryProductions');
-      if (d.bakeryContractorSupplies) bakeryContractorSupplies = _smartMerge(bakeryContractorSupplies, d.bakeryContractorSupplies, function(s) { return (s.name || '') + '|' + normalizeDateStr(s.date) + '|' + (s.count || ''); }, 'bakeryContractorSupplies');
-      if (d.bakeryInvoices) bakeryInvoices = _smartMerge(bakeryInvoices, d.bakeryInvoices, function(inv) { return inv.id || inv._id || JSON.stringify(inv); }, 'bakeryInvoices');
-      if (d.adminOvertime) adminOvertime = _smartMerge(adminOvertime, d.adminOvertime, function(o) { return (o.date || '') + '|' + (o.name || '') + '|' + (o.hours || ''); }, 'adminOvertime');
-      if (typeof d.manualTotalBeds === 'number') manualTotalBeds = d.manualTotalBeds;
-      if (d.roomAssets) roomAssets = _smartMerge(roomAssets, d.roomAssets, function(a) { return (a.room || '') + '|' + (a.item || '') + '|' + (a.id || JSON.stringify(a)); }, 'roomAssets');
-      if (d.archiveData) archiveData = _smartMerge(archiveData, d.archiveData, function(a) { return a.id || a.date || JSON.stringify(a); }, 'archiveData');
-      if (d.quickActions) quickActions = _smartMerge(quickActions, d.quickActions, function(q) { return q.label || JSON.stringify(q); }, 'quickActions');
-      if (d.dailyStats) dailyStats = _smartMerge(dailyStats, d.dailyStats, function(s) { return s.date || JSON.stringify(s); }, 'dailyStats');
-      if (d.finTransactions) finTransactions = _smartMerge(typeof finTransactions !== 'undefined' ? finTransactions : [], d.finTransactions, function(t) { return (t.date || '') + '|' + (t.task || '') + '|' + (t.orderNum || '') + '|' + (t.itemName || ''); }, 'finTransactions');
-      if (d.finBudgets) finBudgets = _smartMerge(typeof finBudgets !== 'undefined' ? finBudgets : [], d.finBudgets, function(b) { return (b.code || '') + '|' + (b.month || '') + '|' + (b.year || ''); }, 'finBudgets');
       if (d.finTransactions || d.finBudgets) { try { if (typeof finSave === 'function') finSave(); } catch(e) {} }
-      if (d.contractorSectors) contractorSectors = _smartMerge(contractorSectors, d.contractorSectors, function(s) { return s.name || JSON.stringify(s); }, 'contractorSectors');
-      if (d.contractorRooms) contractorRooms = _smartMerge(contractorRooms, d.contractorRooms, function(r) { return (r.sector || '') + '|' + (r.number || '') + '|' + (r.beds || ''); }, 'contractorRooms');
-      if (d.evaluations) evaluations = _smartMerge(evaluations, d.evaluations, function(e) { return (e.empCode || e.employeeCode || '') + '|' + (e.date || '') + '|' + (e.month || e.type || '') + '|' + (e.year || ''); }, 'evaluations');
-      if (d.evalTemplates) evalTemplates = d.evalTemplates;
-      if (d.auditLog) auditLog = _smartMerge(auditLog, d.auditLog, function(a) { return a.id || JSON.stringify(a); }, 'auditLog');
-      if (d.bakeryStockLog) bakeryStockLog = _smartMerge(bakeryStockLog, d.bakeryStockLog, function(s) { return (s.date || '') + '|' + (s.ingredient || '') + '|' + (s.type || ''); }, 'bakeryStockLog');
-      if (excludedEmployees.length > 0) {
-        var exclMap = {};
-        excludedEmployees.forEach(function(e) { exclMap[e.code || e.id || e.name] = true; });
-        employees = employees.filter(function(e) { return !exclMap[e.code || e.id || e.name]; });
-      }
       normalizeBakeryDates(true);
       deduplicateAfterSync();
     }
@@ -12303,11 +12113,8 @@ function toggleEmployeeStatus(empId) {
         _forcePull = true;
         await connectSupabase();
         if (!supabaseConnected) { showSyncToast('❌ فشل الاتصال بـ Supabase'); btn.textContent = orig; btn.disabled = false; _forcePull = false; return; }
-        // إجبار سحب كامل
-        _pulledAt = {};
-        localStorage.setItem('_pulledAt', JSON.stringify({}));
         await pullFromSupabase();
-        showSyncToast('✅ تم سحب أحدث البيانات من Supabase');
+        showSyncToast('✅ تم سحب أحدث البيانات من السحابة');
       } catch(e) {
         showSyncToast('❌ فشل السحب');
       }
