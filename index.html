@@ -4724,7 +4724,7 @@
       try { if(tabId === 'tab-tea-sugar') { renderTeaSugarTable(); } } catch(e) { console.error('tab-tea-sugar error:', e); }
       try { if(tabId === 'tab-meal-log') { renderMealLogTable(); if(!document.getElementById('meal-date').value) document.getElementById('meal-date').value = new Date().toISOString().split('T')[0]; } } catch(e) { console.error('tab-meal-log error:', e); }
       try { if(tabId === 'tab-contractors') { populateContractorSectorDropdown(); renderContractorsTable(); } } catch(e) { console.error('tab-contractors error:', e); }
-      try { if(tabId === 'tab-bakery') { renderBakeryProductions(); renderBakeryIngredients(); updateBakeryStats(); populateBakeryDropdowns(); updateBakeryProductionIngredientStocks(); generateBakeryQR(); } } catch(e) { console.error('tab-bakery error:', e); }
+      try { if(tabId === 'tab-bakery') { renderBakeryProductions(); renderBakeryIngredients(); updateBakeryStats(); populateBakeryDropdowns(); updateBakeryProductionIngredientStocks(); generateBakeryQR(); autoLoadBakeryDaily(); } } catch(e) { console.error('tab-bakery error:', e); }
       try { if(tabId === 'tab-bread-supply') { renderBakeryContractorSupplies(); renderBakeryInvoices(); updateBreadSupplyStats(); populateBakeryDropdowns(); } } catch(e) { console.error('tab-bread-supply error:', e); }
       try { if(tabId === 'tab-maintenance') { searchMaintMaterial(); renderMaintMaterialsList(); } } catch(e) { console.error('tab-maintenance error:', e); }
       try { if(tabId === 'tab-vacations') { renderOvertimeCalendar(); } } catch(e) { console.error('tab-vacations error:', e); }
@@ -10147,6 +10147,20 @@ function toggleEmployeeStatus(empId) {
     }
 
     var bakeryDailyReports = [];
+    var _bakeryDailyLoaded = false;
+    function autoLoadBakeryDaily() {
+      if (_bakeryDailyLoaded) return;
+      fetch(SUPABASE_URL+'/rest/v1/sync_data?id=eq.bakery_daily_reports&select=data', { headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY} })
+        .then(function(r){return r.json();})
+        .then(function(rows){
+          if (rows && rows.length > 0 && rows[0].data) {
+            try { bakeryDailyReports = typeof rows[0].data === 'string' ? JSON.parse(rows[0].data) : rows[0].data; } catch(e) { bakeryDailyReports = []; }
+          }
+          importDailyReportsToProduction();
+          _bakeryDailyLoaded = true;
+        })
+        .catch(function(){});
+    }
     function loadBakeryDailyReports() {
       var el = document.getElementById('bakery-daily-list');
       if (!el) return;
