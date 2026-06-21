@@ -192,7 +192,7 @@ function finImportReport(evt) {
           importedBudget++;
         }
 
-        /* ── Transactions sheet (المصروفات) ── */
+        /* ── Transactions sheet (المصروفات) ── AGGREGATE by task+item+month ── */
         var json = XLSX.utils.sheet_to_json(sheet);
         if (!json.length) return;
         var firstRow = json[0];
@@ -202,55 +202,57 @@ function finImportReport(evt) {
         var hasTaskCol = trimmedKeys.some(function(k) { return k === 'Task'; });
         var hasValueCol = trimmedKeys.some(function(k) { return k === 'القيمة' || k === 'Value'; });
         if (hasTaskCol && hasValueCol) {
-          json.forEach(function(row, _ri) {
-            /* find key with trimmed match */
-            var taskVal = '';
-            var dateVal = '';
-            var orderNum = '', itemName = '', itemCode = '', storeName = '', unit = '';
-            var qty = 0, price = 0, value = 0, costCenter = '', costCenterDesc = '', segment = '', taskDesc = '', notes = '';
+          /* first pass: collect all rows into a temp map, aggregated by task+item+month */
+          var aggMap = {};
+          json.forEach(function(row) {
+            var taskVal = '', dateVal = '', itemName = '', taskDesc = '';
+            var qty = 0, price = 0, value = 0, costCenterDesc = '';
             for (var origK in row) {
               var tk = origK.trim();
               if (tk === 'Task') taskVal = row[origK];
               if (tk === 'التاريخ' || tk === 'Date') dateVal = row[origK];
-              if (tk === 'رقم اذن الصرف' || tk === 'رقم البون') orderNum = row[origK];
               if (tk === 'اسم الصـــنف' || tk === 'اسم الصنف') itemName = row[origK];
-              if (tk === 'كود الصنف') itemCode = row[origK];
-              if (tk === 'اسم المخزن') storeName = row[origK];
-              if (tk === 'الوحدة') unit = row[origK];
               if (tk === 'كمية الصرف' || tk === 'الكمية' || tk === 'Qty') qty = parseFloat(row[origK]) || 0;
               if (tk === 'السعر' || tk === 'Price') price = parseFloat(row[origK]) || 0;
               if (tk === 'القيمة' || tk === 'Value') value = parseFloat(row[origK]) || 0;
-              if (tk === 'Cost center' || tk === 'Cost Center') costCenter = row[origK];
               if (tk === 'Cost center Description' || tk === 'Cost Center Description') costCenterDesc = row[origK];
-              if (tk === 'Segment') segment = row[origK];
               if (tk === 'Task Description') taskDesc = row[origK];
-              if (tk === 'ملاحظات') notes = row[origK];
             }
             var overheadCode = String(taskVal).trim();
+            if (!overheadCode) return;
             var parsed = finParseDate(dateVal);
             var txMonth = finMonthFromExcelDate(parsed);
             var txYear = finYearFromExcelDate(parsed);
-            var txDate = finExcelDate(parsed);
-            if (!txDate && !overheadCode) return; /* skip empty rows */
-            orderNum = String(orderNum || '').trim();
-            itemName = String(itemName || '').trim();
             if (isNaN(value) || value === 0) value = qty * price;
-            if (!value || value === 0) return; /* skip zero-value rows */
-            /* compact: only store essential fields to fit localStorage */
-            var txObj = {
-              date: txDate, month: txMonth, year: txYear,
-              orderNum: orderNum,
-              itemName: itemName,
-              qty: qty, price: price, value: value,
-              task: overheadCode,
-              taskDesc: String(taskDesc || '').trim(),
-              costCenter: String(costCenter || '').trim(),
-              costCenterDesc: String(costCenterDesc || '').trim()
-            };
-            var existsIdx = finTransactions.findIndex(function(t) { return t.date === txDate && t.task === overheadCode && t.orderNum === orderNum && t.itemName === itemName; });
-            if (existsIdx >= 0) finTransactions[existsIdx] = txObj; else finTransactions.push(txObj);
+            if (!value || value === 0) return;
+            itemName = String(itemName || '').trim() || 'غير محدد';
+            var key = overheadCode + '|' + itemName + '|' + txYear + '|' + txMonth;
+            if (!aggMap[key]) aggMap[key] = { task: overheadCode, taskDesc: String(taskDesc || '').trim(), itemName: itemName, year: txYear, month: txMonth, totalQty: 0, totalValue: 0, count: 0, costCenterDesc: String(costCenterDesc || '').trim() };
+            aggMap[key].totalQty += qty;
+            aggMap[key].totalValue += value;
+            aggMap[key].count++;
           });
-          imported += json.length;
+          /* second pass: push aggregated records */
+          for (var key in aggMap) {
+            var a = aggMap[key];
+            var txObj = {
+              task: a.task, taskDesc: a.taskDesc, itemName: a.itemName,
+              year: a.year, month: a.month,
+              qty: Math.round(a.totalQty * 100) / 100,
+              value: Math.round(a.totalValue * 100) / 100,
+              count: a.count,
+              costCenterDesc: a.costCenterDesc
+            };
+            var existsIdx = finTransactions.findIndex(function(t) { return t.task === a.task && t.itemName === a.itemName && t.year === a.year && t.month === a.month; });
+            if (existsIdx >= 0) {
+              finTransactions[existsIdx].qty += txObj.qty;
+              finTransactions[existsIdx].value += txObj.value;
+              finTransactions[existsIdx].count += txObj.count;
+            } else {
+              finTransactions.push(txObj);
+            }
+          }
+          imported += Object.keys(aggMap).length;
         }
       });
       finSave();
@@ -500,9 +502,9 @@ function finShowDetail(code) {
     topHtml += '<div style="margin-bottom:6px;"><div style="display:flex;justify-content:space-between;font-size:11px;"><span>' + (i + 1) + '. ' + item.name + '</span><span style="font-weight:700;">' + item.total.toLocaleString(undefined, { maximumFractionDigits: 0 }) + '</span></div><div style="height:6px;background:#e0e0e0;border-radius:3px;overflow:hidden;"><div style="width:' + pct + '%;height:100%;background:#1565c0;border-radius:3px;"></div></div></div>';
   });
   document.getElementById('fin-detail-top-items').innerHTML = topHtml;
-  var tableHtml = '<table style="width:100%;font-size:12px;border-collapse:collapse;"><thead><tr style="background:#1b5e20;color:white;"><th>التاريخ</th><th>الصنف</th><th>الكمية</th><th>السعر</th><th>القيمة</th><th>مركز التكلفة</th></tr></thead><tbody>';
-  filtered.sort(function(a, b) { return (a.date || '').localeCompare(b.date || ''); }).forEach(function(t) {
-    tableHtml += '<tr><td>' + t.date + '</td><td>' + t.itemName + '</td><td style="text-align:center;">' + t.qty + '</td><td style="text-align:center;">' + t.price.toLocaleString(undefined, { maximumFractionDigits: 2 }) + '</td><td style="text-align:center;font-weight:700;color:#1565c0;">' + t.value.toLocaleString(undefined, { maximumFractionDigits: 2 }) + '</td><td>' + (t.costCenterDesc || '') + '</td></tr>';
+  var tableHtml = '<table style="width:100%;font-size:12px;border-collapse:collapse;"><thead><tr style="background:#1b5e20;color:white;"><th>الصنف</th><th>الكمية</th><th>عدد مرات الصرف</th><th>إجمالي القيمة</th><th>مركز التكلفة</th></tr></thead><tbody>';
+  filtered.sort(function(a, b) { return (b.value || 0) - (a.value || 0); }).forEach(function(t) {
+    tableHtml += '<tr><td>' + t.itemName + '</td><td style="text-align:center;">' + (t.qty || 0) + '</td><td style="text-align:center;">' + (t.count || 0) + '</td><td style="text-align:center;font-weight:700;color:#1565c0;">' + (t.value || 0).toLocaleString(undefined, { maximumFractionDigits: 2 }) + '</td><td>' + (t.costCenterDesc || '') + '</td></tr>';
   });
   tableHtml += '</tbody></table>';
   document.getElementById('fin-detail-table-wrap').innerHTML = tableHtml;
