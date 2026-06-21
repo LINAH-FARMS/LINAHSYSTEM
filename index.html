@@ -11558,7 +11558,7 @@ function toggleEmployeeStatus(empId) {
     }
     function _ts(item) { if (item && typeof item === 'object') item.modifiedAt = new Date().toISOString(); return item; }
     function _isDeleted(entity, key, modifiedAt) {
-      return syncDeletions.some(function(d) { return d.entity === entity && d.key === key && (!modifiedAt || d.deletedAt > modifiedAt); });
+      return syncDeletions.some(function(d) { return d.entity === entity && d.key === key; });
     }
     function _isCorrupted(item) {
       if (!item || typeof item !== 'object') return false;
@@ -11581,14 +11581,14 @@ function toggleEmployeeStatus(empId) {
         var rt = remoteItem.modifiedAt || '';
         return (rt >= lt) ? remoteItem : item;
       });
-      // Add remote items not in local (unless deleted locally)
+      // Add remote items not in local (skip deleted AND corrupted)
       var resultKeys = {};
       result.forEach(function(item) { resultKeys[keyFn(item)] = true; });
       remoteArr.forEach(function(item) {
         var k = keyFn(item);
         if (!resultKeys[k] && !_isDeleted(entityName, k, item.modifiedAt) && !_isCorrupted(item)) { result.push(item); resultKeys[k] = true; }
       });
-      // Filter out deleted items
+      // Filter out ALL deleted items (including ones that came from remote and were deleted locally)
       return result.filter(function(item) { return !_isDeleted(entityName, keyFn(item), item.modifiedAt); });
     }
     function _getItemKey(item, entity) {
