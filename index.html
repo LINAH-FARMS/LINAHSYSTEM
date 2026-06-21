@@ -3942,10 +3942,6 @@
       localStorage.setItem('lineh_sync_deletions', JSON.stringify(syncDeletions));
       localStorage.setItem('_pulledAt', JSON.stringify(_pulledAt));
       calculateSystemStats();
-      if (!skipSync && supabaseConnected && !_pushInProgress) {
-        clearTimeout(window.__autoPushTimer);
-        window.__autoPushTimer = setTimeout(function() { pushToSupabase(); }, 2000);
-      }
       if (!noTimestamp) localStorage.setItem('_localChangeTime', Date.now());
       setAction('💾 حفظ');
       _dataChangedSinceBackup = true;
@@ -11885,6 +11881,10 @@ function toggleEmployeeStatus(empId) {
       else if (key === 'archiveData') archiveData = val;
       else if (key === 'quickActions') quickActions = val;
       else if (key === 'dailyStats') dailyStats = val;
+      else if (key === 'finTransactions') finTransactions = val;
+      else if (key === 'finBudgets') finBudgets = val;
+      else if (key === 'manualTotalBeds') manualTotalBeds = val;
+      else if (key === 'deptTitles') deptTitles = val;
       else if (key === 'syncDeletions') syncDeletions = val;
     }
     function mergeArrays(localArr, remoteArr, keyFn) {
@@ -11957,6 +11957,11 @@ function toggleEmployeeStatus(empId) {
         setEntityVar(keys[i], d[keys[i]]);
       }
       if (d.finTransactions || d.finBudgets) { try { if (typeof finSave === 'function') finSave(); } catch(e) {} }
+      if (d.excludedEmployees && d.employees) {
+        var _exclMap = {};
+        excludedEmployees.forEach(function(e) { _exclMap[e.code || e.id || e.name] = true; });
+        employees = employees.filter(function(e) { return !_exclMap[e.code || e.id || e.name]; });
+      }
       normalizeBakeryDates(true);
       deduplicateAfterSync();
     }
@@ -12750,9 +12755,7 @@ function toggleEmployeeStatus(empId) {
         }, 0);
       }, 0);
 
-      // تحميل أولي من Google Drive (مرة واحدة)
-      // try restore from D: drive backup
-      (async function(){try{if(backupDirHandle){var _dok=await verifyDirPermission(false);if(_dok&&((!employees||employees.length===0)||(!hospitalities||hospitalities.length===0))){var _dl=await loadLatestBackup();if(_dl)syncLog('restored from D:');}}}catch(e){}})();
+      // ❌ تم تعطيل التحميل التلقائي من D: drive — يعتمد على السحب اليدوي فقط
       function updateDashClock() {
         let el = document.getElementById('dash-clock');
         if (el) el.innerText = '⏱️ ' + new Date().toLocaleString('ar-EG') + ' | لينه فارمز - منظومة الشئون الإدارية';
@@ -12772,10 +12775,8 @@ function toggleEmployeeStatus(empId) {
           scheduleDailyStats();
         }, delay);
       })();
-      if (currentUser === 'سالم مجدي') {
-        autoSaveBackup();
-        setInterval(autoSaveBackup, 12 * 60 * 60 * 1000);
-      }
+      // ❌ تم تعطيل النسخ الاحتياطي التلقائي — يعتمد على النسخ اليدوي فقط
+      // if (currentUser === 'سالم مجدي') { autoSaveBackup(); setInterval(autoSaveBackup, 12 * 60 * 60 * 1000); }
 
       // Auto-migrate from file:// to server if ?sync=1 in URL
       (async function checkAutoMigrate() {
@@ -12796,44 +12797,8 @@ function toggleEmployeeStatus(empId) {
         }
       })();
 
-      // Auto-load from SQLite server if localStorage empty
-      (async function loadFromServer() {
-        await serverInitPromise;
-        if (employees.length === 0 && isServerOnline) {
-          try {
-            let res = await fetch(`${API_BASE}/context`);
-            let data = await res.json();
-            if (data && data.employees && data.employees.length > 0) {
-              employees = data.employees;
-              if (data.rooms_capacity) { roomsCapacity = data.rooms_capacity; roomsCapacity.forEach(r => { if(r.roomNumber && !r.number) r.number = r.roomNumber; }); }
-              if (data.vacations) vacations = data.vacations;
-              if (data.hospitalities) hospitalities = data.hospitalities;
-              if (data.maintenance) maintenanceRecords = data.maintenance;
-              if (data.septic) septicRecords = data.septic;
-              if (data.inventory_vouchers) inventoryVouchers = data.inventory_vouchers;
-              if (data.excluded_employees) excludedEmployees = data.excluded_employees;
-              if (data.periodic_maintenance) periodicMaintenance = data.periodic_maintenance;
-              if (data.tea_sugar) teaSugarDisbursements = data.tea_sugar;
-              if (data.meal_logs) mealLogs = data.meal_logs;
-              if (data.inventory_items) inventoryItems = data.inventory_items;
-              if (data.contractors) contractors = data.contractors;
-              if (data.dynamicSectors) dynamicSectors = data.dynamicSectors;
-              if (data.dynamicRooms) dynamicRooms = data.dynamicRooms;
-              if (data.dynamicSeptics) dynamicSeptics = data.dynamicSeptics;
-              if (data.dynamicDepts) dynamicDepts = data.dynamicDepts;
-              if (data.dynamicTitles) dynamicTitles = data.dynamicTitles;
-        if (data.deptTitles) deptTitles = data.deptTitles;
-              employees.forEach(function(e) { if (typeof e.vacationBalance !== 'number') e.vacationBalance = 30; });
-              syncStorage();
-              sortEmployeesAlphabetically(); rebuildAllDropdowns();
-              renderTable(); renderHousingLayout(); renderInventoryTable(); renderInventoryItems();
-              renderVacationsTable(); renderOvertimeCalendar(); renderHospitalityTable(); renderMaintenanceTable(); renderSepticTable();
-              renderPeriodicMaintenance(); renderTeaSugarTable(); renderMealLogTable(); autoSaveTodayMeal(); renderContractorsTable();
-              renderBakeryIngredients(); renderBakeryProductions(); renderDashboard(); renderQuickActions(); initAllSortableTables();
-            }
-          } catch(e) {}
-        }
-      })();
+      // ❌ تم تعطيل التحميل التلقائي من السيرفر — يعتمد على السحب اليدوي فقط
+      // (async function loadFromServer() { ... })();
 
       // Restore backup directory handle from IndexedDB
       getIDBValue('backup_dir_handle').then(async (handle) => {
