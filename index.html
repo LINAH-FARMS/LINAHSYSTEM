@@ -5816,6 +5816,8 @@
       alert('✅ تم تعبئة عدد الأرغفة: ' + val);
     }
     function getPresentCountOnDate(targetDateStr) {
+      var stat = dailyStats.find(function(s) { return s.date === targetDateStr; });
+      if (stat) return (stat.permP || 0) + (stat.casP || 0);
       var totalEmps = employees.length;
       var onVacation = employees.filter(function(e) {
         var empVacations = vacations.filter(function(v) {
