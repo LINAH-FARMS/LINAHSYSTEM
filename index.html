@@ -3243,13 +3243,13 @@
       { icon: '📊', label: 'تقرير Excel', action: 'exportDashboardToExcel()' }
     ]);
     let dailyStats = _safeJsonParse(localStorage.getItem('lineh_daily_stats'), []);
-    /* migrate old dailyStats to simplified format (Date,Total,PermP,PermV,CasP,Guests) */
+    /* migrate: strip to only needed fields */
     dailyStats = dailyStats.map(function(s) {
       return {
         date: s.date,
         total: s.total,
         permP: s.permP, permV: s.permV, permPPct: s.permPPct, permVPct: s.permVPct,
-        casP: s.casP, casV: s.casV, casPPct: s.casPPct, casVPct: s.casVPct,
+        casP: s.casP, casPPct: s.casPPct,
         hospGuests: s.hospGuests || 0
       };
     });
@@ -6106,17 +6106,15 @@
       var permP = perm.filter(function(e) { return e.status === 'P'; }).length;
       var permV = perm.filter(function(e) { return e.status === 'V'; }).length;
       var casP = casual.filter(function(e) { return e.status === 'P'; }).length;
-      var casV = casual.filter(function(e) { return e.status === 'V'; }).length;
       var activeHosp = hospitalities.filter(function(h) { return h.arrival && h.arrival <= today && (h.departure || '2099-12-31') >= today; });
       var hospTotal = activeHosp.reduce(function(s, h) { return s + (h.guests || 1); }, 0);
       var p = function(n) { return total > 0 ? Math.round(n / total * 100) : 0; };
       var snap = {
         date: today,
-        permTotal: perm.length, permP: permP, permV: permV, permPPct: p(permP), permVPct: p(permV),
-        casTotal: casual.length, casP: casP, casV: casV, casPPct: p(casP), casVPct: p(casV),
-        total: total, totalP: permP + casP, totalV: permV + casV,
-        totalPPct: p(permP + casP), totalVPct: p(permV + casV),
-        hospCount: activeHosp.length, hospGuests: hospTotal
+        total: total,
+        permP: permP, permV: permV, permPPct: p(permP), permVPct: p(permV),
+        casP: casP, casPPct: p(casP),
+        hospGuests: hospTotal
       };
       var existing = dailyStats.findIndex(function(s) { return s.date === today; });
       if (existing >= 0) dailyStats[existing] = snap; else dailyStats.push(snap);
