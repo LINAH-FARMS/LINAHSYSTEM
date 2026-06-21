@@ -143,23 +143,50 @@ function finProcessWorkbook(workbook) {
         /* ── Budget sheet (Sheet2 style) ── */
         if (headerRowIdx >= 0) {
           var headerCells = rawArr[headerRowIdx] || [];
-          var monthMap = {'Jan':1,'Feb':2,'Mar':3,'Apr':4,'May':5,'Jun':6,'Jul':7,'Aug':8,'Sep':9,'Oct':10,'Nov':11,'Dec':12};
-          var detectedMonth = 1;
-          /* detect month from header row 0 (month labels) or from sheet name */
-          if (headerRowIdx > 0) {
-            var monthRow = rawArr[0] || [];
-            for (var ci = 0; ci < monthRow.length; ci++) {
-              var mv = String(monthRow[ci] || '').trim();
-              for (var mk in monthMap) { if (mv.indexOf(mk) >= 0) { detectedMonth = monthMap[mk]; break; } }
-              if (detectedMonth > 1) break;
+          var monthMapShort = {'jan':1,'feb':2,'mar':3,'apr':4,'may':5,'jun':6,'jul':7,'aug':8,'sep':9,'oct':10,'nov':11,'dec':12};
+          var monthMapFull = {'january':1,'february':2,'march':3,'april':4,'june':6,'july':7,'august':8,'september':9,'october':10,'november':11,'december':12};
+          var monthMapAr = {'يناير':1,'فبراير':2,'مارس':3,'أبريل':4,'مايو':5,'يونيو':6,'يوليو':7,'أغسطس':8,'سبتمبر':9,'أكتوبر':10,'نوفمبر':11,'ديسمبر':12};
+          var detectedMonth = 0;
+
+          /* 1st: detect from sheet name */
+          var snLower = sheetName.toLowerCase();
+          for (var mk in monthMapShort) { if (snLower.indexOf(mk) >= 0) { detectedMonth = monthMapShort[mk]; break; } }
+          if (!detectedMonth) { for (var mk in monthMapFull) { if (snLower.indexOf(mk) >= 0) { detectedMonth = monthMapFull[mk]; break; } } }
+          if (!detectedMonth) { for (var mk in monthMapAr) { if (sheetName.indexOf(mk) >= 0) { detectedMonth = monthMapAr[mk]; break; } } }
+
+          /* 2nd: detect from row above header (row 0) or first non-empty row */
+          if (!detectedMonth) {
+            var scanRows = [rawArr[0], rawArr[1]];
+            for (var ri = 0; ri < scanRows.length && !detectedMonth; ri++) {
+              var monthRow = scanRows[ri] || [];
+              for (var ci = 0; ci < monthRow.length && !detectedMonth; ci++) {
+                var mv = String(monthRow[ci] || '').trim().toLowerCase();
+                for (var mk in monthMapShort) { if (mv.indexOf(mk) >= 0) { detectedMonth = monthMapShort[mk]; break; } }
+                if (!detectedMonth) { for (var mk in monthMapFull) { if (mv.indexOf(mk) >= 0) { detectedMonth = monthMapFull[mk]; break; } } }
+                if (!detectedMonth) {
+                  var mvOrig = String(monthRow[ci] || '').trim();
+                  for (var mk in monthMapAr) { if (mvOrig.indexOf(mk) >= 0) { detectedMonth = monthMapAr[mk]; break; } }
+                }
+              }
             }
           }
-          if (detectedMonth === 1) {
-            for (var mk2 in monthMap) { if (sheetName.indexOf(mk2) >= 0) { detectedMonth = monthMap[mk2]; break; } }
-          }
-          var detectedYear = 2026;
+
+          if (!detectedMonth) detectedMonth = 1;
+
+          var detectedYear = new Date().getFullYear();
+          /* detect year from sheet name first */
           var yearMatch = sheetName.match(/(\d{4})/);
           if (yearMatch) detectedYear = parseInt(yearMatch[1]);
+          /* also try row 0/1 for year */
+          if (!yearMatch) {
+            for (var ri = 0; ri < 2 && !yearMatch; ri++) {
+              var yRow = rawArr[ri] || [];
+              for (var ci = 0; ci < yRow.length && !yearMatch; ci++) {
+                var ym = String(yRow[ci] || '').match(/(\d{4})/);
+                if (ym) { detectedYear = parseInt(ym[1]); yearMatch = ym; }
+              }
+            }
+          }
 
           /* build key->index map from header row */
           var keyIdx = {};
