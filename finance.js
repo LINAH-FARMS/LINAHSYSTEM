@@ -97,16 +97,99 @@ function finImportReport(evt) {
       var _dbgKeys = [];
       workbook.SheetNames.forEach(function(sheetName) {
         var sheet = workbook.Sheets[sheetName];
+
+        /* ── first pass: detect if budget sheet by reading raw with header:1 ── */
+        var rawArr = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+        if (!rawArr.length) return;
+        /* find the header row (first row with "Overhead" and "Budget") */
+        var headerRowIdx = -1;
+        for (var ri = 0; ri < Math.min(rawArr.length, 5); ri++) {
+          var cells = rawArr[ri] || [];
+          var hasOH = cells.some(function(c) { return String(c || '').trim() === 'Overhead'; });
+          var hasBG = cells.some(function(c) { return String(c || '').trim() === 'Budget'; });
+          if (hasOH && hasBG) { headerRowIdx = ri; break; }
+        }
+
+        /* ── Budget sheet (Sheet2 style) ── */
+        if (headerRowIdx >= 0) {
+          var headerCells = rawArr[headerRowIdx] || [];
+          var monthMap = {'Jan':1,'Feb':2,'Mar':3,'Apr':4,'May':5,'Jun':6,'Jul':7,'Aug':8,'Sep':9,'Oct':10,'Nov':11,'Dec':12};
+          var detectedMonth = 1;
+          /* detect month from header row 0 (month labels) or from sheet name */
+          if (headerRowIdx > 0) {
+            var monthRow = rawArr[0] || [];
+            for (var ci = 0; ci < monthRow.length; ci++) {
+              var mv = String(monthRow[ci] || '').trim();
+              for (var mk in monthMap) { if (mv.indexOf(mk) >= 0) { detectedMonth = monthMap[mk]; break; } }
+              if (detectedMonth > 1) break;
+            }
+          }
+          if (detectedMonth === 1) {
+            for (var mk2 in monthMap) { if (sheetName.indexOf(mk2) >= 0) { detectedMonth = monthMap[mk2]; break; } }
+          }
+          var detectedYear = 2026;
+          var yearMatch = sheetName.match(/(\d{4})/);
+          if (yearMatch) detectedYear = parseInt(yearMatch[1]);
+
+          /* build key->index map from header row */
+          var keyIdx = {};
+          headerCells.forEach(function(c, ci) { keyIdx[String(c || '').trim()] = ci; });
+          var overheadIdx = keyIdx['Overhead'];
+          var budgetIdx = keyIdx['Budget'];
+          var actualIdx = keyIdx['Actual'];
+          var varianceIdx = keyIdx['Variance'];
+          var ytdBudgetIdx = keyIdx['YTD Budget'];
+          var ytdActualIdx = keyIdx['YTD Actual'];
+          var ytdVarianceIdx = keyIdx['YTD Variance'];
+          /* fallback: scan all header cells for YTD columns */
+          if (ytdBudgetIdx === undefined || ytdActualIdx === undefined) {
+            var ytdCols = [];
+            headerCells.forEach(function(c, ci) {
+              var s = String(c || '').trim();
+              if (s.indexOf('YTD') >= 0) ytdCols.push({ label: s, idx: ci });
+            });
+            ytdCols.forEach(function(yc) {
+              if (yc.label.indexOf('Budget') >= 0 && ytdBudgetIdx === undefined) ytdBudgetIdx = yc.idx;
+              if (yc.label.indexOf('Actual') >= 0 && ytdActualIdx === undefined) ytdActualIdx = yc.idx;
+              if (yc.label.indexOf('Variance') >= 0 && ytdVarianceIdx === undefined) ytdVarianceIdx = yc.idx;
+            });
+          }
+
+          /* data rows start after header */
+          for (var dri = headerRowIdx + 1; dri < rawArr.length; dri++) {
+            var row = rawArr[dri] || [];
+            if (overheadIdx === undefined) continue;
+            var overheadName = String(row[overheadIdx] || '').trim();
+            if (!overheadName || overheadName === 'Total' || overheadName === 'total') continue;
+            var code = String(row[0] || '').trim();
+            if (!code || code === 'Total') continue;
+            var budget = budgetIdx !== undefined ? parseFloat(row[budgetIdx]) || 0 : 0;
+            var actual = actualIdx !== undefined ? parseFloat(row[actualIdx]) || 0 : 0;
+            var variance = varianceIdx !== undefined ? parseFloat(row[varianceIdx]) || 0 : (budget - actual);
+            var pct = budget ? Math.round((actual / budget) * 100) : 0;
+            var ytdB = ytdBudgetIdx !== undefined ? parseFloat(row[ytdBudgetIdx]) || 0 : 0;
+            var ytdA = ytdActualIdx !== undefined ? parseFloat(row[ytdActualIdx]) || 0 : 0;
+            var ytdV = ytdVarianceIdx !== undefined ? parseFloat(row[ytdVarianceIdx]) || 0 : (ytdB - ytdA);
+            var ytdP = ytdB ? Math.round((ytdA / ytdB) * 100) : 0;
+            var existingIdx = finBudgets.findIndex(function(b) { return b.code === code && b.month === detectedMonth && b.year === detectedYear; });
+            var entry = {
+              code: code, name: overheadName, month: detectedMonth, year: detectedYear,
+              budget: budget, actual: actual, variance: variance, percent: pct,
+              ytdBudget: ytdB, ytdActual: ytdA, ytdVariance: ytdV, ytdPercent: ytdP,
+              modifiedAt: new Date().toISOString()
+            };
+            if (existingIdx >= 0) finBudgets[existingIdx] = entry; else finBudgets.push(entry);
+          }
+          importedBudget++;
+        }
+
+        /* ── Transactions sheet (المصروفات) ── */
         var json = XLSX.utils.sheet_to_json(sheet);
         if (!json.length) return;
         var firstRow = json[0];
         var keys = Object.keys(firstRow);
         if (_dbgKeys.length === 0) _dbgKeys = keys.slice(0, 20);
-
-        /* ── trim whitespace from keys for matching ── */
         var trimmedKeys = keys.map(function(k) { return k.trim(); });
-
-        /* ── Transactions (المصروفات) ── */
         var hasTaskCol = trimmedKeys.some(function(k) { return k === 'Task'; });
         var hasValueCol = trimmedKeys.some(function(k) { return k === 'القيمة' || k === 'Value'; });
         if (hasTaskCol && hasValueCol) {
@@ -165,54 +248,6 @@ function finImportReport(evt) {
           });
           imported += json.length;
         }
-
-        /* ── Budget (Sheet2 / ملخص الميزانية) ── */
-        var hasBudgetCol = trimmedKeys.some(function(k) { return k === 'Overhead'; });
-        var hasBudgetAmt = trimmedKeys.some(function(k) { return k === 'Budget'; });
-        if (hasBudgetCol && hasBudgetAmt) {
-          /* detect month from column names (e.g. " Apr", "Apr Budget", etc.) */
-          var monthMap = {'Jan':1,'Feb':2,'Mar':3,'Apr':4,'May':5,'Jun':6,'Jul':7,'Aug':8,'Sep':9,'Oct':10,'Nov':11,'Dec':12};
-          var detectedMonth = 1;
-          var detectedYear = 2026;
-          for (var mk in monthMap) {
-            if (trimmedKeys.some(function(k) { return k.indexOf(mk) >= 0; })) { detectedMonth = monthMap[mk]; break; }
-          }
-          var yearMatch = sheetName.match(/(\d{4})/);
-          if (yearMatch) detectedYear = parseInt(yearMatch[1]);
-
-          json.forEach(function(row) {
-            /* map trimmed keys to values */
-            var mapped = {};
-            for (var origK in row) { mapped[origK.trim()] = row[origK]; }
-            var overheadName = String(mapped['Overhead'] || '').trim();
-            if (!overheadName || overheadName === 'Total' || overheadName === 'total') return;
-            var code = String(mapped[keys[0]] || '').trim();
-            if (!code || code === 'Total') return;
-            var budget = parseFloat(mapped['Budget']) || 0;
-            var actual = parseFloat(mapped['Actual']) || 0;
-            var variance = parseFloat(mapped['Variance']) || (budget - actual);
-            var pct = budget ? Math.round((actual / budget) * 100) : 0;
-            var ytdB = 0, ytdA = 0, ytdV = 0;
-            /* find YTD columns by trimmed key */
-            for (var origK in row) {
-              var tk = origK.trim();
-              if (tk === 'YTD Budget' || tk.indexOf('YTD') >= 0 && tk.indexOf('Budget') >= 0) ytdB = parseFloat(row[origK]) || 0;
-              if (tk === 'YTD Actual' || tk.indexOf('YTD') >= 0 && tk.indexOf('Actual') >= 0) ytdA = parseFloat(row[origK]) || 0;
-              if (tk === 'YTD Variance' || tk.indexOf('YTD') >= 0 && tk.indexOf('Variance') >= 0) ytdV = parseFloat(row[origK]) || 0;
-            }
-            if (!ytdV) ytdV = ytdB - ytdA;
-            var ytdP = ytdB ? Math.round((ytdA / ytdB) * 100) : 0;
-            var existingIdx = finBudgets.findIndex(function(b) { return b.code === code && b.month === detectedMonth && b.year === detectedYear; });
-            var entry = {
-              code: code, name: overheadName, month: detectedMonth, year: detectedYear,
-              budget: budget, actual: actual, variance: variance, percent: pct,
-              ytdBudget: ytdB, ytdActual: ytdA, ytdVariance: ytdV, ytdPercent: ytdP,
-              modifiedAt: new Date().toISOString()
-            };
-            if (existingIdx >= 0) finBudgets[existingIdx] = entry; else finBudgets.push(entry);
-          });
-          importedBudget++;
-        }
       });
       finSave();
       finPopulateYearSelect();
@@ -239,7 +274,9 @@ function finPopulateYearSelect() {
   Array.from(years).sort().forEach(function(y) {
     sel.innerHTML += '<option value="' + y + '">' + y + '</option>';
   });
-  sel.value = new Date().getFullYear();
+  /* select the latest year from data, not current calendar year */
+  var sortedYears = Array.from(years).sort();
+  sel.value = sortedYears[sortedYears.length - 1];
 }
 
 function finFiltered(month, year) {
