@@ -12751,7 +12751,8 @@ function toggleEmployeeStatus(empId) {
         }, 0);
       }, 0);
 
-      // ❌ تم تعطيل التحميل التلقائي من D: drive — يعتمد على السحب اليدوي فقط
+      // ✅ تحميل من D: drive لو localStorage فاضية
+      (async function(){try{if(backupDirHandle){var _dok=await verifyDirPermission(false);if(_dok&&((!employees||employees.length===0)||(!hospitalities||hospitalities.length===0))){var _dl=await loadLatestBackup();if(_dl)syncLog('restored from D:');}}}catch(e){}})();
       function updateDashClock() {
         let el = document.getElementById('dash-clock');
         if (el) el.innerText = '⏱️ ' + new Date().toLocaleString('ar-EG') + ' | لينه فارمز - منظومة الشئون الإدارية';
@@ -12771,8 +12772,11 @@ function toggleEmployeeStatus(empId) {
           scheduleDailyStats();
         }, delay);
       })();
-      // ❌ تم تعطيل النسخ الاحتياطي التلقائي — يعتمد على النسخ اليدوي فقط
-      // if (currentUser === 'سالم مجدي') { autoSaveBackup(); setInterval(autoSaveBackup, 12 * 60 * 60 * 1000); }
+      // ✅ النسخ الاحتياطي التلقائي على D: drive كل 12 ساعة
+      if (currentUser === 'سالم مجدي') {
+        autoSaveBackup();
+        setInterval(autoSaveBackup, 12 * 60 * 60 * 1000);
+      }
 
       // Auto-migrate from file:// to server if ?sync=1 in URL
       (async function checkAutoMigrate() {
