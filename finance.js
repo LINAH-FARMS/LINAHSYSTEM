@@ -401,9 +401,10 @@ function finRenderBudgetTable(data) {
   });
   for (var code in groups) {
     if (!merged[code]) merged[code] = { code: code, name: groups[code].name, budget: 0, actual: 0, variance: 0, ytdBudget: 0, ytdActual: 0 };
-    if (merged[code].actual === 0) merged[code].actual = groups[code].total;
+    merged[code].actual = groups[code].total;
   }
   var rows = Object.values(merged).sort(function(a, b) { return (b.actual || 0) - (a.actual || 0); });
+  rows.forEach(function(r) { r.variance = r.budget - r.actual; });
   tbody.innerHTML = '';
   if (rows.length === 0) { tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:30px;color:#888;">لا توجد بيانات. قم باستيراد تقرير شهري أولاً.</td></tr>'; return; }
   rows.forEach(function(r) {
