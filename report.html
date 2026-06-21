@@ -37,6 +37,20 @@ textarea{resize:vertical;min-height:70px}
   
   <div id="report-form">
     <div class="form-group">
+      <label>القسم <span class="required">*</span></label>
+      <select id="dept" required>
+        <option value="">-- اختر القسم --</option>
+        <option value="كهرباء">كهرباء</option>
+        <option value="سباكة">سباكة</option>
+        <option value="أجهزة">أجهزة</option>
+        <option value="بناء">بناء</option>
+        <option value="نظافة">نظافة</option>
+        <option value="عمليات">عمليات</option>
+        <option value="إداري">إداري</option>
+        <option value="أخرى">أخرى</option>
+      </select>
+    </div>
+    <div class="form-group">
       <label>رقم الموبايل <span class="required">*</span></label>
       <input type="tel" id="phone" placeholder="01xxxxxxxxx" required maxlength="11" inputmode="numeric">
     </div>
@@ -90,6 +104,22 @@ var SB = 'https://cwqghiqykohefaggedjl.supabase.co';
 var KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN3cWdoaXF5a29oZWZhZ2dlZGpsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEwMjUyMjEsImV4cCI6MjA5NjYwMTIyMX0.3a3hRcNdmYQCtjYjBroAT6df1T_7oz-XWUeD3wagYw8';
 var HEADERS = { 'apikey': KEY, 'Authorization': 'Bearer ' + KEY, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' };
 
+// قراءة المعاملات من الرابط
+(function() {
+  var params = new URLSearchParams(window.location.search);
+  var dept = params.get('dept') || params.get('section') || params.get('القسم');
+  if (dept) {
+    var sel = document.getElementById('dept');
+    for (var i = 0; i < sel.options.length; i++) {
+      if (sel.options[i].value === dept) { sel.selectedIndex = i; break; }
+    }
+    sel.style.background = '#e8f5e9';
+    sel.style.borderColor = '#1b5e20';
+  }
+  var loc = params.get('location') || params.get('الموقع');
+  if (loc) document.getElementById('location').value = loc;
+})();
+
 function showError(msg) {
   var el = document.getElementById('error-msg');
   el.textContent = msg;
@@ -97,6 +127,7 @@ function showError(msg) {
 }
 
 function submitReport() {
+  var dept = document.getElementById('dept').value;
   var phone = document.getElementById('phone').value.trim();
   var name = document.getElementById('name').value.trim();
   var type = document.getElementById('type').value;
@@ -104,7 +135,7 @@ function submitReport() {
   var location = document.getElementById('location').value.trim();
   var priority = document.getElementById('priority').value;
 
-  if (!phone || !name || !type || !desc) {
+  if (!dept || !phone || !name || !type || !desc) {
     alert('من فضلك ملأ جميع الحقول المطلوبة');
     return;
   }
@@ -119,6 +150,7 @@ function submitReport() {
 
   var report = {
     id: Date.now(),
+    dept: dept,
     phone: phone,
     name: name,
     type: type,
@@ -171,6 +203,7 @@ function submitReport() {
 }
 
 function resetForm() {
+  document.getElementById('dept').selectedIndex = 0;
   document.getElementById('phone').value = '';
   document.getElementById('name').value = '';
   document.getElementById('type').value = '';

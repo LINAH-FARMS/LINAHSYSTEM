@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>بيانات المخبز اليومية - لينه فارمز</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Cairo',sans-serif;background:#f5f5f5;min-height:100vh;padding:12px}
+.card{background:white;border-radius:16px;padding:20px 16px;max-width:500px;width:100%;margin:0 auto;box-shadow:0 4px 20px rgba(0,0,0,0.08)}
+.header{background:linear-gradient(135deg,#e65100,#ff9800);border-radius:14px;padding:20px;margin:-20px -16px 20px;text-align:center;color:white}
+.header .logo{font-size:42px;margin-bottom:4px}
+.header h1{font-size:18px;font-weight:800;margin-bottom:2px}
+.header .sub{font-size:12px;opacity:0.85}
+.date-bar{background:#fff3e0;border-radius:10px;padding:10px;text-align:center;margin-bottom:16px;border:1px solid #ffe0b2;font-size:13px;font-weight:700;color:#e65100}
+.step{margin-bottom:18px}
+.step-header{display:flex;align-items:center;gap:10px;margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid #f0f0f0}
+.step-num{background:linear-gradient(135deg,#e65100,#ff9800);color:white;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;flex-shrink:0}
+.step-title{font-size:15px;font-weight:700;color:#333}
+.form-group{margin-bottom:12px}
+label{display:block;font-weight:700;color:#555;margin-bottom:5px;font-size:13px}
+label .unit{font-weight:400;color:#999;font-size:11px}
+input,select,textarea{width:100%;padding:11px 12px;border:2px solid #e0e0e0;border-radius:10px;font-size:14px;font-family:'Cairo',sans-serif;transition:border 0.2s;background:white;-webkit-appearance:none}
+input:focus,select:focus,textarea:focus{border-color:#e65100;outline:none}
+textarea{resize:vertical;min-height:60px}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.ing-card{background:#fafafa;border:1px solid #eee;border-radius:10px;padding:12px;margin-bottom:10px}
+.ing-card .ing-name{font-weight:700;color:#e65100;font-size:13px;margin-bottom:6px}
+.ing-card .ing-stock{font-size:11px;color:#888;margin-bottom:8px}
+.ing-card input{font-size:16px;font-weight:700;text-align:center}
+.contractor-card{background:#f0f7ff;border:1px solid #bbdefb;border-radius:12px;padding:14px;margin-bottom:12px;position:relative}
+.contractor-card .ctr-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.contractor-card .ctr-num{background:#1565c0;color:white;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800}
+.contractor-card .remove-btn{background:#c62828;color:white;border:none;border-radius:50%;width:26px;height:26px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center}
+.add-btn{background:white;border:2px dashed #ff9800;border-radius:12px;padding:14px;text-align:center;cursor:pointer;color:#e65100;font-weight:700;font-size:14px;margin-bottom:14px;transition:background 0.2s}
+.add-btn:active{background:#fff3e0}
+.notes-box{background:#f9f9f9;border:1px solid #eee;border-radius:10px;padding:12px}
+.btn-submit{width:100%;padding:16px;background:linear-gradient(135deg,#2e7d32,#4caf50);color:white;border:none;border-radius:12px;font-size:18px;font-weight:800;cursor:pointer;font-family:'Cairo',sans-serif;margin-top:6px;transition:transform 0.2s;letter-spacing:0.5px}
+.btn-submit:active{transform:scale(0.98)}
+.btn-submit:disabled{background:#ccc;cursor:not-allowed}
+.success{display:none;text-align:center;padding:40px 16px}
+.success .icon{font-size:60px;margin-bottom:12px}
+.success h2{color:#2e7d32;font-size:20px;margin-bottom:8px}
+.success p{color:#666;font-size:14px;line-height:1.8}
+.btn-reset{width:100%;padding:14px;background:linear-gradient(135deg,#1565c0,#1976d2);color:white;border:none;border-radius:12px;font-size:16px;font-weight:700;cursor:pointer;font-family:'Cairo',sans-serif;margin-top:16px}
+.error-msg{background:#ffebee;color:#c62828;padding:12px;border-radius:10px;margin-top:10px;font-size:13px;display:none;text-align:center}
+.footer{margin-top:20px;font-size:10px;color:#bbb;text-align:center}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="header">
+    <div class="logo">🍞</div>
+    <h1>بيانات المخبز اليومية</h1>
+    <div class="sub">أدخل بيانات إنتاج اليوم بالتفصيل</div>
+  </div>
+  <div class="date-bar" id="today-date"></div>
+
+  <div id="bakery-form">
+
+    <!-- الخطوة 0: اسم الخباز -->
+    <div class="step">
+      <div class="step-header">
+        <div class="step-num">0</div>
+        <div class="step-title">بيانات الخباز</div>
+      </div>
+      <div class="form-group">
+        <label>اسم الخباز المسؤول عن الإنتاج اليوم</label>
+        <input type="text" id="bakerName" placeholder="مثلاً: أحمد محمد" required>
+      </div>
+    </div>
+
+    <!-- الخطوة 1: إنتاج اليوم -->
+    <div class="step">
+      <div class="step-header">
+        <div class="step-num">1</div>
+        <div class="step-title">إنتاج اليوم — الأرغفة والخامات المستخدمة</div>
+      </div>
+
+      <div class="form-group">
+        <label>عدد الأرغفة المُنتجة اليوم <span class="unit">(رقم صحيح)</span></label>
+        <input type="number" id="breadCount" placeholder="مثلاً: 1500" min="0" inputmode="numeric" required>
+      </div>
+
+      <div class="form-group">
+        <label>الدقيق المستخدم <span class="unit">(كجم)</span></label>
+        <input type="number" id="flourUsed" placeholder="مثلاً: 500" min="0" step="0.5" inputmode="decimal">
+      </div>
+
+      <div class="form-group">
+        <label>الخميرة المستخدمة <span class="unit">(باكو — باكو 450 جرام)</span></label>
+        <input type="number" id="yeastUsed" placeholder="مثلاً: 3" min="0" step="0.5" inputmode="decimal">
+      </div>
+
+      <div class="form-group">
+        <label>الملح المستخدم <span class="unit">(كجم)</span></label>
+        <input type="number" id="saltUsed" placeholder="مثلاً: 5" min="0" step="0.5" inputmode="decimal">
+      </div>
+
+      <div class="form-group">
+        <label>الردة المستخدمة <span class="unit">(كجم)</span></label>
+        <input type="number" id="branUsed" placeholder="مثلاً: 20" min="0" step="0.5" inputmode="decimal">
+      </div>
+
+      <div class="form-group">
+        <label>السولار المستهلك <span class="unit">(لتر)</span></label>
+        <input type="number" id="dieselUsed" placeholder="مثلاً: 40" min="0" step="0.5" inputmode="decimal">
+      </div>
+
+      <div class="form-group">
+        <label>تكلفة التشغيل الإجمالية <span class="unit">(ج.م — دقيق + خميرة + ملح + ردة + سولار + غيره)</span></label>
+        <input type="number" id="opCost" placeholder="مثلاً: 5000" min="0" inputmode="decimal">
+      </div>
+    </div>
+
+    <!-- الخطوة 2: توريدات المقاولين -->
+    <div class="step">
+      <div class="step-header">
+        <div class="step-num">2</div>
+        <div class="step-title">توريدات المقاولين — كل مقاول أخد كام رغيف وباع بكام</div>
+      </div>
+
+      <div id="contractors-list"></div>
+      <div class="add-btn" onclick="addContractor()">+ إضافة مقاول جديد</div>
+    </div>
+
+    <!-- الخطوة 3: ملاحظات -->
+    <div class="step">
+      <div class="step-header">
+        <div class="step-num">3</div>
+        <div class="step-title">ملاحظات اليوم</div>
+      </div>
+      <div class="notes-box">
+        <textarea id="notes" rows="3" placeholder="اي ملاحظات على إنتاج اليوم — مشاكل، جودة الخبز، طلبات خاصة..."></textarea>
+      </div>
+    </div>
+
+    <button class="btn-submit" id="submit-btn" onclick="submitBakeryData()">✅ حفظ بيانات اليوم</button>
+    <div class="error-msg" id="error-msg"></div>
+  </div>
+
+  <div class="success" id="success-msg">
+    <div class="icon">🎉</div>
+    <h2>تم حفظ بيانات اليوم بنجاح!</h2>
+    <p>بيانات الإنتاج والمقاولين اتبعتت للإدارة.<br>شكراً لك!</p>
+    <button class="btn-reset" onclick="resetForm()">📊 إدخال بيانات يوم جديد</button>
+  </div>
+  <div class="footer">LINAH FARMS — Baharia Oasis — Bakery Daily Report</div>
+</div>
+
+<script>
+var SB = 'https://cwqghiqykohefaggedjl.supabase.co';
+var KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN3cWdoaXF5a29oZWZhZ2dlZGpsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEwMjUyMjEsImV4cCI6MjA5NjYwMTIyMX0.3a3hRcNdmYQCtjYjBroAT6df1T_7oz-XWUeD3wagYw8';
+var HEADERS = { 'apikey': KEY, 'Authorization': 'Bearer ' + KEY, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' };
+var ctrCount = 0;
+
+// تاريخ اليوم
+(function() {
+  var now = new Date();
+  var days = ['الأحد','الإثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
+  var months = ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
+  document.getElementById('today-date').textContent = '📅 ' + days[now.getDay()] + ' ' + now.getDate() + ' ' + months[now.getMonth()] + ' ' + now.getFullYear();
+
+  // قراءة معاملات من الرابط
+  var params = new URLSearchParams(window.location.search);
+  var bread = params.get('bread');
+  if (bread) document.getElementById('breadCount').value = bread;
+})();
+
+function addContractor() {
+  ctrCount++;
+  var n = ctrCount;
+  var html = '<div class="contractor-card" id="ctr-' + n + '">' +
+    '<div class="ctr-header">' +
+    '<div class="ctr-num">' + n + '</div>' +
+    '<button class="remove-btn" onclick="removeContractor(' + n + ')">✕</button>' +
+    '</div>' +
+
+    '<div class="form-group">' +
+    '<label>اسم المقاول</label>' +
+    '<input type="text" id="ctr-name-' + n + '" placeholder="اسم المقاول كامل">' +
+    '</div>' +
+
+    '<div class="form-row">' +
+    '<div class="form-group">' +
+    '<label>عدد الأرغفة المسلمة <span class="unit">(رغيف)</span></label>' +
+    '<input type="number" id="ctr-count-' + n + '" placeholder="0" min="0" inputmode="numeric">' +
+    '</div>' +
+    '<div class="form-group">' +
+    '<label>سعر الرغفة <span class="unit">(ج.م)</span></label>' +
+    '<input type="number" id="ctr-price-' + n + '" placeholder="0" min="0" step="0.25" inputmode="decimal">' +
+    '</div>' +
+    '</div>' +
+
+    '<div class="form-row">' +
+    '<div class="form-group">' +
+    '<label>المبلغ المدفوع <span class="unit">(ج.م)</span></label>' +
+    '<input type="number" id="ctr-paid-' + n + '" placeholder="0" min="0" step="0.5" inputmode="decimal">' +
+    '</div>' +
+    '<div class="form-group">' +
+    '<label>المسؤول عن التوريد</label>' +
+    '<input type="text" id="ctr-resp-' + n + '" placeholder="اسم المسؤول">' +
+    '</div>' +
+    '</div>' +
+
+    '</div>';
+  document.getElementById('contractors-list').insertAdjacentHTML('beforeend', html);
+}
+
+function removeContractor(n) {
+  var el = document.getElementById('ctr-' + n);
+  if (el) el.remove();
+}
+
+function submitBakeryData() {
+  var bakerName = document.getElementById('bakerName').value.trim();
+  if (!bakerName) { alert('من فضلك أدخل اسم الخباز'); return; }
+  var breadCount = parseInt(document.getElementById('breadCount').value) || 0;
+  if (!breadCount) { alert('من فضلك أدخل عدد الأرغفة المُنتجة'); return; }
+
+  var btn = document.getElementById('submit-btn');
+  btn.disabled = true;
+  btn.textContent = 'جاري الحفظ...';
+  document.getElementById('error-msg').style.display = 'none';
+
+  var now = new Date();
+  var dateStr = now.getFullYear() + '-' + ('0'+(now.getMonth()+1)).slice(-2) + '-' + ('0'+now.getDate()).slice(-2);
+  var timeStr = ('0'+now.getHours()).slice(-2) + ':' + ('0'+now.getMinutes()).slice(-2);
+
+  var production = {
+    id: 'bakery_' + Date.now(),
+    date: dateStr,
+    bakerName: bakerName,
+    breadCount: breadCount,
+    flourUsed: parseFloat(document.getElementById('flourUsed').value) || 0,
+    yeastUsed: parseFloat(document.getElementById('yeastUsed').value) || 0,
+    saltUsed: parseFloat(document.getElementById('saltUsed').value) || 0,
+    branUsed: parseFloat(document.getElementById('branUsed').value) || 0,
+    dieselUsed: parseFloat(document.getElementById('dieselUsed').value) || 0,
+    operatingCost: parseFloat(document.getElementById('opCost').value) || 0,
+    notes: document.getElementById('notes').value.trim(),
+    submitted_at: dateStr + ' ' + timeStr
+  };
+
+  var contractors = [];
+  document.querySelectorAll('.contractor-card').forEach(function(card) {
+    var n = card.id.replace('ctr-', '');
+    var name = (document.getElementById('ctr-name-' + n) || {}).value || '';
+    var count = parseInt((document.getElementById('ctr-count-' + n) || {}).value) || 0;
+    var price = parseFloat((document.getElementById('ctr-price-' + n) || {}).value) || 0;
+    var paid = parseFloat((document.getElementById('ctr-paid-' + n) || {}).value) || 0;
+    var resp = (document.getElementById('ctr-resp-' + n) || {}).value || '';
+    if (name && count > 0) {
+      contractors.push({
+        name: name,
+        count: count,
+        price: price,
+        total: count * price,
+        paid: paid,
+        remaining: (count * price) - paid,
+        responsible: resp
+      });
+    }
+  });
+
+  var report = { production: production, contractors: contractors };
+
+  fetch(SB + '/rest/v1/sync_data?id=eq.bakery_daily_reports', {
+    method: 'GET',
+    headers: { 'apikey': KEY, 'Authorization': 'Bearer ' + KEY }
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(rows) {
+    var reports = [];
+    if (rows && rows.length > 0 && rows[0].data) {
+      try { reports = rows[0].data; if (typeof reports === 'string') reports = JSON.parse(reports); } catch(e) { reports = []; }
+    }
+    reports.push(report);
+
+    if (rows && rows.length > 0) {
+      return fetch(SB + '/rest/v1/sync_data?id=eq.bakery_daily_reports', {
+        method: 'PATCH',
+        headers: HEADERS,
+        body: JSON.stringify({ data: reports, updated_at: new Date().toISOString() })
+      });
+    } else {
+      return fetch(SB + '/rest/v1/sync_data', {
+        method: 'POST',
+        headers: HEADERS,
+        body: JSON.stringify({ id: 'bakery_daily_reports', data: reports, updated_at: new Date().toISOString() })
+      });
+    }
+  })
+  .then(function(r) {
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    document.getElementById('bakery-form').style.display = 'none';
+    document.getElementById('success-msg').style.display = 'block';
+  })
+  .catch(function(e) {
+    var existing = JSON.parse(localStorage.getItem('linah_bakery_reports') || '[]');
+    existing.push(report);
+    localStorage.setItem('linah_bakery_reports', JSON.stringify(existing));
+    document.getElementById('bakery-form').style.display = 'none';
+    document.getElementById('success-msg').style.display = 'block';
+  });
+}
+
+function resetForm() {
+  document.getElementById('breadCount').value = '';
+  document.getElementById('bakerName').value = '';
+  document.getElementById('flourUsed').value = '';
+  document.getElementById('yeastUsed').value = '';
+  document.getElementById('saltUsed').value = '';
+  document.getElementById('branUsed').value = '';
+  document.getElementById('dieselUsed').value = '';
+  document.getElementById('opCost').value = '';
+  document.getElementById('notes').value = '';
+  document.getElementById('contractors-list').innerHTML = '';
+  document.getElementById('bakery-form').style.display = 'block';
+  document.getElementById('success-msg').style.display = 'none';
+  document.getElementById('submit-btn').disabled = false;
+  document.getElementById('submit-btn').textContent = '✅ حفظ بيانات اليوم';
+  document.getElementById('error-msg').style.display = 'none';
+  ctrCount = 0;
+}
+</script>
+</body>
+</html>
