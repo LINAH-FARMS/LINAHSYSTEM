@@ -93,18 +93,39 @@ function finClearAll() {
 }
 
 function finImportReport(evt) {
-  var file = evt.target.files[0];
-  if (!file) return;
-  var reader = new FileReader();
-  reader.onload = function(e) {
-    try {
-      var data = new Uint8Array(e.target.result);
-      var workbook = XLSX.read(data, { type: 'array' });
-      var imported = 0;
-      var importedBudget = 0;
-      var _dbgDates = [];
-      var _dbgKeys = [];
-      workbook.SheetNames.forEach(function(sheetName) {
+  var files = evt.target.files;
+  if (!files || !files.length) return;
+  var fileArr = Array.from(files);
+  var totalImported = 0, totalBudget = 0, totalFiles = fileArr.length, done = 0;
+  fileArr.forEach(function(file) {
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      try {
+        var data = new Uint8Array(e.target.result);
+        var workbook = XLSX.read(data, { type: 'array' });
+        var result = finProcessWorkbook(workbook);
+        totalImported += result.imported;
+        totalBudget += result.budgetSheets;
+      } catch(err) { console.error('Import error:', file.name, err); }
+      done++;
+      if (done === totalFiles) {
+        finSave();
+        finPopulateYearSelect();
+        finRenderAll();
+        alert('✅ تم استيراد ' + totalFiles + ' ملفات\n📦 ' + totalImported + ' معاملة\n📊 ' + totalBudget + ' شيت ميزانية');
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  });
+  evt.target.value = '';
+}
+
+function finProcessWorkbook(workbook) {
+  var imported = 0, budgetSheets = 0;
+  try {
+    var importedBudget = 0;
+    var _dbgKeys = [];
+    workbook.SheetNames.forEach(function(sheetName) {
         var sheet = workbook.Sheets[sheetName];
 
         /* ── first pass: detect if budget sheet by reading raw with header:1 ── */
@@ -255,18 +276,9 @@ function finImportReport(evt) {
           imported += Object.keys(aggMap).length;
         }
       });
-      finSave();
-      finPopulateYearSelect();
-      finRenderAll();
-      var _dbgMsg = '📦 الشيتات: ' + workbook.SheetNames.join(', ');
-      _dbgMsg += '\n\nColumns: ' + JSON.stringify(_dbgKeys);
-      _dbgMsg += '\n✅ تم استيراد ' + imported + ' معاملة.';
-      if (importedBudget > 0) _dbgMsg += '\n📊 تم استيراد ' + importedBudget + ' شيت ميزانية.';
-      alert(_dbgMsg);
-    } catch(err) { alert('❌ خطأ في الاستيراد: ' + err.message); }
-  };
-  reader.readAsArrayBuffer(file);
-  evt.target.value = '';
+      budgetSheets = importedBudget;
+    return { imported: imported, budgetSheets: budgetSheets };
+  } catch(err) { console.error('finProcessWorkbook error:', err); return { imported: 0, budgetSheets: 0 }; }
 }
 
 function finPopulateYearSelect() {
