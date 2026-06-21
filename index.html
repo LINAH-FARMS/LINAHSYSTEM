@@ -11596,9 +11596,10 @@ function toggleEmployeeStatus(empId) {
         _pulledAt = {};
         localStorage.setItem('_pulledAt', JSON.stringify({}));
         await pullFromSupabase();
-        // سحب دوري كل 30 ثانية
-        if (_syncTimer) clearInterval(_syncTimer);
-        _syncTimer = setInterval(function() { pullFromSupabase(); }, 30000);
+        // ❌ تم تعطيل السحب الدوري — يعتمد على السحب اليدوي فقط
+        // if (_syncTimer) clearInterval(_syncTimer);
+        // _syncTimer = setInterval(function() { pullFromSupabase(); }, 30000);
+        // فحص بلاغات الأعطال كل دقيقة بدل 30 ثانية
         setInterval(function() {
           try {
             fetch(SUPABASE_URL + '/rest/v1/sync_data?id=eq.incident_reports&select=data', {
@@ -11619,7 +11620,7 @@ function toggleEmployeeStatus(empId) {
               _prevReportsCount = totalCount;
             });
           } catch(e) {}
-        }, 30000);
+        }, 60000);
       } catch(e) { console.log('⚠️ Supabase connect error — retry 3s'); setTimeout(connectSupabase, 3000); }
     }
     setTimeout(connectSupabase, 2000);
