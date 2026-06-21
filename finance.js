@@ -10,8 +10,17 @@ function finInit() {
 }
 
 function finSave() {
-  localStorage.setItem('fin_transactions', JSON.stringify(finTransactions));
-  localStorage.setItem('fin_budgets', JSON.stringify(finBudgets));
+  try {
+    localStorage.setItem('fin_transactions', JSON.stringify(finTransactions));
+    localStorage.setItem('fin_budgets', JSON.stringify(finBudgets));
+  } catch(e) {
+    /* localStorage full — try removing oldest transactions */
+    while (finTransactions.length > 500) {
+      finTransactions.shift();
+      try { localStorage.setItem('fin_transactions', JSON.stringify(finTransactions)); return; } catch(e2) {}
+    }
+    alert('⚠️ مساحة التخزين ممتلية. تم الاحتفاظ بأحدث 500 معاملة فقط.');
+  }
   if (typeof syncStorage === 'function') syncStorage();
 }
 
@@ -226,22 +235,17 @@ function finImportReport(evt) {
             orderNum = String(orderNum || '').trim();
             itemName = String(itemName || '').trim();
             if (isNaN(value) || value === 0) value = qty * price;
+            if (!value || value === 0) return; /* skip zero-value rows */
+            /* compact: only store essential fields to fit localStorage */
             var txObj = {
               date: txDate, month: txMonth, year: txYear,
               orderNum: orderNum,
-              itemCode: String(itemCode || '').trim(),
-              storeName: String(storeName || '').trim(),
               itemName: itemName,
-              unit: String(unit || '').trim(),
-              qty: qty,
-              costCenter: String(costCenter || '').trim(),
-              costCenterDesc: String(costCenterDesc || '').trim(),
-              segment: String(segment || '').trim(),
+              qty: qty, price: price, value: value,
               task: overheadCode,
               taskDesc: String(taskDesc || '').trim(),
-              notes: String(notes || '').trim(),
-              price: price, value: value,
-              modifiedAt: new Date().toISOString()
+              costCenter: String(costCenter || '').trim(),
+              costCenterDesc: String(costCenterDesc || '').trim()
             };
             var existsIdx = finTransactions.findIndex(function(t) { return t.date === txDate && t.task === overheadCode && t.orderNum === orderNum && t.itemName === itemName; });
             if (existsIdx >= 0) finTransactions[existsIdx] = txObj; else finTransactions.push(txObj);
@@ -295,7 +299,7 @@ function finGroupByTask(txList) {
     groups[code].total += t.value || 0;
     groups[code].count++;
     var itemName = t.itemName || 'غير محدد';
-    if (!groups[code].items[itemName]) groups[code].items[itemName] = { name: itemName, total: 0, count: 0, unit: t.unit };
+    if (!groups[code].items[itemName]) groups[code].items[itemName] = { name: itemName, total: 0, count: 0 };
     groups[code].items[itemName].total += t.value || 0;
     groups[code].items[itemName].count++;
   });
@@ -484,7 +488,7 @@ function finShowDetail(code) {
   var itemGroups = {};
   filtered.forEach(function(t) {
     var name = t.itemName || 'غير محدد';
-    if (!itemGroups[name]) itemGroups[name] = { name: name, total: 0, count: 0, unit: t.unit };
+    if (!itemGroups[name]) itemGroups[name] = { name: name, total: 0, count: 0 };
     itemGroups[name].total += t.value || 0;
     itemGroups[name].count++;
   });
@@ -496,9 +500,9 @@ function finShowDetail(code) {
     topHtml += '<div style="margin-bottom:6px;"><div style="display:flex;justify-content:space-between;font-size:11px;"><span>' + (i + 1) + '. ' + item.name + '</span><span style="font-weight:700;">' + item.total.toLocaleString(undefined, { maximumFractionDigits: 0 }) + '</span></div><div style="height:6px;background:#e0e0e0;border-radius:3px;overflow:hidden;"><div style="width:' + pct + '%;height:100%;background:#1565c0;border-radius:3px;"></div></div></div>';
   });
   document.getElementById('fin-detail-top-items').innerHTML = topHtml;
-  var tableHtml = '<table style="width:100%;font-size:12px;border-collapse:collapse;"><thead><tr style="background:#1b5e20;color:white;"><th>التاريخ</th><th>الصنف</th><th>الكمية</th><th>السعر</th><th>القيمة</th><th>المخزن</th><th>ملاحظات</th></tr></thead><tbody>';
+  var tableHtml = '<table style="width:100%;font-size:12px;border-collapse:collapse;"><thead><tr style="background:#1b5e20;color:white;"><th>التاريخ</th><th>الصنف</th><th>الكمية</th><th>السعر</th><th>القيمة</th><th>مركز التكلفة</th></tr></thead><tbody>';
   filtered.sort(function(a, b) { return (a.date || '').localeCompare(b.date || ''); }).forEach(function(t) {
-    tableHtml += '<tr><td>' + t.date + '</td><td>' + t.itemName + '</td><td style="text-align:center;">' + t.qty + ' ' + t.unit + '</td><td style="text-align:center;">' + t.price.toLocaleString(undefined, { maximumFractionDigits: 2 }) + '</td><td style="text-align:center;font-weight:700;color:#1565c0;">' + t.value.toLocaleString(undefined, { maximumFractionDigits: 2 }) + '</td><td>' + t.storeName + '</td><td>' + t.notes + '</td></tr>';
+    tableHtml += '<tr><td>' + t.date + '</td><td>' + t.itemName + '</td><td style="text-align:center;">' + t.qty + '</td><td style="text-align:center;">' + t.price.toLocaleString(undefined, { maximumFractionDigits: 2 }) + '</td><td style="text-align:center;font-weight:700;color:#1565c0;">' + t.value.toLocaleString(undefined, { maximumFractionDigits: 2 }) + '</td><td>' + (t.costCenterDesc || '') + '</td></tr>';
   });
   tableHtml += '</tbody></table>';
   document.getElementById('fin-detail-table-wrap').innerHTML = tableHtml;
