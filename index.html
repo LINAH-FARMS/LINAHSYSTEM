@@ -6160,8 +6160,9 @@
     function calcGuestsForDate(dateStr) {
       var active = hospitalities.filter(function(h) {
         if (!h.arrival) return false;
-        var dep = h.departure || h.arrival;
-        return h.arrival <= dateStr && dep >= dateStr;
+        var arr = h.arrival.split('T')[0];
+        var dep = (h.departure || h.arrival).split('T')[0];
+        return arr <= dateStr && dep >= dateStr;
       });
       return active.reduce(function(s, h) { return s + (h.guests || 1); }, 0);
     }
