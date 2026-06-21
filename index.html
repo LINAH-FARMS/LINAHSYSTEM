@@ -5857,7 +5857,8 @@
       var womenLoaves = womenCount * 2;
       var studentLoaves = studentCount * 2;
       var otherLoaves = otherGuestsCount * 6;
-      var totalLoaves = workerLoaves + womenLoaves + studentLoaves + otherLoaves;
+      var returnFromVacation = 5 * 6;
+      var totalLoaves = workerLoaves + womenLoaves + studentLoaves + otherLoaves + returnFromVacation;
       var existing = document.getElementById('bread-plan-modal');
       if (existing) existing.remove();
       var modal = document.createElement('div');
@@ -5890,6 +5891,7 @@
         '<span>سيدات:</span><b id="bp-loaves-women">' + womenLoaves + '</b>' +
         '<span>طلبة:</span><b id="bp-loaves-students">' + studentLoaves + '</b>' +
         '<span>ضيوف آخرين:</span><b id="bp-loaves-other">' + otherLoaves + '</b>' +
+        '<span>عودة من اجازة (5):</span><b id="bp-loaves-return">' + returnFromVacation + '</b>' +
         '<span>مقاولين:</span><b id="bp-loaves-ctr">0</b>' +
         '<hr style="grid-column:span 2;border:none;border-top:1px dashed #e0e0e0;margin:4px 0;">' +
         '<span style="font-weight:700;">الإجمالي:</span><b style="color:#e65100;font-size:15px;" id="bread-total-display">' + totalLoaves + ' رغيف</b>' +
@@ -5954,7 +5956,8 @@
       var ctrInputs = document.querySelectorAll('#bread-plan-ctr-tbody input[id^="bpqty-"]');
       var ctrTotal = 0;
       ctrInputs.forEach(function(inp) { ctrTotal += parseInt(inp.value) || 0; });
-      var total = workerLoaves + womenLoaves + studentLoaves + otherLoaves + ctrTotal;
+      var returnFromVacation = 30;
+      var total = workerLoaves + womenLoaves + studentLoaves + otherLoaves + returnFromVacation + ctrTotal;
       var ew = document.getElementById('bp-loaves-workers');
       var ewo = document.getElementById('bp-loaves-women');
       var es = document.getElementById('bp-loaves-students');
@@ -6000,7 +6003,8 @@
       var womenLoaves = bpWomen * 2;
       var studentLoaves = bpStudents * 2;
       var otherLoaves = bpOther * 6;
-      var totalLoaves = workerLoaves + womenLoaves + studentLoaves + otherLoaves;
+      var returnFromVacation = 30;
+      var totalLoaves = workerLoaves + womenLoaves + studentLoaves + otherLoaves + returnFromVacation;
       var ctrInputs = document.querySelectorAll('#bread-plan-ctr-tbody tr');
       var contractorsData = [];
       var ctrLoaves = 0;
@@ -6043,7 +6047,8 @@
         '<tr><td>سيدات (' + bpWomen + ' × 2)</td><td style="text-align:center;">' + womenLoaves + '</td></tr>' +
         '<tr><td>طلبة (' + bpStudents + ' × 2)</td><td style="text-align:center;">' + studentLoaves + '</td></tr>' +
         '<tr><td>ضيوف آخرين (' + bpOther + ' × 6)</td><td style="text-align:center;">' + otherLoaves + '</td></tr>' +
-        '<tr style="background:#e8f5e9;font-weight:700;"><td>إجمالي المزرعة</td><td style="text-align:center;">' + farmLoaves + '</td></tr>' +
+        '<tr><td>عودة من اجازة (5 × 6)</td><td style="text-align:center;">' + returnFromVacation + '</td></tr>' +
+        '<tr style="background:#e8f5e9;font-weight:700;"><td>إجمالي المزرعة</td><td style="text-align:center;">' + (farmLoaves + returnFromVacation) + '</td></tr>' +
         '</table></div>' +
         (contractorsData.length > 0 ? '<div class="rp-section"><h3 style="color:#e65100;font-size:14px;margin:0 0 6px;">👷 المقاولين</h3><table class="rp-table"><tr><th>المقاول</th><th>عدد الأرغفة</th></tr>' + contractorsData.map(function(c) { return '<tr><td>' + c.name + '</td><td style="text-align:center;">' + c.qty + '</td></tr>'; }).join('') + '<tr style="background:#fff8e1;font-weight:700;"><td>إجمالي المقاولين</td><td style="text-align:center;">' + ctrLoaves + '</td></tr></table></div>' : '') +
         '<div class="rp-section" style="background:#fff3e0;border-radius:8px;padding:10px;border:1px solid #ffcc80;text-align:center;font-size:15px;font-weight:700;color:#e65100;">🍞 الإجمالي الكلي: ' + totalLoaves + ' رغيف</div>' +
