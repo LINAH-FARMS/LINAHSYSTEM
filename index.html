@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script>
   (function(){
-    var v='2.6';
+    var v='2.7';
     var s=localStorage.getItem('_codeVersion');
     if(s&&s!==v){localStorage.clear();location.replace(location.pathname+'?v='+Date.now());}
     localStorage.setItem('_codeVersion',v);
@@ -2702,6 +2702,12 @@
           <label style="font-size:12px;font-weight:600;">المقاول</label>
           <input type="text" id="filt-ctr-name" placeholder="الكل" list="filt-bctr-list" style="padding:4px 8px;font-size:12px;border:1px solid #cfd8dc;border-radius:4px;width:140px;">
           <datalist id="filt-bctr-list"><option value="عبد الرازق جبر"><option value="ابراهيم شحاته"><option value="البدري"><option value="مصطفى عبد الكريم"><option value="كرم الزيات"><option value="اسامه سمير"><option value="محمود قاسم"><option value="ممدوح"><option value="كامل احمد"><option value="محمد شعبان"><option value="ابوعمار"><option value="محمد حسنى"><option value="اسامه عبد الرازق"><option value="ناجح"><option value="فارس"><option value="اسعد اسماعيل"><option value="ام جبريل"></datalist>
+          <label style="font-size:12px;font-weight:600;">الحالة</label>
+          <select id="filt-ctr-status" style="padding:4px 8px;font-size:12px;border:1px solid #cfd8dc;border-radius:4px;">
+            <option value="all">الجميع</option>
+            <option value="unpaid">🔴 غير مدفوع</option>
+            <option value="paid">✅ مدفوع</option>
+          </select>
           <button class="btn" style="padding:4px 10px;font-size:12px;background:#1b5e20;color:white;" onclick="renderBakeryContractorSupplies()">🔍 تصفية</button>
           <button class="btn" style="padding:4px 10px;font-size:12px;background:#1565c0;color:white;" onclick="exportBakeryContractorSuppliesToExcel()">📤 تصدير Excel</button>
           <button class="btn" style="padding:4px 10px;font-size:12px;background:#0d47a1;color:white;" onclick="document.getElementById('b-ctr-excel-file').click()">📥 استيراد شيت</button>
@@ -11201,16 +11207,27 @@ function toggleEmployeeStatus(empId) {
       if (!data.length) tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#999;padding:30px;">لا توجد حركات</td></tr>';
     }
 
+    function toggleContractorSupplyPaid(idx) {
+      let c = bakeryContractorSupplies[idx];
+      if (!c) return;
+      if (!confirm(`تحويل توريد ${c.name} بتاريخ ${c.date} إلى مدفوع بالكامل؟`)) return;
+      let total = (parseInt(c.count)||0) * (parseFloat(c.price)||0);
+      c.paid = total;
+      syncStorage(); renderBakeryContractorSupplies(); updateBakeryStats(); updateBreadSupplyStats();
+    }
     function renderBakeryContractorSupplies() {
       let tbody = document.getElementById('bakery-ctr-supply-body');
       if (!tbody) return;
       let fromDate = document.getElementById('filt-ctr-from')?.value || '';
       let toDate = document.getElementById('filt-ctr-to')?.value || '';
       let nameFilter = document.getElementById('filt-ctr-name')?.value?.trim() || '';
+      let statusFilter = document.getElementById('filt-ctr-status')?.value || 'all';
       let data = [...bakeryContractorSupplies];
       if (fromDate) data = data.filter(c => c.date >= fromDate);
       if (toDate) data = data.filter(c => c.date <= toDate);
       if (nameFilter) data = data.filter(c => c.name === nameFilter);
+      if (statusFilter === 'paid') data = data.filter(c => { let total = (parseInt(c.count)||0)*(parseFloat(c.price)||0); return parseFloat(c.paid) >= total; });
+      if (statusFilter === 'unpaid') data = data.filter(c => { let total = (parseInt(c.count)||0)*(parseFloat(c.price)||0); return parseFloat(c.paid) < total; });
       let st = sortState['table-bakery-ctr-supply'];
       if (!st || !st.key) data = sortNewestFirst(data, 'date');
       if (st && st.key) data = sortData(data, st.key, st.dir);
@@ -11228,7 +11245,10 @@ function toggleEmployeeStatus(empId) {
           <td style="color:${remaining > 0 ? '#d32f2f' : '#1b5e20'};">${remaining.toFixed(2)}</td>
           <td style="font-weight:700;${paid === 0 ? 'color:#d32f2f;' : remaining > 0 ? 'color:#e65100;' : 'color:#1b5e20;'}">${paid === 0 ? '🔴 غير مدفوع' : remaining > 0 ? `⚠️ متبقي ${remaining.toFixed(2)}` : '✅ تم الدفع'}</td>
           <td>${c.responsible||''}</td>
-          <td class="no-print"><button class="btn btn-danger" style="padding:2px 6px;font-size:11px;" onclick="deleteBakeryContractorSupply(${realIdx})">🗑️</button></td>
+          <td class="no-print">
+            <button class="btn btn-success" style="padding:2px 6px;font-size:11px;background:#2e7d32;color:white;" onclick="toggleContractorSupplyPaid(${realIdx})" title="تحويل لمدفوع">💰</button>
+            <button class="btn btn-danger" style="padding:2px 6px;font-size:11px;" onclick="deleteBakeryContractorSupply(${realIdx})">🗑️</button>
+          </td>
         </tr>`;
       }).join('');
     }
@@ -11711,7 +11731,7 @@ function toggleEmployeeStatus(empId) {
     var _syncTimer = null;
     var _pulledAt = {};
     var _forcePull = false;
-    var _CODE_VERSION = '2.6';
+    var _CODE_VERSION = '2.7';
     (function() {
       localStorage.setItem('_codeVersion', _CODE_VERSION);
     })();
