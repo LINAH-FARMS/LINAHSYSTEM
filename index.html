@@ -11569,11 +11569,13 @@ function toggleEmployeeStatus(empId) {
       localStorage.setItem('lineh_sync_deletions', JSON.stringify(syncDeletions));
     }
     function _removeDeletion(entity, key) {
+      if (!syncDeletions || !Array.isArray(syncDeletions)) return;
       syncDeletions = syncDeletions.filter(function(d) { return !(d.entity === entity && d.key === key); });
       localStorage.setItem('lineh_sync_deletions', JSON.stringify(syncDeletions));
     }
     function _ts(item) { if (item && typeof item === 'object') item.modifiedAt = new Date().toISOString(); return item; }
     function _isDeleted(entity, key, modifiedAt) {
+      if (!syncDeletions || !Array.isArray(syncDeletions)) return false;
       return syncDeletions.some(function(d) { return d.entity === entity && d.key === key; });
     }
     function _isCorrupted(item) {
