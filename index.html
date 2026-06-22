@@ -9,13 +9,6 @@
     var s=localStorage.getItem('_codeVersion');
     if(s&&s!==v){localStorage.clear();location.replace(location.pathname+'?v='+Date.now());}
     localStorage.setItem('_codeVersion',v);
-    // تحقق كل دقيقة لو فيه نسخة جديدة
-    setInterval(function(){
-      fetch(location.pathname+'?check='+Date.now(),{cache:'no-store'}).then(function(r){return r.text();}).then(function(html){
-        var m=html.match(/_CODE_VERSION\s*=\s*'([^']+)'/);
-        if(m&&m[1]!==v){localStorage.clear();location.replace(location.pathname+'?v='+Date.now());}
-      }).catch(function(){});
-    },60000);
   })();
   </script>
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
