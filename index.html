@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script>
   (function(){
-    var v='2.3';
+    var v='2.6';
     var s=localStorage.getItem('_codeVersion');
     if(s&&s!==v){localStorage.clear();location.replace(location.pathname+'?v='+Date.now());}
     localStorage.setItem('_codeVersion',v);
