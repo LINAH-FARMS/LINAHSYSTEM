@@ -765,7 +765,7 @@
       header { display: flex !important; background: white !important; color: #1b5e20 !important; box-shadow: none !important; padding: 10px 0 !important; border-bottom: 2px solid #1b5e20 !important; margin-bottom: 12px !important; }
       header h1 { font-size: 18px !important; color: #1b5e20 !important; }
       header div p { font-size: 12px !important; color: #555 !important; }
-      .nav-tabs, .control-panel, .btn, .no-print, .close-btn, .stats-container, header #live-clock, header #user-selector, header #server-status, header #backup-status, .emp-search-wrapper, .bakery-sub-tabs, .bread-supply-sub-tabs, .game-sub-tabs, #sa-panel { display: none !important; }
+      .nav-tabs, .control-panel, .btn, .no-print, .close-btn, .stats-container, header #live-clock, header #user-selector, header #server-status, header #backup-status, .emp-search-wrapper, .bakery-sub-tabs, .bread-supply-sub-tabs, .game-sub-tabs, .purchases-sub-tabs, #sa-panel { display: none !important; }
       .print-watermark { display: block !important; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-15deg); z-index: -1; opacity: 0.08; pointer-events: none; }
       .print-watermark img { width: 400px; height: auto; }
       .tab-content { display: none !important; }
@@ -792,6 +792,10 @@
     .bread-supply-sub-tabs { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:15px; background:#fff; padding:8px; border-radius:8px; box-shadow:var(--shadow); }
     .bread-supply-sub-tab { padding:8px 16px; border:none; border-radius:6px; cursor:pointer; font-weight:600; background:#f5f5f5; color:var(--dark); transition:all .2s; }
     .bread-supply-sub-tab.active { background:#1565c0; color:white; }
+
+    .purchases-sub-tabs { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:15px; background:#fff; padding:8px; border-radius:8px; box-shadow:var(--shadow); }
+    .purchases-sub-tab { padding:8px 16px; border:none; border-radius:6px; cursor:pointer; font-weight:600; background:#f5f5f5; color:var(--dark); transition:all .2s; }
+    .purchases-sub-tab.active { background:#e65100; color:white; }
     .bread-supply-sub-content { display:none; }
     .bread-supply-sub-content.active { display:block; }
     .ingredient-low { background:#ffebee !important; }
@@ -1004,6 +1008,7 @@
     <button class="tab-btn" onclick="switchTab('tab-bread-supply')" style="background:#e3f2fd; color:#1565c0; font-weight:700;">🚚 توريد الخبز للمقاولين <span class="tab-badge blue" id="badge-bread-supply">0</span></button>
     <button class="tab-btn" onclick="switchTab('tab-evaluations')" style="background:#fce4ec; color:#880e4f; font-weight:700;">⭐ تقييم العاملين <span class="tab-badge danger" id="badge-eval">0</span></button>
     <button class="tab-btn" onclick="switchTab('tab-finance')" style="background:#e8eaf6; color:#283593; font-weight:700;">💰 المركز المالي والميزانية</button>
+    <button class="tab-btn" onclick="switchTab('tab-purchases')" style="background:#fff3e0; color:#e65100; font-weight:700;">📋 المشتريات</button>
     <button class="tab-btn" onclick="switchTab('tab-reports')" style="background:#fce4ec; color:#c62828; font-weight:700;">🚨 بلاغات الأعطال <span class="tab-badge danger" id="badge-reports">0</span></button>
     <button class="tab-btn" onclick="switchTab('tab-data-exchange')" style="background:#e8f5e9; color:#1b5e20; font-weight:700;">🔄 تبادل البيانات</button>
   </div>
@@ -3111,6 +3116,176 @@
         </div>
         <div id="fin-dept-result"></div>
       </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════ -->
+  <!-- تبويب المشتريات -->
+  <!-- ═══════════════════════════════════════════════ -->
+  <div id="tab-purchases" class="tab-content" style="display:none;">
+    <h2 style="margin:0 0 12px 0;">📋 المشتريات</h2>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;background:#fff;padding:8px;border-radius:8px;box-shadow:var(--shadow);">
+      <button class="purchases-sub-tab active" onclick="switchPurchasesSub('psub-requests',this)" style="background:#e65100;color:white;">📋 طلبات الشراء</button>
+      <button class="purchases-sub-tab" onclick="switchPurchasesSub('psub-summary',this)">📊 إجمالي الطلبات</button>
+      <button class="purchases-sub-tab" onclick="switchPurchasesSub('psub-vegs',this)">🥬 خضر أسبوعي</button>
+    </div>
+
+    <div id="psub-requests" class="purchases-sub-content active" style="display:block;">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:14px;">
+        <div></div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <button class="btn" style="background:#e65100;color:white;font-size:12px;" onclick="purchasesAddRow()">➕ إضافة بند</button>
+          <button class="btn" style="background:#1565c0;color:white;font-size:12px;" onclick="purchasesImportExcel()">📥 استيراد Excel</button>
+          <button class="btn" style="background:#2e7d32;color:white;font-size:12px;" onclick="purchasesExportExcel()">📤 تصدير Excel</button>
+          <button class="btn" style="background:#37474f;color:white;font-size:12px;" onclick="purchasesPrint()">🖨️ طباعة</button>
+          <button class="btn btn-danger" style="font-size:12px;" onclick="purchasesBulkDelete()">🗑️ حذف المحدد</button>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
+        <input type="text" id="purchases-search" placeholder="🔍 بحث..." style="padding:8px 12px;border:2px solid #e0e0e0;border-radius:8px;font-family:Cairo;width:220px;" oninput="purchasesRenderTable()">
+        <select id="purchases-filter-status" style="padding:8px;border:2px solid #e0e0e0;border-radius:8px;font-family:Cairo;" onchange="purchasesRenderTable()">
+          <option value="">الكل</option>
+          <option value="لم يتم">لم يتم التنفيذ</option>
+          <option value="قيد التنفيذ">قيد التنفيذ</option>
+          <option value="تم التنفيذ">تم التنفيذ</option>
+          <option value="ملغى">ملغى</option>
+        </select>
+        <select id="purchases-filter-year" style="padding:8px;border:2px solid #e0e0e0;border-radius:8px;font-family:Cairo;" onchange="purchasesRenderTable()">
+          <option value="">الكل</option>
+        </select>
+        <select id="purchases-filter-dept" style="padding:8px;border:2px solid #e0e0e0;border-radius:8px;font-family:Cairo;" onchange="purchasesRenderTable()">
+          <option value="">الكل الأقسام</option>
+          <option>الإدارة</option><option>المطبخ</option><option>الصيانة</option><option>النظافة</option><option>الأمن</option><option>الموارد البشرية</option><option>المالية</option><option>أخرى</option>
+        </select>
+      </div>
+      <div style="overflow-x:auto;">
+        <table id="purchases-table" style="width:100%;border-collapse:collapse;font-size:12px;background:white;border-radius:8px;overflow:hidden;">
+          <thead>
+            <tr style="background:#e65100;color:white;">
+              <th style="padding:8px;"><input type="checkbox" id="purchases-select-all" onchange="purchasesToggleAll(this)"></th>
+              <th style="padding:8px;">رقم الطلب</th>
+              <th style="padding:8px;">رقم الإدارة</th>
+              <th style="padding:8px;">تاريخ الطلب</th>
+              <th style="padding:8px;">البند</th>
+              <th style="padding:8px;">الوحدة</th>
+              <th style="padding:8px;">الكمية المطلوبة</th>
+              <th style="padding:8px;">الكمية المنفذة</th>
+              <th style="padding:8px;">المتبقي</th>
+              <th style="padding:8px;">المنفذ</th>
+              <th style="padding:8px;">القسم</th>
+              <th style="padding:8px;">تاريخ الاستلام</th>
+              <th style="padding:8px;">المستلم</th>
+              <th style="padding:8px;">ملاحظات</th>
+              <th style="padding:8px;">إجراءات</th>
+            </tr>
+          </thead>
+          <tbody id="purchases-tbody"></tbody>
+        </table>
+      </div>
+      <div id="purchases-stats" style="margin-top:10px;display:flex;gap:12px;flex-wrap:wrap;"></div>
+    </div>
+
+    <div id="psub-summary" class="purchases-sub-content" style="display:none;">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:14px;">
+        <h3 style="margin:0;">📊 إجمالي الطلبات</h3>
+        <div style="display:flex;gap:6px;">
+          <button class="btn" style="background:#e65100;color:white;font-size:12px;" onclick="purchaseSummaryAddRow()">➕ طلب جديد</button>
+          <button class="btn" style="background:#2e7d32;color:white;font-size:12px;" onclick="purchaseSummaryExport()">📤 تصدير</button>
+        </div>
+      </div>
+      <table style="width:100%;border-collapse:collapse;font-size:12px;background:white;border-radius:8px;overflow:hidden;">
+        <thead>
+          <tr style="background:#37474f;color:white;">
+            <th style="padding:8px;">رقم الطلب</th>
+            <th style="padding:8px;">تاريخ الطلب</th>
+            <th style="padding:8px;">تاريخ التنفيذ</th>
+            <th style="padding:8px;">الوصف</th>
+            <th style="padding:8px;">الحالة</th>
+            <th style="padding:8px;">ملاحظات</th>
+            <th style="padding:8px;">إجراءات</th>
+          </tr>
+        </thead>
+        <tbody id="purchases-summary-tbody"></tbody>
+      </table>
+    </div>
+
+    <div id="psub-vegs" class="purchases-sub-content" style="display:none;">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:14px;">
+        <h3 style="margin:0;">🥬 خضر أسبوعي</h3>
+        <div style="display:flex;gap:6px;">
+          <button class="btn" style="background:#2e7d32;color:white;font-size:12px;" onclick="vegsAddRow()">➕ إضافة بند</button>
+          <button class="btn" style="background:#2e7d32;color:white;font-size:12px;" onclick="vegsExport()">📤 تصدير</button>
+          <button class="btn" style="background:#37474f;color:white;font-size:12px;" onclick="vegsPrint()">🖨️ طباعة</button>
+        </div>
+      </div>
+      <table style="width:100%;border-collapse:collapse;font-size:12px;background:white;border-radius:8px;overflow:hidden;">
+        <thead>
+          <tr style="background:#2e7d32;color:white;">
+            <th style="padding:8px;"><input type="checkbox" id="vegs-select-all" onchange="vegsToggleAll(this)"></th>
+            <th style="padding:8px;">رقم الطلب</th>
+            <th style="padding:8px;">رقم الإدارة</th>
+            <th style="padding:8px;">تاريخ الطلب</th>
+            <th style="padding:8px;">البند</th>
+            <th style="padding:8px;">الوحدة</th>
+            <th style="padding:8px;">الكمية المطلوبة</th>
+            <th style="padding:8px;">الكمية المنفذة</th>
+            <th style="padding:8px;">المتبقي</th>
+            <th style="padding:8px;">المنفذ</th>
+            <th style="padding:8px;">تاريخ الاستلام</th>
+            <th style="padding:8px;">ملاحظات</th>
+            <th style="padding:8px;">إجراءات</th>
+          </tr>
+        </thead>
+        <tbody id="vegs-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Modal مشتريات -->
+  <div id="modal-purchases" style="display:none;position:fixed;inset:0;z-index:999;background:rgba(0,0,0,.5);display:none;justify-content:center;align-items:center;">
+    <div style="background:white;border-radius:14px;padding:20px;max-width:600px;width:95%;max-height:90vh;overflow-y:auto;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+        <h3 id="purchases-modal-title">إضافة بند</h3>
+        <button class="btn" onclick="closeModal('modal-purchases')" style="font-size:18px;">✕</button>
+      </div>
+      <input type="hidden" id="puf-id">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <div><label>رقم الطلب سيستم</label><input type="text" id="puf-sysNo"></div>
+        <div><label>رقم طلب الإدارة</label><input type="text" id="puf-adminNo"></div>
+        <div><label>تاريخ الطلب</label><input type="date" id="puf-date"></div>
+        <div><label>البند *</label><input type="text" id="puf-item" required></div>
+        <div><label>الوحدة</label><select id="puf-unit"><option>عدد</option><option>كيس</option><option>علبة</option><option>صندوق</option><option>كيلو</option><option>متر</option><option>ساعة</option><option>أخرى</option></select></div>
+        <div><label>الكمية المطلوبة</label><input type="number" id="puf-qtyReq" oninput="purchasesCalcRemaining()"></div>
+        <div><label>الكمية المنفذة</label><input type="number" id="puf-qtyExec" oninput="purchasesCalcRemaining()"></div>
+        <div><label>المتبقي</label><input type="number" id="puf-qtyRem" readonly style="background:#f5f5f5;"></div>
+        <div><label>العام</label><select id="puf-year"></select></div>
+        <div><label>المنفذ</label><select id="puf-executor"><option>لم يتم</option><option>قيد التنفيذ</option><option>تم التنفيذ</option><option>ملغى</option></select></div>
+        <div><label>القسم الطالب</label><select id="puf-dept"><option>الإدارة</option><option>المطبخ</option><option>الصيانة</option><option>النظافة</option><option>الأمن</option><option>الموارد البشرية</option><option>المالية</option><option>أخرى</option></select></div>
+        <div><label>تاريخ الاستلام</label><input type="date" id="puf-receiptDate"></div>
+        <div><label>المستلم</label><input type="text" id="puf-receivedBy"></div>
+      </div>
+      <div style="margin-top:10px;"><label>ملاحظات</label><textarea id="puf-notes" rows="2" style="width:100%;padding:8px;border:2px solid #e0e0e0;border-radius:8px;"></textarea></div>
+      <button class="btn btn-success" style="width:100%;margin-top:12px;padding:12px;font-size:14px;" onclick="purchasesSaveRow()">💾 حفظ</button>
+    </div>
+  </div>
+
+  <!-- Modal إجمالي الطلبات -->
+  <div id="modal-purchase-summary" style="display:none;position:fixed;inset:0;z-index:999;background:rgba(0,0,0,.5);justify-content:center;align-items:center;">
+    <div style="background:white;border-radius:14px;padding:20px;max-width:500px;width:95%;max-height:90vh;overflow-y:auto;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+        <h3 id="ps-modal-title">طلب جديد</h3>
+        <button class="btn" onclick="closeModal('modal-purchase-summary')" style="font-size:18px;">✕</button>
+      </div>
+      <input type="hidden" id="psf-id">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <div><label>رقم الطلب *</label><input type="text" id="psf-number" required></div>
+        <div><label>تاريخ الطلب</label><input type="date" id="psf-date"></div>
+        <div><label>تاريخ التنفيذ</label><input type="date" id="psf-execDate"></div>
+        <div><label>الحالة</label><select id="psf-status"><option>قيد الانتظار</option><option>قيد التنفيذ</option><option>مكتمل</option><option>ملغى</option></select></div>
+        <div style="grid-column:span 2;"><label>الوصف *</label><textarea id="psf-desc" rows="2" style="width:100%;"></textarea></div>
+        <div style="grid-column:span 2;"><label>ملاحظات</label><textarea id="psf-remarks" rows="2" style="width:100%;"></textarea></div>
+      </div>
+      <button class="btn btn-success" style="width:100%;margin-top:12px;padding:12px;font-size:14px;" onclick="purchaseSummarySaveRow()">💾 حفظ</button>
     </div>
   </div>
 
@@ -10229,6 +10404,16 @@ function toggleEmployeeStatus(empId) {
       if (id === 'bsup-reports') { renderBreadSupplyReport(); updateBreadSupplyStats(); }
     }
 
+    function switchPurchasesSub(id, btn) {
+      document.querySelectorAll('.purchases-sub-content').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.purchases-sub-tab').forEach(el => el.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+      if (btn) btn.classList.add('active');
+      if (id === 'psub-requests') { purchasesRenderTable(); }
+      if (id === 'psub-summary') { purchaseSummaryRender(); }
+      if (id === 'psub-vegs') { vegsRenderTable(); }
+    }
+
     function renderBreadSupplyReport() {
       let container = document.getElementById('bread-supply-report-content');
       if (!container) return;
@@ -11515,7 +11700,7 @@ function toggleEmployeeStatus(empId) {
     var _syncTimer = null;
     var _pulledAt = {};
     var _forcePull = false;
-    var _CODE_VERSION = '2.3';
+    var _CODE_VERSION = '2.4';
     (function() {
       localStorage.setItem('_codeVersion', _CODE_VERSION);
     })();
@@ -11531,7 +11716,7 @@ function toggleEmployeeStatus(empId) {
 
     function getAllDataForSync() {
       var o = getAllDataObject();
-      var keys = ['employees','roomsCapacity','vacations','inventoryVouchers','excludedEmployees','contractors','mealLogs','inventoryItems','hospitalities','adminOvertime','maintenanceRecords','septicRecords','periodicMaintenance','teaSugarDisbursements','teaSugarBatches','dynamicSectors','contractorSectors','contractorRooms','dynamicRooms','dynamicSeptics','dynamicDepts','dynamicTitles','evaluations','evalTemplates','appUsers','auditLog','bakeryIngredients','bakeryProductions','bakeryContractorSupplies','bakeryInvoices','bakeryStockLog','roomAssets','archiveData','quickActions','deptTitles','manualTotalBeds','dailyStats','finTransactions','finBudgets','syncDeletions'];
+      var keys = ['employees','roomsCapacity','vacations','inventoryVouchers','excludedEmployees','contractors','mealLogs','inventoryItems','hospitalities','adminOvertime','maintenanceRecords','septicRecords','periodicMaintenance','teaSugarDisbursements','teaSugarBatches','dynamicSectors','contractorSectors','contractorRooms','dynamicRooms','dynamicSeptics','dynamicDepts','dynamicTitles','evaluations','evalTemplates','appUsers','auditLog','bakeryIngredients','bakeryProductions','bakeryContractorSupplies','bakeryInvoices','bakeryStockLog','roomAssets','archiveData','quickActions','deptTitles','manualTotalBeds','dailyStats','finTransactions','finBudgets','syncDeletions','purchaseRequests','purchaseSummary','weeklyVegs'];
       var result = {};
       for (var ki = 0; ki < keys.length; ki++) { result[keys[ki]] = o[keys[ki]]; }
       return result;
@@ -11754,8 +11939,340 @@ function toggleEmployeeStatus(empId) {
       } catch(e) { syncLog('⚠️ خطأ في التحويل: ' + e.message); }
     }
     
+    // ═══════════════════════════════════════════════
+    // المشتريات
+    // ═══════════════════════════════════════════════
+    var purchaseRequests = _safeJsonParse(localStorage.getItem('lineh_purchase_requests'), []);
+    var purchaseSummary = _safeJsonParse(localStorage.getItem('lineh_purchase_summary'), []);
+    var weeklyVegs = _safeJsonParse(localStorage.getItem('lineh_weekly_vegs'), []);
+    var _purchaseUnits = ['عدد','كيس','علبة','صندوق','كيلو','متر','ساعة','أخرى'];
+    var _purchaseDepts = ['الإدارة','المطبخ','الصيانة','النظافة','الأمن','الموارد البشرية','المالية','أخرى'];
+    var _purchaseExecutors = ['لم يتم','قيد التنفيذ','تم التنفيذ','ملغى'];
+    var _purchaseStatuses = ['قيد الانتظار','قيد التنفيذ','مكتمل','ملغى'];
+
+    function purchasesCalcRemaining() {
+      var req = parseFloat(document.getElementById('puf-qtyReq').value) || 0;
+      var exec = parseFloat(document.getElementById('puf-qtyExec').value) || 0;
+      document.getElementById('puf-qtyRem').value = req - exec;
+    }
+    function purchasesAddRow() {
+      document.getElementById('puf-id').value = '';
+      document.getElementById('puf-sysNo').value = '';
+      document.getElementById('puf-adminNo').value = '';
+      document.getElementById('puf-date').value = new Date().toISOString().split('T')[0];
+      document.getElementById('puf-item').value = '';
+      document.getElementById('puf-unit').value = 'عدد';
+      document.getElementById('puf-qtyReq').value = '';
+      document.getElementById('puf-qtyExec').value = '';
+      document.getElementById('puf-qtyRem').value = '';
+      document.getElementById('puf-year').value = new Date().getFullYear().toString();
+      document.getElementById('puf-executor').value = 'لم يتم';
+      document.getElementById('puf-dept').value = 'الإدارة';
+      document.getElementById('puf-receiptDate').value = '';
+      document.getElementById('puf-receivedBy').value = '';
+      document.getElementById('puf-notes').value = '';
+      document.getElementById('purchases-modal-title').textContent = 'إضافة بند';
+      openModal('modal-purchases');
+    }
+    function purchasesEditRow(idx) {
+      var r = purchaseRequests[idx]; if (!r) return;
+      document.getElementById('puf-id').value = idx;
+      document.getElementById('puf-sysNo').value = r.system_request_no || '';
+      document.getElementById('puf-adminNo').value = r.admin_request_no || '';
+      document.getElementById('puf-date').value = r.request_date || '';
+      document.getElementById('puf-item').value = r.item_name || '';
+      document.getElementById('puf-unit').value = r.unit || 'عدد';
+      document.getElementById('puf-qtyReq').value = r.quantity_requested || '';
+      document.getElementById('puf-qtyExec').value = r.quantity_executed || '';
+      document.getElementById('puf-qtyRem').value = r.quantity_remaining || '';
+      document.getElementById('puf-year').value = r.year || new Date().getFullYear().toString();
+      document.getElementById('puf-executor').value = r.executor || 'لم يتم';
+      document.getElementById('puf-dept').value = r.requesting_department || 'الإدارة';
+      document.getElementById('puf-receiptDate').value = r.receipt_date || '';
+      document.getElementById('puf-receivedBy').value = r.received_by || '';
+      document.getElementById('puf-notes').value = r.notes || '';
+      document.getElementById('purchases-modal-title').textContent = 'تعديل بند';
+      openModal('modal-purchases');
+    }
+    function purchasesSaveRow() {
+      var item = document.getElementById('puf-item').value.trim();
+      if (!item) { alert('من فضلك أدخل البند'); return; }
+      var qtyReq = parseFloat(document.getElementById('puf-qtyReq').value) || 0;
+      var qtyExec = parseFloat(document.getElementById('puf-qtyExec').value) || 0;
+      var row = {
+        system_request_no: document.getElementById('puf-sysNo').value.trim(),
+        admin_request_no: document.getElementById('puf-adminNo').value.trim(),
+        request_date: document.getElementById('puf-date').value,
+        item_name: item,
+        unit: document.getElementById('puf-unit').value,
+        quantity_requested: qtyReq,
+        quantity_executed: qtyExec,
+        quantity_remaining: qtyReq - qtyExec,
+        year: document.getElementById('puf-year').value,
+        executor: document.getElementById('puf-executor').value,
+        requesting_department: document.getElementById('puf-dept').value,
+        receipt_date: document.getElementById('puf-receiptDate').value,
+        received_by: document.getElementById('puf-receivedBy').value.trim(),
+        notes: document.getElementById('puf-notes').value.trim(),
+        modifiedAt: new Date().toISOString()
+      };
+      var idx = document.getElementById('puf-id').value;
+      if (idx !== '' && idx !== undefined) {
+        purchaseRequests[parseInt(idx)] = row;
+      } else {
+        purchaseRequests.push(row);
+      }
+      syncStorage(); purchasesRenderTable(); closeModal('modal-purchases');
+    }
+    function purchasesDeleteRow(idx) {
+      if (!confirm('هل أنت متأكد من حذف هذا البند؟')) return;
+      purchaseRequests.splice(idx, 1); syncStorage(); purchasesRenderTable();
+    }
+    function purchasesBulkDelete() {
+      var checked = document.querySelectorAll('.purchases-cb:checked');
+      if (!checked.length) { alert('اختر بنود أولاً'); return; }
+      if (!confirm('حذف ' + checked.length + ' بند؟')) return;
+      var indices = Array.from(checked).map(function(cb) { return parseInt(cb.dataset.idx); }).sort(function(a,b){return b-a;});
+      indices.forEach(function(i) { purchaseRequests.splice(i, 1); });
+      syncStorage(); purchasesRenderTable();
+    }
+    function purchasesToggleAll(el) {
+      document.querySelectorAll('.purchases-cb').forEach(function(cb) { cb.checked = el.checked; });
+    }
+    function purchasesRenderTable() {
+      var q = (document.getElementById('purchases-search')?.value || '').toLowerCase();
+      var fStatus = document.getElementById('purchases-filter-status')?.value || '';
+      var fYear = document.getElementById('purchases-filter-year')?.value || '';
+      var fDept = document.getElementById('purchases-filter-dept')?.value || '';
+      var filtered = purchaseRequests.filter(function(r) {
+        if (fStatus && r.executor !== fStatus) return false;
+        if (fYear && r.year !== fYear) return false;
+        if (fDept && r.requesting_department !== fDept) return false;
+        if (q && !Object.values(r).some(function(v) { return v && String(v).toLowerCase().includes(q); })) return false;
+        return true;
+      });
+      var tbody = document.getElementById('purchases-tbody');
+      if (!tbody) return;
+      tbody.innerHTML = '';
+      filtered.forEach(function(r, vi) {
+        var realIdx = purchaseRequests.indexOf(r);
+        var tr = document.createElement('tr');
+        tr.style.borderBottom = '1px solid #eee';
+        var statusColor = r.executor === 'تم التنفيذ' ? '#2e7d32' : r.executor === 'ملغى' ? '#c62828' : r.executor === 'قيد التنفيذ' ? '#e65100' : '#666';
+        tr.innerHTML = '<td style="padding:6px;text-align:center;"><input type="checkbox" class="purchases-cb" data-idx="' + realIdx + '"></td>'
+          + '<td style="padding:6px;white-space:nowrap;">' + (r.system_request_no || '') + '</td>'
+          + '<td style="padding:6px;">' + (r.admin_request_no || '') + '</td>'
+          + '<td style="padding:6px;white-space:nowrap;">' + (r.request_date || '') + '</td>'
+          + '<td style="padding:6px;font-weight:600;">' + (r.item_name || '') + '</td>'
+          + '<td style="padding:6px;text-align:center;">' + (r.unit || '') + '</td>'
+          + '<td style="padding:6px;text-align:center;">' + (r.quantity_requested || 0) + '</td>'
+          + '<td style="padding:6px;text-align:center;">' + (r.quantity_executed || 0) + '</td>'
+          + '<td style="padding:6px;text-align:center;font-weight:700;color:' + ((r.quantity_remaining > 0) ? '#c62828' : '#2e7d32') + ';">' + (r.quantity_remaining || 0) + '</td>'
+          + '<td style="padding:6px;text-align:center;color:' + statusColor + ';font-weight:600;">' + (r.executor || '') + '</td>'
+          + '<td style="padding:6px;">' + (r.requesting_department || '') + '</td>'
+          + '<td style="padding:6px;white-space:nowrap;">' + (r.receipt_date || '') + '</td>'
+          + '<td style="padding:6px;">' + (r.received_by || '') + '</td>'
+          + '<td style="padding:6px;font-size:11px;max-width:120px;overflow:hidden;text-overflow:ellipsis;" title="' + (r.notes || '') + '">' + (r.notes || '') + '</td>'
+          + '<td style="padding:6px;white-space:nowrap;"><button class="btn" style="font-size:11px;padding:2px 6px;" onclick="purchasesEditRow(' + realIdx + ')">✏️</button> <button class="btn btn-danger" style="font-size:11px;padding:2px 6px;" onclick="purchasesDeleteRow(' + realIdx + ')">🗑️</button></td>';
+        tbody.appendChild(tr);
+      });
+      var total = filtered.length, executed = filtered.filter(function(r){return r.executor==='تم التنفيذ';}).length, pending = filtered.filter(function(r){return r.executor==='لم يتم';}).length;
+      var statsEl = document.getElementById('purchases-stats');
+      if (statsEl) statsEl.innerHTML = '<span style="background:#e3f2fd;padding:4px 10px;border-radius:6px;font-size:12px;">📋 الإجمالي: <b>' + total + '</b></span><span style="background:#e8f5e9;padding:4px 10px;border-radius:6px;font-size:12px;">✅ تم التنفيذ: <b>' + executed + '</b></span><span style="background:#fff3e0;padding:4px 10px;border-radius:6px;font-size:12px;">⏳ معلق: <b>' + pending + '</b></span>';
+      purchasesPopulateYearFilter();
+    }
+    function purchasesPopulateYearFilter() {
+      var sel = document.getElementById('purchases-filter-year');
+      if (!sel) return;
+      var cur = sel.value;
+      var years = {};
+      purchaseRequests.forEach(function(r) { if (r.year) years[r.year] = true; });
+      sel.innerHTML = '<option value="">الكل</option>' + Object.keys(years).sort().reverse().map(function(y) { return '<option value="' + y + '"' + (y === cur ? ' selected' : '') + '>' + y + '</option>'; }).join('');
+    }
+    function purchasesImportExcel() {
+      var input = document.createElement('input');
+      input.type = 'file'; input.accept = '.xlsx,.xls';
+      input.onchange = function(e) {
+        var file = e.target.files[0]; if (!file) return;
+        var reader = new FileReader();
+        reader.onload = function(ev) {
+          try {
+            var wb = XLSX.read(ev.target.result, { type: 'array' });
+            var ws = wb.Sheets[wb.SheetNames[0]];
+            var data = XLSX.utils.sheet_to_json(ws);
+            var map = { 'رقم الطلب سيستم': 'system_request_no', 'رقم طلب الإدارة': 'admin_request_no', 'تاريخ الطلب': 'request_date', 'البند': 'item_name', 'الوحدة': 'unit', 'الكمية المطلوبة': 'quantity_requested', 'الكمية المنفذة': 'quantity_executed', 'العام': 'year', 'المنفذ': 'executor', 'القسم الطالب': 'requesting_department', 'تاريخ الاستلام': 'receipt_date', 'المستلم': 'received_by', 'ملاحظات': 'notes' };
+            var imported = 0;
+            data.forEach(function(row) {
+              var obj = {};
+              Object.keys(row).forEach(function(k) { if (map[k]) obj[map[k]] = row[k]; });
+              if (obj.item_name) {
+                var qr = parseFloat(obj.quantity_requested) || 0;
+                var qe = parseFloat(obj.quantity_executed) || 0;
+                obj.quantity_remaining = qr - qe;
+                obj.quantity_requested = qr; obj.quantity_executed = qe;
+                purchaseRequests.push(obj); imported++;
+              }
+            });
+            syncStorage(); purchasesRenderTable();
+            alert('تم استيراد ' + imported + ' بند');
+          } catch(err) { alert('خطأ في الاستيراد: ' + err.message); }
+        };
+        reader.readAsArrayBuffer(file);
+      };
+      input.click();
+    }
+    function purchasesExportExcel() {
+      var data = purchaseRequests.map(function(r) {
+        return { 'رقم الطلب سيستم': r.system_request_no, 'رقم طلب الإدارة': r.admin_request_no, 'تاريخ الطلب': r.request_date, 'البند': r.item_name, 'الوحدة': r.unit, 'الكمية المطلوبة': r.quantity_requested, 'الكمية المنفذة': r.quantity_executed, 'المتبقي': r.quantity_remaining, 'العام': r.year, 'المنفذ': r.executor, 'القسم الطالب': r.requesting_department, 'تاريخ الاستلام': r.receipt_date, 'المستلم': r.received_by, 'ملاحظات': r.notes };
+      });
+      var ws = XLSX.utils.json_to_sheet(data);
+      var wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'طلبات الشراء');
+      XLSX.writeFile(wb, 'طلبات_الشراء_' + new Date().toISOString().split('T')[0] + '.xlsx');
+    }
+    function purchasesPrint() {
+      var w = window.open('', '_blank');
+      var html = '<html dir="rtl"><head><style>body{font-family:Cairo,sans-serif;padding:20px;}table{width:100%;border-collapse:collapse;}th{background:#e65100;color:white;padding:8px;border:1px solid #ddd;font-size:12px;}td{padding:6px;border:1px solid #ddd;font-size:11px;}h2{text-align:center;}</style></head><body><h2>📋 طلبات الشراء</h2><table><thead><tr><th>رقم الطلب</th><th>رقم الإدارة</th><th>التاريخ</th><th>البند</th><th>الوحدة</th><th>المطلوبة</th><th>المنفذة</th><th>المتبقي</th><th>المنفذ</th><th>القسم</th><th>ملاحظات</th></tr></thead><tbody>';
+      purchaseRequests.forEach(function(r) {
+        html += '<tr><td>' + (r.system_request_no||'') + '</td><td>' + (r.admin_request_no||'') + '</td><td>' + (r.request_date||'') + '</td><td>' + (r.item_name||'') + '</td><td>' + (r.unit||'') + '</td><td>' + (r.quantity_requested||0) + '</td><td>' + (r.quantity_executed||0) + '</td><td>' + (r.quantity_remaining||0) + '</td><td>' + (r.executor||'') + '</td><td>' + (r.requesting_department||'') + '</td><td>' + (r.notes||'') + '</td></tr>';
+      });
+      html += '</tbody></table></body></html>';
+      w.document.write(html); w.document.close(); w.print();
+    }
+
+    // ═══ إجمالي الطلبات ═══
+    function purchaseSummaryAddRow() {
+      document.getElementById('psf-id').value = '';
+      document.getElementById('psf-number').value = '';
+      document.getElementById('psf-date').value = new Date().toISOString().split('T')[0];
+      document.getElementById('psf-execDate').value = '';
+      document.getElementById('psf-desc').value = '';
+      document.getElementById('psf-status').value = 'قيد الانتظار';
+      document.getElementById('psf-remarks').value = '';
+      document.getElementById('ps-modal-title').textContent = 'طلب جديد';
+      openModal('modal-purchase-summary');
+    }
+    function purchaseSummaryEditRow(idx) {
+      var r = purchaseSummary[idx]; if (!r) return;
+      document.getElementById('psf-id').value = idx;
+      document.getElementById('psf-number').value = r.request_number || '';
+      document.getElementById('psf-date').value = r.request_date || '';
+      document.getElementById('psf-execDate').value = r.execution_date || '';
+      document.getElementById('psf-desc').value = r.description || '';
+      document.getElementById('psf-status').value = r.status || 'قيد الانتظار';
+      document.getElementById('psf-remarks').value = r.remarks || '';
+      document.getElementById('ps-modal-title').textContent = 'تعديل طلب';
+      openModal('modal-purchase-summary');
+    }
+    function purchaseSummarySaveRow() {
+      var num = document.getElementById('psf-number').value.trim();
+      var desc = document.getElementById('psf-desc').value.trim();
+      if (!num) { alert('أدخل رقم الطلب'); return; }
+      if (!desc) { alert('أدخل الوصف'); return; }
+      var row = { request_number: num, request_date: document.getElementById('psf-date').value, execution_date: document.getElementById('psf-execDate').value, description: desc, status: document.getElementById('psf-status').value, remarks: document.getElementById('psf-remarks').value.trim(), modifiedAt: new Date().toISOString() };
+      var idx = document.getElementById('psf-id').value;
+      if (idx !== '' && idx !== undefined) { purchaseSummary[parseInt(idx)] = row; }
+      else { purchaseSummary.push(row); }
+      syncStorage(); purchaseSummaryRender(); closeModal('modal-purchase-summary');
+    }
+    function purchaseSummaryDeleteRow(idx) {
+      if (!confirm('حذف هذا الطلب؟')) return;
+      purchaseSummary.splice(idx, 1); syncStorage(); purchaseSummaryRender();
+    }
+    function purchaseSummaryRender() {
+      var tbody = document.getElementById('purchases-summary-tbody');
+      if (!tbody) return; tbody.innerHTML = '';
+      purchaseSummary.forEach(function(r, i) {
+        var statusColor = r.status === 'مكتمل' ? '#2e7d32' : r.status === 'ملغى' ? '#c62828' : r.status === 'قيد التنفيذ' ? '#e65100' : '#666';
+        var tr = document.createElement('tr');
+        tr.style.borderBottom = '1px solid #eee';
+        tr.innerHTML = '<td style="padding:6px;font-weight:600;">' + (r.request_number||'') + '</td><td style="padding:6px;">' + (r.request_date||'') + '</td><td style="padding:6px;">' + (r.execution_date||'') + '</td><td style="padding:6px;max-width:200px;">' + (r.description||'') + '</td><td style="padding:6px;color:' + statusColor + ';font-weight:600;">' + (r.status||'') + '</td><td style="padding:6px;font-size:11px;">' + (r.remarks||'') + '</td><td style="padding:6px;white-space:nowrap;"><button class="btn" style="font-size:11px;padding:2px 6px;" onclick="purchaseSummaryEditRow(' + i + ')">✏️</button> <button class="btn btn-danger" style="font-size:11px;padding:2px 6px;" onclick="purchaseSummaryDeleteRow(' + i + ')">🗑️</button></td>';
+        tbody.appendChild(tr);
+      });
+    }
+    function purchaseSummaryExport() {
+      var data = purchaseSummary.map(function(r) { return { 'رقم الطلب': r.request_number, 'تاريخ الطلب': r.request_date, 'تاريخ التنفيذ': r.execution_date, 'الوصف': r.description, 'الحالة': r.status, 'ملاحظات': r.remarks }; });
+      var ws = XLSX.utils.json_to_sheet(data);
+      var wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'إجمالي الطلبات');
+      XLSX.writeFile(wb, 'إجمالي_الطلبات_' + new Date().toISOString().split('T')[0] + '.xlsx');
+    }
+
+    // ═══ خضر أسبوعي ═══
+    function vegsAddRow() {
+      document.getElementById('puf-id').value = '';
+      document.getElementById('puf-sysNo').value = '';
+      document.getElementById('puf-adminNo').value = '';
+      document.getElementById('puf-date').value = new Date().toISOString().split('T')[0];
+      document.getElementById('puf-item').value = '';
+      document.getElementById('puf-unit').value = 'كيلو';
+      document.getElementById('puf-qtyReq').value = '';
+      document.getElementById('puf-qtyExec').value = '';
+      document.getElementById('puf-qtyRem').value = '';
+      document.getElementById('puf-year').value = new Date().getFullYear().toString();
+      document.getElementById('puf-executor').value = 'لم يتم';
+      document.getElementById('puf-dept').value = 'المطبخ';
+      document.getElementById('puf-receiptDate').value = '';
+      document.getElementById('puf-receivedBy').value = '';
+      document.getElementById('puf-notes').value = '';
+      document.getElementById('purchases-modal-title').textContent = 'إضافة خضر';
+      openModal('modal-purchases');
+    }
+    function vegsRenderTable() {
+      var tbody = document.getElementById('vegs-tbody');
+      if (!tbody) return; tbody.innerHTML = '';
+      weeklyVegs.forEach(function(r, i) {
+        var tr = document.createElement('tr');
+        tr.style.borderBottom = '1px solid #eee';
+        tr.innerHTML = '<td style="padding:6px;text-align:center;"><input type="checkbox" class="vegs-cb" data-idx="' + i + '"></td>'
+          + '<td style="padding:6px;">' + (r.system_request_no||'') + '</td>'
+          + '<td style="padding:6px;">' + (r.admin_request_no||'') + '</td>'
+          + '<td style="padding:6px;">' + (r.request_date||'') + '</td>'
+          + '<td style="padding:6px;font-weight:600;">' + (r.item_name||'') + '</td>'
+          + '<td style="padding:6px;text-align:center;">' + (r.unit||'') + '</td>'
+          + '<td style="padding:6px;text-align:center;">' + (r.quantity_requested||0) + '</td>'
+          + '<td style="padding:6px;text-align:center;">' + (r.quantity_executed||0) + '</td>'
+          + '<td style="padding:6px;text-align:center;font-weight:700;color:' + ((r.quantity_remaining>0)?'#c62828':'#2e7d32') + ';">' + (r.quantity_remaining||0) + '</td>'
+          + '<td style="padding:6px;text-align:center;">' + (r.executor||'') + '</td>'
+          + '<td style="padding:6px;">' + (r.receipt_date||'') + '</td>'
+          + '<td style="padding:6px;font-size:11px;">' + (r.notes||'') + '</td>'
+          + '<td style="padding:6px;white-space:nowrap;"><button class="btn" style="font-size:11px;padding:2px 6px;" onclick="vegsEditRow(' + i + ')">✏️</button> <button class="btn btn-danger" style="font-size:11px;padding:2px 6px;" onclick="vegsDeleteRow(' + i + ')">🗑️</button></td>';
+        tbody.appendChild(tr);
+      });
+    }
+    function vegsEditRow(idx) { /* reuse purchases form but save to weeklyVegs */ var r = weeklyVegs[idx]; if (!r) return; document.getElementById('puf-id').value = 'v' + idx; document.getElementById('puf-sysNo').value = r.system_request_no||''; document.getElementById('puf-adminNo').value = r.admin_request_no||''; document.getElementById('puf-date').value = r.request_date||''; document.getElementById('puf-item').value = r.item_name||''; document.getElementById('puf-unit').value = r.unit||'كيلو'; document.getElementById('puf-qtyReq').value = r.quantity_requested||''; document.getElementById('puf-qtyExec').value = r.quantity_executed||''; document.getElementById('puf-qtyRem').value = r.quantity_remaining||''; document.getElementById('puf-year').value = r.year||''; document.getElementById('puf-executor').value = r.executor||'لم يتم'; document.getElementById('puf-dept').value = r.requesting_department||'المطبخ'; document.getElementById('puf-receiptDate').value = r.receipt_date||''; document.getElementById('puf-receivedBy').value = r.received_by||''; document.getElementById('puf-notes').value = r.notes||''; document.getElementById('purchases-modal-title').textContent = 'تعديل خضر'; openModal('modal-purchases'); }
+    function vegsDeleteRow(idx) { if (!confirm('حذف؟')) return; weeklyVegs.splice(idx,1); syncStorage(); vegsRenderTable(); }
+    function vegsToggleAll(el) { document.querySelectorAll('.vegs-cb').forEach(function(cb){cb.checked=el.checked;}); }
+    function vegsExport() { var data = weeklyVegs.map(function(r){return {'رقم الطلب':r.system_request_no,'رقم الإدارة':r.admin_request_no,'التاريخ':r.request_date,'البند':r.item_name,'الوحدة':r.unit,'المطلوبة':r.quantity_requested,'المنفذة':r.quantity_executed,'المتبقي':r.quantity_remaining,'المنفذ':r.executor,'الاستلام':r.receipt_date,'ملاحظات':r.notes};}); var ws=XLSX.utils.json_to_sheet(data); var wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,'خضر أسبوعي'); XLSX.writeFile(wb,'خضر_اسبوعي_'+new Date().toISOString().split('T')[0]+'.xlsx'); }
+    function vegsPrint() { var w=window.open('','_blank'); var html='<html dir="rtl"><head><style>body{font-family:Cairo;padding:20px;}table{width:100%;border-collapse:collapse;}th{background:#2e7d32;color:white;padding:8px;border:1px solid #ddd;}td{padding:6px;border:1px solid #ddd;font-size:11px;}h2{text-align:center;}</style></head><body><h2>🥬 خضر أسبوعي</h2><table><thead><tr><th>رقم الطلب</th><th>البند</th><th>الوحدة</th><th>المطلوبة</th><th>المنفذة</th><th>المتبقي</th><th>المنفذ</th><th>ملاحظات</th></tr></thead><tbody>'; weeklyVegs.forEach(function(r){html+='<tr><td>'+(r.system_request_no||'')+'</td><td>'+(r.item_name||'')+'</td><td>'+(r.unit||'')+'</td><td>'+(r.quantity_requested||0)+'</td><td>'+(r.quantity_executed||0)+'</td><td>'+(r.quantity_remaining||0)+'</td><td>'+(r.executor||'')+'</td><td>'+(r.notes||'')+'</td></tr>';}); html+='</tbody></table></body></html>'; w.document.write(html); w.document.close(); w.print(); }
+
+    // Override purchasesSaveRow for vegs mode
+    var _purchasesOrigSave = purchasesSaveRow;
+    purchasesSaveRow = function() {
+      var title = document.getElementById('purchases-modal-title').textContent;
+      var idVal = document.getElementById('puf-id').value;
+      if (title.indexOf('خضر') !== -1 || (idVal && String(idVal).charAt(0) === 'v')) {
+        var item = document.getElementById('puf-item').value.trim();
+        if (!item) { alert('أدخل البند'); return; }
+        var qr = parseFloat(document.getElementById('puf-qtyReq').value)||0;
+        var qe = parseFloat(document.getElementById('puf-qtyExec').value)||0;
+        var row = { system_request_no: document.getElementById('puf-sysNo').value.trim(), admin_request_no: document.getElementById('puf-adminNo').value.trim(), request_date: document.getElementById('puf-date').value, item_name: item, unit: document.getElementById('puf-unit').value, quantity_requested: qr, quantity_executed: qe, quantity_remaining: qr-qe, year: document.getElementById('puf-year').value, executor: document.getElementById('puf-executor').value, requesting_department: 'المطبخ', receipt_date: document.getElementById('puf-receiptDate').value, received_by: document.getElementById('puf-receivedBy').value.trim(), notes: document.getElementById('puf-notes').value.trim(), modifiedAt: new Date().toISOString() };
+        if (idVal && String(idVal).charAt(0) === 'v') { weeklyVegs[parseInt(idVal.substring(1))] = row; }
+        else { weeklyVegs.push(row); }
+        syncStorage(); vegsRenderTable(); closeModal('modal-purchases');
+      } else {
+        _purchasesOrigSave();
+      }
+    };
+
+    // Populate year dropdowns
+    (function() {
+      var ySel = document.getElementById('puf-year');
+      if (ySel) { var html = ''; for (var y = 2020; y <= 2035; y++) html += '<option>' + y + '</option>'; ySel.innerHTML = html; }
+    })();
+
     function renderAll() {
-      try { renderTable(); renderHousingLayout(); renderInventoryTable(); renderInventoryItems(); renderVacationsTable(); renderOvertimeCalendar(); renderHospitalityTable(); renderMaintenanceTable(); renderSepticTable(); renderPeriodicMaintenance(); renderTeaSugarTable(); renderMealLogTable(); renderDashboard(); renderQuickActions(); renderContractorsTable(); renderBakeryIngredients(); renderBakeryProductions(); renderBakeryContractorSupplies(); renderBakeryInvoices(); updateBakeryStats(); updateBreadSupplyStats(); rebuildAllDropdowns(); renderExcludedTable(); renderDailyStatsTable(); renderEvaluations(); try { renderFinanceTab(); } catch(e) {} try { fetchReports(); } catch(e) {} } catch(e) { console.error('renderAll error:', e); }
+      try { renderTable(); renderHousingLayout(); renderInventoryTable(); renderInventoryItems(); renderVacationsTable(); renderOvertimeCalendar(); renderHospitalityTable(); renderMaintenanceTable(); renderSepticTable(); renderPeriodicMaintenance(); renderTeaSugarTable(); renderMealLogTable(); renderDashboard(); renderQuickActions(); renderContractorsTable(); renderBakeryIngredients(); renderBakeryProductions(); renderBakeryContractorSupplies(); renderBakeryInvoices(); updateBakeryStats(); updateBreadSupplyStats(); rebuildAllDropdowns(); renderExcludedTable(); renderDailyStatsTable(); renderEvaluations(); try { renderFinanceTab(); } catch(e) {} try { fetchReports(); } catch(e) {} try { purchasesRenderTable(); purchaseSummaryRender(); vegsRenderTable(); } catch(e) {} } catch(e) { console.error('renderAll error:', e); }
     }
 
     function updateLastSyncTime() {
@@ -11893,6 +12410,9 @@ function toggleEmployeeStatus(empId) {
       else if (key === 'finBudgets') finBudgets = val;
       else if (key === 'manualTotalBeds') manualTotalBeds = val;
       else if (key === 'deptTitles') deptTitles = val;
+      else if (key === 'purchaseRequests') purchaseRequests = val;
+      else if (key === 'purchaseSummary') purchaseSummary = val;
+      else if (key === 'weeklyVegs') weeklyVegs = val;
       else if (key === 'syncDeletions') syncDeletions = val;
     }
     function _filterDeletedItems(arr, entityName, keyFn) {
@@ -12259,7 +12779,8 @@ function toggleEmployeeStatus(empId) {
         evaluations, evalTemplates, auditLog, bakeryStockLog, deptTitles,
         roomAssets,
         archiveData,
-        quickActions
+        quickActions,
+        purchaseRequests, purchaseSummary, weeklyVegs
       };
     }
 
