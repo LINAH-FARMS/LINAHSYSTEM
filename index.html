@@ -4807,6 +4807,7 @@
       if (!report) return;
       if (!confirm('هل أنت متأكد من حذف بلاغ "' + (report['اسم العامل'] || '') + '"؟')) return;
 
+      _logDeletion('incident_reports', report.id || report._row || index);
       _reportsData.splice(index, 1);
 
       var local = JSON.parse(localStorage.getItem('linah_reports') || '[]');
@@ -5419,6 +5420,7 @@
       var deleted = _safeJsonParse(localStorage.getItem('lineh_deleted_users'), []);
       if (deleted.indexOf(name) === -1) deleted.push(name);
       localStorage.setItem('lineh_deleted_users', JSON.stringify(deleted));
+      syncStorage();
       saveUsers();
       renderUsersList();
       populateLoginDropdown();
@@ -7314,6 +7316,8 @@ function toggleEmployeeStatus(empId) {
       let occupied = new Set();
       employees.filter(e => e.status === 'P' && e.sector && e.room).forEach(e => occupied.add(e.sector + '|' + e.room));
       let before = roomsCapacity.length;
+      let removedRooms = roomsCapacity.filter(r => !occupied.has(r.sector + '|' + r.number));
+      removedRooms.forEach(function(r) { _logDeletion('roomsCapacity', r.sector + '|' + r.number); });
       roomsCapacity = roomsCapacity.filter(r => occupied.has(r.sector + '|' + r.number));
       let after = roomsCapacity.length;
       if (before === after) { alert('لا توجد غرف خالية للحذف.'); return; }
@@ -11703,7 +11707,7 @@ function toggleEmployeeStatus(empId) {
     var _syncTimer = null;
     var _pulledAt = {};
     var _forcePull = false;
-    var _CODE_VERSION = '2.4';
+    var _CODE_VERSION = '2.5';
     (function() {
       localStorage.setItem('_codeVersion', _CODE_VERSION);
     })();
@@ -11748,17 +11752,33 @@ function toggleEmployeeStatus(empId) {
 
     // Deletion + Update sync: tracks what was deleted/modified across devices
     var syncDeletions = _safeJsonParse(localStorage.getItem('lineh_sync_deletions'), []);
+    var _syncAfterDeleteTimer = null;
+    function _schedulePushAfterDelete() {
+      clearTimeout(_syncAfterDeleteTimer);
+      _syncAfterDeleteTimer = setTimeout(function() {
+        if (typeof supabaseConnected !== 'undefined' && supabaseConnected && typeof pushToSupabase === 'function') {
+          syncLog('🗑️ جاري حذف من السحابة...');
+          pushToSupabase().then(function(ok) {
+            if (ok) syncLog('✅ تم الحذف من السحابة');
+            else syncLog('⚠️ فشل حذف من السحابة');
+          });
+        }
+      }, 2000);
+    }
     function _logDeletion(entity, key) {
       syncDeletions.push({ entity: entity, key: key, deletedAt: new Date().toISOString() });
       // keep last 90 days only
       var cutoff = new Date(Date.now() - 90 * 86400000).toISOString();
       syncDeletions = syncDeletions.filter(function(d) { return d.deletedAt > cutoff; });
       localStorage.setItem('lineh_sync_deletions', JSON.stringify(syncDeletions));
+      _schedulePushAfterDelete();
     }
     function _removeDeletion(entity, key) {
       if (!syncDeletions || !Array.isArray(syncDeletions)) return;
       syncDeletions = syncDeletions.filter(function(d) { return !(d.entity === entity && d.key === key); });
       localStorage.setItem('lineh_sync_deletions', JSON.stringify(syncDeletions));
+      _schedulePushAfterDelete();
+    }
     }
     function _ts(item) { if (item && typeof item === 'object') item.modifiedAt = new Date().toISOString(); return item; }
     function _isDeleted(entity, key, modifiedAt) {
@@ -12029,6 +12049,7 @@ function toggleEmployeeStatus(empId) {
     }
     function purchasesDeleteRow(idx) {
       if (!confirm('هل أنت متأكد من حذف هذا البند؟')) return;
+      _logDeletion('purchaseRequests', (purchaseRequests[idx].item_name||'') + '|' + (purchaseRequests[idx].request_date||'') + '|' + (purchaseRequests[idx].system_request_no||''));
       purchaseRequests.splice(idx, 1); syncStorage(); purchasesRenderTable();
     }
     function purchasesBulkDelete() {
@@ -12036,7 +12057,7 @@ function toggleEmployeeStatus(empId) {
       if (!checked.length) { alert('اختر بنود أولاً'); return; }
       if (!confirm('حذف ' + checked.length + ' بند؟')) return;
       var indices = Array.from(checked).map(function(cb) { return parseInt(cb.dataset.idx); }).sort(function(a,b){return b-a;});
-      indices.forEach(function(i) { purchaseRequests.splice(i, 1); });
+      indices.forEach(function(i) { _logDeletion('purchaseRequests', (purchaseRequests[i].item_name||'') + '|' + (purchaseRequests[i].request_date||'')); purchaseRequests.splice(i, 1); });
       syncStorage(); purchasesRenderTable();
     }
     function purchasesToggleAll(el) {
@@ -12180,6 +12201,7 @@ function toggleEmployeeStatus(empId) {
     }
     function purchaseSummaryDeleteRow(idx) {
       if (!confirm('حذف هذا الطلب؟')) return;
+      _logDeletion('purchaseSummary', (purchaseSummary[idx].request_number||'') + '|' + (purchaseSummary[idx].request_date||''));
       purchaseSummary.splice(idx, 1); syncStorage(); purchaseSummaryRender();
     }
     function purchaseSummaryRender() {
@@ -12244,7 +12266,7 @@ function toggleEmployeeStatus(empId) {
       });
     }
     function vegsEditRow(idx) { /* reuse purchases form but save to weeklyVegs */ var r = weeklyVegs[idx]; if (!r) return; document.getElementById('puf-id').value = 'v' + idx; document.getElementById('puf-sysNo').value = r.system_request_no||''; document.getElementById('puf-adminNo').value = r.admin_request_no||''; document.getElementById('puf-date').value = r.request_date||''; document.getElementById('puf-item').value = r.item_name||''; document.getElementById('puf-unit').value = r.unit||'كيلو'; document.getElementById('puf-qtyReq').value = r.quantity_requested||''; document.getElementById('puf-qtyExec').value = r.quantity_executed||''; document.getElementById('puf-qtyRem').value = r.quantity_remaining||''; document.getElementById('puf-year').value = r.year||''; document.getElementById('puf-executor').value = r.executor||'لم يتم'; document.getElementById('puf-dept').value = r.requesting_department||'المطبخ'; document.getElementById('puf-receiptDate').value = r.receipt_date||''; document.getElementById('puf-receivedBy').value = r.received_by||''; document.getElementById('puf-notes').value = r.notes||''; document.getElementById('purchases-modal-title').textContent = 'تعديل خضر'; openModal('modal-purchases'); }
-    function vegsDeleteRow(idx) { if (!confirm('حذف؟')) return; weeklyVegs.splice(idx,1); syncStorage(); vegsRenderTable(); }
+    function vegsDeleteRow(idx) { if (!confirm('حذف؟')) return; _logDeletion('weeklyVegs', (weeklyVegs[idx].item_name||'') + '|' + (weeklyVegs[idx].request_date||'')); weeklyVegs.splice(idx,1); syncStorage(); vegsRenderTable(); }
     function vegsToggleAll(el) { document.querySelectorAll('.vegs-cb').forEach(function(cb){cb.checked=el.checked;}); }
     function vegsExport() { var data = weeklyVegs.map(function(r){return {'رقم الطلب':r.system_request_no,'رقم الإدارة':r.admin_request_no,'التاريخ':r.request_date,'البند':r.item_name,'الوحدة':r.unit,'المطلوبة':r.quantity_requested,'المنفذة':r.quantity_executed,'المتبقي':r.quantity_remaining,'المنفذ':r.executor,'الاستلام':r.receipt_date,'ملاحظات':r.notes};}); var ws=XLSX.utils.json_to_sheet(data); var wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,'خضر أسبوعي'); XLSX.writeFile(wb,'خضر_اسبوعي_'+new Date().toISOString().split('T')[0]+'.xlsx'); }
     function vegsPrint() { var w=window.open('','_blank'); var html='<html dir="rtl"><head><style>body{font-family:Cairo;padding:20px;}table{width:100%;border-collapse:collapse;}th{background:#2e7d32;color:white;padding:8px;border:1px solid #ddd;}td{padding:6px;border:1px solid #ddd;font-size:11px;}h2{text-align:center;}</style></head><body><h2>🥬 خضر أسبوعي</h2><table><thead><tr><th>رقم الطلب</th><th>البند</th><th>الوحدة</th><th>المطلوبة</th><th>المنفذة</th><th>المتبقي</th><th>المنفذ</th><th>ملاحظات</th></tr></thead><tbody>'; weeklyVegs.forEach(function(r){html+='<tr><td>'+(r.system_request_no||'')+'</td><td>'+(r.item_name||'')+'</td><td>'+(r.unit||'')+'</td><td>'+(r.quantity_requested||0)+'</td><td>'+(r.quantity_executed||0)+'</td><td>'+(r.quantity_remaining||0)+'</td><td>'+(r.executor||'')+'</td><td>'+(r.notes||'')+'</td></tr>';}); html+='</tbody></table></body></html>'; w.document.write(html); w.document.close(); w.print(); }
