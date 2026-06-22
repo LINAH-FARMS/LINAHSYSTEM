@@ -3,6 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script>
+  (function(){
+    var v='2.3';
+    var s=localStorage.getItem('_codeVersion');
+    if(s&&s!==v){localStorage.clear();location.reload(true);}
+    localStorage.setItem('_codeVersion',v);
+  })();
+  </script>
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
@@ -11509,11 +11517,6 @@ function toggleEmployeeStatus(empId) {
     var _forcePull = false;
     var _CODE_VERSION = '2.3';
     (function() {
-      var stored = localStorage.getItem('_codeVersion');
-      if (stored && stored !== _CODE_VERSION) {
-        localStorage.removeItem('_pulledAt');
-        _pulledAt = {};
-      }
       localStorage.setItem('_codeVersion', _CODE_VERSION);
     })();
 
