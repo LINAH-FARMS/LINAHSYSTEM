@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script>
   (function(){
-    var v='2.8';
+    var v='2.9';
     var s=localStorage.getItem('_codeVersion');
     if(s&&s!==v){localStorage.clear();location.replace(location.pathname+'?v='+Date.now());}
     localStorage.setItem('_codeVersion',v);
@@ -1750,7 +1750,6 @@
     <div class="control-panel no-print">
       <select id="septic-name-select"></select>
       <input type="number" id="septic-trips" placeholder="عدد النقلات" min="1" value="1" style="width: 100px;">
-      <input type="time" id="septic-time" style="width:120px;" title="ساعة توقيت النقلة">
       <input type="text" id="septic-supervisor" placeholder="اسم المشرف المسؤول">
       <input type="date" id="septic-date">
       <button class="btn btn-primary" onclick="addSepticRecord()">💾 تسجيل عملية الكسح</button>
@@ -1769,7 +1768,6 @@
             <th data-sort-key="trips">عدد النقلات</th>
             <th>الصرف (م³)</th>
             <th data-sort-key="supervisor">المشرف</th>
-            <th data-sort-key="time">التوقيت</th>
             <th data-sort-key="date">التاريخ</th>
             <th class="no-print">إجراءات</th>
           </tr>
@@ -9061,7 +9059,6 @@ function toggleEmployeeStatus(empId) {
     function addSepticRecord() {
       let name = document.getElementById('septic-name-select').value;
       let trips = document.getElementById('septic-trips').value;
-      let time = document.getElementById('septic-time').value;
       let superv = document.getElementById('septic-supervisor').value.trim();
       if(!name) return alert("⚠️ اختر القطاع.");
       if(!trips || parseInt(trips) < 1) return alert("⚠️ أدخل عدد النقلات.");
@@ -9069,11 +9066,10 @@ function toggleEmployeeStatus(empId) {
 
       if(!name || !trips) return alert("البيارة وعدد النقلات حقول إجبارية");
       let dateInput = document.getElementById('septic-date').value;
-      septicRecords.push(_ts({ name, trips: parseInt(trips), time: time || '—', supervisor: superv || '—', date: dateInput || '—' }));
+      septicRecords.push(_ts({ name, trips: parseInt(trips), supervisor: superv || '—', date: dateInput || '—' }));
       syncStorage(); renderSepticTable();
       logAction('إضافة', 'كسح بيارة', name, 'نقلات: ' + trips + ' | مشرف: ' + superv + ' | تاريخ: ' + dateInput);
       document.getElementById('septic-supervisor').value = '';
-      document.getElementById('septic-time').value = '';
       alert("تم إدراج وتسجيل عملية كسح البيارة الحالية.");
     }
 
@@ -9093,7 +9089,6 @@ function toggleEmployeeStatus(empId) {
           <td><span style="color:var(--danger); font-weight:700;">${s.trips} نقلة</span></td>
           <td><span style="color:var(--primary); font-weight:700;">${s.trips * 5} م³</span></td>
           <td>${s.supervisor}</td>
-          <td style="font-weight:600;color:#1565c0;">${s.time || '—'}</td>
           <td>${s.date}</td>
           <td class="no-print"><button class="btn btn-danger" style="padding:2px 6px; font-size:11px;" onclick="deleteSeptic(${realIdx})">🗑️</button></td>
         `;
@@ -9707,7 +9702,7 @@ function toggleEmployeeStatus(empId) {
 
     function exportSepticToExcel() {
       var data = sortNewestFirst(septicRecords, 'date').map(function(s) {
-        return { "التاريخ": s.date || '', "اسم البيارة": stripEmoji(s.name), "عدد النقلات": s.trips || 0, "الصرف": (s.trips || 0) * 5, "المشرف": stripEmoji(s.supervisor), "التوقيت": s.time || '' };
+        return { "التاريخ": s.date || '', "اسم البيارة": stripEmoji(s.name), "عدد النقلات": s.trips || 0, "الصرف": (s.trips || 0) * 5, "المشرف": stripEmoji(s.supervisor) };
       });
       var ws = XLSX.utils.json_to_sheet(data); var wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, "البيارات"); XLSX.writeFile(wb, "تقرير_البيارات_" + new Date().toISOString().split('T')[0].replace(/-/g, '') + ".xlsx");
@@ -10064,7 +10059,7 @@ function toggleEmployeeStatus(empId) {
             let date = r["التاريخ"]||'';
             let exists = septicRecords.some(s => s.name === name && s.date === date);
             if(exists) { skipped++; continue; }
-            septicRecords.push({ name: name, trips: trips, supervisor: r["المشرف"]||'', time: r["التوقيت"]||'', date: date });
+            septicRecords.push({ name: name, trips: trips, supervisor: r["المشرف"]||'', date: date });
             added++;
           }
           syncStorage(); renderAll(); alert(`تم استيراد ${added} سجل بيارات بنجاح.\nتم تخطي ${skipped} مكرر.`);
@@ -11737,7 +11732,7 @@ function toggleEmployeeStatus(empId) {
     var _syncTimer = null;
     var _pulledAt = {};
     var _forcePull = false;
-    var _CODE_VERSION = '2.8';
+    var _CODE_VERSION = '2.9';
     (function() {
       localStorage.setItem('_codeVersion', _CODE_VERSION);
     })();
