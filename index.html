@@ -3899,7 +3899,6 @@
 
     function syncStorage(noTimestamp, skipSync) {
       if (!skipSync) localStorage.setItem('_pendingChanges', 'true');
-      _applyDeletions();
       localStorage.setItem('lineh_employees', JSON.stringify(employees));
       localStorage.setItem('employees_db', JSON.stringify(employees));
       localStorage.setItem('lineh_rooms_capacity', JSON.stringify(roomsCapacity));
