@@ -11752,7 +11752,7 @@ function toggleEmployeeStatus(empId) {
     }
     
     function renderAll() {
-      try { renderTable(); renderHousingLayout(); renderInventoryTable(); renderInventoryItems(); renderVacationsTable(); renderOvertimeCalendar(); renderHospitalityTable(); renderMaintenanceTable(); renderSepticTable(); renderPeriodicMaintenance(); renderTeaSugarTable(); renderMealLogTable(); renderDashboard(); renderQuickActions(); renderContractorsTable(); renderBakeryIngredients(); renderBakeryProductions(); renderBakeryContractorSupplies(); renderBakeryInvoices(); updateBakeryStats(); updateBreadSupplyStats(); rebuildAllDropdowns(); } catch(e) { console.error('renderAll error:', e); }
+      try { renderTable(); renderHousingLayout(); renderInventoryTable(); renderInventoryItems(); renderVacationsTable(); renderOvertimeCalendar(); renderHospitalityTable(); renderMaintenanceTable(); renderSepticTable(); renderPeriodicMaintenance(); renderTeaSugarTable(); renderMealLogTable(); renderDashboard(); renderQuickActions(); renderContractorsTable(); renderBakeryIngredients(); renderBakeryProductions(); renderBakeryContractorSupplies(); renderBakeryInvoices(); updateBakeryStats(); updateBreadSupplyStats(); rebuildAllDropdowns(); renderExcludedTable(); renderDailyStatsTable(); renderEvaluations(); try { renderFinanceTab(); } catch(e) {} try { fetchReports(); } catch(e) {} } catch(e) { console.error('renderAll error:', e); }
     }
 
     function updateLastSyncTime() {
