@@ -6587,6 +6587,7 @@
       };
       employees.push(_ts(emp));
       _logDeletion('excludedEmployees', (rec.code || '') + '|' + (rec.name || '') + '|' + (rec.date || ''));
+      _removeDeletion('employees', emp.id);
       excludedEmployees.splice(idx, 1);
       sortEmployeesAlphabetically();
       rebuildDeptTitles();
@@ -11565,6 +11566,10 @@ function toggleEmployeeStatus(empId) {
       // keep last 90 days only
       var cutoff = new Date(Date.now() - 90 * 86400000).toISOString();
       syncDeletions = syncDeletions.filter(function(d) { return d.deletedAt > cutoff; });
+      localStorage.setItem('lineh_sync_deletions', JSON.stringify(syncDeletions));
+    }
+    function _removeDeletion(entity, key) {
+      syncDeletions = syncDeletions.filter(function(d) { return !(d.entity === entity && d.key === key); });
       localStorage.setItem('lineh_sync_deletions', JSON.stringify(syncDeletions));
     }
     function _ts(item) { if (item && typeof item === 'object') item.modifiedAt = new Date().toISOString(); return item; }
