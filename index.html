@@ -1014,7 +1014,6 @@
     <button class="tab-btn" onclick="switchTab('tab-purchases')" style="background:#fff3e0; color:#e65100; font-weight:700;">📋 المشتريات</button>
     <button class="tab-btn" onclick="switchTab('tab-reports')" style="background:#fce4ec; color:#c62828; font-weight:700;">🚨 بلاغات الأعطال <span class="tab-badge danger" id="badge-reports">0</span></button>
     <button class="tab-btn" onclick="switchTab('tab-data-exchange')" style="background:#e8f5e9; color:#1b5e20; font-weight:700;">🔄 تبادل البيانات</button>
-    <button class="tab-btn" onclick="switchTab('tab-charts')" style="background:linear-gradient(135deg,#1a237e,#283593); color:white; font-weight:700;">📊 رسومات بيانية</button>
   </div>
 
   <div id="tab-dashboard" class="tab-content active">
@@ -3245,105 +3244,6 @@
     </div>
   </div>
 
-  <!-- ═══════════════════════════════════════════════ -->
-  <!-- تبويب الرسومات البيانية الشامل -->
-  <!-- ═══════════════════════════════════════════════ -->
-  <div id="tab-charts" class="tab-content" style="display:none;">
-    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:14px;">
-      <h2 style="margin:0;">📊 الرسومات البيانية الشاملة</h2>
-      <div style="display:flex;gap:6px;flex-wrap:wrap;">
-        <select id="charts-year" style="padding:6px 10px;border:2px solid #e0e0e0;border-radius:8px;font-family:Cairo;font-size:12px;" onchange="renderAllCharts()"></select>
-        <button class="btn" style="background:#1565c0;color:white;font-size:12px;" onclick="chartsExportAll()">📤 تصدير كل الرسومات</button>
-        <button class="btn" style="background:#37474f;color:white;font-size:12px;" onclick="chartsPrint()">🖨️ طباعة</button>
-      </div>
-    </div>
-
-    <!-- KPI Row -->
-    <div id="charts-kpi-row" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:16px;"></div>
-
-    <!-- Row 1: Finance -->
-    <div style="display:grid;grid-template-columns:2fr 1fr 1fr;gap:12px;margin-bottom:12px;">
-      <div style="background:white;border-radius:12px;padding:14px;box-shadow:var(--shadow);">
-        <div style="font-weight:700;font-size:13px;margin-bottom:8px;color:#1a237e;">💰 المصاريف الشهرية</div>
-        <canvas id="chart-finance-monthly" height="200"></canvas>
-      </div>
-      <div style="background:white;border-radius:12px;padding:14px;box-shadow:var(--shadow);">
-        <div style="font-weight:700;font-size:13px;margin-bottom:8px;color:#1a237e;">🏷️ المصاريف حسب الصنف</div>
-        <canvas id="chart-finance-category" height="200"></canvas>
-      </div>
-      <div style="background:white;border-radius:12px;padding:14px;box-shadow:var(--shadow);">
-        <div style="font-weight:700;font-size:13px;margin-bottom:8px;color:#1a237e;">📊 الميزانية مقابل الفعلي</div>
-        <canvas id="chart-finance-budget" height="200"></canvas>
-      </div>
-    </div>
-
-    <!-- Row 2: Workforce + Bakery + Hospitality -->
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px;">
-      <div style="background:white;border-radius:12px;padding:14px;box-shadow:var(--shadow);">
-        <div style="font-weight:700;font-size:13px;margin-bottom:8px;color:#1b5e20;">👥 توزيع القوة العاملة</div>
-        <canvas id="chart-workforce-dist" height="180"></canvas>
-      </div>
-      <div style="background:white;border-radius:12px;padding:14px;box-shadow:var(--shadow);">
-        <div style="font-weight:700;font-size:13px;margin-bottom:8px;color:#e65100;">🍞 إنتاج الخبز اليومي</div>
-        <canvas id="chart-bakery-daily" height="180"></canvas>
-      </div>
-      <div style="background:white;border-radius:12px;padding:14px;box-shadow:var(--shadow);">
-        <div style="font-weight:700;font-size:13px;margin-bottom:8px;color:#6a1b9a;">🏨 حركة الضيافة</div>
-        <canvas id="chart-hospitality-trend" height="180"></canvas>
-      </div>
-    </div>
-
-    <!-- Row 3: Purchases + Maintenance + Housing -->
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px;">
-      <div style="background:white;border-radius:12px;padding:14px;box-shadow:var(--shadow);">
-        <div style="font-weight:700;font-size:13px;margin-bottom:8px;color:#e65100;">📋 المشتريات حسب القسم</div>
-        <canvas id="chart-purchases-dept" height="180"></canvas>
-      </div>
-      <div style="background:white;border-radius:12px;padding:14px;box-shadow:var(--shadow);">
-        <div style="font-weight:700;font-size:13px;margin-bottom:8px;color:#c62828;">🔧 حالة بلاغات الأعطال</div>
-        <canvas id="chart-reports-status" height="180"></canvas>
-      </div>
-      <div style="background:white;border-radius:12px;padding:14px;box-shadow:var(--shadow);">
-        <div style="font-weight:700;font-size:13px;margin-bottom:8px;color:#1565c0;">🏠 إشغال المباني</div>
-        <canvas id="chart-housing-occupancy" height="180"></canvas>
-      </div>
-    </div>
-
-    <!-- Row 4: Vacations + Department Consumption + Contractors -->
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px;">
-      <div style="background:white;border-radius:12px;padding:14px;box-shadow:var(--shadow);">
-        <div style="font-weight:700;font-size:13px;margin-bottom:8px;color:#ff8f00;">🌴 الإجازات حسب الشهر</div>
-        <canvas id="chart-vacations-monthly" height="180"></canvas>
-      </div>
-      <div style="background:white;border-radius:12px;padding:14px;box-shadow:var(--shadow);">
-        <div style="font-weight:700;font-size:13px;margin-bottom:8px;color:#283593;">🏢 استهلاك الإدارات</div>
-        <canvas id="chart-dept-consumption" height="180"></canvas>
-      </div>
-      <div style="background:white;border-radius:12px;padding:14px;box-shadow:var(--shadow);">
-        <div style="font-weight:700;font-size:13px;margin-bottom:8px;color:#00695c;">👷 المقاولين حسب النشاط</div>
-        <canvas id="chart-contractors-type" height="180"></canvas>
-      </div>
-    </div>
-
-    <!-- Row 5: Attendance Trend (full width) -->
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
-      <div style="background:white;border-radius:12px;padding:14px;box-shadow:var(--shadow);">
-        <div style="font-weight:700;font-size:13px;margin-bottom:8px;color:#1b5e20;">📈 اتجاه الحضور والغياب</div>
-        <canvas id="chart-attendance-trend" height="160"></canvas>
-      </div>
-      <div style="background:white;border-radius:12px;padding:14px;box-shadow:var(--shadow);">
-        <div style="font-weight:700;font-size:13px;margin-bottom:8px;color:#4a148c;">📊 ملخص الأنشطة الشهرية</div>
-        <canvas id="chart-monthly-summary" height="160"></canvas>
-      </div>
-    </div>
-
-    <!-- Row 6: Finance Dept Breakdown (full width) -->
-    <div style="background:white;border-radius:12px;padding:14px;box-shadow:var(--shadow);margin-bottom:12px;">
-      <div style="font-weight:700;font-size:13px;margin-bottom:8px;color:#1a237e;">🏢 استهلاك الإدارات (تفصيلي)</div>
-      <canvas id="chart-dept-breakdown" height="140"></canvas>
-    </div>
-  </div>
-
   <!-- Modal مشتريات -->
   <div id="modal-purchases" style="display:none;position:fixed;inset:0;z-index:999;background:rgba(0,0,0,.5);display:none;justify-content:center;align-items:center;">
     <div style="background:white;border-radius:14px;padding:20px;max-width:600px;width:95%;max-height:90vh;overflow-y:auto;">
@@ -3477,7 +3377,6 @@
     // Seed data removed — الموقع يعتمد على السحابة ☁️
 
     function _safeJsonParse(val, fallback) { try { var r = JSON.parse(val); return (r !== null && r !== undefined) ? r : fallback; } catch(e) { return fallback; } }
-    function _formatNum(n) { if (n >= 1000000) return (n/1000000).toFixed(1) + 'M'; if (n >= 1000) return (n/1000).toFixed(1) + 'K'; return Math.round(n).toLocaleString('ar-EG'); }
 
     (function _cleanCorruptedLocalStorage() {
       if (localStorage.getItem('_corruptionCleaned_v2')) return;
@@ -5001,7 +4900,7 @@
       if (!tabEl) { console.error('Tab not found:', tabId); return; }
       tabEl.classList.add('active');
       if (el) el.classList.add('active');
-      var tabNames = { 'tab-dashboard':'الرئيسية','tab-employees':'القوة','tab-housing':'السكن','tab-inventory':'المخزن','tab-vacations':'إجازات وإضافي الشئون الإدارية','tab-hospitality':'الضيافة','tab-maintenance':'الصيانة','tab-septic':'البيارات','tab-dynamic':'الإدارة المرنة','tab-excluded':'المستبعدين','tab-periodic-maint':'الصيانة الدورية','tab-tea-sugar':'شاي وسكر','tab-meal-log':'الوجبات','tab-contractors':'المقاولين','tab-bakery':'المخبز','tab-bread-supply':'توريد الخبز','tab-evaluations':'التقييمات','tab-audit':'سجل التعديلات','tab-finance':'المركز المالي والميزانية','tab-reports':'بلاغات الأعطال','tab-data-exchange':'تبادل البيانات','tab-charts':'📊 الرسومات البيانية' };
+      var tabNames = { 'tab-dashboard':'الرئيسية','tab-employees':'القوة','tab-housing':'السكن','tab-inventory':'المخزن','tab-vacations':'إجازات وإضافي الشئون الإدارية','tab-hospitality':'الضيافة','tab-maintenance':'الصيانة','tab-septic':'البيارات','tab-dynamic':'الإدارة المرنة','tab-excluded':'المستبعدين','tab-periodic-maint':'الصيانة الدورية','tab-tea-sugar':'شاي وسكر','tab-meal-log':'الوجبات','tab-contractors':'المقاولين','tab-bakery':'المخبز','tab-bread-supply':'توريد الخبز','tab-evaluations':'التقييمات','tab-audit':'سجل التعديلات','tab-finance':'المركز المالي والميزانية','tab-reports':'بلاغات الأعطال','tab-data-exchange':'تبادل البيانات' };
       setAction('🔍 ' + (tabNames[tabId] || tabId));
       try { if(tabId === 'tab-dashboard') { renderDashboard(); renderQuickActions(); } } catch(e) { console.error('tab-dashboard error:', e); }
       try { if(tabId === 'tab-housing') { renderHousingLayout(); updateHousingStats(); } } catch(e) { console.error('tab-housing error:', e); }
@@ -5019,7 +4918,6 @@
       try { if(tabId === 'tab-evaluations') { populateEvalEmployees(); renderEvaluations(); } } catch(e) { console.error('tab-evaluations error:', e); }
       try { if(tabId === 'tab-finance') { renderFinanceTab(); } } catch(e) { console.error('tab-finance error:', e); }
       try { if(tabId === 'tab-reports') { fetchReports(); generateReportsQR(); } } catch(e) { console.error('tab-reports error:', e); }
-      try { if(tabId === 'tab-charts') { renderAllCharts(); } } catch(e) { console.error('tab-charts error:', e); }
     }
 
     function printActiveTab() {
@@ -12045,340 +11943,6 @@ function toggleEmployeeStatus(empId) {
     }
     
     // ═══════════════════════════════════════════════
-    // الرسومات البيانية الشاملة
-    // ═══════════════════════════════════════════════
-    var _chartInstances = {};
-    var _chartColors = ['#1565c0','#e65100','#2e7d32','#6a1b9a','#c62828','#00695c','#ff8f00','#283593','#ad1457','#00838f','#4e342e','#37474f'];
-
-    function _destroyChart(id) { if (_chartInstances[id]) { _chartInstances[id].destroy(); delete _chartInstances[id]; } }
-
-    function _initChartsYearSelect() {
-      var sel = document.getElementById('charts-year');
-      if (!sel) return;
-      var cur = sel.value || new Date().getFullYear().toString();
-      var years = {};
-      dailyStats.forEach(function(s) { if (s.date) years[s.date.substring(0,4)] = true; });
-      finTransactions.forEach(function(t) { if (t.year) years[t.year] = true; });
-      years[new Date().getFullYear().toString()] = true;
-      sel.innerHTML = Object.keys(years).sort().reverse().map(function(y) { return '<option value="' + y + '"' + (y === cur ? ' selected' : '') + '>' + y + '</option>'; }).join('');
-    }
-
-    function renderAllCharts() {
-      _initChartsYearSelect();
-      var yr = document.getElementById('charts-year')?.value || new Date().getFullYear().toString();
-      _renderChartsKPIs(yr);
-      _renderFinanceMonthlyChart(yr);
-      _renderFinanceCategoryChart(yr);
-      _renderFinanceBudgetChart(yr);
-      _renderWorkforceDistChart();
-      _renderBakeryDailyChart(yr);
-      _renderHospitalityTrendChart(yr);
-      _renderPurchasesDeptChart(yr);
-      _renderReportsStatusChart();
-      _renderHousingOccupancyChart();
-      _renderVacationsMonthlyChart(yr);
-      _renderDeptConsumptionChart(yr);
-      _renderContractorsTypeChart();
-      _renderAttendanceTrendChart(yr);
-      _renderMonthlySummaryChart(yr);
-      _renderDeptBreakdownChart(yr);
-    }
-
-    function _renderChartsKPIs(yr) {
-      var el = document.getElementById('charts-kpi-row'); if (!el) return;
-      var totalEmp = employees.length;
-      var presentEmp = employees.filter(function(e){return e.status==='P';}).length;
-      var vacationEmp = employees.filter(function(e){return e.status==='V';}).length;
-      var totalBeds = calcTotalBeds();
-      var occupied = calcOccupiedBeds();
-      var yrFin = finTransactions.filter(function(t){return t.year===yr;});
-      var yrTotal = yrFin.reduce(function(s,t){return s+(parseFloat(t.amount)||0);},0);
-      var yrBudget = finBudgets.filter(function(b){return b.year===yr;}).reduce(function(s,b){return s+(parseFloat(b.amount)||0);},0);
-      var purchasesDone = purchaseRequests.filter(function(r){return r.executor==='تم التنفيذ';}).length;
-      var reportsOpen = (function(){ try { var d = _safeJsonParse(localStorage.getItem('lineh_incident_reports'),[]); return d.filter(function(r){return r.status!=='مغلق';}).length; } catch(e){return 0;}})();
-      var kpis = [
-        { icon:'👥', label:'القوة العاملة', value:totalEmp, color:'#1b5e20' },
-        { icon:'✅', label:'المتواجدين', value:presentEmp, color:'#1565c0' },
-        { icon:'🌴', label:'في الإجازة', value:vacationEmp, color:'#ff8f00' },
-        { icon:'🛏️', label:'الغرف المشغولة', value:occupied+'/'+totalBeds, color:'#6a1b9a' },
-        { icon:'💰', label:'إجمالي المصاريف '+yr, value:_formatNum(yrTotal), color:'#c62828' },
-        { icon:'📊', label:'الميزانية '+yr, value:_formatNum(yrBudget), color:'#283593' },
-        { icon:'📋', label:'طلبات نفّذت', value:purchasesDone, color:'#2e7d32' },
-        { icon:'🚨', label:'بلاغات مفتوحة', value:reportsOpen, color:'#b71c1c' }
-      ];
-      el.innerHTML = kpis.map(function(k) {
-        return '<div style="background:white;border-radius:10px;padding:12px;box-shadow:var(--shadow);text-align:center;border-left:4px solid '+k.color+';"><div style="font-size:20px;">'+k.icon+'</div><div style="font-size:20px;font-weight:800;color:'+k.color+';">'+k.value+'</div><div style="font-size:11px;color:#666;">'+k.label+'</div></div>';
-      }).join('');
-    }
-
-    function _renderFinanceMonthlyChart(yr) {
-      _destroyChart('finance-monthly');
-      var el = document.getElementById('chart-finance-monthly'); if (!el) return;
-      var months = ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
-      var data = new Array(12).fill(0);
-      finTransactions.filter(function(t){return t.year===yr && t.type==='مصروف';}).forEach(function(t) {
-        var m = parseInt(t.month) - 1; if (m >= 0 && m < 12) data[m] += parseFloat(t.amount) || 0;
-      });
-      _chartInstances['finance-monthly'] = new Chart(el, {
-        type: 'bar', data: { labels: months, datasets: [{ label: 'المصاريف', data: data, backgroundColor: '#1565c0', borderRadius: 6 }] },
-        options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { callback: function(v){return _formatNum(v);} } } } }
-      });
-    }
-
-    function _renderFinanceCategoryChart(yr) {
-      _destroyChart('finance-category');
-      var el = document.getElementById('chart-finance-category'); if (!el) return;
-      var cats = {};
-      finTransactions.filter(function(t){return t.year===yr && t.type==='مصروف';}).forEach(function(t) {
-        var c = t.item || 'أخرى'; cats[c] = (cats[c]||0) + (parseFloat(t.amount)||0);
-      });
-      var labels = Object.keys(cats).slice(0,8);
-      var values = labels.map(function(l){return cats[l];});
-      _chartInstances['finance-category'] = new Chart(el, {
-        type: 'doughnut', data: { labels: labels, datasets: [{ data: values, backgroundColor: _chartColors }] },
-        options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { font: { size: 10 } } } } }
-      });
-    }
-
-    function _renderFinanceBudgetChart(yr) {
-      _destroyChart('finance-budget');
-      var el = document.getElementById('chart-finance-budget'); if (!el) return;
-      var months = ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
-      var budgetByMonth = new Array(12).fill(0);
-      finBudgets.filter(function(b){return b.year===yr;}).forEach(function(b) {
-        var m = parseInt(b.month) - 1; if (m >= 0 && m < 12) budgetByMonth[m] += parseFloat(b.amount) || 0;
-      });
-      var actualByMonth = new Array(12).fill(0);
-      finTransactions.filter(function(t){return t.year===yr && t.type==='مصروف';}).forEach(function(t) {
-        var m = parseInt(t.month) - 1; if (m >= 0 && m < 12) actualByMonth[m] += parseFloat(t.amount) || 0;
-      });
-      _chartInstances['finance-budget'] = new Chart(el, {
-        type: 'bar', data: { labels: months, datasets: [
-          { label: 'الميزانية', data: budgetByMonth, backgroundColor: 'rgba(21,101,192,0.3)', borderColor: '#1565c0', borderWidth: 1, borderRadius: 4 },
-          { label: 'الفعلي', data: actualByMonth, backgroundColor: 'rgba(198,40,40,0.7)', borderRadius: 4 }
-        ] },
-        options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { font: { size: 10 } } } }, scales: { y: { beginAtZero: true, ticks: { callback: function(v){return _formatNum(v);} } } } }
-      });
-    }
-
-    function _renderWorkforceDistChart() {
-      _destroyChart('workforce-dist');
-      var el = document.getElementById('chart-workforce-dist'); if (!el) return;
-      var p = employees.filter(function(e){return e.status==='P';}).length;
-      var v = employees.filter(function(e){return e.status==='V';}).length;
-      var other = employees.length - p - v;
-      _chartInstances['workforce-dist'] = new Chart(el, {
-        type: 'doughnut', data: { labels: ['المتواجدين (P)','في الإجازة (V)','أخرى'], datasets: [{ data: [p,v,other], backgroundColor: ['#2e7d32','#ff8f00','#bdbdbd'] }] },
-        options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { font: { size: 11 } } } } }
-      });
-    }
-
-    function _renderBakeryDailyChart(yr) {
-      _destroyChart('bakery-daily');
-      var el = document.getElementById('chart-bakery-daily'); if (!el) return;
-      var prods = bakeryProductions.filter(function(p){return p.date && p.date.substring(0,4)===yr;});
-      var byMonth = {};
-      prods.forEach(function(p) { var m = p.date.substring(5,7); byMonth[m] = (byMonth[m]||0) + (parseInt(p.breadCount)||0); });
-      var months = ['01','02','03','04','05','06','07','08','09','10','11','12'];
-      var labels = ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
-      var data = months.map(function(m){return byMonth[m]||0;});
-      _chartInstances['bakery-daily'] = new Chart(el, {
-        type: 'bar', data: { labels: labels, datasets: [{ label: 'رغيف', data: data, backgroundColor: '#e65100', borderRadius: 6 }] },
-        options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
-      });
-    }
-
-    function _renderHospitalityTrendChart(yr) {
-      _destroyChart('hospitality-trend');
-      var el = document.getElementById('chart-hospitality-trend'); if (!el) return;
-      var byMonth = {};
-      hospitalities.filter(function(h){return h.date && h.date.substring(0,4)===yr;}).forEach(function(h) {
-        var m = h.date.substring(5,7); byMonth[m] = (byMonth[m]||0) + (parseInt(h.guestCount)||parseInt(h.guests)||0);
-      });
-      var months = ['01','02','03','04','05','06','07','08','09','10','11','12'];
-      var labels = ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
-      var data = months.map(function(m){return byMonth[m]||0;});
-      _chartInstances['hospitality-trend'] = new Chart(el, {
-        type: 'line', data: { labels: labels, datasets: [{ label: 'ضيوف', data: data, borderColor: '#6a1b9a', backgroundColor: 'rgba(106,27,154,0.1)', fill: true, tension: 0.4 }] },
-        options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
-      });
-    }
-
-    function _renderPurchasesDeptChart(yr) {
-      _destroyChart('purchases-dept');
-      var el = document.getElementById('chart-purchases-dept'); if (!el) return;
-      var depts = {};
-      purchaseRequests.filter(function(r){return r.year===yr;}).forEach(function(r) {
-        var d = r.requesting_department || 'أخرى'; depts[d] = (depts[d]||0) + 1;
-      });
-      var labels = Object.keys(depts);
-      var values = labels.map(function(l){return depts[l];});
-      _chartInstances['purchases-dept'] = new Chart(el, {
-        type: 'bar', data: { labels: labels, datasets: [{ label: 'عدد الطلبات', data: values, backgroundColor: _chartColors.slice(0,labels.length), borderRadius: 6 }] },
-        options: { responsive: true, indexAxis: 'y', plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true } } }
-      });
-    }
-
-    function _renderReportsStatusChart() {
-      _destroyChart('reports-status');
-      var el = document.getElementById('chart-reports-status'); if (!el) return;
-      var reports = _safeJsonParse(localStorage.getItem('lineh_incident_reports'), []);
-      var statuses = {};
-      reports.forEach(function(r) { var s = r.status || 'جديد'; statuses[s] = (statuses[s]||0) + 1; });
-      var labels = Object.keys(statuses);
-      var values = labels.map(function(l){return statuses[l];});
-      var colors = labels.map(function(l){ return l==='مغلق' ? '#2e7d32' : l==='قيد التنفيذ' ? '#ff8f00' : '#c62828'; });
-      _chartInstances['reports-status'] = new Chart(el, {
-        type: 'doughnut', data: { labels: labels, datasets: [{ data: values, backgroundColor: colors.length ? colors : _chartColors }] },
-        options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { font: { size: 11 } } } } }
-      });
-    }
-
-    function _renderHousingOccupancyChart() {
-      _destroyChart('housing-occupancy');
-      var el = document.getElementById('chart-housing-occupancy'); if (!el) return;
-      var labels = []; var occupied = []; var empty = [];
-      (dynamicRooms || []).forEach(function(r) {
-        labels.push(r.name || r.roomName || 'غرفة');
-        var cap = parseInt(r.capacity) || 4;
-        var occ = (r.occupants || []).length;
-        occupied.push(occ);
-        empty.push(Math.max(0, cap - occ));
-      });
-      if (labels.length > 15) { labels = labels.slice(0,15); occupied = occupied.slice(0,15); empty = empty.slice(0,15); }
-      _chartInstances['housing-occupancy'] = new Chart(el, {
-        type: 'bar', data: { labels: labels, datasets: [
-          { label: 'مشغول', data: occupied, backgroundColor: '#c62828', borderRadius: 4 },
-          { label: 'شاغر', data: empty, backgroundColor: '#2e7d32', borderRadius: 4 }
-        ] },
-        options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { font: { size: 10 } } } }, scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true } } }
-      });
-    }
-
-    function _renderVacationsMonthlyChart(yr) {
-      _destroyChart('vacations-monthly');
-      var el = document.getElementById('chart-vacations-monthly'); if (!el) return;
-      var byMonth = {};
-      vacations.filter(function(v){return v.startDate && v.startDate.substring(0,4)===yr;}).forEach(function(v) {
-        var m = v.startDate.substring(5,7); byMonth[m] = (byMonth[m]||0) + 1;
-      });
-      var months = ['01','02','03','04','05','06','07','08','09','10','11','12'];
-      var labels = ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
-      var data = months.map(function(m){return byMonth[m]||0;});
-      _chartInstances['vacations-monthly'] = new Chart(el, {
-        type: 'bar', data: { labels: labels, datasets: [{ label: 'إجازات', data: data, backgroundColor: '#ff8f00', borderRadius: 6 }] },
-        options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
-      });
-    }
-
-    function _renderDeptConsumptionChart(yr) {
-      _destroyChart('dept-consumption');
-      var el = document.getElementById('chart-dept-consumption'); if (!el) return;
-      var depts = {};
-      finTransactions.filter(function(t){return t.year===yr && t.type==='مصروف';}).forEach(function(t) {
-        var d = t.task || t.department || 'أخرى'; depts[d] = (depts[d]||0) + (parseFloat(t.amount)||0);
-      });
-      var labels = Object.keys(depts).slice(0,8);
-      var values = labels.map(function(l){return depts[l];});
-      _chartInstances['dept-consumption'] = new Chart(el, {
-        type: 'doughnut', data: { labels: labels, datasets: [{ data: values, backgroundColor: _chartColors }] },
-        options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { font: { size: 10 } } } } }
-      });
-    }
-
-    function _renderContractorsTypeChart() {
-      _destroyChart('contractors-type');
-      var el = document.getElementById('chart-contractors-type'); if (!el) return;
-      var types = {};
-      contractors.forEach(function(c) { var t = c.sector || c.activity || 'أخرى'; types[t] = (types[t]||0) + 1; });
-      var labels = Object.keys(types);
-      var values = labels.map(function(l){return types[l];});
-      _chartInstances['contractors-type'] = new Chart(el, {
-        type: 'doughnut', data: { labels: labels, datasets: [{ data: values, backgroundColor: _chartColors }] },
-        options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { font: { size: 10 } } } } }
-      });
-    }
-
-    function _renderAttendanceTrendChart(yr) {
-      _destroyChart('attendance-trend');
-      var el = document.getElementById('chart-attendance-trend'); if (!el) return;
-      var stats = dailyStats.filter(function(s){return s.date && s.date.substring(0,4)===yr;}).sort(function(a,b){return a.date.localeCompare(b.date);});
-      var labels = stats.map(function(s){return s.date.substring(5);});
-      var presentData = stats.map(function(s){return s.permP || 0;});
-      var absentData = stats.map(function(s){return s.permV || 0;});
-      var guestData = stats.map(function(s){return s.hospGuests || 0;});
-      _chartInstances['attendance-trend'] = new Chart(el, {
-        type: 'line', data: { labels: labels, datasets: [
-          { label: 'المتواجدين', data: presentData, borderColor: '#2e7d32', backgroundColor: 'rgba(46,125,50,0.1)', fill: true, tension: 0.3 },
-          { label: 'في الإجازة', data: absentData, borderColor: '#ff8f00', backgroundColor: 'rgba(255,143,0,0.1)', fill: true, tension: 0.3 },
-          { label: 'الضيوف', data: guestData, borderColor: '#6a1b9a', backgroundColor: 'rgba(106,27,154,0.1)', fill: true, tension: 0.3 }
-        ] },
-        options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { font: { size: 10 } } } }, scales: { y: { beginAtZero: true } } }
-      });
-    }
-
-    function _renderMonthlySummaryChart(yr) {
-      _destroyChart('monthly-summary');
-      var el = document.getElementById('chart-monthly-summary'); if (!el) return;
-      var months = ['01','02','03','04','05','06','07','08','09','10','11','12'];
-      var labels = ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
-      var maintByMonth = new Array(12).fill(0);
-      maintenanceRecords.forEach(function(r) { if (r.date && r.date.substring(0,4)===yr) { var m = r.date.substring(5,7); var idx = months.indexOf(m); if(idx>=0) maintByMonth[idx]++; } });
-      var hospByMonth = new Array(12).fill(0);
-      hospitalities.filter(function(h){return h.date && h.date.substring(0,4)===yr;}).forEach(function(h) { var m = h.date.substring(5,7); var idx = months.indexOf(m); if(idx>=0) hospByMonth[idx]++; });
-      _chartInstances['monthly-summary'] = new Chart(el, {
-        type: 'bar', data: { labels: labels, datasets: [
-          { label: 'الصيانة', data: maintByMonth, backgroundColor: '#1565c0', borderRadius: 4 },
-          { label: 'الضيافة', data: hospByMonth, backgroundColor: '#6a1b9a', borderRadius: 4 }
-        ] },
-        options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { font: { size: 10 } } } }, scales: { y: { beginAtZero: true } } }
-      });
-    }
-
-    function _renderDeptBreakdownChart(yr) {
-      _destroyChart('dept-breakdown');
-      var el = document.getElementById('chart-dept-breakdown'); if (!el) return;
-      var depts = {};
-      finTransactions.filter(function(t){return t.year===yr && t.type==='مصروف';}).forEach(function(t) {
-        var d = t.task || t.department || 'أخرى';
-        if (!depts[d]) depts[d] = {};
-        var m = t.month || '00';
-        depts[d][m] = (depts[d][m]||0) + (parseFloat(t.amount)||0);
-      });
-      var labels = Object.keys(depts).slice(0,6);
-      var months = ['01','02','03','04','05','06','07','08','09','10','11','12'];
-      var monthLabels = ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
-      var datasets = labels.map(function(d,i) {
-        return { label: d, data: months.map(function(m){return depts[d][m]||0;}), backgroundColor: _chartColors[i], borderRadius: 4 };
-      });
-      _chartInstances['dept-breakdown'] = new Chart(el, {
-        type: 'bar', data: { labels: monthLabels, datasets: datasets },
-        options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { font: { size: 10 } } } }, scales: { y: { beginAtZero: true, ticks: { callback: function(v){return _formatNum(v);} } } } }
-      });
-    }
-
-    function chartsExportAll() {
-      var links = document.querySelectorAll('#tab-charts canvas');
-      links.forEach(function(c) {
-        var link = document.createElement('a');
-        link.download = c.id + '_' + new Date().toISOString().split('T')[0] + '.png';
-        link.href = c.toDataURL('image/png');
-        link.click();
-      });
-    }
-
-    function chartsPrint() {
-      var w = window.open('', '_blank');
-      var html = '<html dir="rtl"><head><title>الرسومات البيانية - لينه</title><style>body{font-family:Cairo,sans-serif;padding:20px;}h1{text-align:center;color:#1a237e;}h2{color:#333;border-bottom:2px solid #1a237e;padding-bottom:5px;}.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;}.card{border:1px solid #ddd;border-radius:8px;padding:12px;text-align:center;}canvas{max-width:100%;}img{max-width:100%;border-radius:8px;}</style></head><body><h1>📊 الرسومات البيانية الشاملة</h1><h2>تم الإنشاء: ' + new Date().toLocaleDateString('ar-EG') + '</h2><div class="grid">';
-      document.querySelectorAll('#tab-charts canvas').forEach(function(c) {
-        html += '<div class="card"><img src="' + c.toDataURL('image/png') + '"></div>';
-      });
-      html += '</div></body></html>';
-      w.document.write(html); w.document.close();
-      setTimeout(function(){w.print();},500);
-    }
-
-    // ═══════════════════════════════════════════════
     // المشتريات
     // ═══════════════════════════════════════════════
     var purchaseRequests = _safeJsonParse(localStorage.getItem('lineh_purchase_requests'), []);
@@ -12711,7 +12275,7 @@ function toggleEmployeeStatus(empId) {
     })();
 
     function renderAll() {
-      try { renderTable(); renderHousingLayout(); renderInventoryTable(); renderInventoryItems(); renderVacationsTable(); renderOvertimeCalendar(); renderHospitalityTable(); renderMaintenanceTable(); renderSepticTable(); renderPeriodicMaintenance(); renderTeaSugarTable(); renderMealLogTable(); renderDashboard(); renderQuickActions(); renderContractorsTable(); renderBakeryIngredients(); renderBakeryProductions(); renderBakeryContractorSupplies(); renderBakeryInvoices(); updateBakeryStats(); updateBreadSupplyStats(); rebuildAllDropdowns(); renderExcludedTable(); renderDailyStatsTable(); renderEvaluations(); try { renderFinanceTab(); } catch(e) {} try { fetchReports(); } catch(e) {}       try { purchasesRenderTable(); purchaseSummaryRender(); vegsRenderTable(); } catch(e) {} try { if (document.getElementById('tab-charts')?.style.display !== 'none') renderAllCharts(); } catch(e) {} } catch(e) { console.error('renderAll error:', e); }
+      try { renderTable(); renderHousingLayout(); renderInventoryTable(); renderInventoryItems(); renderVacationsTable(); renderOvertimeCalendar(); renderHospitalityTable(); renderMaintenanceTable(); renderSepticTable(); renderPeriodicMaintenance(); renderTeaSugarTable(); renderMealLogTable(); renderDashboard(); renderQuickActions(); renderContractorsTable(); renderBakeryIngredients(); renderBakeryProductions(); renderBakeryContractorSupplies(); renderBakeryInvoices(); updateBakeryStats(); updateBreadSupplyStats(); rebuildAllDropdowns(); renderExcludedTable(); renderDailyStatsTable(); renderEvaluations(); try { renderFinanceTab(); } catch(e) {} try { fetchReports(); } catch(e) {} try { purchasesRenderTable(); purchaseSummaryRender(); vegsRenderTable(); } catch(e) {} } catch(e) { console.error('renderAll error:', e); }
     }
 
     function updateLastSyncTime() {
