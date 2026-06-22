@@ -11704,6 +11704,7 @@ function toggleEmployeeStatus(empId) {
             _takeSnapshot();
             syncStorage(true, true);
             renderAll();
+            try { _bakeryFormImported = false; importBakeryFormData(); } catch(e) {}
             syncLog('✅ تم تحديث البيانات من السحابة');
             showSyncToast('تم استلام البيانات');
           } else {
@@ -11747,6 +11748,7 @@ function toggleEmployeeStatus(empId) {
           _takeSnapshot();
           syncStorage(true, true);
           renderAll();
+          try { _bakeryFormImported = false; importBakeryFormData(); } catch(e) {}
           syncLog('✅ تم تحويل البيانات القديمة إلى نظام جديد');
         }
       } catch(e) { syncLog('⚠️ خطأ في التحويل: ' + e.message); }
