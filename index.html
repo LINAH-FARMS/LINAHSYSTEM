@@ -11779,7 +11779,6 @@ function toggleEmployeeStatus(empId) {
       localStorage.setItem('lineh_sync_deletions', JSON.stringify(syncDeletions));
       _schedulePushAfterDelete();
     }
-    }
     function _ts(item) { if (item && typeof item === 'object') item.modifiedAt = new Date().toISOString(); return item; }
     function _isDeleted(entity, key, modifiedAt) {
       if (!syncDeletions || !Array.isArray(syncDeletions)) return false;
