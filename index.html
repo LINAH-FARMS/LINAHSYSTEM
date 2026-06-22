@@ -5884,8 +5884,11 @@
       var pCount = getPresentCountOnDate(dateInput);
       var todayGuests = hospitalities.filter(function(h) {
         if (!h.arrival) return false;
-        var a = new Date(h.arrival + 'T00:00:00');
-        var d = h.departure ? new Date(h.departure + 'T00:00:00') : a;
+        var aStr = normalizeDateStr(h.arrival);
+        var dStr = h.departure ? normalizeDateStr(h.departure) : aStr;
+        if (!aStr) return false;
+        var a = new Date(aStr + 'T00:00:00');
+        var d = new Date(dStr + 'T00:00:00');
         var target = new Date(dateInput + 'T00:00:00');
         return target >= a && target <= d;
       });
@@ -5896,13 +5899,7 @@
         else if (h.type === 'طلبة مدرسة') studentCount += g;
         else otherGuestsCount += g;
       });
-      var womenCount = 0, studentCount = 0, otherGuestsCount = 0;
-      todayGuests.forEach(function(h) {
-        var g = h.guests || 1;
-        if (h.type === 'سيدات') womenCount += g;
-        else if (h.type === 'طلبة مدرسة') studentCount += g;
-        else otherGuestsCount += g;
-      });
+      var workerLoaves = pCount * 6;
       var womenLoaves = womenCount * 2;
       var studentLoaves = studentCount * 2;
       var otherGuestsLoaves = otherGuestsCount * 2;
@@ -5947,8 +5944,11 @@
       var pCount = getPresentCountOnDate(dateVal);
       var planGuests = hospitalities.filter(function(h) {
         if (!h.arrival) return false;
-        var a = new Date(h.arrival + 'T00:00:00');
-        var d = h.departure ? new Date(h.departure + 'T00:00:00') : a;
+        var aStr = normalizeDateStr(h.arrival);
+        var dStr = h.departure ? normalizeDateStr(h.departure) : aStr;
+        if (!aStr) return false;
+        var a = new Date(aStr + 'T00:00:00');
+        var d = new Date(dStr + 'T00:00:00');
         var target = new Date(dateVal + 'T00:00:00');
         return target >= a && target <= d;
       });
@@ -6044,8 +6044,11 @@
       var pCount = getPresentCountOnDate(planDate);
       var planGuests = hospitalities.filter(function(h) {
         if (!h.arrival) return false;
-        var a = new Date(h.arrival + 'T00:00:00');
-        var d = h.departure ? new Date(h.departure + 'T00:00:00') : a;
+        var aStr = normalizeDateStr(h.arrival);
+        var dStr = h.departure ? normalizeDateStr(h.departure) : aStr;
+        if (!aStr) return false;
+        var a = new Date(aStr + 'T00:00:00');
+        var d = new Date(dStr + 'T00:00:00');
         var target = new Date(planDate + 'T00:00:00');
         return target >= a && target <= d;
       });
@@ -6113,8 +6116,11 @@
       var pCount = getPresentCountOnDate(dateVal);
       var planGuests = hospitalities.filter(function(h) {
         if (!h.arrival) return false;
-        var a = new Date(h.arrival + 'T00:00:00');
-        var d = h.departure ? new Date(h.departure + 'T00:00:00') : a;
+        var aStr = normalizeDateStr(h.arrival);
+        var dStr = h.departure ? normalizeDateStr(h.departure) : aStr;
+        if (!aStr) return false;
+        var a = new Date(aStr + 'T00:00:00');
+        var d = new Date(dStr + 'T00:00:00');
         var target = new Date(dateVal + 'T00:00:00');
         return target >= a && target <= d;
       });
