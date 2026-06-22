@@ -10354,6 +10354,8 @@ function toggleEmployeeStatus(empId) {
           reports.forEach(function(r) {
             var p = r.production || {};
             if (!p.date || !p.breadCount) return;
+            var pKey = normalizeDateStr(p.date) + '|' + (p.breadCount || '');
+            if (_isDeleted('bakeryProductions', pKey)) return;
             var pExists = bakeryProductions.some(function(bp) { return bp.date === p.date && bp.breadCount == p.breadCount; });
             if (!pExists) {
               bakeryProductions.push(_ts({
@@ -10372,6 +10374,8 @@ function toggleEmployeeStatus(empId) {
             }
             (r.contractors || []).forEach(function(ct) {
               if (!ct.name || !ct.count) return;
+              var ctKey = (ct.name||'') + '|' + normalizeDateStr(p.date) + '|' + (ct.count||'');
+              if (_isDeleted('bakeryContractorSupplies', ctKey)) return;
               var cExists = bakeryContractorSupplies.some(function(bc) { return bc.date === p.date && bc.name === ct.name && bc.count == ct.count; });
               if (!cExists) {
                 var ing = ct.ingredients || {};
