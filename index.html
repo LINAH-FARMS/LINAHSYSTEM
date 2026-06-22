@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script>
   (function(){
-    var v='2.7';
+    var v='2.8';
     var s=localStorage.getItem('_codeVersion');
     if(s&&s!==v){localStorage.clear();location.replace(location.pathname+'?v='+Date.now());}
     localStorage.setItem('_codeVersion',v);
@@ -11731,7 +11731,7 @@ function toggleEmployeeStatus(empId) {
     var _syncTimer = null;
     var _pulledAt = {};
     var _forcePull = false;
-    var _CODE_VERSION = '2.7';
+    var _CODE_VERSION = '2.8';
     (function() {
       localStorage.setItem('_codeVersion', _CODE_VERSION);
     })();
@@ -12582,7 +12582,17 @@ function toggleEmployeeStatus(empId) {
     function applyRemoteData(d) {
       if (!d || typeof d !== 'object') return;
       var keys = Object.keys(d);
-      if (d.syncDeletions) setEntityVar('syncDeletions', d.syncDeletions);
+      // دمج syncDeletions المحلية مع البعيدة — لا تستبدل، عشان الحذف المحلي اللي مدفعش يفضل
+      if (d.syncDeletions) {
+        var localDel = _safeJsonParse(localStorage.getItem('lineh_sync_deletions'), []);
+        var mergedDel = [].concat(d.syncDeletions);
+        localDel.forEach(function(ld) {
+          var exists = mergedDel.some(function(md) { return md.entity === ld.entity && md.key === ld.key; });
+          if (!exists) mergedDel.push(ld);
+        });
+        setEntityVar('syncDeletions', mergedDel);
+        localStorage.setItem('lineh_sync_deletions', JSON.stringify(mergedDel));
+      }
       for (var i = 0; i < keys.length; i++) {
         if (keys[i] === 'syncDeletions') continue;
         setEntityVar(keys[i], d[keys[i]]);
