@@ -6219,15 +6219,22 @@
       var end = new Date(toDate + 'T00:00:00');
       while (d <= end) {
         var dateStr = d.toISOString().split('T')[0];
-        var total = employees.length;
+        var active = employees.filter(function(e) {
+          if (e.hireDate && e.hireDate.split('T')[0] > dateStr) return false;
+          return !excludedEmployees.some(function(x) {
+            if ((x.code || x.name) !== (e.code || e.name)) return false;
+            if (x.date && x.date.split('T')[0] <= dateStr) return true;
+            return false;
+          });
+        });
+        var total = active.length;
         var permP = 0, permV = 0, casP = 0;
-        employees.forEach(function(e) {
+        active.forEach(function(e) {
           var onVac = vacations.some(function(v) {
             var vStart = (v.start || v.startDate || v.dateFrom || '').split('T')[0];
             var vEnd = (v.end || v.endDate || v.dateTo || '').split('T')[0];
             if (!vStart || !vEnd) return false;
-            var empId = v.code || v.employeeCode;
-            var empName = v.employeeName || v.name;
+            var empId = v.code || v.employeeCode, empName = v.employeeName || v.name;
             var match = (empId && empId === e.code) || (empName && empName === e.name);
             return match && vStart <= dateStr && vEnd >= dateStr;
           });
