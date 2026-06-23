@@ -1,4 +1,4 @@
-import requests, json, sys
+import requests, json, sys, os
 from datetime import datetime, timedelta
 sys.stdout.reconfigure(encoding='utf-8')
 from openpyxl import Workbook
@@ -42,9 +42,6 @@ def style_sheet(ws, headers, rows, col_widths=None, title=None):
 
 print('[جاري سحب البيانات...]')
 data = fetch()
-sun, sat = last_saturday(), last_saturday() + timedelta(days=6)
-date_str = f'{fmt(sun)}_الى_{fmt(sat)}'
-print(f'[الفترة] {fmt(sun)} إلى {fmt(sat)}')
 
 sync_del = data.get('syncDeletions', [])
 def filt(arr, entity):
@@ -67,6 +64,9 @@ def filt(arr, entity):
 for ent in ['employees','hospitalities','maintenanceRecords','bakeryProductions','bakeryContractorSupplies','septicRecords','teaSugarDisbursements']:
     if data.get(ent): data[ent] = filt(data[ent], ent)
 
+sun, sat = last_saturday(), last_saturday() + timedelta(days=6)
+print(f'[الفترة] {fmt(sun)} إلى {fmt(sat)}')
+
 emps = data.get('employees', [])
 p_count = sum(1 for e in emps if e.get('status') == 'P')
 v_count = sum(1 for e in emps if e.get('status') == 'V')
@@ -81,9 +81,15 @@ tea_sugar = [t for t in data.get('teaSugarDisbursements', []) if t.get('date',''
 
 today_str = datetime.now().strftime('%Y-%m-%d')
 filename = f'C:\\Users\\Salem Magdy\\Desktop\\Lina_Weekly_{today_str}.xlsx'
+
+base = filename.replace('.xlsx','')
+i = 1
+while os.path.exists(filename):
+    filename = f'{base}_{i}.xlsx'
+    i += 1
+
 wb = Workbook()
 
-# Sheet 1: Summary
 ws = wb.active; ws.title = 'Summary'
 style_sheet(ws, ['Item', 'Count'], [
     ['Total Employees', len(emps)], ['Present (P)', p_count], ['Vacation (V)', v_count],
@@ -93,28 +99,31 @@ style_sheet(ws, ['Item', 'Count'], [
     ['Incidents', len(incidents)], ['Tea & Sugar', len(tea_sugar)]
 ], [25, 12], title=f'Weekly Report {fmt(sun)} to {fmt(sat)}')
 
-# Sheet 2: Bakery Production
 if prods:
     ws2 = wb.create_sheet('Bakery')
     style_sheet(ws2, ['Date', 'Bread', 'Flour', 'Bran', 'Salt', 'Yeast', 'Diesel'], [
         [p.get('date',''), p.get('breadCount',0), p.get('flourUsed',0), p.get('branUsed',0), p.get('saltUsed',0), p.get('yeastUsed',0), p.get('dieselUsed',0)]
         for p in sorted(prods, key=lambda x: x.get('date',''))
     ], [14,10,10,10,10,10,10], title='Bakery Production')
-    ws2.cell(row=2, column=1, value='Total').font = Font(bold=True)
-    for ci, sf in [(2,'breadCount'),(3,'flourUsed'),(4,'branUsed'),(5,'saltUsed'),(6,'yeastUsed'),(7,'dieselUsed')]:
-        ws2.cell(row=2, column=ci, value=round(sum(float(p.get(sf,0)or 0) for p in prods),1))
+    data_end = 3 + len(prods)  # row after last data row
+    ws2.cell(row=data_end, column=1, value='الإجمالي').font = Font(bold=True, size=11, color='1B5E20')
+    ws2.cell(row=data_end, column=2, value=round(sum(float(p.get('breadCount',0)or 0) for p in prods)))
+    ws2.cell(row=data_end, column=3, value=round(sum(float(p.get('flourUsed',0)or 0) for p in prods),1))
+    ws2.cell(row=data_end, column=4, value=round(sum(float(p.get('branUsed',0)or 0) for p in prods),1))
+    ws2.cell(row=data_end, column=5, value=round(sum(float(p.get('saltUsed',0)or 0) for p in prods),1))
+    ws2.cell(row=data_end, column=6, value=round(sum(float(p.get('yeastUsed',0)or 0) for p in prods),1))
+    ws2.cell(row=data_end, column=7, value=round(sum(float(p.get('dieselUsed',0)or 0) for p in prods),1))
 
-# Sheet 3: Contractor Supply
 if ctr_sup:
     ws3 = wb.create_sheet('Contractors')
     rows = [[c.get('date',''), c.get('name',''), c.get('count',0), c.get('price',0),
              int(c.get('count',0)or 0)*float(c.get('price',0)or 0)] for c in sorted(ctr_sup, key=lambda x: x.get('date',''))]
     style_sheet(ws3, ['Date', 'Name', 'Loaves', 'Price', 'Total'], rows, [14,20,10,10,12], title='Contractor Supply')
-    ws3.cell(row=2, column=1, value='Total').font = Font(bold=True)
-    ws3.cell(row=2, column=3, value=sum(r[2] for r in rows))
-    ws3.cell(row=2, column=5, value=round(sum(r[4] for r in rows),2))
+    data_end = 3 + len(ctr_sup)
+    ws3.cell(row=data_end, column=1, value='الإجمالي').font = Font(bold=True, size=11, color='1B5E20')
+    ws3.cell(row=data_end, column=3, value=sum(r[2] for r in rows))
+    ws3.cell(row=data_end, column=5, value=round(sum(r[4] for r in rows),2))
 
-# Sheet 4: Hospitality
 if hosp:
     ws4 = wb.create_sheet('Hospitality')
     style_sheet(ws4, ['Name', 'Arrival', 'Departure', 'Guests'], [
@@ -122,7 +131,6 @@ if hosp:
         for h in sorted(hosp, key=lambda x: x.get('arrival',''))
     ], [25,14,14,10], title='Hospitality')
 
-# Sheet 5: Maintenance
 if maint:
     ws5 = wb.create_sheet('Maintenance')
     style_sheet(ws5, ['Date', 'Category', 'Task', 'Cost', 'Responsible'], [
@@ -130,7 +138,6 @@ if maint:
         for m in sorted(maint, key=lambda x: x.get('date',''))
     ], [14,15,30,10,20], title='Maintenance')
 
-# Sheet 6: Meals
 if meals:
     ws6 = wb.create_sheet('Meals')
     rows = [[m.get('date',''), m.get('breakfast',0), m.get('lunch',0), m.get('dinner',0),
@@ -138,7 +145,6 @@ if meals:
             for m in sorted(meals, key=lambda x: x.get('date',''))]
     style_sheet(ws6, ['Date', 'Breakfast', 'Lunch', 'Dinner', 'Total'], rows, [14,10,10,10,12], title='Meals')
 
-# Sheet 7: Septic
 if septic:
     ws7 = wb.create_sheet('Septic')
     style_sheet(ws7, ['Date', 'Name', 'Trips', 'Quantity'], [
@@ -146,7 +152,6 @@ if septic:
         for s in sorted(septic, key=lambda x: x.get('date',''))
     ], [14,20,10,10], title='Septic')
 
-# Sheet 8: Incidents
 if incidents:
     ws8 = wb.create_sheet('Incidents')
     style_sheet(ws8, ['Date', 'Location', 'Category', 'Description', 'Status'], [
@@ -154,7 +159,6 @@ if incidents:
         for i in sorted(incidents, key=lambda x: x.get('date',''))
     ], [14,15,15,40,10], title='Incidents')
 
-# Sheet 9: Tea & Sugar
 if tea_sugar:
     ws9 = wb.create_sheet('TeaSugar')
     style_sheet(ws9, ['Date', 'Employee', 'Tea', 'Sugar', 'Period'], [
