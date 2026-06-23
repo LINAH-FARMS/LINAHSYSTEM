@@ -2,7 +2,7 @@ import requests, json, sys
 from datetime import datetime, timedelta
 sys.stdout.reconfigure(encoding='utf-8')
 from openpyxl import Workbook
-from openpyxl.styles import Font, PatternFill, Alignment, Border, Side, numbers
+from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from openpyxl.utils import get_column_letter
 
 SUPABASE_URL = 'https://cwqghiqykohefaggedjl.supabase.co'
@@ -17,217 +17,150 @@ def last_sunday():
     today = datetime.now()
     return today - timedelta(days=(today.weekday() + 1) % 7)
 
-def date_range_str(sun):
-    sat = sun + timedelta(days=6)
-    return sun.strftime('%Y-%m-%d'), sat.strftime('%Y-%m-%d')
+def fmt(d):
+    return d.strftime('%Y-%m-%d')
 
-def style_header(ws, row, headers, fill_color='1B5E20'):
-    hf = Font(bold=True, color='FFFFFF', size=10)
-    hfill = PatternFill('solid', fgColor=fill_color)
-    thin = Side(style='thin'); border = Border(top=thin, left=thin, right=thin, bottom=thin)
-    for c, h in enumerate(headers, 1):
-        cell = ws.cell(row=row, column=c, value=h)
-        cell.font = hf; cell.fill = hfill; cell.alignment = Alignment(horizontal='center', vertical='center')
-        cell.border = border
-
-def write_rows(ws, start_row, data, widths=None):
+def style_sheet(ws, headers, rows, col_widths=None, title=None):
     thin = Side(style='thin'); border = Border(top=thin, left=thin, right=thin, bottom=thin)
     alt_fill = PatternFill('solid', fgColor='F5F5F5')
-    for r, row_data in enumerate(data, start_row):
+    if title:
+        ws.cell(row=1, column=1, value=title).font = Font(bold=True, size=13, color='1B5E20')
+    r = 2 if title else 1
+    hf = Font(bold=True, color='FFFFFF', size=10)
+    hfill = PatternFill('solid', fgColor='1B5E20')
+    for c, h in enumerate(headers, 1):
+        cell = ws.cell(row=r, column=c, value=h)
+        cell.font = hf; cell.fill = hfill; cell.alignment = Alignment(horizontal='center'); cell.border = border
+    for ri, row_data in enumerate(rows, r + 1):
         for c, v in enumerate(row_data, 1):
-            cell = ws.cell(row=r, column=c, value=v)
-            cell.border = border; cell.alignment = Alignment(horizontal='center', vertical='center')
-            if r % 2 == 0: cell.fill = alt_fill
-    if widths:
-        for c, w in enumerate(widths, 1):
+            cell = ws.cell(row=ri, column=c, value=v)
+            cell.border = border; cell.alignment = Alignment(horizontal='center')
+            if ri % 2 == 0: cell.fill = alt_fill
+    if col_widths:
+        for c, w in enumerate(col_widths, 1):
             ws.column_dimensions[get_column_letter(c)].width = w
 
 print('[جاري سحب البيانات...]')
 data = fetch()
-sun, sat = date_range_str(last_sunday())
-print(f'[الفترة] {sun} ← {sat}')
-
-# تطبيق syncDeletions (لو فيه)
-def apply_deletions(arr, entity, sync_del):
-    if not sync_del or not arr: return arr
-    keys_to_del = set(d['key'] for d in sync_del if d.get('entity') == entity)
-    if not keys_to_del: return arr
-    if entity == 'employees':
-        return [e for e in arr if (e.get('code') or e.get('name')) not in keys_to_del]
-    elif entity == 'hospitalities':
-        return [h for h in arr if ((h.get('name','') + '|' + (h.get('arrival','') or '') + '|' + (h.get('type','') or ''))) not in keys_to_del]
-    elif entity == 'maintenanceRecords':
-        return [m for m in arr if ((m.get('category','') + '|' + m.get('task','') + '|' + (m.get('date','') or ''))) not in keys_to_del]
-    elif entity == 'bakeryProductions':
-        return [p for p in arr if ((p.get('date','') + '|' + str(p.get('breadCount','')))) not in keys_to_del]
-    elif entity == 'bakeryContractorSupplies':
-        return [s for s in arr if ((s.get('name','') + '|' + (s.get('date','') or '') + '|' + str(s.get('count','')))) not in keys_to_del]
-    elif entity == 'septicRecords':
-        return [s for s in arr if ((s.get('date','') + '|' + (s.get('name',s.get('sector','')) or '') + '|' + str(s.get('trips',s.get('quantity',''))))) not in keys_to_del]
-    elif entity == 'teaSugarDisbursements':
-        return [t for t in arr if ((t.get('date','') + '|' + (t.get('period',t.get('type','')) or '') + '|' + (t.get('empCode','') or '') + '|' + str(t.get('teaPacks',t.get('quantity',''))) + '|' + str(t.get('sugarKg','')))) not in keys_to_del]
-    return arr
+sun, sat = last_sunday(), last_sunday() + timedelta(days=6)
+date_str = f'{fmt(sun)}_الى_{fmt(sat)}'
+print(f'[الفترة] {fmt(sun)} إلى {fmt(sat)}')
 
 sync_del = data.get('syncDeletions', [])
+def filt(arr, entity):
+    if not sync_del or not arr: return arr
+    keys = set(d['key'] for d in sync_del if d.get('entity') == entity)
+    if not keys: return arr
+    key_fns = {
+        'employees': lambda e: e.get('code') or e.get('name'),
+        'hospitalities': lambda h: f"{h.get('name','')}|{h.get('arrival','')}|{h.get('type','')}",
+        'maintenanceRecords': lambda m: f"{m.get('category','')}|{m.get('task','')}|{m.get('date','')}",
+        'bakeryProductions': lambda p: f"{p.get('date','')}|{p.get('breadCount','')}",
+        'bakeryContractorSupplies': lambda s: f"{s.get('name','')}|{s.get('date','')}|{s.get('count','')}",
+        'septicRecords': lambda s: f"{s.get('date','')}|{s.get('name',s.get('sector',''))}|{s.get('trips',s.get('quantity',''))}",
+        'teaSugarDisbursements': lambda t: f"{t.get('date','')}|{t.get('period',t.get('type',''))}|{t.get('empCode','')}|{t.get('teaPacks',t.get('quantity',''))}|{t.get('sugarKg','')}"
+    }
+    fn = key_fns.get(entity)
+    if not fn: return arr
+    return [x for x in arr if fn(x) not in keys]
+
 for ent in ['employees','hospitalities','maintenanceRecords','bakeryProductions','bakeryContractorSupplies','septicRecords','teaSugarDisbursements']:
-    if data.get(ent):
-        data[ent] = apply_deletions(data[ent], ent, sync_del)
+    if data.get(ent): data[ent] = filt(data[ent], ent)
 
-wb = Workbook()
-
-# ===== شيت 1: ملخص الأسبوع =====
-ws = wb.active; ws.title = 'ملخص الأسبوع'
-title_fill = PatternFill('solid', fgColor='1B5E20')
-title_cell = ws.cell(row=1, column=1, value=f'تقرير لينة الأسبوعي — {sun} إلى {sat}')
-title_cell.font = Font(bold=True, color='FFFFFF', size=14)
-title_cell.fill = title_fill; ws.merge_cells('A1:F1')
-ws.row_dimensions[1].height = 35
-
-# إحصائيات سريعة
 emps = data.get('employees', [])
-total = len(emps)
 p_count = sum(1 for e in emps if e.get('status') == 'P')
 v_count = sum(1 for e in emps if e.get('status') == 'V')
-hosp = [h for h in data.get('hospitalities', []) if h.get('arrival','')[:10] >= sun and h.get('arrival','')[:10] <= sat]
-prods = [p for p in data.get('bakeryProductions', []) if p.get('date','') >= sun and p.get('date','') <= sat]
-ctr_sup = [c for c in data.get('bakeryContractorSupplies', []) if c.get('date','') >= sun and c.get('date','') <= sat]
-meals = [m for m in data.get('mealLogs', []) if m.get('date','') >= sun and m.get('date','') <= sat]
-maint = [m for m in data.get('maintenanceRecords', []) if m.get('date','') >= sun and m.get('date','') <= sat]
-septic = [s for s in data.get('septicRecords', []) if s.get('date','') >= sun and s.get('date','') <= sat]
-incidents = [i for i in data.get('incident_reports', []) if i.get('date','')[:10] >= sun and i.get('date','')[:10] <= sat]
-tea_sugar = [t for t in data.get('teaSugarDisbursements', []) if t.get('date','') >= sun and t.get('date','') <= sat]
+hosp = [h for h in data.get('hospitalities', []) if h.get('arrival','')[:10] >= fmt(sun) and h.get('arrival','')[:10] <= fmt(sat)]
+prods = [p for p in data.get('bakeryProductions', []) if p.get('date','') >= fmt(sun) and p.get('date','') <= fmt(sat)]
+ctr_sup = [c for c in data.get('bakeryContractorSupplies', []) if c.get('date','') >= fmt(sun) and c.get('date','') <= fmt(sat)]
+meals = [m for m in data.get('mealLogs', []) if m.get('date','') >= fmt(sun) and m.get('date','') <= fmt(sat)]
+maint = [m for m in data.get('maintenanceRecords', []) if m.get('date','') >= fmt(sun) and m.get('date','') <= fmt(sat)]
+septic = [s for s in data.get('septicRecords', []) if s.get('date','') >= fmt(sun) and s.get('date','') <= fmt(sat)]
+incidents = [i for i in data.get('incident_reports', []) if i.get('date','')[:10] >= fmt(sun) and i.get('date','')[:10] <= fmt(sat)]
+tea_sugar = [t for t in data.get('teaSugarDisbursements', []) if t.get('date','') >= fmt(sun) and t.get('date','') <= fmt(sat)]
 
-summary = [
-    ['إجمالي الموظفين', total], ['P (متواجد)', p_count], ['V (إجازات)', v_count],
-    ['الضيافة (الأسبوع)', len(hosp)], ['إنتاج الفرن (الأسبوع)', len(prods)],
-    ['توريد مقاولين (الأسبوع)', len(ctr_sup)], ['وجبات (الأسبوع)', len(meals)],
-    ['بلاغات صيانة (الأسبوع)', len(maint)],
-    ['بيارات (الأسبوع)', len(septic)],
-    ['بلاغات أعطال (الأسبوع)', len(incidents)],
-    ['شاي وسكر (الأسبوع)', len(tea_sugar)]]
-style_header(ws, 3, ['البيان', 'العدد'])
-write_rows(ws, 4, summary, [30, 15])
+today_str = datetime.now().strftime('%Y-%m-%d')
+filename = f'C:\\Users\\Salem Magdy\\Desktop\\Lina_Weekly_{today_str}.xlsx'
+wb = Workbook()
 
-# ===== شيت 2: إنتاج الفرن =====
+# Sheet 1: Summary
+ws = wb.active; ws.title = 'Summary'
+style_sheet(ws, ['Item', 'Count'], [
+    ['Total Employees', len(emps)], ['Present (P)', p_count], ['Vacation (V)', v_count],
+    ['Hospitality', len(hosp)], ['Bakery Production', len(prods)],
+    ['Contractor Supply', len(ctr_sup)], ['Meals', len(meals)],
+    ['Maintenance', len(maint)], ['Septic', len(septic)],
+    ['Incidents', len(incidents)], ['Tea & Sugar', len(tea_sugar)]
+], [25, 12], title=f'Weekly Report {fmt(sun)} to {fmt(sat)}')
+
+# Sheet 2: Bakery Production
 if prods:
-    ws2 = wb.create_sheet('إنتاج الفرن')
-    total_bread = sum(int(p.get('breadCount',0) or 0) for p in prods)
-    total_flour = sum(float(p.get('flourUsed',0) or 0) for p in prods)
-    total_bran = sum(float(p.get('branUsed',0) or 0) for p in prods)
-    total_salt = sum(float(p.get('saltUsed',0) or 0) for p in prods)
-    total_yeast = sum(float(p.get('yeastUsed',0) or 0) for p in prods)
-    total_diesel = sum(float(p.get('dieselUsed',0) or 0) for p in prods)
-    r = 1
-    c = ws2.cell(row=r, column=1, value=f'إنتاج الفرن — {sun} إلى {sat}')
-    c.font = Font(bold=True, size=13, color='FFFFFF'); c.fill = title_fill; ws2.merge_cells(f'A{r}:G{r}')
-    ws2.row_dimensions[r].height = 30
-    r += 1
-    totals = [['إجمالي الخبز', total_bread, 'رغيف'],
-              ['إجمالي الدقيق', round(total_flour,1), 'كجم'],
-              ['إجمالي الردة', round(total_bran,1), 'كجم'],
-              ['إجمالي الملح', round(total_salt,1), 'كجم'],
-              ['إجمالي الخميرة', round(total_yeast,1), 'كجم'],
-              ['إجمالي السولار', round(total_diesel,1), 'لتر']]
-    style_header(ws2, r, ['البيان', 'الإجمالي', 'الوحدة'], '37474F')
-    r += 1; write_rows(ws2, r, totals, [20, 15, 10]); r += len(totals) + 1
-    style_header(ws2, r, ['التاريخ', 'عدد الأرغفة', 'دقيق', 'ردة', 'ملح', 'خميرة', 'سولار'])
-    r += 1
-    write_rows(ws2, r, [[p.get('date',''), p.get('breadCount',0), p.get('flourUsed',0),
-        p.get('branUsed',0), p.get('saltUsed',0), p.get('yeastUsed',0), p.get('dieselUsed',0)] for p in sorted(prods, key=lambda x: x.get('date',''))],
-        [14,12,10,10,10,10,10])
+    ws2 = wb.create_sheet('Bakery')
+    style_sheet(ws2, ['Date', 'Bread', 'Flour', 'Bran', 'Salt', 'Yeast', 'Diesel'], [
+        [p.get('date',''), p.get('breadCount',0), p.get('flourUsed',0), p.get('branUsed',0), p.get('saltUsed',0), p.get('yeastUsed',0), p.get('dieselUsed',0)]
+        for p in sorted(prods, key=lambda x: x.get('date',''))
+    ], [14,10,10,10,10,10,10], title='Bakery Production')
+    ws2.cell(row=2, column=1, value='Total').font = Font(bold=True)
+    for ci, sf in [(2,'breadCount'),(3,'flourUsed'),(4,'branUsed'),(5,'saltUsed'),(6,'yeastUsed'),(7,'dieselUsed')]:
+        ws2.cell(row=2, column=ci, value=round(sum(float(p.get(sf,0)or 0) for p in prods),1))
 
-# ===== شيت 3: توريد مقاولين =====
+# Sheet 3: Contractor Supply
 if ctr_sup:
-    ws3 = wb.create_sheet('توريد مقاولين')
-    total_loaves = sum(int(c.get('count',0) or 0) for c in ctr_sup)
-    total_cost = sum(int(c.get('count',0) or 0) * float(c.get('price',0) or 0) for c in ctr_sup)
-    c = ws3.cell(row=1, column=1, value=f'توريد مقاولين — {sun} إلى {sat}')
-    c.font = Font(bold=True, size=13, color='FFFFFF'); c.fill = title_fill; ws3.merge_cells('A1:E1')
-    ws3.row_dimensions[1].height = 30
-    style_header(ws3, 3, ['إجمالي الخبز', total_loaves, 'رغيف'], '37474F')
-    ws3.merge_cells('A3:B3'); ws3.cell(row=4, column=1, value='إجمالي التكلفة').font = Font(bold=True, size=11)
-    ws3.cell(row=4, column=2, value=round(total_cost,2))
-    style_header(ws3, 6, ['التاريخ', 'المقاول', 'عدد الأرغفة', 'سعر الوحدة', 'الإجمالي'])
-    write_rows(ws3, 7, [[c.get('date',''), c.get('name',''), c.get('count',0), c.get('price',0),
-        int(c.get('count',0) or 0) * float(c.get('price',0) or 0)] for c in sorted(ctr_sup, key=lambda x: x.get('date',''))],
-        [14,20,12,10,12])
+    ws3 = wb.create_sheet('Contractors')
+    rows = [[c.get('date',''), c.get('name',''), c.get('count',0), c.get('price',0),
+             int(c.get('count',0)or 0)*float(c.get('price',0)or 0)] for c in sorted(ctr_sup, key=lambda x: x.get('date',''))]
+    style_sheet(ws3, ['Date', 'Name', 'Loaves', 'Price', 'Total'], rows, [14,20,10,10,12], title='Contractor Supply')
+    ws3.cell(row=2, column=1, value='Total').font = Font(bold=True)
+    ws3.cell(row=2, column=3, value=sum(r[2] for r in rows))
+    ws3.cell(row=2, column=5, value=round(sum(r[4] for r in rows),2))
 
-# ===== شيت 4: الضيافة =====
+# Sheet 4: Hospitality
 if hosp:
-    ws4 = wb.create_sheet('الضيافة')
-    c = ws4.cell(row=1, column=1, value=f'الضيافة — {sun} إلى {sat}')
-    c.font = Font(bold=True, size=13, color='FFFFFF'); c.fill = title_fill; ws4.merge_cells('A1:D1')
-    ws4.row_dimensions[1].height = 30
-    total_guests = sum(int(h.get('guests',1) or 1) for h in hosp)
-    style_header(ws4, 3, ['إجمالي الضيوف', total_guests], '37474F')
-    ws4.merge_cells('A3:B3')
-    style_header(ws4, 5, ['الاسم', 'تاريخ الوصول', 'تاريخ المغادرة', 'عدد الضيوف'])
-    write_rows(ws4, 6, [[h.get('name',''), h.get('arrival','')[:10], h.get('departure','')[:10] if h.get('departure') else '', h.get('guests',1)] for h in sorted(hosp, key=lambda x: x.get('arrival',''))],
-        [25,14,14,10])
+    ws4 = wb.create_sheet('Hospitality')
+    style_sheet(ws4, ['Name', 'Arrival', 'Departure', 'Guests'], [
+        [h.get('name',''), h.get('arrival','')[:10], (h.get('departure','')[:10] if h.get('departure') else ''), h.get('guests',1)]
+        for h in sorted(hosp, key=lambda x: x.get('arrival',''))
+    ], [25,14,14,10], title='Hospitality')
 
-# ===== شيت 5: الصيانة =====
+# Sheet 5: Maintenance
 if maint:
-    ws5 = wb.create_sheet('الصيانة')
-    c = ws5.cell(row=1, column=1, value=f'بلاغات الصيانة — {sun} إلى {sat}')
-    c.font = Font(bold=True, size=13, color='FFFFFF'); c.fill = title_fill; ws5.merge_cells('A1:E1')
-    ws5.row_dimensions[1].height = 30
-    style_header(ws5, 3, ['التاريخ', 'التصنيف', 'المهمة', 'التكلفة', 'المسؤول'])
-    write_rows(ws5, 4, [[m.get('date',''), m.get('category',''), m.get('task',''), m.get('cost',0), m.get('responsible','')] for m in sorted(maint, key=lambda x: x.get('date',''))],
-        [14,15,30,10,20])
+    ws5 = wb.create_sheet('Maintenance')
+    style_sheet(ws5, ['Date', 'Category', 'Task', 'Cost', 'Responsible'], [
+        [m.get('date',''), m.get('category',''), m.get('task',''), m.get('cost',0), m.get('responsible','')]
+        for m in sorted(maint, key=lambda x: x.get('date',''))
+    ], [14,15,30,10,20], title='Maintenance')
 
-# ===== شيت 6: الوجبات =====
+# Sheet 6: Meals
 if meals:
-    ws6 = wb.create_sheet('الوجبات')
-    c = ws6.cell(row=1, column=1, value=f'الوجبات اليومية — {sun} إلى {sat}')
-    c.font = Font(bold=True, size=13, color='FFFFFF'); c.fill = title_fill; ws6.merge_cells('A1:E1')
-    ws6.row_dimensions[1].height = 30
-    total_bf = sum(int(m.get('breakfast',0) or 0) for m in meals)
-    total_lh = sum(int(m.get('lunch',0) or 0) for m in meals)
-    total_dn = sum(int(m.get('dinner',0) or 0) for m in meals)
-    style_header(ws6, 3, ['الإفطار', total_bf, 'الغداء', total_lh, 'العشاء', total_dn], '37474F')
-    style_header(ws6, 5, ['التاريخ', 'الإفطار', 'الغداء', 'العشاء', 'الإجمالي'])
-    write_rows(ws6, 6, [[m.get('date',''), m.get('breakfast',0), m.get('lunch',0), m.get('dinner',0),
-        int(m.get('breakfast',0) or 0) + int(m.get('lunch',0) or 0) + int(m.get('dinner',0) or 0)] for m in sorted(meals, key=lambda x: x.get('date',''))],
-        [14,10,10,10,12])
+    ws6 = wb.create_sheet('Meals')
+    rows = [[m.get('date',''), m.get('breakfast',0), m.get('lunch',0), m.get('dinner',0),
+             int(m.get('breakfast',0)or 0)+int(m.get('lunch',0)or 0)+int(m.get('dinner',0)or 0)]
+            for m in sorted(meals, key=lambda x: x.get('date',''))]
+    style_sheet(ws6, ['Date', 'Breakfast', 'Lunch', 'Dinner', 'Total'], rows, [14,10,10,10,12], title='Meals')
 
-# ===== شيت 7: البيارات =====
+# Sheet 7: Septic
 if septic:
-    ws7 = wb.create_sheet('البيارات')
-    c = ws7.cell(row=1, column=1, value=f'البيارات — {sun} إلى {sat}')
-    c.font = Font(bold=True, size=13, color='FFFFFF'); c.fill = title_fill; ws7.merge_cells('A1:D1')
-    ws7.row_dimensions[1].height = 30
-    total_trips = sum(int(s.get('trips',0) or 0) for s in septic)
-    total_qty = sum(float(s.get('quantity',0) or 0) for s in septic)
-    style_header(ws7, 3, ['إجمالي الرحلات', total_trips, 'إجمالي الكمية', round(total_qty,1)], '37474F')
-    style_header(ws7, 5, ['التاريخ', 'الاسم/القطاع', 'عدد الرحلات', 'الكمية'])
-    write_rows(ws7, 6, [[s.get('date',''), s.get('name',s.get('sector','')), s.get('trips',0), s.get('quantity',0)] for s in sorted(septic, key=lambda x: x.get('date',''))],
-        [14,20,12,10])
+    ws7 = wb.create_sheet('Septic')
+    style_sheet(ws7, ['Date', 'Name', 'Trips', 'Quantity'], [
+        [s.get('date',''), s.get('name',s.get('sector','')), s.get('trips',0), s.get('quantity',0)]
+        for s in sorted(septic, key=lambda x: x.get('date',''))
+    ], [14,20,10,10], title='Septic')
 
-# ===== شيت 8: بلاغات الأعطال =====
+# Sheet 8: Incidents
 if incidents:
-    ws8 = wb.create_sheet('بلاغات الأعطال')
-    c = ws8.cell(row=1, column=1, value=f'بلاغات الأعطال — {sun} إلى {sat}')
-    c.font = Font(bold=True, size=13, color='FFFFFF'); c.fill = title_fill; ws8.merge_cells('A1:E1')
-    ws8.row_dimensions[1].height = 30
-    open_inc = sum(1 for i in incidents if i.get('status','') != 'تم')
-    style_header(ws8, 3, ['إجمالي البلاغات', len(incidents), 'غير مغلق', open_inc], '37474F')
-    style_header(ws8, 5, ['التاريخ', 'الموقع', 'التصنيف', 'الوصف', 'الحالة'])
-    write_rows(ws8, 6, [[i.get('date','')[:10], i.get('location',''), i.get('category',''), i.get('description',''), i.get('status','')] for i in sorted(incidents, key=lambda x: x.get('date',''))],
-        [14,15,15,40,10])
+    ws8 = wb.create_sheet('Incidents')
+    style_sheet(ws8, ['Date', 'Location', 'Category', 'Description', 'Status'], [
+        [i.get('date','')[:10], i.get('location',''), i.get('category',''), i.get('description',''), i.get('status','')]
+        for i in sorted(incidents, key=lambda x: x.get('date',''))
+    ], [14,15,15,40,10], title='Incidents')
 
-# ===== شيت 9: شاي وسكر =====
+# Sheet 9: Tea & Sugar
 if tea_sugar:
-    ws9 = wb.create_sheet('شاي وسكر')
-    c = ws9.cell(row=1, column=1, value=f'شاي وسكر — {sun} إلى {sat}')
-    c.font = Font(bold=True, size=13, color='FFFFFF'); c.fill = title_fill; ws9.merge_cells('A1:E1')
-    ws9.row_dimensions[1].height = 30
-    total_tea = sum(float(t.get('teaPacks',0) or 0) for t in tea_sugar)
-    total_sugar = sum(float(t.get('sugarKg',0) or 0) for t in tea_sugar)
-    style_header(ws9, 3, ['إجمالي شاي', round(total_tea,1), 'كجم', 'إجمالي سكر', round(total_sugar,1), 'كجم'], '37474F')
-    style_header(ws9, 5, ['التاريخ', 'الموظف', 'شاي (كجم)', 'سكر (كجم)', 'الفترة'])
-    write_rows(ws9, 6, [[t.get('date',''), t.get('empCode',t.get('name','')), t.get('teaPacks',0), t.get('sugarKg',0), t.get('period',t.get('type',''))] for t in sorted(tea_sugar, key=lambda x: x.get('date',''))],
-        [14,20,10,10,12])
+    ws9 = wb.create_sheet('TeaSugar')
+    style_sheet(ws9, ['Date', 'Employee', 'Tea', 'Sugar', 'Period'], [
+        [t.get('date',''), t.get('empCode',t.get('name','')), t.get('teaPacks',0), t.get('sugarKg',0), t.get('period',t.get('type',''))]
+        for t in sorted(tea_sugar, key=lambda x: x.get('date',''))
+    ], [14,20,10,10,12], title='Tea & Sugar')
 
-path = 'C:\\Users\\Salem Magdy\\Desktop\\تقرير_لينة_الأسبوعي.xlsx'
-wb.save(path)
-print(f'[تم] التقرير الأسبوعي — {sun} إلى {sat}')
+wb.save(filename)
+print(f'[تم] {filename}')
