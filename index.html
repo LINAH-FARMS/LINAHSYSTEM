@@ -11747,6 +11747,10 @@ function toggleEmployeeStatus(empId) {
           var localTs = _pulledAt['alldata'] || '';
           if (remote.updated_at > localTs || _forcePull) {
             var remoteData = typeof remote.data === 'string' ? JSON.parse(remote.data) : remote.data;
+            if (!remoteData || typeof remoteData !== 'object') { syncLog('⚠️ remoteData فاضي أو مش object'); return; }
+            var _keys = Object.keys(remoteData);
+            syncLog('📦 تم استلام ' + _keys.length + ' keys من Supabase');
+            if (remoteData.bakeryContractorSupplies) syncLog('🍞 توريد الخبز: ' + remoteData.bakeryContractorSupplies.length + ' سجل');
             applyRemoteData(remoteData);
             _pulledAt['alldata'] = remote.updated_at;
             localStorage.setItem('_pulledAt', JSON.stringify(_pulledAt));
