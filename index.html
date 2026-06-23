@@ -3000,11 +3000,11 @@
       </div>
       <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:8px 0;">
         <label style="font-size:12px;font-weight:600;">من:</label>
-        <input type="date" id="bakeryConsFrom" style="padding:4px 8px;border:1px solid #ccc;border-radius:6px;font-size:12px;">
+        <input type="date" id="bakeryConsFrom" onchange="renderBakeryConsumptionTable()" style="padding:4px 8px;border:1px solid #ccc;border-radius:6px;font-size:12px;">
         <label style="font-size:12px;font-weight:600;">إلى:</label>
-        <input type="date" id="bakeryConsTo" style="padding:4px 8px;border:1px solid #ccc;border-radius:6px;font-size:12px;">
-        <button class="btn btn-primary" style="padding:4px 12px;font-size:11px;" onclick="renderBakeryConsumptionTable()">عرض</button>
+        <input type="date" id="bakeryConsTo" onchange="renderBakeryConsumptionTable()" style="padding:4px 8px;border:1px solid #ccc;border-radius:6px;font-size:12px;">
       </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:8px;" id="bakery-summary-cards"></div>
       <div style="overflow-x:auto;">
         <table id="bakery-consumption-table" style="width:100%;border-collapse:collapse;font-size:12px;text-align:center;">
           <thead id="bakery-consumption-thead"></thead>
@@ -6324,6 +6324,20 @@
       if (!fromDate || !toDate) { tbody.innerHTML = ''; return; }
       var data = computeBakeryConsumptionForRange(fromDate, toDate);
       if (!data.length) { tbody.innerHTML = '<tr><td colspan="10" style="padding:15px;color:#888;">لا توجد بيانات</td></tr>'; return; }
+      // Summary cards
+      var totals = { flour:0, bran:0, salt:0, yeast:0, diesel:0, breadFarm:0, breadCtr:0, breadTotal:0 };
+      data.forEach(function(s) { totals.flour += s.flour; totals.bran += s.bran; totals.salt += s.salt; totals.yeast += s.yeast; totals.diesel += s.diesel; totals.breadFarm += s.breadFarm; totals.breadCtr += s.breadCtr; totals.breadTotal += s.breadTotal; });
+      var cards = document.getElementById('bakery-summary-cards');
+      if (cards) cards.innerHTML = [
+        { label: '🥖 إجمالي الخبز', val: totals.breadTotal, color: '#1b5e20' },
+        { label: '🌾 دقيق', val: Math.round(totals.flour*100)/100 + ' كجم', color: '#37474f' },
+        { label: '🧂 ردة', val: Math.round(totals.bran*100)/100 + ' كجم', color: '#37474f' },
+        { label: '🧂 ملح', val: Math.round(totals.salt*100)/100 + ' كجم', color: '#37474f' },
+        { label: '🧫 خميرة', val: Math.round(totals.yeast*100)/100 + ' كجم', color: '#37474f' },
+        { label: '⛽ سولار', val: Math.round(totals.diesel*100)/100 + ' لتر', color: '#37474f' }
+      ].map(function(c) {
+        return '<div style="background:' + c.color + ';color:white;padding:6px 14px;border-radius:8px;font-size:12px;text-align:center;min-width:100px;"><div style="font-weight:700;font-size:16px;">' + c.val + '</div><div style="font-size:10px;opacity:0.9;">' + c.label + '</div></div>';
+      }).join('');
       var cols = ['التاريخ', 'خبز الفرن', 'توريد مقاولين', 'إجمالي الخبز', 'دقيق (كجم)', 'ردة (كجم)', 'ملح (كجم)', 'خميرة (كجم)', 'سولار (لتر)'];
       thead.innerHTML = '<tr>' + cols.map(function(c, i) {
         var bg = i === 0 ? '#263238' : (i <= 3 ? '#1b5e20' : '#37474f');
