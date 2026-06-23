@@ -1,0 +1,12 @@
+Windows Registry Editor Version 5.00
+
+[HKEY_CLASSES_ROOT\linah]
+@="URL:LinaReport Protocol"
+"URL Protocol"=""
+
+[HKEY_CLASSES_ROOT\linah\shell]
+
+[HKEY_CLASSES_ROOT\linah\shell\open]
+
+[HKEY_CLASSES_ROOT\linah\shell\open\command]
+@="\"C:\\Users\\SALEMM~1\\AppData\\Local\\Programs\\Python\\PYTHON~1\\python.exe\" \"C:\\Users\\SALEMM~1\\Desktop\\LINAHS~1\\reports\\weekly_report.py\""

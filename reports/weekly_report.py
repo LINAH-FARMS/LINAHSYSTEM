@@ -13,9 +13,9 @@ def fetch():
     raw = r.json()[0]['data']
     return json.loads(raw) if isinstance(raw, str) else raw
 
-def last_sunday():
+def last_saturday():
     today = datetime.now()
-    return today - timedelta(days=(today.weekday() + 1) % 7)
+    return today - timedelta(days=(today.weekday() + 1) % 7 + 1)
 
 def fmt(d):
     return d.strftime('%Y-%m-%d')
@@ -42,7 +42,7 @@ def style_sheet(ws, headers, rows, col_widths=None, title=None):
 
 print('[جاري سحب البيانات...]')
 data = fetch()
-sun, sat = last_sunday(), last_sunday() + timedelta(days=6)
+sun, sat = last_saturday(), last_saturday() + timedelta(days=6)
 date_str = f'{fmt(sun)}_الى_{fmt(sat)}'
 print(f'[الفترة] {fmt(sun)} إلى {fmt(sat)}')
 
