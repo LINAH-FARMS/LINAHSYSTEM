@@ -47,6 +47,32 @@ data = fetch()
 sun, sat = date_range_str(last_sunday())
 print(f'[الفترة] {sun} ← {sat}')
 
+# تطبيق syncDeletions (لو فيه)
+def apply_deletions(arr, entity, sync_del):
+    if not sync_del or not arr: return arr
+    keys_to_del = set(d['key'] for d in sync_del if d.get('entity') == entity)
+    if not keys_to_del: return arr
+    if entity == 'employees':
+        return [e for e in arr if (e.get('code') or e.get('name')) not in keys_to_del]
+    elif entity == 'hospitalities':
+        return [h for h in arr if ((h.get('name','') + '|' + (h.get('arrival','') or '') + '|' + (h.get('type','') or ''))) not in keys_to_del]
+    elif entity == 'maintenanceRecords':
+        return [m for m in arr if ((m.get('category','') + '|' + m.get('task','') + '|' + (m.get('date','') or ''))) not in keys_to_del]
+    elif entity == 'bakeryProductions':
+        return [p for p in arr if ((p.get('date','') + '|' + str(p.get('breadCount','')))) not in keys_to_del]
+    elif entity == 'bakeryContractorSupplies':
+        return [s for s in arr if ((s.get('name','') + '|' + (s.get('date','') or '') + '|' + str(s.get('count','')))) not in keys_to_del]
+    elif entity == 'septicRecords':
+        return [s for s in arr if ((s.get('date','') + '|' + (s.get('name',s.get('sector','')) or '') + '|' + str(s.get('trips',s.get('quantity',''))))) not in keys_to_del]
+    elif entity == 'teaSugarDisbursements':
+        return [t for t in arr if ((t.get('date','') + '|' + (t.get('period',t.get('type','')) or '') + '|' + (t.get('empCode','') or '') + '|' + str(t.get('teaPacks',t.get('quantity',''))) + '|' + str(t.get('sugarKg','')))) not in keys_to_del]
+    return arr
+
+sync_del = data.get('syncDeletions', [])
+for ent in ['employees','hospitalities','maintenanceRecords','bakeryProductions','bakeryContractorSupplies','septicRecords','teaSugarDisbursements']:
+    if data.get(ent):
+        data[ent] = apply_deletions(data[ent], ent, sync_del)
+
 wb = Workbook()
 
 # ===== شيت 1: ملخص الأسبوع =====
