@@ -1185,6 +1185,29 @@
         </div>
       </div>
     </div>
+    <!-- Bakery Consumption Panel -->
+    <div class="dash-chart-panel" style="grid-column:1/-1;margin-top:10px;">
+      <div class="dash-chart-title" style="display:flex;justify-content:space-between;align-items:center;">
+        <span>🧑‍🍳 استهلاك خامات الفرن</span>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span style="font-size:11px;color:#888;">محسوب من بيانات الإنتاج</span>
+          <button class="btn btn-excel" style="padding:3px 10px;font-size:11px;background:#1565c0;color:white;" onclick="exportBakeryConsumptionToExcel()">📤 تصدير Excel</button>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:8px 0;">
+        <label style="font-size:12px;font-weight:600;">من:</label>
+        <input type="date" id="bakeryConsFrom" onchange="renderBakeryConsumptionTable()" style="padding:4px 8px;border:1px solid #ccc;border-radius:6px;font-size:12px;">
+        <label style="font-size:12px;font-weight:600;">إلى:</label>
+        <input type="date" id="bakeryConsTo" onchange="renderBakeryConsumptionTable()" style="padding:4px 8px;border:1px solid #ccc;border-radius:6px;font-size:12px;">
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:8px;" id="bakery-summary-cards"></div>
+      <div style="overflow-x:auto;">
+        <table id="bakery-consumption-table" style="width:100%;border-collapse:collapse;font-size:12px;text-align:center;">
+          <thead id="bakery-consumption-thead"></thead>
+          <tbody id="bakery-consumption-tbody"></tbody>
+        </table>
+      </div>
+    </div>
   </div>
 
   <div id="tab-employees" class="tab-content">
@@ -2990,7 +3013,9 @@
     </div>
 
 
-  <div id="tab-employees" class="tab-content">
+  </div>
+
+  <div id="tab-finance" class="tab-content">
     <div class="stats-container" id="fin-stats"></div>
     <div class="control-panel no-print" style="flex-wrap:wrap;gap:10px;">
       <button class="btn btn-primary" style="background:#1565c0;" onclick="document.getElementById('fin-import-file').click()">📥 استيراد تقارير شهرية</button>
