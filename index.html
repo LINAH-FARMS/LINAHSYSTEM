@@ -12327,18 +12327,21 @@ function toggleEmployeeStatus(empId) {
         document.getElementById('supabase-status').textContent = '🔄 قيد الاتصال...';
         document.getElementById('cloud-status').textContent = '☁️ قيد الاتصال...';
         _forcePull = true;
-        console.log('manualPull: calling connectSupabase...');
         await connectSupabase();
-        console.log('manualPull: connectSupabase done, supabaseConnected=', supabaseConnected);
-        if (!supabaseConnected) { console.log('manualPull: connectSupabase failed'); showSyncToast('❌ فشل الاتصال بـ Supabase'); btn.textContent = orig; btn.disabled = false; _forcePull = false; return; }
-        console.log('manualPull: calling pullFromSupabase...');
+        if (!supabaseConnected) { showSyncToast('❌ فشل الاتصال بـ Supabase'); btn.textContent = orig; btn.disabled = false; _forcePull = false; return; }
+        // دفع أولاً عشان السحابة تاخد آخر حاجة — بس لو في بيانات محلية
+        if (employees && employees.length > 0) {
+          await pushToSupabase();
+        }
         await pullFromSupabase();
-        console.log('manualPull: pullFromSupabase done');
         showSyncToast('✅ تم سحب أحدث البيانات من السحابة');
       } catch(e) {
-        console.log('manualPull ERROR:', e);
         showSyncToast('❌ فشل السحب: ' + e.message);
       }
+      _forcePull = false;
+      btn.textContent = orig;
+      btn.disabled = false;
+    }
       _forcePull = false;
       btn.textContent = orig;
       btn.disabled = false;
