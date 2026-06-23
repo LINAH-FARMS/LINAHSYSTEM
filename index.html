@@ -6677,7 +6677,7 @@
       excludedRecord.assetsStr = (emp.assets && emp.assets.length > 0) ? emp.assets.map(a => `${a.item} (${a.qty})`).join('، ') : "لا يوجد";
 
       excludedEmployees.push(excludedRecord);
-      _logDeletion('employees', emp.id);
+      _logDeletion('employees', emp.id || emp.code || emp.name);
       employees.splice(idx, 1);
 
       rebuildDeptTitles();
@@ -11806,11 +11806,11 @@ function toggleEmployeeStatus(empId) {
     }
     function _getItemKey(item, entity) {
       var keyFns = {
-        employees: function(e) { return e.code || e.name; },
+        employees: function(e) { return e.id || e.code || e.name; },
         roomsCapacity: function(r) { return r.sector + '|' + r.number; },
         vacations: function(v) { return (v.code || v.employeeCode || v.employeeName || v.name || '') + '|' + (v.start || v.startDate || v.dateFrom || '') + '|' + (v.end || v.endDate || v.dateTo || ''); },
         inventoryVouchers: function(v) { return v.voucherId || v.id || v._id; },
-        excludedEmployees: function(e) { return e.code || e.name; },
+        excludedEmployees: function(e) { return e.id || e.code || e.name; },
         contractors: function(c) { return c.name || c.id; },
         mealLogs: function(m) { return m.date; },
         inventoryItems: function(i) { return i.id || i.name; },
@@ -12206,11 +12206,11 @@ function toggleEmployeeStatus(empId) {
     function _applyDeletions() {
       if (!syncDeletions || !Array.isArray(syncDeletions) || syncDeletions.length === 0) return;
       var _keyFns = {
-        employees: function(e) { return e.code || e.name; },
+        employees: function(e) { return e.id || e.code || e.name; },
         roomsCapacity: function(r) { return r.sector + '|' + r.number; },
         vacations: function(v) { return (v.code||v.employeeCode||v.employeeName||v.name||'') + '|' + (v.start||v.startDate||v.dateFrom||'') + '|' + (v.end||v.endDate||v.dateTo||''); },
         inventoryVouchers: function(v) { return v.id || v._id; },
-        excludedEmployees: function(e) { return e.code || e.name; },
+        excludedEmployees: function(e) { return e.id || e.code || e.name; },
         contractors: function(c) { return c.name || c.id; },
         mealLogs: function(m) { return m.date; },
         inventoryItems: function(i) { return i.id || i.name; },

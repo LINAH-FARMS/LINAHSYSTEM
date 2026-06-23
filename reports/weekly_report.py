@@ -52,7 +52,7 @@ def filt(arr, entity):
     keys = set(d['key'] for d in sync_del if d.get('entity') == entity)
     if not keys: return arr
     key_fns = {
-        'employees': lambda e: e.get('code') or e.get('name'),
+        'employees': lambda e: str(e.get('id','')) or e.get('code') or e.get('name'),
         'hospitalities': lambda h: f"{h.get('name','')}|{h.get('arrival','')}|{h.get('type','')}",
         'maintenanceRecords': lambda m: f"{m.get('category','')}|{m.get('task','')}|{m.get('date','')}",
         'bakeryProductions': lambda p: f"{p.get('date','')}|{p.get('breadCount','')}",
