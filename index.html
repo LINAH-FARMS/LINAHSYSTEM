@@ -2986,8 +2986,32 @@
         </div>
         <div class="table-container" id="dx-report-table-wrapper" style="max-height:400px;overflow:auto;"></div>
       </div>
+      </div>
     </div>
-  </div>
+
+    <!-- Bakery Consumption Panel -->
+    <div class="dash-chart-panel" style="grid-column:1/-1;margin-top:10px;">
+      <div class="dash-chart-title" style="display:flex;justify-content:space-between;align-items:center;">
+        <span>🧑‍🍳 استهلاك خامات الفرن</span>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span style="font-size:11px;color:#888;">محسوب من بيانات الإنتاج</span>
+          <button class="btn btn-excel" style="padding:3px 10px;font-size:11px;background:#1565c0;color:white;" onclick="exportBakeryConsumptionToExcel()">📤 تصدير Excel</button>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:8px 0;">
+        <label style="font-size:12px;font-weight:600;">من:</label>
+        <input type="date" id="bakeryConsFrom" style="padding:4px 8px;border:1px solid #ccc;border-radius:6px;font-size:12px;">
+        <label style="font-size:12px;font-weight:600;">إلى:</label>
+        <input type="date" id="bakeryConsTo" style="padding:4px 8px;border:1px solid #ccc;border-radius:6px;font-size:12px;">
+        <button class="btn btn-primary" style="padding:4px 12px;font-size:11px;" onclick="renderBakeryConsumptionTable()">عرض</button>
+      </div>
+      <div style="overflow-x:auto;">
+        <table id="bakery-consumption-table" style="width:100%;border-collapse:collapse;font-size:12px;text-align:center;">
+          <thead id="bakery-consumption-thead"></thead>
+          <tbody id="bakery-consumption-tbody"></tbody>
+        </table>
+      </div>
+    </div>
   </div>
 
   <div id="tab-finance" class="tab-content">
@@ -6272,6 +6296,72 @@
     }
     window.renderDailyStatsTable = renderDailyStatsTable;
     window.exportDailyStatsToExcel = exportDailyStatsToExcel;
+
+    function computeBakeryConsumptionForRange(fromDate, toDate) {
+      var results = [];
+      var d = new Date(fromDate + 'T00:00:00');
+      var end = new Date(toDate + 'T00:00:00');
+      while (d <= end) {
+        var dateStr = d.toISOString().split('T')[0];
+        var prod = bakeryProductions.filter(function(p) { return p.date === dateStr; });
+        var ctr = bakeryContractorSupplies.filter(function(c) { return c.date === dateStr; });
+        var flour = 0, bran = 0, salt = 0, yeast = 0, diesel = 0, breadFarm = 0, breadCtr = 0, ctrCount = ctr.length;
+        prod.forEach(function(p) { flour += parseFloat(p.flourUsed)||0; bran += parseFloat(p.branUsed)||0; salt += parseFloat(p.saltUsed)||0; yeast += parseFloat(p.yeastUsed)||0; diesel += parseFloat(p.dieselUsed)||0; breadFarm += parseInt(p.breadCount)||0; });
+        ctr.forEach(function(c) { breadCtr += parseInt(c.count)||0; });
+        results.push({ date: dateStr, flour: Math.round(flour*100)/100, bran: Math.round(bran*100)/100, salt: Math.round(salt*100)/100, yeast: Math.round(yeast*100)/100, diesel: Math.round(diesel*100)/100, breadFarm: breadFarm, breadCtr: breadCtr, breadTotal: breadFarm + breadCtr, ctrCount: ctrCount });
+        d.setDate(d.getDate() + 1);
+      }
+      return results;
+    }
+    function renderBakeryConsumptionTable() {
+      var thead = document.getElementById('bakery-consumption-thead');
+      var tbody = document.getElementById('bakery-consumption-tbody');
+      if (!thead || !tbody) return;
+      var fromEl = document.getElementById('bakeryConsFrom');
+      var toEl = document.getElementById('bakeryConsTo');
+      var fromDate = fromEl ? fromEl.value : '';
+      var toDate = toEl ? toEl.value : '';
+      if (!fromDate || !toDate) { tbody.innerHTML = ''; return; }
+      var data = computeBakeryConsumptionForRange(fromDate, toDate);
+      if (!data.length) { tbody.innerHTML = '<tr><td colspan="10" style="padding:15px;color:#888;">لا توجد بيانات</td></tr>'; return; }
+      var cols = ['التاريخ', 'خبز الفرن', 'توريد مقاولين', 'إجمالي الخبز', 'دقيق (كجم)', 'ردة (كجم)', 'ملح (كجم)', 'خميرة (كجم)', 'سولار (لتر)'];
+      thead.innerHTML = '<tr>' + cols.map(function(c, i) {
+        var bg = i === 0 ? '#263238' : (i <= 3 ? '#1b5e20' : '#37474f');
+        return '<th style="padding:6px;background:' + bg + ';color:white;border:1px solid #ddd;font-size:11px;white-space:nowrap;">' + c + '</th>';
+      }).join('') + '</tr>';
+      tbody.innerHTML = '';
+      data.slice().reverse().forEach(function(s) {
+        var row = '<td style="padding:5px;border:1px solid #ddd;font-weight:700;font-family:monospace;">' + s.date + '</td>';
+        row += '<td style="padding:5px;border:1px solid #ddd;">' + s.breadFarm + '</td>';
+        row += '<td style="padding:5px;border:1px solid #ddd;">' + s.breadCtr + (s.ctrCount ? ' <span style="color:#888;font-size:10px;">(' + s.ctrCount + ')</span>' : '') + '</td>';
+        row += '<td style="padding:5px;border:1px solid #ddd;font-weight:700;">' + s.breadTotal + '</td>';
+        row += '<td style="padding:5px;border:1px solid #ddd;">' + s.flour + '</td>';
+        row += '<td style="padding:5px;border:1px solid #ddd;">' + s.bran + '</td>';
+        row += '<td style="padding:5px;border:1px solid #ddd;">' + s.salt + '</td>';
+        row += '<td style="padding:5px;border:1px solid #ddd;">' + s.yeast + '</td>';
+        row += '<td style="padding:5px;border:1px solid #ddd;">' + s.diesel + '</td>';
+        tbody.innerHTML += '<tr>' + row + '</tr>';
+      });
+    }
+    function exportBakeryConsumptionToExcel() {
+      var fromEl = document.getElementById('bakeryConsFrom');
+      var toEl = document.getElementById('bakeryConsTo');
+      var fromDate = fromEl ? fromEl.value : '';
+      var toDate = toEl ? toEl.value : '';
+      if (!fromDate || !toDate) return alert('حدد تاريخ البداية والنهاية أولاً');
+      var data = computeBakeryConsumptionForRange(fromDate, toDate);
+      if (!data.length) return alert('لا توجد بيانات');
+      data.slice().reverse();
+      var xlData = data.map(function(s) {
+        return { 'التاريخ': s.date, 'خبز الفرن': s.breadFarm, 'توريد مقاولين': s.breadCtr, 'إجمالي الخبز': s.breadTotal, 'دقيق (كجم)': s.flour, 'ردة (كجم)': s.bran, 'ملح (كجم)': s.salt, 'خميرة (كجم)': s.yeast, 'سولار (لتر)': s.diesel };
+      });
+      var ws = XLSX.utils.json_to_sheet(xlData); var wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Bakery Consumption');
+      var range = fromDate + '_to_' + toDate;
+      XLSX.writeFile(wb, 'BakeryConsumption_' + range.replace(/-/g, '') + '_' + new Date().toISOString().split('T')[0].replace(/-/g, '') + '.xlsx');
+    }
+    window.renderBakeryConsumptionTable = renderBakeryConsumptionTable;
+    window.exportBakeryConsumptionToExcel = exportBakeryConsumptionToExcel;
 
     function calculateSystemStats() {
       document.getElementById('stat-total-emp').innerText = employees.length;
@@ -12926,7 +13016,8 @@ function toggleEmployeeStatus(empId) {
           setTimeout(function() {
             renderMealLogTable(); autoSaveTodayMeal(); renderContractorsTable(); renderDashboard(); renderQuickActions(); updateEmployeeVacationStatuses();
             setTimeout(function() {
-              (function(){ var from=document.getElementById('dailyStatsFrom'); var to=document.getElementById('dailyStatsTo'); var t=new Date(); to.value=t.toISOString().split('T')[0]; t.setDate(t.getDate()-7); from.value=t.toISOString().split('T')[0]; renderDailyStatsTable(); })(); initAllSortableTables();
+              (function(){ var from=document.getElementById('dailyStatsFrom'); var to=document.getElementById('dailyStatsTo'); var t=new Date(); to.value=t.toISOString().split('T')[0]; t.setDate(t.getDate()-7); from.value=t.toISOString().split('T')[0]; renderDailyStatsTable();
+                var bf=document.getElementById('bakeryConsFrom'); var bt=document.getElementById('bakeryConsTo'); var bd=new Date(); bt.value=bd.toISOString().split('T')[0]; bd.setDate(bd.getDate()-7); bf.value=bd.toISOString().split('T')[0]; renderBakeryConsumptionTable(); })(); initAllSortableTables();
               try { fetchReports(); } catch(e) {}
             }, 0);
           }, 0);
