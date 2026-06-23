@@ -67,12 +67,18 @@ prods = [p for p in data.get('bakeryProductions', []) if p.get('date','') >= sun
 ctr_sup = [c for c in data.get('bakeryContractorSupplies', []) if c.get('date','') >= sun and c.get('date','') <= sat]
 meals = [m for m in data.get('mealLogs', []) if m.get('date','') >= sun and m.get('date','') <= sat]
 maint = [m for m in data.get('maintenanceRecords', []) if m.get('date','') >= sun and m.get('date','') <= sat]
+septic = [s for s in data.get('septicRecords', []) if s.get('date','') >= sun and s.get('date','') <= sat]
+incidents = [i for i in data.get('incident_reports', []) if i.get('date','')[:10] >= sun and i.get('date','')[:10] <= sat]
+tea_sugar = [t for t in data.get('teaSugarDisbursements', []) if t.get('date','') >= sun and t.get('date','') <= sat]
 
 summary = [
     ['إجمالي الموظفين', total], ['P (متواجد)', p_count], ['V (إجازات)', v_count],
     ['الضيافة (الأسبوع)', len(hosp)], ['إنتاج الفرن (الأسبوع)', len(prods)],
     ['توريد مقاولين (الأسبوع)', len(ctr_sup)], ['وجبات (الأسبوع)', len(meals)],
-    ['بلاغات صيانة (الأسبوع)', len(maint)]]
+    ['بلاغات صيانة (الأسبوع)', len(maint)],
+    ['بيارات (الأسبوع)', len(septic)],
+    ['بلاغات أعطال (الأسبوع)', len(incidents)],
+    ['شاي وسكر (الأسبوع)', len(tea_sugar)]]
 style_header(ws, 3, ['البيان', 'العدد'])
 write_rows(ws, 4, summary, [30, 15])
 
@@ -157,6 +163,44 @@ if meals:
     write_rows(ws6, 6, [[m.get('date',''), m.get('breakfast',0), m.get('lunch',0), m.get('dinner',0),
         int(m.get('breakfast',0) or 0) + int(m.get('lunch',0) or 0) + int(m.get('dinner',0) or 0)] for m in sorted(meals, key=lambda x: x.get('date',''))],
         [14,10,10,10,12])
+
+# ===== شيت 7: البيارات =====
+if septic:
+    ws7 = wb.create_sheet('البيارات')
+    c = ws7.cell(row=1, column=1, value=f'البيارات — {sun} إلى {sat}')
+    c.font = Font(bold=True, size=13, color='FFFFFF'); c.fill = title_fill; ws7.merge_cells('A1:D1')
+    ws7.row_dimensions[1].height = 30
+    total_trips = sum(int(s.get('trips',0) or 0) for s in septic)
+    total_qty = sum(float(s.get('quantity',0) or 0) for s in septic)
+    style_header(ws7, 3, ['إجمالي الرحلات', total_trips, 'إجمالي الكمية', round(total_qty,1)], '37474F')
+    style_header(ws7, 5, ['التاريخ', 'الاسم/القطاع', 'عدد الرحلات', 'الكمية'])
+    write_rows(ws7, 6, [[s.get('date',''), s.get('name',s.get('sector','')), s.get('trips',0), s.get('quantity',0)] for s in sorted(septic, key=lambda x: x.get('date',''))],
+        [14,20,12,10])
+
+# ===== شيت 8: بلاغات الأعطال =====
+if incidents:
+    ws8 = wb.create_sheet('بلاغات الأعطال')
+    c = ws8.cell(row=1, column=1, value=f'بلاغات الأعطال — {sun} إلى {sat}')
+    c.font = Font(bold=True, size=13, color='FFFFFF'); c.fill = title_fill; ws8.merge_cells('A1:E1')
+    ws8.row_dimensions[1].height = 30
+    open_inc = sum(1 for i in incidents if i.get('status','') != 'تم')
+    style_header(ws8, 3, ['إجمالي البلاغات', len(incidents), 'غير مغلق', open_inc], '37474F')
+    style_header(ws8, 5, ['التاريخ', 'الموقع', 'التصنيف', 'الوصف', 'الحالة'])
+    write_rows(ws8, 6, [[i.get('date','')[:10], i.get('location',''), i.get('category',''), i.get('description',''), i.get('status','')] for i in sorted(incidents, key=lambda x: x.get('date',''))],
+        [14,15,15,40,10])
+
+# ===== شيت 9: شاي وسكر =====
+if tea_sugar:
+    ws9 = wb.create_sheet('شاي وسكر')
+    c = ws9.cell(row=1, column=1, value=f'شاي وسكر — {sun} إلى {sat}')
+    c.font = Font(bold=True, size=13, color='FFFFFF'); c.fill = title_fill; ws9.merge_cells('A1:E1')
+    ws9.row_dimensions[1].height = 30
+    total_tea = sum(float(t.get('teaPacks',0) or 0) for t in tea_sugar)
+    total_sugar = sum(float(t.get('sugarKg',0) or 0) for t in tea_sugar)
+    style_header(ws9, 3, ['إجمالي شاي', round(total_tea,1), 'كجم', 'إجمالي سكر', round(total_sugar,1), 'كجم'], '37474F')
+    style_header(ws9, 5, ['التاريخ', 'الموظف', 'شاي (كجم)', 'سكر (كجم)', 'الفترة'])
+    write_rows(ws9, 6, [[t.get('date',''), t.get('empCode',t.get('name','')), t.get('teaPacks',0), t.get('sugarKg',0), t.get('period',t.get('type',''))] for t in sorted(tea_sugar, key=lambda x: x.get('date',''))],
+        [14,20,10,10,12])
 
 path = 'C:\\Users\\Salem Magdy\\Desktop\\تقرير_لينة_الأسبوعي.xlsx'
 wb.save(path)
