@@ -12055,6 +12055,51 @@ function toggleEmployeeStatus(empId) {
       return result;
     }
 
+    function _applyDeletions() {
+      if (!syncDeletions || !Array.isArray(syncDeletions) || syncDeletions.length === 0) return;
+      var _keyFns = {
+        employees: function(e) { return e.code || e.name; },
+        roomsCapacity: function(r) { return r.sector + '|' + r.number; },
+        vacations: function(v) { return (v.code||v.employeeCode||v.employeeName||v.name||'') + '|' + (v.start||v.startDate||v.dateFrom||'') + '|' + (v.end||v.endDate||v.dateTo||''); },
+        inventoryVouchers: function(v) { return v.id || v._id; },
+        excludedEmployees: function(e) { return e.code || e.name; },
+        contractors: function(c) { return c.name || c.id; },
+        mealLogs: function(m) { return m.date; },
+        inventoryItems: function(i) { return i.id || i.name; },
+        hospitalities: function(h) { return (h.name||'') + '|' + (h.arrival||'') + '|' + (h.type||''); },
+        adminOvertime: function(o) { return (o.date||'') + '|' + (o.empCode||o.name||''); },
+        maintenanceRecords: function(m) { return (m.category||'') + '|' + (m.task||'') + '|' + (m.date||m.createdAt||''); },
+        septicRecords: function(s) { return (s.date||'') + '|' + (s.name||s.sector||'') + '|' + (s.trips||s.quantity||''); },
+        periodicMaintenance: function(p) { return (p.name||p.task||'') + '|' + (p.id||'') + '|' + (p.freq||p.frequency||''); },
+        teaSugarDisbursements: function(t) { return (t.date||'') + '|' + (t.period||t.type||'') + '|' + (t.empCode||t.empId||'') + '|' + (t.teaPacks||t.quantity||'') + '|' + (t.sugarKg||''); },
+        teaSugarBatches: function(b) { return b.id || b._id; },
+        dynamicSectors: function(s) { return s.name || s; },
+        dynamicRooms: function(r) { return (r.sector||'') + '|' + (r.number||''); },
+        dynamicSeptics: function(s) { return s.name || s.id || s; },
+        dynamicDepts: function(d) { return d.name || d.id || d; },
+        dynamicTitles: function(t) { return t.name || t.title || t; },
+        appUsers: function(u) { return u.name || u.username || u; },
+        bakeryIngredients: function(b) { return b.name; },
+        bakeryProductions: function(p) { return normalizeDateStr(p.date) + '|' + (p.breadCount||''); },
+        bakeryContractorSupplies: function(s) { return (s.name||'') + '|' + normalizeDateStr(s.date) + '|' + (s.count||''); },
+        bakeryInvoices: function(inv) { return inv.id || inv._id; },
+        bakeryStockLog: function(b) { return b.id || b.date || b; },
+        roomAssets: function(a) { return (a.room||'') + '|' + (a.item||'') + '|' + (a.id||''); },
+        archiveData: function(a) { return a.id || a.date; },
+        quickActions: function(q) { return q.label || q; },
+        deptTitles: function(d) { return (d.dept||'') + '|' + (d.title||''); },
+        evaluations: function(e) { return (e.empCode||e.employeeCode||'') + '|' + (e.date||'') + '|' + (e.month||e.type||'') + '|' + (e.year||''); },
+        evalTemplates: function(e) { return (e.title||'') + '|' + (e.name||e.templateName||''); }
+      };
+      syncDeletions.forEach(function(del) {
+        var fn = _keyFns[del.entity];
+        if (!fn) return;
+        var arr = getEntityVar(del.entity);
+        if (!arr || !Array.isArray(arr)) return;
+        var filtered = arr.filter(function(item) { return fn(item) !== del.key; });
+        if (filtered.length !== arr.length) setEntityVar(del.entity, filtered);
+      });
+    }
     function applyRemoteData(d) {
       if (!d) return;
       if (typeof d === 'string') { try { d = JSON.parse(d); } catch(e) { return; } }
