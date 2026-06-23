@@ -1163,8 +1163,7 @@
         <div class="dash-chart-title" style="display:flex;justify-content:space-between;align-items:center;">
           <span>Daily Statistics</span>
           <div style="display:flex;align-items:center;gap:8px;">
-            <span style="font-size:11px;color:#888;">Auto-saved at 11:59 PM</span>
-            <button class="btn" style="padding:3px 10px;font-size:11px;background:#e65100;color:white;" onclick="recalcAllDailyStats()">🔄 إعادة حساب الضيوف</button>
+            <span style="font-size:11px;color:#888;">محسوب من البيانات مباشرة</span>
             <button class="btn btn-excel" style="padding:3px 10px;font-size:11px;background:#1565c0;color:white;" onclick="exportDailyStatsToExcel()">📤 تصدير Excel</button>
           </div>
         </div>
@@ -1182,8 +1181,7 @@
           </table>
         </div>
         <div style="margin-top:6px;display:flex;gap:6px;">
-          <button class="btn btn-excel" style="padding:3px 10px;font-size:11px;" onclick="exportDailyStatsToExcel()">Export</button>
-          <button class="btn btn-danger" style="padding:3px 10px;font-size:11px;" onclick="if(confirm('Clear all history?')){dailyStats=[];syncStorage();renderDailyStatsTable();}">Clear History</button>
+          <button class="btn btn-excel" style="padding:3px 10px;font-size:11px;" onclick="exportDailyStatsToExcel()">📤 تصدير Excel</button>
         </div>
       </div>
     </div>
@@ -6190,16 +6188,32 @@
       return active.reduce(function(s, h) { return s + (h.guests || 1); }, 0);
     }
 
-    function recalcAllDailyStats() {
-      dailyStats.forEach(function(s) {
-        s.hospGuests = calcGuestsForDate(s.date);
-      });
-      dailyStats.sort(function(a, b) { return b.date.localeCompare(a.date); });
-      syncStorage();
-      renderDailyStatsTable();
-      alert('تم إعادة حساب الضيوف لكل الأيام');
+    function computeDailyStatsForRange(fromDate, toDate) {
+      var results = [];
+      var d = new Date(fromDate + 'T00:00:00');
+      var end = new Date(toDate + 'T00:00:00');
+      while (d <= end) {
+        var dateStr = d.toISOString().split('T')[0];
+        var total = employees.length;
+        var perm = employees.filter(function(e) { return (e.contract || 'دائم') === 'دائم'; });
+        var casual = employees.filter(function(e) { return (e.contract || 'دائم') === 'كاجول'; });
+        var permP = 0, permV = 0, casP = 0;
+        perm.forEach(function(e) { if (_isOnVacation(e, dateStr)) permV++; else permP++; });
+        casual.forEach(function(e) { if (!_isOnVacation(e, dateStr)) casP++; });
+        var hospGuests = calcGuestsForDate(dateStr);
+        var p = function(n) { return total > 0 ? Math.round(n / total * 100) : 0; };
+        results.push({ date: dateStr, total: total, permP: permP, permV: permV, permPPct: p(permP), permVPct: p(permV), casP: casP, casPPct: p(casP), hospGuests: hospGuests });
+        d.setDate(d.getDate() + 1);
+      }
+      return results;
     }
-
+    function _isOnVacation(emp, dateStr) {
+      return vacations.some(function(v) {
+        var vStart = (v.start || v.startDate || v.dateFrom || '').split('T')[0];
+        var vEnd = (v.end || v.endDate || v.dateTo || '').split('T')[0];
+        return (v.code || v.employeeCode) === emp.code && vStart <= dateStr && vEnd >= dateStr;
+      });
+    }
     function renderDailyStatsTable() {
       var thead = document.getElementById('daily-stats-thead');
       var tbody = document.getElementById('daily-stats-tbody');
@@ -6208,62 +6222,54 @@
       var toEl = document.getElementById('dailyStatsTo');
       var fromDate = fromEl ? fromEl.value : '';
       var toDate = toEl ? toEl.value : '';
+      if (!fromDate || !toDate) { tbody.innerHTML = ''; return; }
+      var data = computeDailyStatsForRange(fromDate, toDate);
+      if (!data.length) { tbody.innerHTML = '<tr><td colspan="6" style="padding:15px;color:#888;">No data in selected range</td></tr>'; return; }
       var cols = ['Date', 'Total', 'Perm Present', 'Perm Leave', 'Casual Present', 'Guests'];
       thead.innerHTML = '<tr>' + cols.map(function(c, i) {
         var bg = i === 0 ? '#263238' : (i <= 1 ? '#1b5e20' : '#37474f');
         return '<th style="padding:6px;background:' + bg + ';color:white;border:1px solid #ddd;font-size:11px;white-space:nowrap;">' + c + '</th>';
       }).join('') + '</tr>';
       tbody.innerHTML = '';
-      var filtered = dailyStats.filter(function(s) {
-        if (fromDate && s.date < fromDate) return false;
-        if (toDate && s.date > toDate) return false;
-        return true;
-      }).sort(function(a, b) { return b.date.localeCompare(a.date); });
-      if (!filtered.length) { tbody.innerHTML = '<tr><td colspan="' + cols.length + '" style="padding:15px;color:#888;">No data in selected range</td></tr>'; return; }
+      data.reverse();
       var sumTotal = 0, sumPP = 0, sumPV = 0, sumCP = 0, sumGuests = 0;
-      filtered.forEach(function(s) {
+      data.forEach(function(s) {
         var row = '<td style="padding:5px;border:1px solid #ddd;font-weight:700;font-family:monospace;">' + s.date + '</td>';
         row += '<td style="padding:5px;border:1px solid #ddd;font-weight:700;">' + s.total + '</td>';
         row += '<td style="padding:5px;border:1px solid #ddd;">' + s.permP + ' <span style="color:#888;font-size:10px;">(' + s.permPPct + '%)</span></td>';
         row += '<td style="padding:5px;border:1px solid #ddd;">' + s.permV + ' <span style="color:#888;font-size:10px;">(' + s.permVPct + '%)</span></td>';
         row += '<td style="padding:5px;border:1px solid #ddd;">' + s.casP + ' <span style="color:#888;font-size:10px;">(' + s.casPPct + '%)</span></td>';
-        row += '<td style="padding:5px;border:1px solid #ddd;">' + (s.hospGuests || 0) + '</td>';
+        row += '<td style="padding:5px;border:1px solid #ddd;">' + s.hospGuests + '</td>';
         tbody.innerHTML += '<tr>' + row + '</tr>';
-        sumTotal += s.total; sumPP += s.permP; sumPV += s.permV; sumCP += s.casP; sumGuests += (s.hospGuests || 0);
+        sumTotal += s.total; sumPP += s.permP; sumPV += s.permV; sumCP += s.casP; sumGuests += s.hospGuests;
       });
-      if (filtered.length > 1) {
-        var avgRow = '<td style="padding:5px;border:2px solid #1b5e20;font-weight:900;background:#e8f5e9;">AVG (' + filtered.length + ')</td>';
-        avgRow += '<td style="padding:5px;border:2px solid #1b5e20;font-weight:900;background:#e8f5e9;">' + Math.round(sumTotal / filtered.length) + '</td>';
-        avgRow += '<td style="padding:5px;border:2px solid #1b5e20;background:#e8f5e9;">' + Math.round(sumPP / filtered.length) + '</td>';
-        avgRow += '<td style="padding:5px;border:2px solid #1b5e20;background:#e8f5e9;">' + Math.round(sumPV / filtered.length) + '</td>';
-        avgRow += '<td style="padding:5px;border:2px solid #1b5e20;background:#e8f5e9;">' + Math.round(sumCP / filtered.length) + '</td>';
-        avgRow += '<td style="padding:5px;border:2px solid #1b5e20;background:#e8f5e9;">' + Math.round(sumGuests / filtered.length) + '</td>';
+      if (data.length > 1) {
+        var avgRow = '<td style="padding:5px;border:2px solid #1b5e20;font-weight:900;background:#e8f5e9;">AVG (' + data.length + ')</td>';
+        avgRow += '<td style="padding:5px;border:2px solid #1b5e20;font-weight:900;background:#e8f5e9;">' + Math.round(sumTotal / data.length) + '</td>';
+        avgRow += '<td style="padding:5px;border:2px solid #1b5e20;background:#e8f5e9;">' + Math.round(sumPP / data.length) + '</td>';
+        avgRow += '<td style="padding:5px;border:2px solid #1b5e20;background:#e8f5e9;">' + Math.round(sumPV / data.length) + '</td>';
+        avgRow += '<td style="padding:5px;border:2px solid #1b5e20;background:#e8f5e9;">' + Math.round(sumCP / data.length) + '</td>';
+        avgRow += '<td style="padding:5px;border:2px solid #1b5e20;background:#e8f5e9;">' + Math.round(sumGuests / data.length) + '</td>';
         tbody.innerHTML += '<tr>' + avgRow + '</tr>';
       }
     }
-
     function exportDailyStatsToExcel() {
-      if (!dailyStats.length) return alert('No data');
       var fromEl = document.getElementById('dailyStatsFrom');
       var toEl = document.getElementById('dailyStatsTo');
       var fromDate = fromEl ? fromEl.value : '';
       var toDate = toEl ? toEl.value : '';
-      var filtered = dailyStats.filter(function(s) {
-        if (fromDate && s.date < fromDate) return false;
-        if (toDate && s.date > toDate) return false;
-        return true;
-      }).sort(function(a, b) { return b.date.localeCompare(a.date); });
-      if (!filtered.length) return alert('No data in range');
-      var data = filtered.map(function(s) {
-        return { 'Date': s.date, 'Total': s.total, 'Perm Present': s.permP, 'Perm Present %': s.permPPct + '%', 'Perm Leave': s.permV, 'Perm Leave %': s.permVPct + '%', 'Casual Present': s.casP, 'Casual Present %': s.casPPct + '%', 'Guests': s.hospGuests || 0 };
+      if (!fromDate || !toDate) return alert('حدد تاريخ البداية والنهاية أولاً');
+      var data = computeDailyStatsForRange(fromDate, toDate);
+      if (!data.length) return alert('No data in range');
+      data.reverse();
+      var xlData = data.map(function(s) {
+        return { 'Date': s.date, 'Total': s.total, 'Perm Present': s.permP, 'Perm Present %': s.permPPct + '%', 'Perm Leave': s.permV, 'Perm Leave %': s.permVPct + '%', 'Casual Present': s.casP, 'Casual Present %': s.casPPct + '%', 'Guests': s.hospGuests };
       });
-      var ws = XLSX.utils.json_to_sheet(data); var wb = XLSX.utils.book_new();
+      var ws = XLSX.utils.json_to_sheet(xlData); var wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, 'Daily Stats');
-      var range = (fromDate || 'all') + '_to_' + (toDate || 'all');
+      var range = fromDate + '_to_' + toDate;
       XLSX.writeFile(wb, 'DailyStats_' + range.replace(/-/g, '') + '_' + new Date().toISOString().split('T')[0].replace(/-/g, '') + '.xlsx');
     }
-    window.captureDailyStats = captureDailyStats;
-    window.recalcAllDailyStats = recalcAllDailyStats;
     window.renderDailyStatsTable = renderDailyStatsTable;
     window.exportDailyStatsToExcel = exportDailyStatsToExcel;
 
@@ -12920,7 +12926,7 @@ function toggleEmployeeStatus(empId) {
           setTimeout(function() {
             renderMealLogTable(); autoSaveTodayMeal(); renderContractorsTable(); renderDashboard(); renderQuickActions(); updateEmployeeVacationStatuses();
             setTimeout(function() {
-              (function(){ var from=document.getElementById('dailyStatsFrom'); var to=document.getElementById('dailyStatsTo'); if(dailyStats.length){var dates=dailyStats.map(function(s){return s.date}).sort();if(from)from.value=dates[0];if(to)to.value=dates[dates.length-1];}else{var t=new Date().toISOString().split('T')[0];if(from)from.value=t;if(to)to.value=t;} renderDailyStatsTable(); })(); initAllSortableTables();
+              (function(){ var from=document.getElementById('dailyStatsFrom'); var to=document.getElementById('dailyStatsTo'); var t=new Date(); to.value=t.toISOString().split('T')[0]; t.setDate(t.getDate()-7); from.value=t.toISOString().split('T')[0]; renderDailyStatsTable(); })(); initAllSortableTables();
               try { fetchReports(); } catch(e) {}
             }, 0);
           }, 0);
