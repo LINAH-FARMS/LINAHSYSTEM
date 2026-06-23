@@ -6219,24 +6219,17 @@
       while (d <= end) {
         var dateStr = d.toISOString().split('T')[0];
         var total = employees.length;
-        var perm = employees.filter(function(e) { return (e.contract || 'دائم') === 'دائم'; });
-        var casual = employees.filter(function(e) { return (e.contract || 'دائم') === 'كاجول'; });
         var permP = 0, permV = 0, casP = 0;
-        perm.forEach(function(e) { if (_isOnVacation(e, dateStr)) permV++; else permP++; });
-        casual.forEach(function(e) { if (!_isOnVacation(e, dateStr)) casP++; });
+        employees.forEach(function(e) {
+          if ((e.contract || 'دائم') === 'دائم') { if (e.status === 'V') permV++; else permP++; }
+          else if (e.status !== 'V') casP++;
+        });
         var hospGuests = calcGuestsForDate(dateStr);
         var p = function(n) { return total > 0 ? Math.round(n / total * 100) : 0; };
         results.push({ date: dateStr, total: total, permP: permP, permV: permV, permPPct: p(permP), permVPct: p(permV), casP: casP, casPPct: p(casP), hospGuests: hospGuests });
         d.setDate(d.getDate() + 1);
       }
       return results;
-    }
-    function _isOnVacation(emp, dateStr) {
-      return vacations.some(function(v) {
-        var vStart = (v.start || v.startDate || v.dateFrom || '').split('T')[0];
-        var vEnd = (v.end || v.endDate || v.dateTo || '').split('T')[0];
-        return (v.code || v.employeeCode) === emp.code && vStart <= dateStr && vEnd >= dateStr;
-      });
     }
     function renderDailyStatsTable() {
       var thead = document.getElementById('daily-stats-thead');
