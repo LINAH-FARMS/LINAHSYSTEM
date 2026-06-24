@@ -11758,8 +11758,13 @@ function toggleEmployeeStatus(empId) {
     function filterContractorCheckboxes() {
       var q = document.getElementById('filt-ctr-name').value.trim().toLowerCase();
       var list = document.getElementById('filt-ctr-checklist');
+      var fromDate = document.getElementById('filt-ctr-from')?.value || '';
+      var toDate = document.getElementById('filt-ctr-to')?.value || '';
+      var filtered = bakeryContractorSupplies;
+      if (fromDate) filtered = filtered.filter(function(c) { return c.date >= fromDate; });
+      if (toDate) filtered = filtered.filter(function(c) { return c.date <= toDate; });
       var names = {};
-      bakeryContractorSupplies.forEach(function(c) { names[c.name] = true; });
+      filtered.forEach(function(c) { names[c.name] = true; });
       var sorted = Object.keys(names).sort().filter(function(n) { return !q || n.toLowerCase().indexOf(q) !== -1; });
       list.style.display = sorted.length ? 'block' : 'none';
       list.innerHTML = sorted.map(function(n) {
