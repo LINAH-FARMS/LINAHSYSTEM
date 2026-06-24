@@ -1277,7 +1277,7 @@
             <th data-sort-key="sector">المبنى السكني</th>
             <th data-sort-key="room">رقم الغرفة</th>
             <th data-sort-key="status">الموقف اليومي</th>
-            <th class="no-print">العهدة</th>
+            <th class="no-print" style="display:none;">العهدة</th>
             <th class="no-print">إجراءات حركية</th>
           </tr>
         </thead>
@@ -1888,6 +1888,27 @@
           <button class="btn btn-primary" onclick="addContractorRoom()" style="padding:6px 12px;font-size:13px;">➕ إضافة</button>
         </div>
         <div id="ctr-rooms-list" style="margin-top:8px;font-size:12px;max-height:200px;overflow:auto;"></div>
+      </div>
+
+      <!-- العهد -->
+      <div style="background:#fff;border-radius:12px;padding:15px;border:1px solid #e0e0e0;grid-column:1/-1;">
+        <h4 style="margin:0 0 10px 0;color:#e65100;">📦 إدارة العهد (Assets)</h4>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:10px;">
+          <input type="text" id="asset-emp-search" placeholder="ابحث بكود أو اسم الموظف..." style="flex:2;min-width:200px;padding:6px 10px;border:2px solid #e0e0e0;border-radius:6px;font-size:13px;" oninput="searchAssetEmployee()">
+          <span style="font-size:12px;color:#888;" id="asset-emp-display">لم يتم الاختيار</span>
+          <input type="hidden" id="asset-emp-id">
+        </div>
+        <div id="asset-edit-area" style="display:none;border:1px solid #e0e0e0;border-radius:8px;padding:12px;background:#fafafa;margin-bottom:10px;">
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px;margin-bottom:10px;" id="asset-defaults-container"></div>
+          <div id="asset-extra-container"></div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;">
+            <button class="btn btn-secondary" onclick="addAssetField('',1)" style="padding:4px 10px;font-size:12px;">➕ إضافة صنف</button>
+            <button class="btn btn-primary" onclick="saveAssetEmployee()" style="padding:4px 10px;font-size:12px;background:#e65100;">💾 حفظ العهدة</button>
+            <button class="btn btn-excel" onclick="exportAssetsExcel()" style="padding:4px 10px;font-size:12px;background:#1565c0;">📤 تصدير العهد</button>
+            <button class="btn btn-excel" onclick="document.getElementById('import-assets-file').click()" style="padding:4px 10px;font-size:12px;background:#0d47a1;">📥 استيراد العهد</button>
+            <input type="file" id="import-assets-file" style="display:none;" accept=".xlsx,.xls" onchange="importAssetsExcel(event)">
+          </div>
+        </div>
       </div>
 
     </div>
@@ -6639,6 +6660,143 @@
       container.appendChild(row);
     }
 
+    /* ===== عهدة employee asset management (from flexible admin) ===== */
+    var _DEFAULT_ASSETS = ["بطانية 8 كيلو","بطانية 6 كيلو","بطانية قديمة / ملاية سرير","مرتبة","مخدة","دولاب","سرير","ملايه سرير","كاب الشركة","بدلة 2 قطعه","ملعقة + 2 طبق","تيشرت","فيست","قميص","بنطلون","جاكت ووتر بروف","جاكت طباخ","بنطلون طباخ","سابو طباخ","كوزلوك","حذاء سنيكرز"];
+
+    function searchAssetEmployee() {
+      var q = document.getElementById('asset-emp-search').value.trim().toLowerCase();
+      var display = document.getElementById('asset-emp-display');
+      var idField = document.getElementById('asset-emp-id');
+      var area = document.getElementById('asset-edit-area');
+      if (!q) { display.textContent = 'لم يتم الاختيار'; area.style.display = 'none'; idField.value = ''; return; }
+      var emp = null;
+      for (var i = 0; i < employees.length; i++) {
+        var e = employees[i];
+        if ((e.code && e.code.toLowerCase() === q) || (e.name && e.name.toLowerCase().indexOf(q) !== -1)) { emp = e; break; }
+      }
+      if (!emp) { display.textContent = '⚠️ لا يوجد موظف بهذا الاسم/الكود'; area.style.display = 'none'; idField.value = ''; return; }
+      idField.value = emp.id;
+      display.textContent = '🧑‍💼 ' + emp.name + ' (' + (emp.code || 'بدون كود') + ') — ' + (emp.dept || '') + ' | ' + (emp.title || '');
+      area.style.display = 'block';
+      renderAssetEditor(emp);
+    }
+
+    function renderAssetEditor(emp) {
+      var defContainer = document.getElementById('asset-defaults-container');
+      var extraContainer = document.getElementById('asset-extra-container');
+      defContainer.innerHTML = '';
+      extraContainer.innerHTML = '';
+      var empAssets = emp.assets || [];
+      _DEFAULT_ASSETS.forEach(function(item) {
+        var found = empAssets.filter(function(a) { return a.item === item; });
+        var qty = found.length > 0 ? found[0].qty : 0;
+        var div = document.createElement('div');
+        div.style.cssText = 'background:#fff;padding:8px;border-radius:6px;border:1px solid #e0e0e0;';
+        div.innerHTML = '<div style="font-size:11px;margin-bottom:3px;color:#555;">' + item + '</div><input type="number" class="asset-def-qty" data-item="' + item.replace(/"/g,'&quot;') + '" value="' + qty + '" min="0" style="width:100%;padding:4px;border:2px solid #e0e0e0;border-radius:4px;font-size:12px;">';
+        defContainer.appendChild(div);
+      });
+      empAssets.forEach(function(a) {
+        if (_DEFAULT_ASSETS.indexOf(a.item) === -1) {
+          addExtraAssetField(a.item, a.qty);
+        }
+      });
+    }
+
+    function addExtraAssetField(item, qty) {
+      item = item || '';
+      qty = qty || 1;
+      var container = document.getElementById('asset-extra-container');
+      var row = document.createElement('div');
+      row.className = 'asset-extra-row';
+      row.style.cssText = 'display:flex;gap:6px;margin-bottom:4px;';
+      row.innerHTML = '<input type="text" class="asset-extra-name" placeholder="اسم الصنف" value="' + item.replace(/"/g,'&quot;') + '" style="flex:2;padding:4px 8px;border:2px solid #e0e0e0;border-radius:4px;font-size:12px;"><input type="number" class="asset-extra-qty" value="' + qty + '" min="1" style="width:60px;padding:4px;border:2px solid #e0e0e0;border-radius:4px;font-size:12px;"><button class="btn btn-danger" onclick="this.parentElement.remove()" style="padding:2px 6px;font-size:11px;">🗑️</button>';
+      container.appendChild(row);
+    }
+
+    function addAssetField(item, qty) { addExtraAssetField(item, qty); }
+
+    function saveAssetEmployee() {
+      var id = document.getElementById('asset-emp-id').value;
+      if (!id) return alert('⚠️ اختر موظفاً أولاً.');
+      var emp = null;
+      for (var i = 0; i < employees.length; i++) { if (employees[i].id === id) { emp = employees[i]; break; } }
+      if (!emp) return alert('⚠️ الموظف غير موجود.');
+      var assetsList = [];
+      document.querySelectorAll('#asset-defaults-container .asset-def-qty').forEach(function(inp) {
+        var q = parseInt(inp.value) || 0;
+        if (q > 0) assetsList.push({ item: inp.getAttribute('data-item'), qty: q });
+      });
+      document.querySelectorAll('#asset-extra-container .asset-extra-row').forEach(function(row) {
+        var n = row.querySelector('.asset-extra-name').value.trim();
+        var q = parseInt(row.querySelector('.asset-extra-qty').value) || 0;
+        if (n && q > 0) assetsList.push({ item: n, qty: q });
+      });
+      emp.assets = assetsList;
+      assetsList.sort(function(a,b) { return a.item.localeCompare(b.item); });
+      syncStorage();
+      var idx = employees.indexOf(emp);
+      if (idx >= 0) {
+        employees[idx] = _ts(emp);
+        syncStorage();
+      }
+      alert('✅ تم حفظ العهدة للموظف ' + emp.name);
+    }
+
+    function exportAssetsExcel() {
+      var data = employees.map(function(e) {
+        var assetsStr = '';
+        if (e.assets && e.assets.length > 0) {
+          assetsStr = e.assets.map(function(a) { return a.item + ' (' + a.qty + ')'; }).join('، ');
+        } else { assetsStr = ''; }
+        return { 'الكود': e.code || '', 'الاسم': e.name, 'الإدارة': e.dept || '', 'المسمى': e.title || '', 'العهدة': assetsStr };
+      });
+      if (data.length === 0) return alert('لا يوجد موظفين');
+      var ws = XLSX.utils.json_to_sheet(data);
+      var wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Assets');
+      XLSX.writeFile(wb, 'عهدة_الموظفين_' + new Date().toISOString().split('T')[0] + '.xlsx');
+    }
+
+    function importAssetsExcel(event) {
+      var file = event.target.files[0];
+      if (!file) return;
+      var reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          var wb = XLSX.read(e.target.result, { type: 'array' });
+          var ws = wb.Sheets[wb.SheetNames[0]];
+          var rows = XLSX.utils.sheet_to_json(ws);
+          var updated = 0;
+          rows.forEach(function(r) {
+            var name = (r['الاسم'] || '').toString().trim();
+            var assetsRaw = (r['العهدة'] || '').toString().trim();
+            if (!name || !assetsRaw) return;
+            for (var i = 0; i < employees.length; i++) {
+              if (employees[i].name === name) {
+                // Parse assets from string like "بطانية 8 كيلو (2)، سرير (1)"
+                var items = [];
+                assetsRaw.split(/[،,]/).forEach(function(part) {
+                  part = part.trim();
+                  if (!part) return;
+                  var m = part.match(/^(.+?)\s*\((\d+)\)\s*$/);
+                  if (m) { items.push({ item: m[1].trim(), qty: parseInt(m[2]) }); }
+                  else { items.push({ item: part, qty: 1 }); }
+                });
+                employees[i].assets = items;
+                if (document.getElementById('asset-emp-id').value === employees[i].id) renderAssetEditor(employees[i]);
+                updated++;
+                break;
+              }
+            }
+          });
+          syncStorage();
+          alert('✅ تم استيراد العهد. تم تحديث ' + updated + ' موظف.');
+        } catch(err) { alert('❌ خطأ في قراءة الملف: ' + err.message); }
+      };
+      reader.readAsArrayBuffer(file);
+      event.target.value = '';
+    }
+
     function saveEmployeeData() {
       let code = document.getElementById('form-emp-code').value.trim();
       let name = document.getElementById('form-emp-name').value.trim();
@@ -6942,7 +7100,7 @@ function toggleEmployeeStatus(empId) {
           <td>${e.sector || '—'}</td>
           <td>${e.room || '—'}</td>
           <td><span class="status-badge ${e.status==='P'?'status-p':'status-v'}">${e.status==='P'?'تواجد P':`إجازة V ${e.departureTime?'(مغادرة '+e.departureTime+')':''}`}</span></td>
-          <td class="no-print" style="max-width:180px; font-size:11px; color:#555;">${assetsStr}</td>
+          <td class="no-print" style="display:none;">${assetsStr}</td>
           <td class="no-print" style="white-space:nowrap;">
             <button class="btn btn-secondary" style="padding:4px 8px; font-size:11px;" onclick="editEmployee('${e.id}')">📝 تعديل</button>
             <button class="btn btn-warning btn-sm"style="padding:4px 8px; font-size:11px;" onclick="toggleEmployeeStatus('${e.id}')">🔄 تبديل الحالة</button>
