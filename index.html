@@ -12357,10 +12357,6 @@ function toggleEmployeeStatus(empId) {
         _forcePull = true;
         await connectSupabase();
         if (!supabaseConnected) { showSyncToast('❌ فشل الاتصال بـ Supabase'); btn.textContent = orig; btn.disabled = false; _forcePull = false; return; }
-        // دفع أولاً عشان السحابة تاخد آخر حاجة — بس لو في بيانات محلية
-        if (employees && employees.length > 0) {
-          await pushToSupabase();
-        }
         await pullFromSupabase();
         showSyncToast('✅ تم سحب أحدث البيانات من السحابة');
       } catch(e) {
