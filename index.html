@@ -2802,9 +2802,10 @@
             </div>
           </div>
         </div>
-        <button class="btn btn-primary" onclick="saveBakeryContractorSupply()" style="height:42px;">🚚 تسجيل التوريد</button>
-
-      </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;grid-column:1/-1;">
+          <button class="btn btn-primary" onclick="saveBakeryContractorSupply()" id="btn-save-ctr" style="height:42px;flex:1;">🚚 تسجيل التوريد</button>
+          <button class="btn btn-secondary" onclick="cancelEditBakeryContractorSupply()" id="btn-cancel-ctr" style="height:42px;display:none;">❌ إلغاء التعديل</button>
+        </div>
       <div class="table-container">
         <div class="filter-bar no-print" style="display:flex;gap:8px;align-items:center;padding:8px 12px;border-bottom:1px solid #e0e0e0;flex-wrap:wrap;">
           <label style="font-size:12px;font-weight:600;">من تاريخ</label>
@@ -11544,6 +11545,38 @@ function toggleEmployeeStatus(empId) {
       }
     }
 
+    var _editingCtrIdx = -1;
+
+    function editBakeryContractorSupply(idx) {
+      var rec = bakeryContractorSupplies[idx];
+      if (!rec) return;
+      _editingCtrIdx = idx;
+      document.getElementById('bctr-date').value = rec.date;
+      document.getElementById('bctr-name').value = rec.name;
+      document.getElementById('bctr-count').value = rec.count;
+      document.getElementById('bctr-price').value = rec.price;
+      document.getElementById('bctr-paid').value = rec.paid || 0;
+      document.getElementById('bctr-responsible').value = rec.responsible || '';
+      document.getElementById('bctr-notes').value = rec.notes || '';
+      var ingIds = ['ING001','ING002','ING003','ING004','ING007'];
+      ingIds.forEach(function(id) { document.getElementById('bctr-ing-' + id).value = (rec.ingredients && rec.ingredients[id]) || 0; });
+      document.getElementById('btn-save-ctr').textContent = '💾 حفظ التعديل';
+      document.getElementById('btn-cancel-ctr').style.display = 'block';
+      window.scrollTo({ top: document.getElementById('bsup-contractors').offsetTop - 20, behavior: 'smooth' });
+    }
+
+    function cancelEditBakeryContractorSupply() {
+      _editingCtrIdx = -1;
+      document.getElementById('bctr-count').value = '0';
+      document.getElementById('bctr-paid').value = '0';
+      document.getElementById('bctr-responsible').value = '';
+      document.getElementById('bctr-notes').value = '';
+      var ingIds = ['ING001','ING002','ING003','ING004','ING007'];
+      ingIds.forEach(function(id) { document.getElementById('bctr-ing-' + id).value = '0'; });
+      document.getElementById('btn-save-ctr').textContent = '🚚 تسجيل التوريد';
+      document.getElementById('btn-cancel-ctr').style.display = 'none';
+    }
+
     function saveBakeryContractorSupply() {
       try {
         let date = document.getElementById('bctr-date').value;
@@ -11556,24 +11589,43 @@ function toggleEmployeeStatus(empId) {
         let paid = parseFloat(document.getElementById('bctr-paid').value) || 0;
         let responsible = document.getElementById('bctr-responsible').value.trim();
         let notes = document.getElementById('bctr-notes').value.trim();
-        // حذف التوريد القديم لنفس المقاول في نفس التاريخ (استعادة الخامات أولاً)
         var normDate = normalizeDateStr(date);
-        var dupIdx = bakeryContractorSupplies.findIndex(function(r) { return r.name === name && normalizeDateStr(r.date) === normDate; });
-        if (dupIdx >= 0) {
-          var oldSup = bakeryContractorSupplies[dupIdx];
-          if (oldSup.ingredients) {
-            Object.keys(oldSup.ingredients).forEach(function(id) {
-              var qty = oldSup.ingredients[id];
+        var ingIds = ['ING001','ING002','ING003','ING004','ING007'];
+
+        // If editing, restore old ingredients first
+        if (_editingCtrIdx >= 0) {
+          var oldRec = bakeryContractorSupplies[_editingCtrIdx];
+          if (oldRec && oldRec.ingredients) {
+            Object.keys(oldRec.ingredients).forEach(function(id) {
+              var qty = oldRec.ingredients[id];
               if (qty <= 0) return;
               var ing = bakeryIngredients.find(function(i) { return i.id === id; });
               if (ing) ing.currentQty = (ing.currentQty || 0) + qty;
             });
           }
-          bakeryStockLog = bakeryStockLog.filter(function(l) { return l.reference !== 'CTR_' + name || normalizeDateStr(l.date) !== normDate; });
-          bakeryContractorSupplies.splice(dupIdx, 1);
+          bakeryStockLog = bakeryStockLog.filter(function(l) { return l.reference !== 'CTR_' + oldRec.name || normalizeDateStr(l.date) !== normalizeDateStr(oldRec.date); });
+          bakeryContractorSupplies.splice(_editingCtrIdx, 1);
         }
-        // Deduct ingredients
-        var ingIds = ['ING001','ING002','ING003','ING004','ING007'];
+
+        // Check duplicate (skip if editing same record)
+        if (_editingCtrIdx === -1) {
+          var dupIdx = bakeryContractorSupplies.findIndex(function(r) { return r.name === name && normalizeDateStr(r.date) === normDate; });
+          if (dupIdx >= 0) {
+            var oldSup = bakeryContractorSupplies[dupIdx];
+            if (oldSup.ingredients) {
+              Object.keys(oldSup.ingredients).forEach(function(id) {
+                var qty = oldSup.ingredients[id];
+                if (qty <= 0) return;
+                var ing = bakeryIngredients.find(function(i) { return i.id === id; });
+                if (ing) ing.currentQty = (ing.currentQty || 0) + qty;
+              });
+            }
+            bakeryStockLog = bakeryStockLog.filter(function(l) { return l.reference !== 'CTR_' + name || normalizeDateStr(l.date) !== normDate; });
+            bakeryContractorSupplies.splice(dupIdx, 1);
+          }
+        }
+
+        // Deduct new ingredients
         var deducted = {};
         var deductedCost = 0;
         ingIds.forEach(function(id) {
@@ -11606,7 +11658,10 @@ function toggleEmployeeStatus(empId) {
         let revenue = count * price;
         let profit = revenue - prodCost;
         bakeryContractorSupplies.push(_ts({ id: getBakeryNextId('CTR', bakeryContractorSupplies), date: normDate, name, count, price, paid, prodCost, revenue, profit, responsible, notes, ingredients: deducted }));
+        _editingCtrIdx = -1;
         syncStorage(); renderBakeryContractorSupplies(); updateBakeryStats(); updateBreadSupplyStats(); updateBctrIngredientStocks(); updateBakeryProductionIngredientStocks();
+        document.getElementById('btn-save-ctr').textContent = '🚚 تسجيل التوريد';
+        document.getElementById('btn-cancel-ctr').style.display = 'none';
         document.getElementById('bctr-count').value = '0'; document.getElementById('bctr-paid').value = '0';
         document.getElementById('bctr-responsible').value = ''; document.getElementById('bctr-notes').value = '';
         ingIds.forEach(function(id) { document.getElementById('bctr-ing-' + id).value = '0'; });
@@ -11776,6 +11831,7 @@ function toggleEmployeeStatus(empId) {
           <td style="font-weight:700;${paid === 0 ? 'color:#d32f2f;' : remaining > 0 ? 'color:#e65100;' : 'color:#1b5e20;'}">${paid === 0 ? '🔴 غير مدفوع' : remaining > 0 ? `⚠️ متبقي ${remaining.toFixed(2)}` : '✅ تم الدفع'}</td>
           <td>${c.responsible||''}</td>
           <td class="no-print">
+            <button class="btn btn-secondary" style="padding:2px 6px;font-size:11px;background:#1565c0;color:white;" onclick="editBakeryContractorSupply(${realIdx})" title="تعديل">🖊️</button>
             <button class="btn btn-success" style="padding:2px 6px;font-size:11px;background:#2e7d32;color:white;" onclick="toggleContractorSupplyPaid(${realIdx})" title="تحويل لمدفوع">💰</button>
             <button class="btn btn-danger" style="padding:2px 6px;font-size:11px;" onclick="deleteBakeryContractorSupply(${realIdx})">🗑️</button>
           </td>
