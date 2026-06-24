@@ -37,16 +37,20 @@ textarea{resize:vertical;min-height:70px}
   
   <div id="report-form">
     <div class="form-group">
-      <label>الإدارة <span class="required">*</span></label>
-      <input type="text" id="dept" placeholder="الإدارة المختصة" required>
+      <label>اسم المبلغ عن العطل <span class="required">*</span></label>
+      <input type="text" id="name" placeholder="الاسم الكامل للمبلغ" required>
+    </div>
+    <div class="form-group">
+      <label>الكود الوظيفي</label>
+      <input type="text" id="empcode" placeholder="الكود الوظيفي (إن وجد)">
     </div>
     <div class="form-group">
       <label>رقم الموبايل <span class="required">*</span></label>
       <input type="tel" id="phone" placeholder="01xxxxxxxxx" required maxlength="11" inputmode="numeric">
     </div>
     <div class="form-group">
-      <label>اسم العامل <span class="required">*</span></label>
-      <input type="text" id="name" placeholder="الاسم الكامل" required>
+      <label>الإدارة التابع لها <span class="required">*</span></label>
+      <input type="text" id="dept" placeholder="الإدارة التابع لها" required>
     </div>
     <div class="form-group">
       <label>نوع العطل <span class="required">*</span></label>
@@ -102,6 +106,10 @@ var HEADERS = { 'apikey': KEY, 'Authorization': 'Bearer ' + KEY, 'Content-Type':
   if (dept) {
     document.getElementById('dept').value = dept;
   }
+  var empcode = params.get('code') || params.get('empcode') || params.get('الكود');
+  if (empcode) {
+    document.getElementById('empcode').value = empcode;
+  }
   var loc = params.get('location') || params.get('الموقع');
   if (loc) document.getElementById('location').value = loc;
 })();
@@ -113,15 +121,16 @@ function showError(msg) {
 }
 
 function submitReport() {
-  var dept = document.getElementById('dept').value;
-  var phone = document.getElementById('phone').value.trim();
   var name = document.getElementById('name').value.trim();
+  var empcode = document.getElementById('empcode').value.trim();
+  var phone = document.getElementById('phone').value.trim();
+  var dept = document.getElementById('dept').value.trim();
   var type = document.getElementById('type').value;
   var desc = document.getElementById('desc').value.trim();
   var location = document.getElementById('location').value.trim();
   var priority = document.getElementById('priority').value;
 
-  if (!dept || !phone || !name || !type || !desc) {
+  if (!name || !phone || !dept || !type || !desc) {
     alert('من فضلك ملأ جميع الحقول المطلوبة');
     return;
   }
@@ -136,9 +145,10 @@ function submitReport() {
 
   var report = {
     id: Date.now(),
-    dept: dept,
-    phone: phone,
     name: name,
+    code: empcode,
+    phone: phone,
+    dept: dept,
     type: type,
     desc: desc,
     location: location || 'غير محدد',
@@ -189,9 +199,10 @@ function submitReport() {
 }
 
 function resetForm() {
-  document.getElementById('dept').value = '';
-  document.getElementById('phone').value = '';
   document.getElementById('name').value = '';
+  document.getElementById('empcode').value = '';
+  document.getElementById('phone').value = '';
+  document.getElementById('dept').value = '';
   document.getElementById('type').value = '';
   document.getElementById('desc').value = '';
   document.getElementById('location').value = '';
