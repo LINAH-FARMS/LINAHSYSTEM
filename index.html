@@ -11705,8 +11705,13 @@ function toggleEmployeeStatus(empId) {
       if (fromDate) data = data.filter(c => c.date >= fromDate);
       if (toDate) data = data.filter(c => c.date <= toDate);
       if (nameFilter) {
-        var terms = nameFilter.split(/\s+/);
-        data = data.filter(function(c) { return terms.every(function(t) { return c.name.toLowerCase().indexOf(t) !== -1; }); });
+        var names = nameFilter.split(/[،,]/).map(function(s) { return s.trim(); }).filter(Boolean);
+        data = data.filter(function(c) {
+          return names.some(function(n) {
+            var terms = n.split(/\s+/).filter(Boolean);
+            return terms.every(function(t) { return c.name.toLowerCase().indexOf(t) !== -1; });
+          });
+        });
       }
       if (statusFilter === 'paid') data = data.filter(c => { let total = (parseInt(c.count)||0)*(parseFloat(c.price)||0); return parseFloat(c.paid) >= total; });
       if (statusFilter === 'unpaid') data = data.filter(c => { let total = (parseInt(c.count)||0)*(parseFloat(c.price)||0); return parseFloat(c.paid) < total; });
