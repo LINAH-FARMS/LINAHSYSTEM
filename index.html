@@ -1187,40 +1187,6 @@
       </div>
     </div>
     <!-- Attendance Report Panel -->
-    <div class="dash-chart-row">
-      <div class="dash-chart-panel" style="grid-column:1/-1;">
-        <div class="dash-chart-title">📈 تقرير الحضور والغياب <span class="badge-count" id="dash-attendance-badge">0</span></div>
-        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:8px 0;">
-          <label style="font-size:12px;font-weight:600;">من:</label>
-          <input type="date" id="attendanceFrom" style="padding:4px 8px;border:1px solid #ccc;border-radius:6px;font-size:12px;">
-          <label style="font-size:12px;font-weight:600;">إلى:</label>
-          <input type="date" id="attendanceTo" style="padding:4px 8px;border:1px solid #ccc;border-radius:6px;font-size:12px;">
-          <button class="btn btn-primary" style="padding:4px 12px;font-size:11px;" onclick="renderAttendanceReport()">عرض</button>
-          <button class="btn btn-excel" style="padding:3px 10px;font-size:11px;background:#1565c0;color:white;" onclick="exportAttendanceReport()">📤 تصدير Excel</button>
-        </div>
-        <div style="position:relative;height:250px;">
-          <canvas id="attendance-chart"></canvas>
-        </div>
-        <div id="attendance-table-container" style="margin-top:8px;overflow-x:auto;"></div>
-      </div>
-    </div>
-    <!-- Inventory Movement Report Panel -->
-    <div class="dash-chart-row">
-      <div class="dash-chart-panel" style="grid-column:1/-1;">
-        <div class="dash-chart-title">📦 تقرير حركة المخزن <span class="badge-count" id="dash-inv-badge">0</span></div>
-        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:8px 0;">
-          <label style="font-size:12px;font-weight:600;">من:</label>
-          <input type="date" id="invReportFrom" style="padding:4px 8px;border:1px solid #ccc;border-radius:6px;font-size:12px;">
-          <label style="font-size:12px;font-weight:600;">إلى:</label>
-          <input type="date" id="invReportTo" style="padding:4px 8px;border:1px solid #ccc;border-radius:6px;font-size:12px;">
-          <label style="font-size:12px;font-weight:600;">الصنف:</label>
-          <select id="invReportItem" style="padding:4px 8px;border:1px solid #ccc;border-radius:6px;font-size:12px;"><option value="">الكل</option></select>
-          <button class="btn btn-primary" style="padding:4px 12px;font-size:11px;" onclick="renderInventoryReport()">عرض</button>
-          <button class="btn btn-excel" style="padding:3px 10px;font-size:11px;background:#1565c0;color:white;" onclick="exportInventoryReport()">📤 تصدير Excel</button>
-        </div>
-        <div id="inv-report-container" style="overflow-x:auto;"></div>
-      </div>
-    </div>
     <!-- Bakery Consumption Panel -->
     <div class="dash-chart-panel" style="grid-column:1/-1;margin-top:10px;">
       <div class="dash-chart-title" style="display:flex;justify-content:space-between;align-items:center;">
@@ -3405,6 +3371,8 @@
     let dynamicTitles = _safeJsonParse(localStorage.getItem('dyn_titles'), ["مهندس زراعي", "مشرف موقع", "مشرف إداري", "مشرف إداري أول", "مشرف إداري ثاني", "مشرف الصيانة الفنية", "رئيس قسم المطبخ", "عامل زراعي", "فرد أمن", "فني صيانة", "سائق تراك", "قائد فريق الزيتون", "قائد فريق الشئون الإدارية", "نخال", "مدخل بيانات", "مدير الرى والتسميد", "مهندس جودة"]);
     let dynamicVisitorTypes = _safeJsonParse(localStorage.getItem('dyn_visitor_types'), ["ضيوف", "سيدات", "طلبة مدرسة", "مقدمي خدمة", "سائقين", "مقدم خدمة بدون اجر", "مقدم خدمة باجر", "سائق براد", "اخري"]);
     let bakeryContractorsNames = _safeJsonParse(localStorage.getItem('linah_bakery_contractors_names'), ["عبد الرازق جبر", "ابراهيم شحاته", "البدري", "مصطفى عبد الكريم", "كرم الزيات", "اسامه سمير", "محمود قاسم", "ممدوح", "كامل احمد", "محمد شعبان", "ابوعمار", "محمد حسنى", "اسامه عبد الرازق", "ناجح", "فارس", "اسعد اسماعيل", "ام جبريل"]);
+    // add any names from existing records not already in the list
+    (function() { var ctrs = _safeJsonParse(localStorage.getItem('linah_bakery_ctr_supplies'), []); ctrs.forEach(function(c) { if (c.name && bakeryContractorsNames.indexOf(c.name) === -1) bakeryContractorsNames.push(c.name); }); })();
     let evaluations = _safeJsonParse(localStorage.getItem('lineh_evaluations'), []);
     let roomAssets = _safeJsonParse(localStorage.getItem('lineh_room_assets'), []);
     let archiveData = _safeJsonParse(localStorage.getItem('lineh_archive_data'), []);
@@ -6614,158 +6582,6 @@
 
     /* ===== Attendance Report (P/V over time) ===== */
     var _attendanceChart = null;
-    function renderAttendanceReport() {
-      var fromEl = document.getElementById('attendanceFrom');
-      var toEl = document.getElementById('attendanceTo');
-      var fromDate = fromEl ? fromEl.value : '';
-      var toDate = toEl ? toEl.value : '';
-      if (!fromDate || !toDate) return alert('حدد تاريخ البداية والنهاية أولاً');
-      var filtered = dailyStats.filter(function(s) { return s.date >= fromDate && s.date <= toDate; });
-      filtered.sort(function(a,b) { return a.date.localeCompare(b.date); });
-      if (filtered.length === 0) {
-        document.getElementById('attendance-table-container').innerHTML = '<span style="color:#888;">لا توجد بيانات في هذا النطاق</span>';
-        return;
-      }
-      // Table
-      var cols = ['التاريخ', 'إجمالي القوة', 'P (دائم)', 'V (دائم)', '%P (دائم)', '%V (دائم)', 'P (كاجول)', '%P (كاجول)', 'ضيوف'];
-      var thead = '<tr>' + cols.map(function(c,i) {
-        var bg = i === 0 ? '#263238' : '#1b5e20';
-        return '<th style="padding:6px;background:' + bg + ';color:white;border:1px solid #ddd;font-size:11px;white-space:nowrap;">' + c + '</th>';
-      }).join('') + '</tr>';
-      var tbody = '';
-      filtered.forEach(function(s) {
-        tbody += '<tr><td style="padding:5px;border:1px solid #ddd;font-weight:700;font-family:monospace;">' + s.date + '</td>' +
-          '<td style="padding:5px;border:1px solid #ddd;">' + s.total + '</td>' +
-          '<td style="padding:5px;border:1px solid #ddd;">' + s.permP + '</td>' +
-          '<td style="padding:5px;border:1px solid #ddd;">' + s.permV + '</td>' +
-          '<td style="padding:5px;border:1px solid #ddd;">' + s.permPPct + '%</td>' +
-          '<td style="padding:5px;border:1px solid #ddd;">' + s.permVPct + '%</td>' +
-          '<td style="padding:5px;border:1px solid #ddd;">' + (s.casP || 0) + '</td>' +
-          '<td style="padding:5px;border:1px solid #ddd;">' + (s.casPPct || 0) + '%</td>' +
-          '<td style="padding:5px;border:1px solid #ddd;">' + (s.hospGuests || 0) + '</td></tr>';
-      });
-      document.getElementById('attendance-table-container').innerHTML = '<table style="width:100%;border-collapse:collapse;font-size:12px;text-align:center;"><thead>' + thead + '</thead><tbody>' + tbody + '</tbody></table>';
-      document.getElementById('dash-attendance-badge').textContent = filtered.length;
-      // Chart
-      var canvas = document.getElementById('attendance-chart');
-      if (!canvas) return;
-      if (_attendanceChart) { _attendanceChart.destroy(); _attendanceChart = null; }
-      var ctx = canvas.getContext('2d');
-      var labels = filtered.map(function(s) { var d = s.date.split('-'); return d[1] + '/' + d[2]; });
-      _attendanceChart = new Chart(ctx, {
-        type: 'line',
-        data: {
-          labels: labels,
-          datasets: [
-            { label: 'P (دائم)', data: filtered.map(function(s) { return s.permP; }), borderColor: '#2e7d32', backgroundColor: 'transparent', borderWidth: 2.5, pointBackgroundColor: '#2e7d32', pointRadius: 3, tension: 0.2 },
-            { label: 'V (دائم)', data: filtered.map(function(s) { return s.permV; }), borderColor: '#f57f17', backgroundColor: 'transparent', borderWidth: 2.5, pointBackgroundColor: '#f57f17', pointRadius: 3, tension: 0.2 },
-            { label: '% حضور (دائم)', data: filtered.map(function(s) { return s.permPPct; }), borderColor: '#1565c0', backgroundColor: 'transparent', borderWidth: 2, pointBackgroundColor: '#1565c0', pointRadius: 2, tension: 0.2, yAxisID: 'y1' },
-            { label: 'ضيوف', data: filtered.map(function(s) { return s.hospGuests || 0; }), borderColor: '#6a1b9a', backgroundColor: 'transparent', borderWidth: 2, pointBackgroundColor: '#6a1b9a', pointRadius: 2, tension: 0.2, borderDash: [5,5] }
-          ]
-        },
-        options: {
-          responsive: true, maintainAspectRatio: false,
-          interaction: { mode: 'index', intersect: false },
-          plugins: { legend: { position: 'top', labels: { font: { size: 11 }, usePointStyle: true } } },
-          scales: {
-            x: { grid: { display: false }, ticks: { font: { size: 10 } } },
-            y: { beginAtZero: true, position: 'left', ticks: { font: { size: 10 } } },
-            y1: { beginAtZero: true, position: 'right', grid: { drawOnChartArea: false }, ticks: { font: { size: 10 }, callback: function(v) { return v + '%'; } } }
-          }
-        }
-      });
-    }
-    window.renderAttendanceReport = renderAttendanceReport;
-
-    function exportAttendanceReport() {
-      var fromEl = document.getElementById('attendanceFrom');
-      var toEl = document.getElementById('attendanceTo');
-      var fromDate = fromEl ? fromEl.value : '';
-      var toDate = toEl ? toEl.value : '';
-      if (!fromDate || !toDate) return alert('حدد تاريخ البداية والنهاية أولاً');
-      var filtered = dailyStats.filter(function(s) { return s.date >= fromDate && s.date <= toDate; });
-      filtered.sort(function(a,b) { return a.date.localeCompare(b.date); });
-      if (!filtered.length) return alert('لا توجد بيانات');
-      var xlData = filtered.map(function(s) {
-        return { 'التاريخ': s.date, 'إجمالي القوة': s.total, 'P (دائم)': s.permP, 'V (دائم)': s.permV, '%P (دائم)': s.permPPct, '%V (دائم)': s.permVPct, 'P (كاجول)': s.casP || 0, '%P (كاجول)': s.casPPct || 0, 'ضيوف': s.hospGuests || 0 };
-      });
-      var ws = XLSX.utils.json_to_sheet(xlData); var wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, 'Attendance');
-      XLSX.writeFile(wb, 'Attendance_' + fromDate.replace(/-/g,'') + '_to_' + toDate.replace(/-/g,'') + '.xlsx');
-    }
-    window.exportAttendanceReport = exportAttendanceReport;
-
-    /* ===== Inventory Movement Report ===== */
-    function renderInventoryReport() {
-      var fromEl = document.getElementById('invReportFrom');
-      var toEl = document.getElementById('invReportTo');
-      var fromDate = fromEl ? fromEl.value : '';
-      var toDate = toEl ? toEl.value : '';
-      if (!fromDate || !toDate) return alert('حدد تاريخ البداية والنهاية أولاً');
-      var itemFilter = document.getElementById('invReportItem').value;
-      var filtered = inventoryVouchers.filter(function(v) { return v.date >= fromDate && v.date <= toDate; });
-      if (itemFilter) filtered = filtered.filter(function(v) { return v.itemName === itemFilter; });
-      if (!filtered.length) {
-        document.getElementById('inv-report-container').innerHTML = '<span style="color:#888;">لا توجد حركة في هذا النطاق</span>';
-        document.getElementById('dash-inv-badge').textContent = '0';
-        return;
-      }
-      // Aggregate by item
-      var agg = {};
-      filtered.forEach(function(v) {
-        var key = v.itemName + ' (' + (v.unit || '') + ')';
-        if (!agg[key]) agg[key] = { item: v.itemName, unit: v.unit || '', totalQty: 0, count: 0, depts: {} };
-        agg[key].totalQty += v.qty;
-        agg[key].count++;
-        if (v.dept) {
-          if (!agg[key].depts[v.dept]) agg[key].depts[v.dept] = { count: 0, qty: 0 };
-          agg[key].depts[v.dept].count++;
-          agg[key].depts[v.dept].qty += v.qty;
-        }
-      });
-      var sorted = Object.keys(agg).sort();
-      var html = '<table style="width:100%;border-collapse:collapse;font-size:12px;text-align:center;"><thead><tr><th style="padding:6px;background:#263238;color:white;border:1px solid #ddd;">#</th><th style="padding:6px;background:#263238;color:white;border:1px solid #ddd;">الصنف</th><th style="padding:6px;background:#1b5e20;color:white;border:1px solid #ddd;">الوحدة</th><th style="padding:6px;background:#1b5e20;color:white;border:1px solid #ddd;">إجمالي الكمية</th><th style="padding:6px;background:#1b5e20;color:white;border:1px solid #ddd;">عدد العمليات</th></tr></thead><tbody>';
-      sorted.forEach(function(key, idx) {
-        var a = agg[key];
-        html += '<tr><td style="padding:5px;border:1px solid #ddd;">' + (idx + 1) + '</td><td style="padding:5px;border:1px solid #ddd;font-weight:700;">' + a.item + '</td><td style="padding:5px;border:1px solid #ddd;">' + a.unit + '</td><td style="padding:5px;border:1px solid #ddd;font-weight:700;color:#e65100;">' + a.totalQty + '</td><td style="padding:5px;border:1px solid #ddd;">' + a.count + '</td></tr>';
-      });
-      html += '</tbody></table>';
-      html += '<div style="margin-top:8px;color:#888;font-size:11px;">إجمالي الحركات: ' + filtered.length + ' | إجمالي الأصناف: ' + sorted.length + '</div>';
-      document.getElementById('inv-report-container').innerHTML = html;
-      document.getElementById('dash-inv-badge').textContent = filtered.length;
-      // Populate item filter
-      var itemSelect = document.getElementById('invReportItem');
-      if (itemSelect.options.length <= 1) {
-        var items = {};
-        inventoryVouchers.forEach(function(v) { items[v.itemName] = true; });
-        Object.keys(items).sort().forEach(function(n) {
-          var opt = document.createElement('option');
-          opt.value = n; opt.textContent = n;
-          itemSelect.appendChild(opt);
-        });
-      }
-    }
-    window.renderInventoryReport = renderInventoryReport;
-
-    function exportInventoryReport() {
-      var fromEl = document.getElementById('invReportFrom');
-      var toEl = document.getElementById('invReportTo');
-      var fromDate = fromEl ? fromEl.value : '';
-      var toDate = toEl ? toEl.value : '';
-      if (!fromDate || !toDate) return alert('حدد تاريخ البداية والنهاية أولاً');
-      var itemFilter = document.getElementById('invReportItem').value;
-      var filtered = inventoryVouchers.filter(function(v) { return v.date >= fromDate && v.date <= toDate; });
-      if (itemFilter) filtered = filtered.filter(function(v) { return v.itemName === itemFilter; });
-      if (!filtered.length) return alert('لا توجد بيانات');
-      var xlData = filtered.map(function(v) {
-        return { 'التاريخ': v.date, 'رقم الإذن': v.voucherId || '', 'الصنف': v.itemName, 'الكود': v.itemCode || '', 'الوحدة': v.unit || '', 'الكمية': v.qty, 'الإدارة': v.dept || '', 'الموظف': v.empName || '', 'ملاحظات': v.notes || '' };
-      });
-      var ws = XLSX.utils.json_to_sheet(xlData); var wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, 'Inventory Movement');
-      XLSX.writeFile(wb, 'Inventory_' + fromDate.replace(/-/g,'') + '_to_' + toDate.replace(/-/g,'') + '.xlsx');
-    }
-    window.exportInventoryReport = exportInventoryReport;
-
     function calculateSystemStats() {
       document.getElementById('stat-total-emp').innerText = employees.length;
       document.getElementById('stat-p-emp').innerText = employees.filter(e => e.status === 'P').length;
@@ -12184,6 +12000,8 @@ function toggleEmployeeStatus(empId) {
       currentUser = localStorage.getItem('lineh_current_user') || currentUser;
       syncDeletions = _safeJsonParse(localStorage.getItem('lineh_sync_deletions'), []);
       _applyDeletions();
+      // Auto-populate bakery contractors list from existing supplies
+      bakeryContractorSupplies.forEach(function(c) { if (c.name && bakeryContractorsNames.indexOf(c.name) === -1) { bakeryContractorsNames.push(c.name); } });
 
       // Reset all form fields
       document.querySelectorAll('input[type="text"], input[type="number"], input[type="date"], input[type="search"], textarea').forEach(el => {

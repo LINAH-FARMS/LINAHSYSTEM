@@ -2963,6 +2963,8 @@
     let dynamicDepts = JSON.parse(localStorage.getItem('dyn_depts')) || ["الإنتاج الزراعي", "الادارة الزراعيه", "الأمن الإداري", "الشئون الإدارية", "الحركة والنقل", "الصيانة والهندسة", "الاداره الفنية", "ادارة الجودة"];
     let dynamicTitles = JSON.parse(localStorage.getItem('dyn_titles')) || ["مهندس زراعي", "مشرف موقع", "مشرف إداري", "مشرف إداري أول", "مشرف إداري ثاني", "مشرف الصيانة الفنية", "رئيس قسم المطبخ", "عامل زراعي", "فرد أمن", "فني صيانة", "سائق تراك", "قائد فريق الزيتون", "قائد فريق الشئون الإدارية", "نخال", "مدخل بيانات", "مدير الرى والتسميد", "مهندس جودة"];
     let bakeryContractorsNames = JSON.parse(localStorage.getItem('linah_bakery_contractors_names')) || ["عبد الرازق جبر", "ابراهيم شحاته", "البدري", "مصطفى عبد الكريم", "كرم الزيات", "اسامه سمير", "محمود قاسم", "ممدوح", "كامل احمد", "محمد شعبان", "ابوعمار", "محمد حسنى", "اسامه عبد الرازق", "ناجح", "فارس", "اسعد اسماعيل", "ام جبريل"];
+    // add any names from existing records not already in the list
+    (function() { var ctrs = JSON.parse(localStorage.getItem('linah_bakery_ctr_supplies') || '[]'); ctrs.forEach(function(c) { if (c.name && bakeryContractorsNames.indexOf(c.name) === -1) bakeryContractorsNames.push(c.name); }); })();
     let evaluations = JSON.parse(localStorage.getItem('lineh_evaluations')) || [];
     let roomAssets = JSON.parse(localStorage.getItem('lineh_room_assets')) || [];
     let archiveData = JSON.parse(localStorage.getItem('lineh_archive_data')) || [];
