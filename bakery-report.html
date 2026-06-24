@@ -145,6 +145,23 @@ var SB = 'https://cwqghiqykohefaggedjl.supabase.co';
 var KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN3cWdoaXF5a29oZWZhZ2dlZGpsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEwMjUyMjEsImV4cCI6MjA5NjYwMTIyMX0.3a3hRcNdmYQCtjYjBroAT6df1T_7oz-XWUeD3wagYw8';
 var HEADERS = { 'apikey': KEY, 'Authorization': 'Bearer ' + KEY, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' };
 var ctrCount = 0;
+var bakeryContractorsNames = [];
+var _bctrLoaded = false;
+
+function loadBakeryContractors() {
+  fetch(SB + '/rest/v1/sync_data?id=eq.alldata', {
+    method: 'GET',
+    headers: { 'apikey': KEY, 'Authorization': 'Bearer ' + KEY }
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(rows) {
+    if (rows && rows.length > 0 && rows[0].data && rows[0].data.bakeryContractorsNames) {
+      bakeryContractorsNames = rows[0].data.bakeryContractorsNames;
+    }
+    _bctrLoaded = true;
+  })
+  .catch(function() { _bctrLoaded = true; });
+}
 
 function calcDiesel() {
   var flour = parseFloat(document.getElementById('flourUsed').value) || 0;
@@ -164,6 +181,9 @@ function calcDiesel() {
   if (bread) document.getElementById('breadCount').value = bread;
   var date = params.get('date');
   if (date) document.getElementById('report-date').value = date;
+
+  // تحميل قائمة مقاولي الخبز من Supabase
+  loadBakeryContractors();
 })();
 
 function addContractor() {
@@ -177,7 +197,10 @@ function addContractor() {
 
     '<div class="form-group">' +
     '<label>اسم المقاول</label>' +
-    '<input type="text" id="ctr-name-' + n + '" placeholder="الاسم الأول واللقب">' +
+    '<select id="ctr-name-' + n + '" style="width:100%;padding:11px 12px;border:2px solid #e0e0e0;border-radius:10px;font-size:14px;font-family:Cairo;background:white;-webkit-appearance:none;">' +
+    '<option value="">-- اختر المقاول --</option>' +
+    bakeryContractorsNames.map(function(nm) { return '<option value="' + nm.replace(/"/g,'&quot;') + '">' + nm + '</option>'; }).join('') +
+    '</select>' +
     '</div>' +
 
     '<div class="form-row">' +

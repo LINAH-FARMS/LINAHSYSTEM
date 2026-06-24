@@ -1782,6 +1782,16 @@
         <div id="title-list" style="margin-top:8px;font-size:12px;"></div>
       </div>
 
+      <!-- مقاولي الخبز -->
+      <div style="background:#fff;border-radius:12px;padding:15px;border:1px solid #e0e0e0;">
+        <h4 style="margin:0 0 10px 0;color:#e65100;">🍞 مقاولي الخبز</h4>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <input type="text" id="new-bakery-ctr" placeholder="اسم المقاول" style="flex:1;min-width:100px;padding:6px 10px;border:2px solid #e0e0e0;border-radius:6px;font-size:13px;">
+          <button class="btn btn-primary" onclick="addBakeryContractorName()" id="btn-bakery-ctr" style="padding:6px 12px;font-size:13px;">➕ إضافة</button>
+        </div>
+        <div id="bakery-ctr-list" style="margin-top:8px;font-size:12px;"></div>
+      </div>
+
       <!-- ربط الوظائف بالإدارات -->
       <div style="background:#fff;border-radius:12px;padding:15px;border:1px solid #e0e0e0;">
         <h4 style="margin:0 0 10px 0;color:#6a1b9a;">🔗 ربط الوظائف بالإدارات</h4>
@@ -2596,7 +2606,7 @@
     <div id="bsup-contractors" class="bread-supply-sub-content active">
       <div class="control-panel no-print" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;">
         <div class="form-group"><label>التاريخ</label><input type="date" id="bctr-date"></div>
-        <div class="form-group"><label>المقاول</label><input type="text" id="bctr-name" placeholder="اسم المقاول" list="bctr-list"><datalist id="bctr-list"><option value="عبد الرازق جبر"><option value="ابراهيم شحاته"><option value="البدري"><option value="مصطفى عبد الكريم"><option value="كرم الزيات"><option value="اسامه سمير"><option value="محمود قاسم"><option value="ممدوح"><option value="كامل احمد"><option value="محمد شعبان"><option value="ابوعمار"><option value="محمد حسنى"><option value="اسامه عبد الرازق"><option value="ناجح"><option value="فارس"><option value="اسعد اسماعيل"><option value="ام جبريل"></datalist></div>
+        <div class="form-group"><label>المقاول</label><input type="text" id="bctr-name" placeholder="اسم المقاول" list="bctr-list"><datalist id="bctr-list"></datalist></div>
         <div class="form-group"><label>عدد الأرغفة للمقاول</label><input type="number" id="bctr-count" min="1" value="0" oninput="estimateCtrProfit()"></div>
         <div class="form-group"><label>سعر الرغيف (ج.م)</label><input type="number" id="bctr-price" min="0" step="0.01" value="2" oninput="estimateCtrProfit()"></div>
         <div class="form-group"><label>المدفوع (ج.م)</label><input type="number" id="bctr-paid" min="0" step="0.01" value="0"></div>
@@ -2884,6 +2894,7 @@
         septicRecords, inventoryVouchers, inventoryItems, excludedEmployees,
         periodicMaintenance, teaSugarDisbursements, teaSugarBatches, mealLogs, contractors,
         dynamicSectors, dynamicRooms, dynamicSeptics, dynamicDepts, dynamicTitles,
+        bakeryContractorsNames,
         appUsers, currentUser, bakeryIngredients, bakeryProductions,
         bakeryContractorSupplies, bakeryInvoices
       };
@@ -2951,6 +2962,7 @@
     
     let dynamicDepts = JSON.parse(localStorage.getItem('dyn_depts')) || ["الإنتاج الزراعي", "الادارة الزراعيه", "الأمن الإداري", "الشئون الإدارية", "الحركة والنقل", "الصيانة والهندسة", "الاداره الفنية", "ادارة الجودة"];
     let dynamicTitles = JSON.parse(localStorage.getItem('dyn_titles')) || ["مهندس زراعي", "مشرف موقع", "مشرف إداري", "مشرف إداري أول", "مشرف إداري ثاني", "مشرف الصيانة الفنية", "رئيس قسم المطبخ", "عامل زراعي", "فرد أمن", "فني صيانة", "سائق تراك", "قائد فريق الزيتون", "قائد فريق الشئون الإدارية", "نخال", "مدخل بيانات", "مدير الرى والتسميد", "مهندس جودة"];
+    let bakeryContractorsNames = JSON.parse(localStorage.getItem('linah_bakery_contractors_names')) || ["عبد الرازق جبر", "ابراهيم شحاته", "البدري", "مصطفى عبد الكريم", "كرم الزيات", "اسامه سمير", "محمود قاسم", "ممدوح", "كامل احمد", "محمد شعبان", "ابوعمار", "محمد حسنى", "اسامه عبد الرازق", "ناجح", "فارس", "اسعد اسماعيل", "ام جبريل"];
     let evaluations = JSON.parse(localStorage.getItem('lineh_evaluations')) || [];
     let roomAssets = JSON.parse(localStorage.getItem('lineh_room_assets')) || [];
     let archiveData = JSON.parse(localStorage.getItem('lineh_archive_data')) || [];
@@ -3454,6 +3466,13 @@
       populateContractorSectorDropdown();
       fillSelectWithOptions('transfer-dept-select', dynamicDepts, '-- اختر الإدارة --');
       fillSelectWithOptions('transfer-title-select', dynamicTitles, '-- اختر الوظيفة --');
+      populateBctrDatalist();
+    }
+
+    function populateBctrDatalist() {
+      var dl = document.getElementById('bctr-list');
+      if (!dl) return;
+      dl.innerHTML = bakeryContractorsNames.map(function(n) { return '<option value="' + n.replace(/"/g,'&quot;') + '">'; }).join('');
     }
 
     function fillSelectWithOptions(selectId, optionsArray, placeholder) {
@@ -3611,6 +3630,7 @@
       localStorage.setItem('dyn_septics', JSON.stringify(dynamicSeptics));
       localStorage.setItem('dyn_depts', JSON.stringify(dynamicDepts));
       localStorage.setItem('dyn_titles', JSON.stringify(dynamicTitles));
+      localStorage.setItem('linah_bakery_contractors_names', JSON.stringify(bakeryContractorsNames));
       localStorage.setItem('lineh_evaluations', JSON.stringify(evaluations));
       localStorage.setItem('lineh_eval_templates', JSON.stringify(evalTemplates));
       localStorage.setItem('lineh_users', JSON.stringify(appUsers));
@@ -4207,7 +4227,8 @@
         🏢 <b>المباني:</b> ${dynamicSectors.join(' | ')}<br><br>
         🚪 <b>الغرف:</b> ${dynamicRooms.join(' | ')}<br><br>
         🧹 <b>البيارات:</b> ${dynamicSeptics.join(' | ')}<br><br>
-        🏗️ <b>سكن المقاولين:</b> ${contractorSectors.join(' | ')}
+        🏗️ <b>سكن المقاولين:</b> ${contractorSectors.join(' | ')}<br><br>
+        🍞 <b>مقاولي الخبز:</b> ${bakeryContractorsNames.join(' | ')}
       `;
       renderListItems('sector', dynamicSectors, 'sector');
       var sortedRooms = dynamicRooms.slice().sort(naturalCompare);
@@ -4216,6 +4237,7 @@
       renderListItems('dept', dynamicDepts, 'dept');
       renderListItems('title', dynamicTitles, 'title');
       renderListItems('ctr-sector', contractorSectors, 'ctr-sector');
+      renderListItems('bakery-ctr', bakeryContractorsNames, 'bakery-ctr');
       renderContractorRoomsList();
       populateContractorRoomSectorDropdown();
       renderDeptTitleList();
@@ -4258,7 +4280,7 @@
     let dynamicEditIndex = null;
 
     function editDynamicItem(inputId, listId, idx) {
-      let lists = { sector: dynamicSectors, room: dynamicRooms, septic: dynamicSeptics, dept: dynamicDepts, title: dynamicTitles, 'ctr-sector': contractorSectors };
+      let lists = { sector: dynamicSectors, room: dynamicRooms, septic: dynamicSeptics, dept: dynamicDepts, title: dynamicTitles, 'ctr-sector': contractorSectors, 'bakery-ctr': bakeryContractorsNames };
       let arr = lists[listId];
       if (!arr || idx >= arr.length) return;
       document.getElementById('new-' + inputId).value = arr[idx];
@@ -4269,7 +4291,7 @@
 
     function saveDynamicEdit(inputId) {
       if (!dynamicEditIndex) return;
-      let lists = { sector: dynamicSectors, room: dynamicRooms, septic: dynamicSeptics, dept: dynamicDepts, title: dynamicTitles, 'ctr-sector': contractorSectors };
+      let lists = { sector: dynamicSectors, room: dynamicRooms, septic: dynamicSeptics, dept: dynamicDepts, title: dynamicTitles, 'ctr-sector': contractorSectors, 'bakery-ctr': bakeryContractorsNames };
       let arr = lists[dynamicEditIndex.listId];
       if (!arr || dynamicEditIndex.idx >= arr.length) { cancelDynamicEdit(inputId); return; }
       let val = document.getElementById('new-' + inputId).value.trim();
@@ -4286,13 +4308,13 @@
       let btn = document.getElementById('btn-' + inputId);
       if (!btn) return;
       btn.textContent = '➕ إضافة'; btn.style.background = '';
-      let fns = { sector: addDynamicSector, room: addDynamicRoom, septic: addDynamicSeptic, dept: addDynamicDept, title: addDynamicTitle, 'ctr-sector': addContractorSector };
+      let fns = { sector: addDynamicSector, room: addDynamicRoom, septic: addDynamicSeptic, dept: addDynamicDept, title: addDynamicTitle, 'ctr-sector': addContractorSector, 'bakery-ctr': addBakeryContractorName };
       if (fns[inputId]) btn.onclick = fns[inputId];
     }
 
     function deleteDynamicItem(listId, idx) { if (!requireAdmin()) return;
       if (!confirm('حذف هذا العنصر؟')) return;
-      let lists = { sector: dynamicSectors, room: dynamicRooms, septic: dynamicSeptics, dept: dynamicDepts, title: dynamicTitles, 'ctr-sector': contractorSectors };
+      let lists = { sector: dynamicSectors, room: dynamicRooms, septic: dynamicSeptics, dept: dynamicDepts, title: dynamicTitles, 'ctr-sector': contractorSectors, 'bakery-ctr': bakeryContractorsNames };
       let arr = lists[listId];
       if (!arr || idx >= arr.length) return;
       arr.splice(idx, 1);
@@ -4326,6 +4348,16 @@
       if(contractorSectors.includes(val)) return alert('⚠️ المبنى موجود بالفعل.');
       contractorSectors.push(val); document.getElementById('new-ctr-sector').value = '';
       syncStorage(); populateContractorSectorDropdown(); renderDynamicLists();
+    }
+
+    function addBakeryContractorName() {
+      let val = document.getElementById('new-bakery-ctr').value.trim();
+      if(!val) return alert("من فضلك اكتب اسم المقاول أولاً");
+      if(bakeryContractorsNames.includes(val)) return alert("هذا المقاول مسجل بالفعل");
+      bakeryContractorsNames.push(val);
+      document.getElementById('new-bakery-ctr').value = '';
+      syncStorage(); rebuildAllDropdowns(); renderDynamicLists();
+      populateBctrDatalist();
     }
 
     // ============================
@@ -10017,7 +10049,7 @@ function toggleEmployeeStatus(empId) {
 
     function getAllDataForSync() {
       var o = getAllDataObject();
-      var keys = ['employees','roomsCapacity','vacations','inventoryVouchers','excludedEmployees','contractors','mealLogs','inventoryItems','hospitalities','adminOvertime','maintenanceRecords','septicRecords','periodicMaintenance','teaSugarDisbursements','teaSugarBatches','dynamicSectors','contractorSectors','contractorRooms','dynamicRooms','dynamicSeptics','dynamicDepts','dynamicTitles','evaluations','evalTemplates','appUsers','auditLog','bakeryIngredients','bakeryProductions','bakeryContractorSupplies','bakeryInvoices','bakeryStockLog','roomAssets','archiveData','quickActions'];
+      var keys = ['employees','roomsCapacity','vacations','inventoryVouchers','excludedEmployees','contractors','mealLogs','inventoryItems','hospitalities','adminOvertime','maintenanceRecords','septicRecords','periodicMaintenance','teaSugarDisbursements','teaSugarBatches','dynamicSectors','contractorSectors','contractorRooms','dynamicRooms','dynamicSeptics','dynamicDepts','dynamicTitles','bakeryContractorsNames','evaluations','evalTemplates','appUsers','auditLog','bakeryIngredients','bakeryProductions','bakeryContractorSupplies','bakeryInvoices','bakeryStockLog','roomAssets','archiveData','quickActions'];
       var result = {};
       for (var ki = 0; ki < keys.length; ki++) { result[keys[ki]] = o[keys[ki]]; }
       return result;
@@ -10067,6 +10099,7 @@ function toggleEmployeeStatus(empId) {
         dynamicSeptics: JSON.parse(JSON.stringify(dynamicSeptics)),
         dynamicDepts: JSON.parse(JSON.stringify(dynamicDepts)),
         dynamicTitles: JSON.parse(JSON.stringify(dynamicTitles)),
+        bakeryContractorsNames: JSON.parse(JSON.stringify(bakeryContractorsNames)),
         evaluations: JSON.parse(JSON.stringify(evaluations)),
         evalTemplates: JSON.parse(JSON.stringify(evalTemplates)),
         appUsers: JSON.parse(JSON.stringify(appUsers)),
@@ -10241,7 +10274,7 @@ function toggleEmployeeStatus(empId) {
     var debouncedSyncToSupabase = function() { setTimeout(pushToSupabase, 500); };
 
     // backward compat for old function refs
-    var DATA_KEYS = ['employees','roomsCapacity','vacations','hospitalities','maintenanceRecords','septicRecords','inventoryVouchers','inventoryItems','excludedEmployees','periodicMaintenance','teaSugarDisbursements','teaSugarBatches','mealLogs','contractors','dynamicSectors','dynamicRooms','dynamicSeptics','dynamicDepts','dynamicTitles','deptTitles','appUsers','auditLog','bakeryIngredients','bakeryProductions','bakeryContractorSupplies','bakeryInvoices','manualTotalBeds','roomAssets','archiveData','quickActions'];
+    var DATA_KEYS = ['employees','roomsCapacity','vacations','hospitalities','maintenanceRecords','septicRecords','inventoryVouchers','inventoryItems','excludedEmployees','periodicMaintenance','teaSugarDisbursements','teaSugarBatches','mealLogs','contractors','dynamicSectors','dynamicRooms','dynamicSeptics','dynamicDepts','dynamicTitles','bakeryContractorsNames','deptTitles','appUsers','auditLog','bakeryIngredients','bakeryProductions','bakeryContractorSupplies','bakeryInvoices','manualTotalBeds','roomAssets','archiveData','quickActions'];
 
     // Snapshot after pull — نعرف إيه اللي اتشال عشان push ما يضيفوش تاني
     var _snapshotKeys = {};
@@ -10257,7 +10290,7 @@ function toggleEmployeeStatus(empId) {
       if (key==='inventoryVouchers') return inventoryVouchers; if (key==='inventoryItems') return inventoryItems; if (key==='excludedEmployees') return excludedEmployees;
       if (key==='periodicMaintenance') return periodicMaintenance; if (key==='teaSugarDisbursements') return teaSugarDisbursements; if (key==='teaSugarBatches') return teaSugarBatches;
       if (key==='mealLogs') return mealLogs; if (key==='contractors') return contractors; if (key==='dynamicSectors') return dynamicSectors; if (key==='dynamicRooms') return dynamicRooms;
-      if (key==='dynamicSeptics') return dynamicSeptics; if (key==='dynamicDepts') return dynamicDepts; if (key==='dynamicTitles') return dynamicTitles; if (key==='deptTitles') return deptTitles;
+      if (key==='dynamicSeptics') return dynamicSeptics; if (key==='dynamicDepts') return dynamicDepts; if (key==='dynamicTitles') return dynamicTitles; if (key==='bakeryContractorsNames') return bakeryContractorsNames; if (key==='deptTitles') return deptTitles;
       if (key==='appUsers') return appUsers; if (key==='auditLog') return auditLog; if (key==='bakeryIngredients') return bakeryIngredients; if (key==='bakeryProductions') return bakeryProductions;
       if (key==='bakeryContractorSupplies') return bakeryContractorSupplies; if (key==='bakeryInvoices') return bakeryInvoices; if (key==='roomAssets') return roomAssets;
       if (key==='archiveData') return archiveData; if (key==='quickActions') return quickActions;
@@ -10303,6 +10336,7 @@ function toggleEmployeeStatus(empId) {
       else if (key === 'dynamicSeptics') dynamicSeptics = val;
       else if (key === 'dynamicDepts') dynamicDepts = val;
       else if (key === 'dynamicTitles') dynamicTitles = val;
+      else if (key === 'bakeryContractorsNames') bakeryContractorsNames = val;
       else if (key === 'evaluations') evaluations = val;
       else if (key === 'evalTemplates') evalTemplates = val;
       else if (key === 'appUsers') appUsers = filterLatinUsers(val);
@@ -10500,6 +10534,7 @@ function toggleEmployeeStatus(empId) {
           septicRecords, inventoryVouchers, inventoryItems, excludedEmployees,
           periodicMaintenance, teaSugarDisbursements, teaSugarBatches, mealLogs, contractors,
           dynamicSectors, dynamicRooms, dynamicSeptics, dynamicDepts, dynamicTitles,
+          bakeryContractorsNames,
           appUsers, bakeryIngredients, bakeryProductions,
           bakeryContractorSupplies, bakeryInvoices
         };
@@ -10523,7 +10558,7 @@ function toggleEmployeeStatus(empId) {
         if (!res.ok) return;
         var data = await res.json();
         if (!data || !data.employees) return;
-        var localJson = JSON.stringify({employees,roomsCapacity,vacations,hospitalities,maintenanceRecords,septicRecords,inventoryVouchers,inventoryItems,excludedEmployees,periodicMaintenance,teaSugarDisbursements,teaSugarBatches,mealLogs,contractors,dynamicSectors,contractorSectors,contractorRooms,dynamicRooms,dynamicSeptics,dynamicDepts,dynamicTitles,deptTitles,appUsers,bakeryIngredients,bakeryProductions,bakeryContractorSupplies,bakeryInvoices,manualTotalBeds});
+        var localJson = JSON.stringify({employees,roomsCapacity,vacations,hospitalities,maintenanceRecords,septicRecords,inventoryVouchers,inventoryItems,excludedEmployees,periodicMaintenance,teaSugarDisbursements,teaSugarBatches,mealLogs,contractors,dynamicSectors,contractorSectors,contractorRooms,dynamicRooms,dynamicSeptics,dynamicDepts,dynamicTitles,bakeryContractorsNames,deptTitles,appUsers,bakeryIngredients,bakeryProductions,bakeryContractorSupplies,bakeryInvoices,manualTotalBeds});
         lastCloudData = JSON.stringify(data);
         if (JSON.stringify(data) === localJson) return;
         var localTime = parseInt(localStorage.getItem('_localChangeTime')) || 0;
@@ -10629,6 +10664,7 @@ function toggleEmployeeStatus(empId) {
         employees, roomsCapacity, vacations, hospitalities, maintenanceRecords, septicRecords,
         inventoryVouchers, excludedEmployees, periodicMaintenance, teaSugarDisbursements, teaSugarBatches, mealLogs,
         inventoryItems, contractors, dynamicSectors, contractorSectors, contractorRooms, dynamicRooms, dynamicSeptics, dynamicDepts, dynamicTitles,
+        bakeryContractorsNames,
         appUsers, currentUser, bakeryIngredients, bakeryProductions,
         bakeryContractorSupplies, bakeryInvoices,
         manualTotalBeds, adminOvertime,
@@ -11238,7 +11274,8 @@ function toggleEmployeeStatus(empId) {
               if (data.dynamicRooms) dynamicRooms = data.dynamicRooms;
               if (data.dynamicSeptics) dynamicSeptics = data.dynamicSeptics;
               if (data.dynamicDepts) dynamicDepts = data.dynamicDepts;
-              if (data.dynamicTitles) dynamicTitles = data.dynamicTitles;
+        if (data.dynamicTitles) dynamicTitles = data.dynamicTitles;
+        if (data.bakeryContractorsNames) bakeryContractorsNames = data.bakeryContractorsNames;
         if (data.deptTitles) deptTitles = data.deptTitles;
               employees.forEach(function(e) { if (typeof e.vacationBalance !== 'number') e.vacationBalance = 30; });
               syncStorage();
