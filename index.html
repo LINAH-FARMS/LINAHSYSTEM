@@ -1613,17 +1613,7 @@
       </div>
       <div class="form-group">
         <label style="font-weight:600;">تصنيف الزائر</label>
-        <select id="hosp-type">
-          <option value="ضيوف">ضيوف / زوار</option>
-          <option value="سيدات">سيدات</option>
-          <option value="طلبة مدرسة">طلبة مدرسة</option>
-          <option value="مقدمي خدمة">مقدمي خدمة</option>
-          <option value="سائقين">سائقين</option>
-          <option value="مقدم خدمة بدون اجر">مقدم خدمة بدون اجر</option>
-          <option value="مقدم خدمة باجر">مقدم خدمة باجر</option>
-          <option value="سائق براد">سائق براد</option>
-          <option value="اخري">اخري</option>
-        </select>
+        <select id="hosp-type"></select>
       </div>
       <div class="form-group">
         <label style="font-weight:600;">الصفة / الغرض</label>
@@ -1851,6 +1841,16 @@
           <button class="btn btn-primary" onclick="addDynamicTitle()" id="btn-title" style="padding:6px 12px;font-size:13px;">➕ إضافة</button>
         </div>
         <div id="title-list" style="margin-top:8px;font-size:12px;"></div>
+      </div>
+
+      <!-- تصنيف الزوار -->
+      <div style="background:#fff;border-radius:12px;padding:15px;border:1px solid #e0e0e0;">
+        <h4 style="margin:0 0 10px 0;color:#6a1b9a;">🛎️ تصنيف الزوار</h4>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <input type="text" id="new-visitor-type" placeholder="تصنيف الزائر" style="flex:1;min-width:100px;padding:6px 10px;border:2px solid #e0e0e0;border-radius:6px;font-size:13px;">
+          <button class="btn btn-primary" onclick="addDynamicVisitorType()" id="btn-visitor-type" style="padding:6px 12px;font-size:13px;">➕ إضافة</button>
+        </div>
+        <div id="visitor-type-list" style="margin-top:8px;font-size:12px;"></div>
       </div>
 
       <!-- ربط الوظائف بالإدارات -->
@@ -3316,6 +3316,7 @@
     
     let dynamicDepts = _safeJsonParse(localStorage.getItem('dyn_depts'), ["الإنتاج الزراعي", "الادارة الزراعيه", "الأمن الإداري", "الشئون الإدارية", "الحركة والنقل", "الصيانة والهندسة", "الاداره الفنية", "ادارة الجودة"]);
     let dynamicTitles = _safeJsonParse(localStorage.getItem('dyn_titles'), ["مهندس زراعي", "مشرف موقع", "مشرف إداري", "مشرف إداري أول", "مشرف إداري ثاني", "مشرف الصيانة الفنية", "رئيس قسم المطبخ", "عامل زراعي", "فرد أمن", "فني صيانة", "سائق تراك", "قائد فريق الزيتون", "قائد فريق الشئون الإدارية", "نخال", "مدخل بيانات", "مدير الرى والتسميد", "مهندس جودة"]);
+    let dynamicVisitorTypes = _safeJsonParse(localStorage.getItem('dyn_visitor_types'), ["ضيوف", "سيدات", "طلبة مدرسة", "مقدمي خدمة", "سائقين", "مقدم خدمة بدون اجر", "مقدم خدمة باجر", "سائق براد", "اخري"]);
     let evaluations = _safeJsonParse(localStorage.getItem('lineh_evaluations'), []);
     let roomAssets = _safeJsonParse(localStorage.getItem('lineh_room_assets'), []);
     let archiveData = _safeJsonParse(localStorage.getItem('lineh_archive_data'), []);
@@ -3829,6 +3830,7 @@
       populateContractorSectorDropdown();
       fillSelectWithOptions('transfer-dept-select', dynamicDepts, '-- اختر الإدارة --');
       fillSelectWithOptions('transfer-title-select', dynamicTitles, '-- اختر الوظيفة --');
+      fillSelectWithOptions('hosp-type', dynamicVisitorTypes, '');
     }
 
     function fillSelectWithOptions(selectId, optionsArray, placeholder) {
@@ -3986,6 +3988,7 @@
       localStorage.setItem('dyn_septics', JSON.stringify(dynamicSeptics));
       localStorage.setItem('dyn_depts', JSON.stringify(dynamicDepts));
       localStorage.setItem('dyn_titles', JSON.stringify(dynamicTitles));
+      localStorage.setItem('dyn_visitor_types', JSON.stringify(dynamicVisitorTypes));
       localStorage.setItem('lineh_evaluations', JSON.stringify(evaluations));
       localStorage.setItem('lineh_eval_templates', JSON.stringify(evalTemplates));
       localStorage.setItem('lineh_users', JSON.stringify(appUsers));
@@ -4862,6 +4865,14 @@
       syncStorage(); rebuildAllDropdowns(); renderDynamicLists();
     }
 
+    function addDynamicVisitorType() {
+      let val = document.getElementById('new-visitor-type').value.trim();
+      if(!val) return alert("من فضلك اكتب تصنيف الزائر أولاً");
+      if(dynamicVisitorTypes.includes(val)) return alert("هذا التصنيف مسجل بالفعل");
+      dynamicVisitorTypes.push(val);
+      document.getElementById('new-visitor-type').value = '';
+      syncStorage(); rebuildAllDropdowns(); renderDynamicLists();
+    }
     function addDynamicTitle() {
       let titleName = document.getElementById('new-title').value.trim();
       if(!titleName) return alert("من فضلك اكتب المسمى الوظيفي أولاً");
@@ -4966,7 +4977,8 @@
         🏢 <b>المباني:</b> ${dynamicSectors.join(' | ')}<br><br>
         🚪 <b>الغرف:</b> ${dynamicRooms.join(' | ')}<br><br>
         🧹 <b>البيارات:</b> ${dynamicSeptics.join(' | ')}<br><br>
-        🏗️ <b>سكن المقاولين:</b> ${contractorSectors.join(' | ')}
+        🏗️ <b>سكن المقاولين:</b> ${contractorSectors.join(' | ')}<br><br>
+        🛎️ <b>تصنيف الزوار:</b> ${dynamicVisitorTypes.join(' | ')}
       `;
       renderListItems('sector', dynamicSectors, 'sector');
       var sortedRooms = dynamicRooms.slice().sort(naturalCompare);
@@ -4975,6 +4987,7 @@
       renderListItems('dept', dynamicDepts, 'dept');
       renderListItems('title', dynamicTitles, 'title');
       renderListItems('ctr-sector', contractorSectors, 'ctr-sector');
+      renderListItems('visitor-type', dynamicVisitorTypes, 'visitor-type');
       renderContractorRoomsList();
       populateContractorRoomSectorDropdown();
       renderDeptTitleList();
@@ -5017,7 +5030,7 @@
     let dynamicEditIndex = null;
 
     function editDynamicItem(inputId, listId, idx) {
-      let lists = { sector: dynamicSectors, room: dynamicRooms, septic: dynamicSeptics, dept: dynamicDepts, title: dynamicTitles, 'ctr-sector': contractorSectors };
+      let lists = { sector: dynamicSectors, room: dynamicRooms, septic: dynamicSeptics, dept: dynamicDepts, title: dynamicTitles, 'ctr-sector': contractorSectors, 'visitor-type': dynamicVisitorTypes };
       let arr = lists[listId];
       if (!arr || idx >= arr.length) return;
       document.getElementById('new-' + inputId).value = arr[idx];
@@ -5028,7 +5041,7 @@
 
     function saveDynamicEdit(inputId) {
       if (!dynamicEditIndex) return;
-      let lists = { sector: dynamicSectors, room: dynamicRooms, septic: dynamicSeptics, dept: dynamicDepts, title: dynamicTitles, 'ctr-sector': contractorSectors };
+      let lists = { sector: dynamicSectors, room: dynamicRooms, septic: dynamicSeptics, dept: dynamicDepts, title: dynamicTitles, 'ctr-sector': contractorSectors, 'visitor-type': dynamicVisitorTypes };
       let arr = lists[dynamicEditIndex.listId];
       if (!arr || dynamicEditIndex.idx >= arr.length) { cancelDynamicEdit(inputId); return; }
       let val = document.getElementById('new-' + inputId).value.trim();
@@ -5045,13 +5058,13 @@
       let btn = document.getElementById('btn-' + inputId);
       if (!btn) return;
       btn.textContent = '➕ إضافة'; btn.style.background = '';
-      let fns = { sector: addDynamicSector, room: addDynamicRoom, septic: addDynamicSeptic, dept: addDynamicDept, title: addDynamicTitle, 'ctr-sector': addContractorSector };
+      let fns = { sector: addDynamicSector, room: addDynamicRoom, septic: addDynamicSeptic, dept: addDynamicDept, title: addDynamicTitle, 'ctr-sector': addContractorSector, 'visitor-type': addDynamicVisitorType };
       if (fns[inputId]) btn.onclick = fns[inputId];
     }
 
     function deleteDynamicItem(listId, idx) { if (!requireAdmin()) return;
       if (!confirm('حذف هذا العنصر؟')) return;
-      let lists = { sector: dynamicSectors, room: dynamicRooms, septic: dynamicSeptics, dept: dynamicDepts, title: dynamicTitles, 'ctr-sector': contractorSectors };
+      let lists = { sector: dynamicSectors, room: dynamicRooms, septic: dynamicSeptics, dept: dynamicDepts, title: dynamicTitles, 'ctr-sector': contractorSectors, 'visitor-type': dynamicVisitorTypes };
       let arr = lists[listId];
       if (!arr || idx >= arr.length) return;
       _logDeletion(listId, arr[idx]);
@@ -11793,7 +11806,7 @@ function toggleEmployeeStatus(empId) {
 
     function getAllDataForSync() {
       var o = getAllDataObject();
-      var keys = ['employees','roomsCapacity','vacations','inventoryVouchers','excludedEmployees','contractors','mealLogs','inventoryItems','hospitalities','adminOvertime','maintenanceRecords','septicRecords','periodicMaintenance','teaSugarDisbursements','teaSugarBatches','dynamicSectors','contractorSectors','contractorRooms','dynamicRooms','dynamicSeptics','dynamicDepts','dynamicTitles','evaluations','evalTemplates','appUsers','auditLog','bakeryIngredients','bakeryProductions','bakeryContractorSupplies','bakeryInvoices','bakeryStockLog','roomAssets','archiveData','quickActions','deptTitles','manualTotalBeds','dailyStats','finTransactions','finBudgets','syncDeletions'];
+      var keys = ['employees','roomsCapacity','vacations','inventoryVouchers','excludedEmployees','contractors','mealLogs','inventoryItems','hospitalities','adminOvertime','maintenanceRecords','septicRecords','periodicMaintenance','teaSugarDisbursements','teaSugarBatches','dynamicSectors','contractorSectors','contractorRooms','dynamicRooms','dynamicSeptics','dynamicDepts','dynamicTitles','dynamicVisitorTypes','evaluations','evalTemplates','appUsers','auditLog','bakeryIngredients','bakeryProductions','bakeryContractorSupplies','bakeryInvoices','bakeryStockLog','roomAssets','archiveData','quickActions','deptTitles','manualTotalBeds','dailyStats','finTransactions','finBudgets','syncDeletions'];
       var result = {};
       for (var ki = 0; ki < keys.length; ki++) { result[keys[ki]] = o[keys[ki]]; }
       return result;
@@ -12160,6 +12173,7 @@ function toggleEmployeeStatus(empId) {
       else if (key === 'dynamicSeptics') dynamicSeptics = val;
       else if (key === 'dynamicDepts') dynamicDepts = val;
       else if (key === 'dynamicTitles') dynamicTitles = val;
+      else if (key === 'dynamicVisitorTypes') dynamicVisitorTypes = val;
       else if (key === 'evaluations') evaluations = val;
       else if (key === 'evalTemplates') evalTemplates = val;
       else if (key === 'appUsers') appUsers = filterLatinUsers(val);
@@ -12454,7 +12468,7 @@ function toggleEmployeeStatus(empId) {
           septicRecords, inventoryVouchers, inventoryItems, excludedEmployees,
           periodicMaintenance, teaSugarDisbursements, teaSugarBatches, mealLogs, contractors,
           dynamicSectors, dynamicRooms, dynamicSeptics, dynamicDepts, dynamicTitles,
-          appUsers, currentUser, bakeryIngredients, bakeryProductions,
+        appUsers, currentUser, dynamicVisitorTypes, bakeryIngredients, bakeryProductions,
           bakeryContractorSupplies, bakeryInvoices
         };
         var json = JSON.stringify(backup);
