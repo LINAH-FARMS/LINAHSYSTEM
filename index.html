@@ -2814,8 +2814,8 @@
           <input type="date" id="filt-ctr-to" onchange="renderBakeryContractorSupplies()" style="padding:4px 8px;font-size:12px;border:1px solid #cfd8dc;border-radius:4px;">
           <label style="font-size:12px;font-weight:600;">المقاول</label>
           <div style="position:relative;min-width:180px;">
-            <input type="text" id="filt-ctr-name" placeholder="ابحث عن مقاول..." oninput="filterContractorCheckboxes()" style="padding:4px 8px;font-size:12px;border:1px solid #cfd8dc;border-radius:4px;width:100%;box-sizing:border-box;">
-            <div id="filt-ctr-checklist" style="display:none;position:absolute;top:100%;left:0;right:0;z-index:100;background:white;border:1px solid #cfd8dc;border-radius:4px;max-height:150px;overflow-y:auto;box-shadow:0 4px 12px rgba(0,0,0,0.1);"></div>
+            <input type="text" id="filt-ctr-name" placeholder="ابحث عن مقاول..." oninput="filterContractorCheckboxes()" onfocus="filterContractorCheckboxes()" style="padding:4px 8px;font-size:12px;border:1px solid #cfd8dc;border-radius:4px;width:100%;box-sizing:border-box;">
+            <div id="filt-ctr-checklist" style="display:none;position:absolute;top:100%;left:0;right:0;z-index:100;background:white;border:1px solid #cfd8dc;border-radius:4px;max-height:300px;overflow-y:auto;box-shadow:0 4px 12px rgba(0,0,0,0.1);"></div>
             <div id="filt-ctr-selected" style="display:flex;gap:3px;flex-wrap:wrap;margin-top:4px;font-size:11px;"></div>
           </div>
           <label style="font-size:12px;font-weight:600;">الحالة</label>
@@ -11757,12 +11757,10 @@ function toggleEmployeeStatus(empId) {
     function filterContractorCheckboxes() {
       var q = document.getElementById('filt-ctr-name').value.trim().toLowerCase();
       var list = document.getElementById('filt-ctr-checklist');
-      if (q.length === 0) { list.style.display = 'none'; return; }
       var names = {};
       bakeryContractorSupplies.forEach(function(c) { names[c.name] = true; });
-      var sorted = Object.keys(names).sort().filter(function(n) { return n.toLowerCase().indexOf(q) !== -1; });
-      if (sorted.length === 0) { list.style.display = 'none'; return; }
-      list.style.display = 'block';
+      var sorted = Object.keys(names).sort().filter(function(n) { return !q || n.toLowerCase().indexOf(q) !== -1; });
+      list.style.display = sorted.length ? 'block' : 'none';
       list.innerHTML = sorted.map(function(n) {
         var checked = _selectedContractors.indexOf(n) !== -1 ? 'checked' : '';
         return '<label style="display:flex;align-items:center;gap:6px;padding:4px 8px;cursor:pointer;font-size:12px;border-bottom:1px solid #f0f0f0;"><input type="checkbox" value="' + n.replace(/"/g,'&quot;') + '" ' + checked + ' onchange="toggleContractorSelection(\'' + n.replace(/'/g,"\\'") + '\',this.checked)">' + n + '</label>';
