@@ -1202,6 +1202,9 @@
         <input type="date" id="bakeryConsTo" onchange="renderBakeryConsumptionTable()" style="padding:4px 8px;border:1px solid #ccc;border-radius:6px;font-size:12px;">
       </div>
       <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:8px;" id="bakery-summary-cards"></div>
+      <div style="margin:12px 0;position:relative;height:250px;">
+        <canvas id="bakery-chart"></canvas>
+      </div>
       <div style="overflow-x:auto;">
         <table id="bakery-consumption-table" style="width:100%;border-collapse:collapse;font-size:12px;text-align:center;">
           <thead id="bakery-consumption-thead"></thead>
@@ -6394,6 +6397,7 @@
         row += '<td style="padding:5px;border:1px solid #ddd;">' + s.diesel + '</td>';
         tbody.innerHTML += '<tr>' + row + '</tr>';
       });
+      renderBakeryChart(data);
     }
     function exportBakeryConsumptionToExcel() {
       var fromEl = document.getElementById('bakeryConsFrom');
@@ -6414,6 +6418,79 @@
     }
     window.renderBakeryConsumptionTable = renderBakeryConsumptionTable;
     window.exportBakeryConsumptionToExcel = exportBakeryConsumptionToExcel;
+
+    var _bakeryChart = null;
+    function renderBakeryChart(data) {
+      var canvas = document.getElementById('bakery-chart');
+      if (!canvas) return;
+      if (_bakeryChart) { _bakeryChart.destroy(); _bakeryChart = null; }
+      if (!data || data.length < 2) { canvas.parentElement.style.height = '0'; return; }
+      canvas.parentElement.style.height = '250px';
+      var ctx = canvas.getContext('2d');
+      var labels = data.map(function(s) {
+        var d = s.date.split('-');
+        return d[1] + '/' + d[2];
+      });
+      _bakeryChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [
+            {
+              label: 'خبز الفرن',
+              data: data.map(function(s) { return s.breadFarm; }),
+              backgroundColor: '#e65100',
+              borderRadius: 3,
+              order: 2
+            },
+            {
+              label: 'توريد مقاولين',
+              data: data.map(function(s) { return s.breadCtr; }),
+              backgroundColor: '#ff8a65',
+              borderRadius: 3,
+              order: 2
+            },
+            {
+              label: 'دقيق (كجم)',
+              data: data.map(function(s) { return s.flour; }),
+              type: 'line',
+              borderColor: '#1565c0',
+              backgroundColor: 'transparent',
+              borderWidth: 2.5,
+              pointBackgroundColor: '#1565c0',
+              pointRadius: 3,
+              tension: 0.2,
+              order: 1,
+              yAxisID: 'y1'
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: { mode: 'index', intersect: false },
+          plugins: {
+            legend: { position: 'top', labels: { font: { size: 11 }, usePointStyle: true } }
+          },
+          scales: {
+            x: { grid: { display: false }, ticks: { font: { size: 10 } } },
+            y: {
+              beginAtZero: true,
+              position: 'left',
+              title: { display: true, text: '🍞 عدد أرغفة', font: { size: 11 } },
+              ticks: { font: { size: 10 } }
+            },
+            y1: {
+              beginAtZero: true,
+              position: 'right',
+              title: { display: true, text: '🌾 دقيق (كجم)', font: { size: 11 } },
+              grid: { drawOnChartArea: false },
+              ticks: { font: { size: 10 } }
+            }
+          }
+        }
+      });
+    }
 
     function calculateSystemStats() {
       document.getElementById('stat-total-emp').innerText = employees.length;
