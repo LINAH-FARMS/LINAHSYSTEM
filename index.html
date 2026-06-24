@@ -2740,8 +2740,8 @@
           <label style="font-size:12px;font-weight:600;">إلى تاريخ</label>
           <input type="date" id="filt-ctr-to" onchange="renderBakeryContractorSupplies()" style="padding:4px 8px;font-size:12px;border:1px solid #cfd8dc;border-radius:4px;">
           <label style="font-size:12px;font-weight:600;">المقاول</label>
-          <input type="text" id="filt-ctr-name" placeholder="الكل — اكتب جزء من الاسم" list="filt-bctr-list" style="padding:4px 8px;font-size:12px;border:1px solid #cfd8dc;border-radius:4px;width:160px;" oninput="renderBakeryContractorSupplies()">
-          <datalist id="filt-bctr-list"><option value="عبد الرازق جبر"><option value="ابراهيم شحاته"><option value="البدري"><option value="مصطفى عبد الكريم"><option value="كرم الزيات"><option value="اسامه سمير"><option value="محمود قاسم"><option value="ممدوح"><option value="كامل احمد"><option value="محمد شعبان"><option value="ابوعمار"><option value="محمد حسنى"><option value="اسامه عبد الرازق"><option value="ناجح"><option value="فارس"><option value="اسعد اسماعيل"><option value="ام جبريل"></datalist>
+          <select id="filt-ctr-name" multiple style="padding:4px 8px;font-size:12px;border:1px solid #cfd8dc;border-radius:4px;min-width:160px;max-height:120px;background:white;" onchange="renderBakeryContractorSupplies()"></select>
+          <span style="font-size:10px;color:#888;">Ctrl+Click لاختيار أكثر من اسم</span>
           <label style="font-size:12px;font-weight:600;">الحالة</label>
           <select id="filt-ctr-status" onchange="renderBakeryContractorSupplies()" style="padding:4px 8px;font-size:12px;border:1px solid #cfd8dc;border-radius:4px;">
             <option value="all">الجميع</option>
@@ -11262,14 +11262,14 @@ function toggleEmployeeStatus(empId) {
       if (!tbody) return;
       let fromDate = document.getElementById('filt-ctr-from')?.value || '';
       let toDate = document.getElementById('filt-ctr-to')?.value || '';
-      let nameFilter = document.getElementById('filt-ctr-name')?.value?.trim() || '';
+      let nameSel = document.getElementById('filt-ctr-name');
+      let selectedNames = nameSel ? Array.from(nameSel.selectedOptions).map(function(o) { return o.value; }).filter(Boolean) : [];
       let statusFilter = document.getElementById('filt-ctr-status')?.value || 'all';
       let data = [...bakeryContractorSupplies];
       if (fromDate) data = data.filter(c => c.date >= fromDate);
       if (toDate) data = data.filter(c => c.date <= toDate);
-      if (nameFilter) {
-        var terms = nameFilter.split(/[\s,،]+/).filter(Boolean);
-        data = data.filter(function(c) { return terms.some(function(t) { return c.name.indexOf(t) !== -1; }); });
+      if (selectedNames.length > 0) {
+        data = data.filter(function(c) { return selectedNames.indexOf(c.name) !== -1; });
       }
       if (statusFilter === 'paid') data = data.filter(c => { let total = (parseInt(c.count)||0)*(parseFloat(c.price)||0); return parseFloat(c.paid) >= total; });
       if (statusFilter === 'unpaid') data = data.filter(c => { let total = (parseInt(c.count)||0)*(parseFloat(c.price)||0); return parseFloat(c.paid) < total; });
@@ -11296,6 +11296,7 @@ function toggleEmployeeStatus(empId) {
           </td>
         </tr>`;
       }).join('');
+      populateContractorFilterList();
     }
 
     function renderBakeryInvoices() {
