@@ -1241,6 +1241,7 @@
     <div class="control-panel no-print">
       <button class="btn btn-primary" onclick="populateRoomSectorDropdown(); openModal('modal-add-room')">🏠 إضافة / تعديل سعة غرفة</button>
       <button class="btn btn-danger" onclick="deleteEmptyRooms()" style="background-color: #c62828;">🗑️ حذف الغرف الخالية</button>
+      <button class="btn btn-warning" onclick="diagnoseAndFixHousing()" style="background-color: #e65100;">🔧 إصلاح سكن الموظفين</button>
       <button class="btn btn-secondary" onclick="downloadTemplate_Housing()">📥 نموذج شيت فاضي</button>
       <button class="btn btn-excel" onclick="exportHousingToExcel()" style="background-color: #2e7d32;">📤 تصدير السعة (Excel)</button>
       <button class="btn btn-excel" onclick="document.getElementById('excel-housing-file').click()" style="background-color: #1565c0;">📥 استيراد السعة (Excel)</button>
@@ -5949,6 +5950,90 @@ function toggleEmployeeStatus(empId) {
         });
         block.appendChild(roomsContainer); layout.appendChild(block);
       }
+    }
+
+    function diagnoseAndFixHousing() {
+      if (!requireAdmin()) return;
+      var validSectors = {};
+      roomsCapacity.forEach(function(rc) { validSectors[rc.sector] = true; });
+      var validSectorList = Object.keys(validSectors);
+      if (validSectorList.length === 0) { alert('⚠️ لا توجد مباني مسجلة في تبويب السكن. أضف مباني وغرف أولاً.'); return; }
+
+      function wordSimilarity(a, b) {
+        a = a.trim(); b = b.trim();
+        if (a === b) return 1;
+        if (a.includes(b) || b.includes(a)) return 0.9;
+        var wa = a.split(/[\s/]+/), wb = b.split(/[\s/]+/);
+        var matches = 0;
+        wa.forEach(function(w) { if (w && wb.indexOf(w) !== -1) matches++; });
+        wb.forEach(function(w) { if (w && wa.indexOf(w) !== -1) matches++; });
+        return matches / Math.max(wa.length + wb.length, 1);
+      }
+
+      function findBestSector(input) {
+        if (!input || !input.trim()) return null;
+        input = input.trim();
+        if (validSectors[input]) return input;
+        var bestScore = 0, best = null;
+        validSectorList.forEach(function(s) {
+          var score = wordSimilarity(input, s);
+          if (score > bestScore) { bestScore = score; best = s; }
+        });
+        return bestScore > 0.3 ? best : null;
+      }
+
+      function findAvailableRoom(sector) {
+        var sectorRooms = roomsCapacity.filter(function(r) { return r.sector === sector; });
+        sectorRooms.sort(function(a, b) { return (a.number || '').localeCompare(b.number || '', 'ar'); });
+        for (var i = 0; i < sectorRooms.length; i++) {
+          var r = sectorRooms[i];
+          var occupants = employees.filter(function(e) { return e.sector === sector && e.room === r.number && e.status === 'P'; }).length;
+          if (occupants < r.beds) return r.number;
+        }
+        return sectorRooms.length > 0 ? sectorRooms[0].number : null;
+      }
+
+      var fixed = [], notFound = [], skipped = [];
+      employees.forEach(function(emp) {
+        if (!emp.sector || !emp.room) { skipped.push(emp); return; }
+        if (validSectors[emp.sector]) {
+          var roomExists = roomsCapacity.some(function(r) { return r.sector === emp.sector && r.number === emp.room; });
+          if (roomExists) { skipped.push(emp); return; }
+        }
+        var targetSector = findBestSector(emp.sector);
+        if (!targetSector) { notFound.push(emp); return; }
+        var targetRoom = findAvailableRoom(targetSector);
+        if (!targetRoom) { notFound.push(emp); return; }
+        fixed.push({ emp: emp, oldSector: emp.sector, oldRoom: emp.room, newSector: targetSector, newRoom: targetRoom });
+        emp.sector = targetSector;
+        emp.room = targetRoom;
+      });
+
+      if (fixed.length > 0) syncStorage();
+      renderHousingLayout();
+      updateHousingStats();
+      rebuildAllDropdowns();
+
+      var msg = '📊 تقرير إصلاح السكن:\n';
+      msg += '━━━━━━━━━━━━━━━━━━━━━━\n';
+      msg += '✅ تم تعديل: ' + fixed.length + ' موظف\n';
+      msg += '⏭️ بدون تغيير: ' + skipped.length + ' موظف\n';
+      msg += '❌ لم يتم إيجاد سكن: ' + notFound.length + ' موظف\n';
+      if (fixed.length > 0) {
+        msg += '\n📋 تفاصيل التعديلات:\n';
+        fixed.forEach(function(f, i) {
+          msg += (i+1) + '. ' + f.emp.name + ' [' + (f.emp.code||'') + ']:\n';
+          msg += '   من: ' + f.oldSector + ' / ' + f.oldRoom + '\n';
+          msg += '   إلى: ' + f.newSector + ' / ' + f.newRoom + '\n';
+        });
+      }
+      if (notFound.length > 0) {
+        msg += '\n⚠️ الموظفين اللي مالقنالهمش سكن (أضف مباني/غرف أولاً):\n';
+        notFound.forEach(function(emp) {
+          msg += '   • ' + emp.name + ' [' + (emp.code||'') + '] ← ' + (emp.sector||'بدون') + ' / ' + (emp.room||'بدون') + '\n';
+        });
+      }
+      alert(msg);
     }
 
     function showHousingEmployeeResult() {
