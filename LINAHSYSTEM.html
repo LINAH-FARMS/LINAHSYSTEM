@@ -12026,7 +12026,6 @@ function toggleEmployeeStatus(empId) {
         let days = esc(td[5]?.textContent?.trim());
         let endDate = esc(td[6]?.textContent?.trim());
         let vacType = esc(td[10]?.textContent?.trim());
-        let remaining = esc(td[12]?.textContent?.trim());
 
         idx++;
         detailRows += '<tr>' +
@@ -12034,12 +12033,12 @@ function toggleEmployeeStatus(empId) {
           '<td style="padding:5px 6px;border:1px solid #000;text-align:center;">' + code + '</td>' +
           '<td style="padding:5px 6px;border:1px solid #000;">' + name + '</td>' +
           '<td style="padding:5px 6px;border:1px solid #000;">' + info + '</td>' +
-          '<td style="padding:5px 6px;border:1px solid #000;text-align:center;">' + remaining + '</td>' +
+          '<td style="padding:5px 6px;border:1px solid #000;text-align:center;"></td>' +
           '<td style="padding:5px 6px;border:1px solid #000;text-align:center;">' + startDate + '</td>' +
           '<td style="padding:5px 6px;border:1px solid #000;text-align:center;">' + endDate + '</td>' +
           '<td style="padding:5px 6px;border:1px solid #000;text-align:center;">' + days + '</td>' +
           '<td style="padding:5px 6px;border:1px solid #000;text-align:center;">' + vacType + '</td>' +
-          '<td style="padding:5px 6px;border:1px solid #000;text-align:center;">لا</td>' +
+          '<td style="padding:5px 6px;border:1px solid #000;text-align:center;"></td>' +
           '</tr>';
       });
 
