@@ -11808,22 +11808,16 @@ function toggleEmployeeStatus(empId) {
       let logoImg = document.querySelector('.print-watermark img');
       let logoSrc = logoImg ? logoImg.src : '';
 
-      // Build header once
-      let headerHtml =
-        '<div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px;">' +
-        (logoSrc ? '<div style="flex-shrink:0;"><img src="' + logoSrc + '" style="height:70px;width:auto;"></div>' : '<div style="flex-shrink:0;width:70px;"></div>') +
-        '<div style="flex:1;text-align:center;">' +
-        '<h1 style="margin:0 0 4px;font-size:22px;color:#1b5e20;">لينه فارمز</h1>' +
-        '<h3 style="margin:0;font-size:14px;color:#555;font-weight:400;">منظومة الشئون الإدارية المتكاملة</h3>' +
-        '</div>' +
-        '<div style="flex-shrink:0;width:70px;"></div>' +
-        '</div>' +
-        '<hr style="border:none;border-top:2px solid #1b5e20;margin:0 0 16px;">' +
-        '<h2 style="text-align:center;color:#1b5e20;margin:0 0 20px;font-size:18px;">نموذج إجازة' + (checked.length > 1 ? 'ات' : '') + '</h2>';
+      let today = new Date();
+      let day = today.getDate().toString().padStart(2,' ');
+      let month = (today.getMonth()+1).toString().padStart(2,' ');
+      let year = today.getFullYear();
+      let dateStr = day + ' /  ' + month + '  /  ' + year;
 
       // Build detail rows for all selected vacations
       let detailRows = '';
-      checked.forEach((cb, idx) => {
+      let idx = 0;
+      checked.forEach(cb => {
         let tr = cb.closest('tr');
         if (!tr) return;
         let td = tr.querySelectorAll('td');
@@ -11833,57 +11827,80 @@ function toggleEmployeeStatus(empId) {
         let startDate = td[4]?.textContent?.trim() || '';
         let days = td[5]?.textContent?.trim() || '';
         let endDate = td[6]?.textContent?.trim() || '';
-        let travelDate = td[7]?.textContent?.trim() || '';
-        let lastWorkDay = td[8]?.textContent?.trim() || '';
-        let returnDate = td[9]?.textContent?.trim() || '';
         let vacType = td[10]?.textContent?.trim() || '';
         let remaining = td[12]?.textContent?.trim() || '';
-        let notes = td[13]?.textContent?.trim() || '';
 
-        let num = idx + 1;
+        idx++;
         detailRows +=
-          '<tr style="background:' + (idx % 2 === 0 ? '#fff' : '#f9fafb') + ';">' +
-          '<td style="padding:6px 8px;border:1px solid #ccc;text-align:center;font-weight:700;width:30px;">' + num + '</td>' +
-          '<td style="padding:6px 8px;border:1px solid #ccc;">' + code + '</td>' +
-          '<td style="padding:6px 8px;border:1px solid #ccc;">' + name + '</td>' +
-          '<td style="padding:6px 8px;border:1px solid #ccc;">' + info + '</td>' +
-          '<td style="padding:6px 8px;border:1px solid #ccc;">' + startDate + '</td>' +
-          '<td style="padding:6px 8px;border:1px solid #ccc;">' + days + '</td>' +
-          '<td style="padding:6px 8px;border:1px solid #ccc;">' + endDate + '</td>' +
-          '<td style="padding:6px 8px;border:1px solid #ccc;">' + vacType + '</td>' +
-          (notes ? '<td style="padding:6px 8px;border:1px solid #ccc;">' + notes + '</td>' : '<td style="padding:6px 8px;border:1px solid #ccc;"></td>') +
+          '<tr style="' + (idx % 2 === 0 ? 'background:#f9fafb;' : '') + '">' +
+          '<td style="padding:4px 6px;border:1px solid #999;text-align:center;font-size:11px;">' + idx + '</td>' +
+          '<td style="padding:4px 6px;border:1px solid #999;text-align:center;font-size:11px;">' + code + '</td>' +
+          '<td style="padding:4px 6px;border:1px solid #999;font-size:11px;">' + name + '</td>' +
+          '<td style="padding:4px 6px;border:1px solid #999;font-size:11px;">' + info + '</td>' +
+          '<td style="padding:4px 6px;border:1px solid #999;text-align:center;font-size:11px;">' + remaining + '</td>' +
+          '<td style="padding:4px 6px;border:1px solid #999;text-align:center;font-size:11px;">' + startDate + '</td>' +
+          '<td style="padding:4px 6px;border:1px solid #999;text-align:center;font-size:11px;">' + endDate + '</td>' +
+          '<td style="padding:4px 6px;border:1px solid #999;text-align:center;font-size:11px;">' + days + '</td>' +
+          '<td style="padding:4px 6px;border:1px solid #999;text-align:center;font-size:11px;">' + vacType + '</td>' +
+          '<td style="padding:4px 6px;border:1px solid #999;text-align:center;font-size:11px;">لا</td>' +
           '</tr>';
       });
 
-      let tableHtml =
-        '<table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:20px;">' +
-        '<thead><tr>' +
-        '<th style="padding:7px 8px;border:1px solid #1b5e20;background:#1b5e20;color:#fff;text-align:center;width:30px;">م</th>' +
-        '<th style="padding:7px 8px;border:1px solid #1b5e20;background:#1b5e20;color:#fff;">الكود</th>' +
-        '<th style="padding:7px 8px;border:1px solid #1b5e20;background:#1b5e20;color:#fff;">الاسم</th>' +
-        '<th style="padding:7px 8px;border:1px solid #1b5e20;background:#1b5e20;color:#fff;">الوظيفة / الإدارة</th>' +
-        '<th style="padding:7px 8px;border:1px solid #1b5e20;background:#1b5e20;color:#fff;">تاريخ البداية</th>' +
-        '<th style="padding:7px 8px;border:1px solid #1b5e20;background:#1b5e20;color:#fff;">عدد الأيام</th>' +
-        '<th style="padding:7px 8px;border:1px solid #1b5e20;background:#1b5e20;color:#fff;">تاريخ النهاية</th>' +
-        '<th style="padding:7px 8px;border:1px solid #1b5e20;background:#1b5e20;color:#fff;">نوع الإجازة</th>' +
-        '<th style="padding:7px 8px;border:1px solid #1b5e20;background:#1b5e20;color:#fff;">ملاحظات</th>' +
-        '</tr></thead><tbody>' + detailRows + '</tbody></table>';
+      // Fill empty rows up to 7
+      let emptyRows = 7 - idx;
+      for (let i = 0; i < emptyRows; i++) {
+        idx++;
+        detailRows +=
+          '<tr>' +
+          '<td style="padding:4px 6px;border:1px solid #999;text-align:center;font-size:11px;">' + idx + '</td>' +
+          '<td style="padding:4px 6px;border:1px solid #999;"></td>' +
+          '<td style="padding:4px 6px;border:1px solid #999;"></td>' +
+          '<td style="padding:4px 6px;border:1px solid #999;"></td>' +
+          '<td style="padding:4px 6px;border:1px solid #999;"></td>' +
+          '<td style="padding:4px 6px;border:1px solid #999;"></td>' +
+          '<td style="padding:4px 6px;border:1px solid #999;"></td>' +
+          '<td style="padding:4px 6px;border:1px solid #999;"></td>' +
+          '<td style="padding:4px 6px;border:1px solid #999;"></td>' +
+          '<td style="padding:4px 6px;border:1px solid #999;"></td>' +
+          '</tr>';
+      }
 
-      // Signature footer once
-      let footerHtml =
-        '<div style="display:flex;justify-content:space-between;margin-top:10px;padding:0 20px;">' +
-        '<div style="text-align:center;"><span style="display:inline-block;width:180px;border-bottom:1px solid #333;padding-bottom:4px;margin-bottom:4px;font-size:12px;color:#555;">توقيع الموظف</span></div>' +
-        '<div style="text-align:center;"><span style="display:inline-block;width:180px;border-bottom:1px solid #333;padding-bottom:4px;margin-bottom:4px;font-size:12px;color:#555;">توقيع المدير المباشر</span></div>' +
-        '<div style="text-align:center;"><span style="display:inline-block;width:180px;border-bottom:1px solid #333;padding-bottom:4px;margin-bottom:4px;font-size:12px;color:#555;">توقيع الشئون الإدارية</span></div>' +
-        '</div>' +
-        '<div style="margin-top:16px;text-align:center;font-size:10px;color:#999;">تمت الطباعة: ' + new Date().toLocaleString('ar-EG') + '</div>';
+      let html =
+        '<div style="text-align:center;margin-bottom:4px;font-size:16px;font-weight:700;color:#000;">شركة لينة للتنمية السياحية والعمرانية</div>' +
+        '<table style="width:100%;border-collapse:collapse;font-size:11px;margin-bottom:4px;">' +
+        '<tr><td style="border:none;padding:2px 4px;font-size:11px;">تاريخ اليوم:-  ' + dateStr + '</td>' +
+        '<td style="border:none;padding:2px 4px;font-size:11px;text-align:left;font-weight:700;">بيان إجازات يومي/ قسم ( إدارة الشئون الادارية )</td></tr>' +
+        '</table>' +
+        '<table style="width:100%;border-collapse:collapse;font-size:11px;">' +
+        '<thead><tr>' +
+        '<th style="padding:5px 4px;border:1px solid #999;background:#f0f0f0;color:#000;font-weight:700;text-align:center;width:20px;">م</th>' +
+        '<th style="padding:5px 4px;border:1px solid #999;background:#f0f0f0;color:#000;font-weight:700;text-align:center;width:40px;">الكود</th>' +
+        '<th style="padding:5px 4px;border:1px solid #999;background:#f0f0f0;color:#000;font-weight:700;text-align:center;">اسم الموظف</th>' +
+        '<th style="padding:5px 4px;border:1px solid #999;background:#f0f0f0;color:#000;font-weight:700;text-align:center;">الوظيفه</th>' +
+        '<th style="padding:5px 4px;border:1px solid #999;background:#f0f0f0;color:#000;font-weight:700;text-align:center;width:35px;">رصيد الاجازات</th>' +
+        '<th style="padding:5px 4px;border:1px solid #999;background:#f0f0f0;color:#000;font-weight:700;text-align:center;width:50px;">تاريخ بدايه الاجازة</th>' +
+        '<th style="padding:5px 4px;border:1px solid #999;background:#f0f0f0;color:#000;font-weight:700;text-align:center;width:50px;">تاريخ نهايه الاجازة</th>' +
+        '<th style="padding:5px 4px;border:1px solid #999;background:#f0f0f0;color:#000;font-weight:700;text-align:center;width:30px;">مدة الاجازة</th>' +
+        '<th style="padding:5px 4px;border:1px solid #999;background:#f0f0f0;color:#000;font-weight:700;text-align:center;width:50px;">نوع الاجازة</th>' +
+        '<th style="padding:5px 4px;border:1px solid #999;background:#f0f0f0;color:#000;font-weight:700;text-align:center;width:35px;">تسجيل اودوو</th>' +
+        '</tr></thead><tbody>' + detailRows + '</tbody></table>' +
+        '<table style="width:100%;border-collapse:collapse;font-size:11px;margin-top:4px;">' +
+        '<tr><td style="border:1px solid #999;padding:6px 8px;font-weight:700;width:25%;text-align:center;">مدير الإدارة/ القسم</td>' +
+        '<td style="border:1px solid #999;padding:6px 8px;width:25%;"></td>' +
+        '<td style="border:1px solid #999;padding:6px 8px;font-weight:700;width:25%;text-align:center;">شئون العاملين/</td>' +
+        '<td style="border:1px solid #999;padding:6px 8px;width:25%;"></td></tr>' +
+        '<tr><td style="border:1px solid #999;padding:6px 8px;font-weight:700;text-align:center;" colspan="2">إعتماد نهائي/</td>' +
+        '<td style="border:1px solid #999;padding:6px 8px;" colspan="2"></td></tr>' +
+        '</table>';
 
       let w = window.open('', '_blank', 'width=900,height=700');
       w.document.write('<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8"><title>طباعة إجازات</title>' +
         '<style>' +
         'body{font-family:"Segoe UI",Tahoma,Arial,sans-serif;margin:0;padding:20px;}' +
-        '@media print{body{padding:15px;}}' +
-        '</style></head><body>' + headerHtml + tableHtml + footerHtml +
+        '@media print{body{padding:10px;}}' +
+        '</style></head><body>' +
+        (logoSrc ? '<div style="text-align:left;margin-bottom:6px;"><img src="' + logoSrc + '" style="height:50px;width:auto;"></div>' : '') +
+        html +
         '<script>window.print();setTimeout(function(){window.close()},1500);</' + 'script>' +
         '</body></html>');
       w.document.close();
