@@ -1306,6 +1306,7 @@
     <div class="control-panel no-print">
       <button class="btn btn-primary" onclick="populateRoomSectorDropdown(); openModal('modal-add-room')">🏠 إضافة / تعديل سعة غرفة</button>
       <button class="btn btn-danger" onclick="deleteEmptyRooms()" style="background-color: #c62828;">🗑️ حذف الغرف الخالية</button>
+      <button class="btn btn-warning" onclick="diagnoseAndFixHousing()" style="background-color: #e65100;">🔧 إصلاح سكن الموظفين</button>
       <button class="btn btn-secondary" onclick="downloadTemplate_Housing()">📥 نموذج شيت فاضي</button>
       <button class="btn btn-excel" onclick="exportHousingToExcel()" style="background-color: #2e7d32;">📤 تصدير السعة (Excel)</button>
       <button class="btn btn-excel" onclick="document.getElementById('excel-housing-file').click()" style="background-color: #1565c0;">📥 استيراد السعة (Excel)</button>
@@ -3228,11 +3229,6 @@
     let isServerOnline = false;
 
     async function checkServer() {
-      try {
-        const res = await fetch(`${API_BASE}/health`, { signal: AbortSignal.timeout(2000) });
-        if (res.ok) { isServerOnline = true; return true; }
-      } catch(e) {}
-      isServerOnline = false;
       return false;
     }
 
@@ -7275,6 +7271,202 @@ function toggleEmployeeStatus(empId) {
         });
         block.appendChild(roomsContainer); layout.appendChild(block);
       }
+    }
+
+    function diagnoseAndFixHousing() {
+      if (!requireAdmin()) return;
+      var validSectors = {};
+      roomsCapacity.forEach(function(rc) { validSectors[rc.sector] = true; });
+      var validSectorList = Object.keys(validSectors);
+      if (validSectorList.length === 0) { alert('⚠️ لا توجد مباني مسجلة في تبويب السكن. أضف مباني وغرف أولاً.'); return; }
+
+      function wordSimilarity(a, b) {
+        a = a.trim(); b = b.trim();
+        if (a === b) return 1;
+        if (a.includes(b) || b.includes(a)) return 0.9;
+        var wa = a.split(/[\s/]+/), wb = b.split(/[\s/]+/);
+        var matches = 0;
+        wa.forEach(function(w) { if (w && wb.indexOf(w) !== -1) matches++; });
+        wb.forEach(function(w) { if (w && wa.indexOf(w) !== -1) matches++; });
+        return matches / Math.max(wa.length + wb.length, 1);
+      }
+
+      function findBestSector(input) {
+        if (!input || !input.trim()) return null;
+        input = input.trim();
+        if (validSectors[input]) return input;
+        var bestScore = 0, best = null;
+        validSectorList.forEach(function(s) {
+          var score = wordSimilarity(input, s);
+          if (score > bestScore) { bestScore = score; best = s; }
+        });
+        return bestScore > 0.3 ? best : null;
+      }
+
+      function getAvailableRooms(sector) {
+        return roomsCapacity.filter(function(r) { return r.sector === sector; }).sort(function(a, b) { return (a.number || '').localeCompare(b.number || '', 'ar'); });
+      }
+
+      // Collect employees that need fixing
+      var pending = [];
+      employees.forEach(function(emp) {
+        if (!emp.sector || !emp.room) return;
+        if (validSectors[emp.sector]) {
+          var roomExists = roomsCapacity.some(function(r) { return r.sector === emp.sector && r.number === emp.room; });
+          if (roomExists) return;
+        }
+        pending.push(emp);
+      });
+      if (pending.length === 0) { alert('✅ جميع الموظفين مسكنين بشكل صحيح.'); return; }
+
+      // Build suggested sector for each
+      var suggestions = {};
+      pending.forEach(function(emp) {
+        suggestions[emp.id || emp.code] = findBestSector(emp.sector);
+      });
+
+      var currentIdx = 0;
+      var fixed = [], skipped = [];
+      var overlay = null, modal = null;
+      var empNameEl, empCodeEl, empOldEl, sectorSel, roomSel, progressEl, empIdxSpan;
+
+      function showFixer() {
+        if (currentIdx >= pending.length) { finishFixer(); return; }
+        var emp = pending[currentIdx];
+        var suggested = suggestions[emp.id || emp.code];
+        empIdxSpan.textContent = (currentIdx + 1);
+        empNameEl.textContent = emp.name || '-';
+        empCodeEl.textContent = '[' + (emp.code || '') + ']';
+        empOldEl.textContent = emp.sector + ' / ' + emp.room;
+
+        // Build sector dropdown
+        sectorSel.innerHTML = '';
+        var anySelected = false;
+        validSectorList.forEach(function(s) {
+          var opt = document.createElement('option');
+          opt.value = s; opt.textContent = s;
+          if (s === suggested) { opt.selected = true; anySelected = true; }
+          sectorSel.appendChild(opt);
+        });
+        if (!anySelected && validSectorList.length > 0) sectorSel.value = validSectorList[0];
+
+        updateRooms();
+        overlay.style.display = 'flex';
+      }
+
+      function updateRooms() {
+        roomSel.innerHTML = '';
+        var sector = sectorSel.value;
+        if (!sector) {
+          var opt = document.createElement('option'); opt.value = ''; opt.textContent = '-- اختر مبني أولاً --'; roomSel.appendChild(opt); return;
+        }
+        var rooms = getAvailableRooms(sector);
+        rooms.forEach(function(r) {
+          var opt = document.createElement('option');
+          opt.value = r.number;
+          opt.textContent = r.number + ' (سعة: ' + r.beds + ')';
+          roomSel.appendChild(opt);
+        });
+      }
+
+      function applyCurrent(action) {
+        if (action === 'save') {
+          var emp = pending[currentIdx];
+          var newSector = sectorSel.value;
+          var newRoom = roomSel.value;
+          if (!newSector || !newRoom) { alert('اختر المبني والغرفة أولاً'); return; }
+          fixed.push({ emp: emp, oldSector: emp.sector, oldRoom: emp.room, newSector: newSector, newRoom: newRoom });
+          emp.sector = newSector;
+          emp.room = newRoom;
+        } else {
+          skipped.push(pending[currentIdx]);
+        }
+        currentIdx++;
+        showFixer();
+      }
+
+      function finishFixer() {
+        if (overlay) overlay.remove();
+        if (fixed.length > 0) {
+          syncStorage();
+          renderHousingLayout();
+          updateHousingStats();
+          rebuildAllDropdowns();
+        }
+        var msg = '📊 تقرير إصلاح السكن:\n━━━━━━━━━━━━━━━━━━━━━━\n';
+        msg += '✅ تم تعديل: ' + fixed.length + ' موظف\n';
+        msg += '⏭️ تم التخطي: ' + skipped.length + ' موظف\n';
+        if (fixed.length > 0) {
+          msg += '\n📋 التعديلات:\n';
+          fixed.forEach(function(f, i) {
+            msg += (i+1) + '. ' + f.emp.name + ' [' + (f.emp.code||'') + ']:\n';
+            msg += '   ' + f.oldSector + '/' + f.oldRoom + ' ← ' + f.newSector + '/' + f.newRoom + '\n';
+          });
+        }
+        alert(msg);
+      }
+
+      // Create overlay modal
+      overlay = document.createElement('div');
+      overlay.className = 'ov-modal-overlay';
+      overlay.id = 'housing-fix-overlay';
+      overlay.style.cssText = 'display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:10000;align-items:center;justify-content:center;';
+      overlay.onclick = function(e) { if (e.target === overlay && confirm('❌ إلغاء الإصلاح؟')) { overlay.remove(); } };
+
+      modal = document.createElement('div');
+      modal.style.cssText = 'background:#fff;border-radius:12px;padding:20px;max-width:500px;width:90%;box-shadow:0 10px 40px rgba(0,0,0,0.2);direction:rtl;font-family:inherit;';
+      modal.innerHTML =
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:15px;">' +
+          '<h3 style="margin:0;color:#e65100;">🔧 إصلاح سكن الموظفين</h3>' +
+          '<span style="font-size:13px;color:#888;">الموظف <span id="hfix-idx">1</span> من ' + pending.length + '</span>' +
+        '</div>' +
+        '<div style="background:#f5f5f5;padding:12px;border-radius:8px;margin-bottom:15px;">' +
+          '<div style="font-size:16px;font-weight:700;" id="hfix-name">-</div>' +
+          '<div style="font-size:13px;color:#888;" id="hfix-code">-</div>' +
+          '<div style="font-size:13px;color:#c62828;margin-top:6px;" id="hfix-old">-</div>' +
+        '</div>' +
+        '<div style="margin-bottom:12px;">' +
+          '<label style="display:block;font-weight:600;font-size:13px;margin-bottom:4px;">المبني السكني</label>' +
+          '<select id="hfix-sector" style="width:100%;padding:8px;border:1px solid #bbb;border-radius:6px;font-size:13px;" onchange="var evt=document.createEvent(\'HTMLEvents\');evt.initEvent(\'change\',true,true);document.getElementById(\'hfix-room\').dispatchEvent(evt);"></select>' +
+        '</div>' +
+        '<div style="margin-bottom:18px;">' +
+          '<label style="display:block;font-weight:600;font-size:13px;margin-bottom:4px;">رقم الغرفة</label>' +
+          '<select id="hfix-room" style="width:100%;padding:8px;border:1px solid #bbb;border-radius:6px;font-size:13px;"></select>' +
+        '</div>' +
+        '<div style="display:flex;gap:8px;justify-content:space-between;">' +
+          '<button id="hfix-skip-btn" style="flex:1;padding:10px;border:none;border-radius:6px;background:#e0e0e0;color:#333;font-size:14px;font-weight:600;cursor:pointer;">⏭️ تخطي</button>' +
+          '<button id="hfix-save-btn" style="flex:1;padding:10px;border:none;border-radius:6px;background:#e65100;color:#fff;font-size:14px;font-weight:600;cursor:pointer;">✅ حفظ ومتابعة</button>' +
+        '</div>' +
+        '<div style="margin-top:12px;text-align:center;">' +
+          '<button id="hfix-cancel-btn" style="padding:6px 20px;border:none;border-radius:6px;background:transparent;color:#c62828;font-size:12px;cursor:pointer;">❌ إلغاء الإصلاح</button>' +
+        '</div>';
+
+      overlay.appendChild(modal);
+      document.body.appendChild(overlay);
+
+      empNameEl = document.getElementById('hfix-name');
+      empCodeEl = document.getElementById('hfix-code');
+      empOldEl = document.getElementById('hfix-old');
+      sectorSel = document.getElementById('hfix-sector');
+      roomSel = document.getElementById('hfix-room');
+      empIdxSpan = document.getElementById('hfix-idx');
+
+      document.getElementById('hfix-save-btn').onclick = function() { applyCurrent('save'); };
+      document.getElementById('hfix-skip-btn').onclick = function() { applyCurrent('skip'); };
+      document.getElementById('hfix-cancel-btn').onclick = function() { if (confirm('❌ إلغاء الإصلاح؟ تم حفظ التعديلات السابقة.')) { overlay.remove(); finishFixer(); } };
+      sectorSel.onchange = function() {
+        roomSel.innerHTML = '';
+        var sector = sectorSel.value;
+        if (!sector) { var o = document.createElement('option'); o.value = ''; o.textContent = '-- اختر مبني أولاً --'; roomSel.appendChild(o); return; }
+        var rooms = getAvailableRooms(sector);
+        rooms.forEach(function(r) {
+          var opt = document.createElement('option');
+          opt.value = r.number; opt.textContent = r.number + ' (سعة: ' + r.beds + ')';
+          roomSel.appendChild(opt);
+        });
+      };
+
+      showFixer();
     }
 
     function deleteBuilding(sector) {
@@ -14317,7 +14509,11 @@ function toggleEmployeeStatus(empId) {
           }
         }
       });
-      rowData.sort(function(a, b) { return a.date.localeCompare(b.date); });
+      // Special case for vacations table
+      if (tableId === 'table-vacations') {
+        printVacationForms(checked);
+        return;
+      }
       rows = rowData.map(function(r) { return r.html; }).join('');
 
       let logoImg = document.querySelector('.print-watermark img');
@@ -14350,6 +14546,108 @@ function toggleEmployeeStatus(empId) {
         '<table>' + headerRow + rows + '</table>' +
         summaryHtml +
         '<div style="text-align:center;color:#888;margin-top:15px;font-size:11px;">تمت الطباعة: ' + new Date().toLocaleString('ar-EG') + '</div>' +
+        '<script>window.print();setTimeout(function(){window.close()},1500);</' + 'script>' +
+        '</body></html>');
+      w.document.close();
+    }
+
+    function printVacationForms(checked) {
+      let logoImg = document.querySelector('.print-watermark img');
+      let logoSrc = logoImg ? logoImg.src : '';
+
+      let today = new Date();
+      let day = today.getDate().toString().padStart(2,' ');
+      let month = (today.getMonth()+1).toString().padStart(2,' ');
+      let year = today.getFullYear();
+      let dateStr = day + ' /  ' + month + '  /  ' + year;
+
+      // Build detail rows for all selected vacations
+      let detailRows = '';
+      let idx = 0;
+      checked.forEach(cb => {
+        let tr = cb.closest('tr');
+        if (!tr) return;
+        let td = tr.querySelectorAll('td');
+        let code = td[1]?.textContent?.trim() || '';
+        let name = td[2]?.textContent?.trim() || '';
+        let info = td[3]?.textContent?.trim() || '';
+        let startDate = td[4]?.textContent?.trim() || '';
+        let days = td[5]?.textContent?.trim() || '';
+        let endDate = td[6]?.textContent?.trim() || '';
+        let vacType = td[10]?.textContent?.trim() || '';
+        let remaining = td[12]?.textContent?.trim() || '';
+
+        idx++;
+        detailRows +=
+          '<tr style="' + (idx % 2 === 0 ? 'background:#f9fafb;' : '') + '">' +
+          '<td style="padding:4px 6px;border:1px solid #999;text-align:center;font-size:11px;">' + idx + '</td>' +
+          '<td style="padding:4px 6px;border:1px solid #999;text-align:center;font-size:11px;">' + code + '</td>' +
+          '<td style="padding:4px 6px;border:1px solid #999;font-size:11px;">' + name + '</td>' +
+          '<td style="padding:4px 6px;border:1px solid #999;font-size:11px;">' + info + '</td>' +
+          '<td style="padding:4px 6px;border:1px solid #999;text-align:center;font-size:11px;">' + remaining + '</td>' +
+          '<td style="padding:4px 6px;border:1px solid #999;text-align:center;font-size:11px;">' + startDate + '</td>' +
+          '<td style="padding:4px 6px;border:1px solid #999;text-align:center;font-size:11px;">' + endDate + '</td>' +
+          '<td style="padding:4px 6px;border:1px solid #999;text-align:center;font-size:11px;">' + days + '</td>' +
+          '<td style="padding:4px 6px;border:1px solid #999;text-align:center;font-size:11px;">' + vacType + '</td>' +
+          '<td style="padding:4px 6px;border:1px solid #999;text-align:center;font-size:11px;">لا</td>' +
+          '</tr>';
+      });
+
+      // Fill empty rows up to 7
+      let emptyRows = 7 - idx;
+      for (let i = 0; i < emptyRows; i++) {
+        idx++;
+        detailRows +=
+          '<tr>' +
+          '<td style="padding:4px 6px;border:1px solid #999;text-align:center;font-size:11px;">' + idx + '</td>' +
+          '<td style="padding:4px 6px;border:1px solid #999;"></td>' +
+          '<td style="padding:4px 6px;border:1px solid #999;"></td>' +
+          '<td style="padding:4px 6px;border:1px solid #999;"></td>' +
+          '<td style="padding:4px 6px;border:1px solid #999;"></td>' +
+          '<td style="padding:4px 6px;border:1px solid #999;"></td>' +
+          '<td style="padding:4px 6px;border:1px solid #999;"></td>' +
+          '<td style="padding:4px 6px;border:1px solid #999;"></td>' +
+          '<td style="padding:4px 6px;border:1px solid #999;"></td>' +
+          '<td style="padding:4px 6px;border:1px solid #999;"></td>' +
+          '</tr>';
+      }
+
+      let html =
+        '<div style="text-align:center;margin-bottom:4px;font-size:16px;font-weight:700;color:#000;">شركة لينة للتنمية السياحية والعمرانية</div>' +
+        '<table style="width:100%;border-collapse:collapse;font-size:11px;margin-bottom:4px;">' +
+        '<tr><td style="border:none;padding:2px 4px;font-size:11px;">تاريخ اليوم:-  ' + dateStr + '</td>' +
+        '<td style="border:none;padding:2px 4px;font-size:11px;text-align:left;font-weight:700;">بيان إجازات يومي/ قسم ( إدارة الشئون الادارية )</td></tr>' +
+        '</table>' +
+        '<table style="width:100%;border-collapse:collapse;font-size:11px;">' +
+        '<thead><tr>' +
+        '<th style="padding:5px 4px;border:1px solid #999;background:#f0f0f0;color:#000;font-weight:700;text-align:center;width:20px;">م</th>' +
+        '<th style="padding:5px 4px;border:1px solid #999;background:#f0f0f0;color:#000;font-weight:700;text-align:center;width:40px;">الكود</th>' +
+        '<th style="padding:5px 4px;border:1px solid #999;background:#f0f0f0;color:#000;font-weight:700;text-align:center;">اسم الموظف</th>' +
+        '<th style="padding:5px 4px;border:1px solid #999;background:#f0f0f0;color:#000;font-weight:700;text-align:center;">الوظيفه</th>' +
+        '<th style="padding:5px 4px;border:1px solid #999;background:#f0f0f0;color:#000;font-weight:700;text-align:center;width:35px;">رصيد الاجازات</th>' +
+        '<th style="padding:5px 4px;border:1px solid #999;background:#f0f0f0;color:#000;font-weight:700;text-align:center;width:50px;">تاريخ بدايه الاجازة</th>' +
+        '<th style="padding:5px 4px;border:1px solid #999;background:#f0f0f0;color:#000;font-weight:700;text-align:center;width:50px;">تاريخ نهايه الاجازة</th>' +
+        '<th style="padding:5px 4px;border:1px solid #999;background:#f0f0f0;color:#000;font-weight:700;text-align:center;width:30px;">مدة الاجازة</th>' +
+        '<th style="padding:5px 4px;border:1px solid #999;background:#f0f0f0;color:#000;font-weight:700;text-align:center;width:50px;">نوع الاجازة</th>' +
+        '<th style="padding:5px 4px;border:1px solid #999;background:#f0f0f0;color:#000;font-weight:700;text-align:center;width:35px;">تسجيل اودوو</th>' +
+        '</tr></thead><tbody>' + detailRows + '</tbody></table>' +
+        '<table style="width:100%;border-collapse:collapse;font-size:11px;margin-top:4px;">' +
+        '<tr><td style="border:1px solid #999;padding:6px 8px;font-weight:700;width:25%;text-align:center;">مدير الإدارة/ القسم</td>' +
+        '<td style="border:1px solid #999;padding:6px 8px;width:25%;"></td>' +
+        '<td style="border:1px solid #999;padding:6px 8px;font-weight:700;width:25%;text-align:center;">شئون العاملين/</td>' +
+        '<td style="border:1px solid #999;padding:6px 8px;width:25%;"></td></tr>' +
+        '<tr><td style="border:1px solid #999;padding:6px 8px;font-weight:700;text-align:center;" colspan="2">إعتماد نهائي/</td>' +
+        '<td style="border:1px solid #999;padding:6px 8px;" colspan="2"></td></tr>' +
+        '</table>';
+
+      let w = window.open('', '_blank', 'width=900,height=700');
+      w.document.write('<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8"><title>طباعة إجازات</title>' +
+        '<style>' +
+        'body{font-family:"Segoe UI",Tahoma,Arial,sans-serif;margin:0;padding:20px;}' +
+        '@media print{body{padding:10px;}}' +
+        '</style></head><body>' +
+        (logoSrc ? '<div style="text-align:left;margin-bottom:6px;"><img src="' + logoSrc + '" style="height:50px;width:auto;"></div>' : '') +
+        html +
         '<script>window.print();setTimeout(function(){window.close()},1500);</' + 'script>' +
         '</body></html>');
       w.document.close();
