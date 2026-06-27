@@ -14977,6 +14977,9 @@ function toggleEmployeeStatus(empId) {
     document.addEventListener('change', function(e) {
       if (e.target && e.target.id === 'mgt-title-select') showEvalTemplateTasks();
     });
+
+    // Initialize the dashboard on page load
+    switchTab('tab-dashboard');
   </script>
 
   <div id="modal-add-stock" class="modal">
