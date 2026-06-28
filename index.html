@@ -2492,7 +2492,7 @@
 
   <div id="tab-ai-assistant" class="tab-content">
     <div id="ai-header" style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:linear-gradient(135deg,#6a1b9a,#4a148c);color:#fff;border-radius:10px;margin-bottom:10px;">
-      <div style="display:flex;align-items:center;gap:8px;"><span style="font-size:22px;">🤖</span><div><b style="font-size:15px;">المساعد الذكي</b><div style="font-size:11px;opacity:.8;">Gemini AI — محلل ومستشار النظام</div></div></div>
+      <div style="display:flex;align-items:center;gap:8px;"><span style="font-size:22px;">🤖</span><div><b style="font-size:15px;">المساعد الذكي</b><div style="font-size:11px;opacity:.8;">Groq AI (Llama 3) — محلل ومستشار النظام</div></div></div>
       <div style="display:flex;align-items:center;gap:6px;">
         <span id="ai-status" style="font-size:11px;background:rgba(255,255,255,.15);padding:3px 8px;border-radius:10px;">غير متصل</span>
         <button onclick="showAiKeyDialog()" style="background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:6px;padding:4px 10px;cursor:pointer;font-size:11px;font-family:Cairo;">🔑 المفتاح</button>
@@ -2503,7 +2503,7 @@
         <div id="ai-messages" style="flex:1;overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:6px;"></div>
         <div style="padding:8px;border-top:1px solid #e0e0e0;display:flex;gap:6px;align-items:center;">
           <button onclick="startVoiceInput()" id="ai-voice-btn" title="تسجيل صوتي" style="background:none;border:none;font-size:20px;cursor:pointer;padding:4px;">🎤</button>
-          <button onclick="document.getElementById('ai-image-input').click()" title="رفع صورة" style="background:none;border:none;font-size:20px;cursor:pointer;padding:4px;">📷</button>
+          <button onclick="addAiMessage('⚠️ رفع الصور غير مدعوم حالياً مع Groq API. ممكن تستخدم Llama 3 عبر Groq للأسئلة النصية.', 'ai')" title="غير متاح مع Groq" style="background:none;border:none;font-size:20px;cursor:pointer;padding:4px;opacity:0.5;">📷</button>
           <input type="file" id="ai-image-input" accept="image/*" style="display:none;" onchange="handleAiImage(event)">
           <textarea id="ai-input" rows="2" placeholder="اسأل عن النظام، الموظفين، الرواتب، الصيانة..." onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendAiMessage();}" style="flex:1;padding:8px 12px;border:2px solid #e0e0e0;border-radius:8px;font-size:13px;outline:none;font-family:Cairo;resize:none;"></textarea>
           <button onclick="sendAiMessage()" id="ai-send-btn" style="padding:8px 16px;background:#6a1b9a;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-family:Cairo;">إرسال</button>
@@ -15187,8 +15187,8 @@ function toggleEmployeeStatus(empId) {
   });
 })();
 
-// ====== AI Assistant (Gemini) with Function Calling ======
-var _aiKey = localStorage.getItem('_gemini_key') || '';
+// ====== AI Assistant (Groq) with Function Calling ======
+var _aiKey = localStorage.getItem('_groq_key') || '';
 var _aiMessages = _safeJsonParse(localStorage.getItem('_ai_messages'), []);
 var _aiImageData = null;
 
@@ -15289,7 +15289,7 @@ function renderAiAssistant() {
   if (!container) return;
   container.innerHTML = '';
   if (_aiMessages.length === 0) {
-    container.innerHTML = '<div style="text-align:center;padding:40px 20px;color:#999;"><div style="font-size:48px;margin-bottom:10px;">🤖</div><b style="font-size:15px;">المساعد الذكي</b><div style="font-size:12px;margin-top:4px;">اسأل أي سؤال عن النظام — الموظفين، المخزون، الصيانة، المخبز، المالية...</div><div style="font-size:11px;color:#bbb;margin-top:12px;">مدعوم بـ Gemini AI • أقدر أسجل صيانة، بيارات، ومحطات مياه بأمرك</div></div>';
+    container.innerHTML = '<div style="text-align:center;padding:40px 20px;color:#999;"><div style="font-size:48px;margin-bottom:10px;">🤖</div><b style="font-size:15px;">المساعد الذكي</b><div style="font-size:12px;margin-top:4px;">اسأل أي سؤال عن النظام — الموظفين، المخزون، الصيانة، المخبز، المالية...</div><div style="font-size:11px;color:#bbb;margin-top:12px;">مدعوم بـ Groq AI (Llama 3) • أقدر أسجل صيانة، بيارات، ومحطات مياه بأمرك</div></div>';
   } else {
     _aiMessages.forEach(function(m) {
       var div = document.createElement('div');
@@ -15315,7 +15315,7 @@ function buildSystemPrompt() {
   parts.push('لديك access لكل بيانات النظام أدناه. أجب بناءً على هذه البيانات فقط.');
   parts.push('إذا طلب المستخدم تحليلًا أو إحصاء، احسبها بنفسك من البيانات.');
   parts.push('إذا طلب تنبؤات، استخدم الاتجاهات في البيانات.');
-  parts.push('إذا طلب صورة، حللها بناءً على ما تراه.');
+  parts.push('للأسف لا أستطيع رؤية الصور حالياً. إذا رفع المستخدم صورة، أخبره أن الميزة غير متاحة.');
   parts.push('');
   parts.push('** الأدوات المتاحة لك **');
   parts.push('عندما يطلب المستخدم تسجيل شيء — استخدم الأداة المناسبة. مثلاً:');
@@ -15371,33 +15371,41 @@ function buildSystemPrompt() {
   return parts.join('\n');
 }
 
-async function callGeminiWithTools(messages, tools) {
-  if (!_aiKey) { addAiMessage('⚠️ من فضلك أدخل مفتاح Gemini API أولاً (اضغط على 🔑 في الأعلى)', 'ai'); return null; }
+function wrapOpenAiTools(tools) {
+  if (!tools || !tools.length) return [];
+  return tools.map(function(t) {
+    return { type: 'function', function: { name: t.name, description: t.description, parameters: t.parameters } };
+  });
+}
+
+async function callGroqWithTools(messages, tools) {
+  if (!_aiKey) { addAiMessage('⚠️ من فضلك أدخل مفتاح Groq API أولاً (اضغط على 🔑 في الأعلى)', 'ai'); return null; }
   var sysPrompt = buildSystemPrompt();
-  var contents = [];
-  contents.push({ role: 'user', parts: [{ text: sysPrompt }] });
-  contents.push({ role: 'model', parts: [{ text: 'فهمت! أنا جاهز لأسئلتك وأوامرك.' }] });
+  var groqMessages = [{ role: 'system', content: sysPrompt }];
   for (var i = 0; i < messages.length; i++) {
-    var parts = [{ text: messages[i].text }];
-    if (messages[i].role === 'user' && i === messages.length - 1 && _aiImageData) {
-      parts.push({ inline_data: { mime_type: _aiImageData.mime, data: _aiImageData.data } });
+    if (messages[i].role === 'user') {
+      groqMessages.push({ role: 'user', content: messages[i].text });
+    } else {
+      groqMessages.push({ role: 'assistant', content: messages[i].text });
     }
-    contents.push({ role: messages[i].role === 'ai' ? 'model' : 'user', parts: parts });
   }
   var body = {
-    contents: contents,
-    tools: tools ? [{ functionDeclarations: tools }] : [],
-    generationConfig: { temperature: 0.4, maxOutputTokens: 4096 }
+    model: 'llama3-70b-8192',
+    messages: groqMessages,
+    tools: wrapOpenAiTools(tools),
+    tool_choice: 'auto',
+    temperature: 0.4,
+    max_tokens: 4096
   };
   try {
-    var resp = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent', {
+    var resp = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-goog-api-key': _aiKey },
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + _aiKey },
       body: JSON.stringify(body)
     });
     if (!resp.ok) {
       var errBody = await resp.text();
-      if (resp.status === 403 || resp.status === 400) throw new Error('خطأ في المفتاح — تأكد من صحة API Key');
+      if (resp.status === 401 || resp.status === 403) throw new Error('خطأ في المفتاح — تأكد من صحة API Key');
       throw new Error('خطأ ' + resp.status + ': ' + errBody.substring(0,200));
     }
     return await resp.json();
@@ -15405,22 +15413,17 @@ async function callGeminiWithTools(messages, tools) {
 }
 
 function extractFunctionCall(data) {
-  if (!data || !data.candidates || !data.candidates[0]) return null;
-  var c = data.candidates[0].content;
-  if (!c || !c.parts) return null;
-  for (var i = 0; i < c.parts.length; i++) {
-    if (c.parts[i].functionCall) return c.parts[i].functionCall;
-  }
-  return null;
+  if (!data || !data.choices || !data.choices[0]) return null;
+  var msg = data.choices[0].message;
+  if (!msg || !msg.tool_calls || !msg.tool_calls.length) return null;
+  var tc = msg.tool_calls[0];
+  if (tc.type !== 'function') return null;
+  return { name: tc.function.name, args: JSON.parse(tc.function.arguments || '{}') };
 }
 
 function extractText(data) {
-  if (!data || !data.candidates || !data.candidates[0] || !data.candidates[0].content || !data.candidates[0].content.parts) return null;
-  var texts = [];
-  for (var i = 0; i < data.candidates[0].content.parts.length; i++) {
-    if (data.candidates[0].content.parts[i].text) texts.push(data.candidates[0].content.parts[i].text);
-  }
-  return texts.length > 0 ? texts.join('') : null;
+  if (!data || !data.choices || !data.choices[0] || !data.choices[0].message) return null;
+  return data.choices[0].message.content || null;
 }
 
 function showAiLoading() {
@@ -15448,7 +15451,7 @@ async function sendAiMessage() {
   addAiMessage(text, 'user');
   showAiLoading();
   try {
-    var data = await callGeminiWithTools(_aiMessages, _aiTools);
+    var data = await callGroqWithTools(_aiMessages, _aiTools);
     removeAiLoading();
     if (!data) return;
     var fnCall = extractFunctionCall(data);
@@ -15512,12 +15515,12 @@ function quickAi(q) {
 }
 
 function showAiKeyDialog() {
-  var key = prompt('🔑 أدخل مفتاح Gemini API:\n(احصل عليه مجاناً من aistudio.google.com → API Key)', _aiKey);
+  var key = prompt('🔑 أدخل مفتاح Groq API:\n(احصل عليه مجاناً من console.groq.com/keys → Create API Key)', _aiKey);
   if (key) {
     _aiKey = key.trim();
-    localStorage.setItem('_gemini_key', _aiKey);
+    localStorage.setItem('_groq_key', _aiKey);
     document.getElementById('ai-status').textContent = '🟢 متصل';
-    addAiMessage('✅ تم حفظ مفتاح Gemini API بنجاح! أنا جاهز.', 'ai');
+    addAiMessage('✅ تم حفظ مفتاح Groq API بنجاح! أنا جاهز.', 'ai');
   }
 }
 
