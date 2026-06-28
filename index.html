@@ -15187,17 +15187,109 @@ function toggleEmployeeStatus(empId) {
   });
 })();
 
-// ====== AI Assistant (Gemini) ======
+// ====== AI Assistant (Gemini) with Function Calling ======
 var _aiKey = localStorage.getItem('_gemini_key') || '';
 var _aiMessages = _safeJsonParse(localStorage.getItem('_ai_messages'), []);
 var _aiImageData = null;
+
+// ----- AI Tools (Function Calling) -----
+var _aiTools = [
+  {
+    name: 'addMaintenanceRecord',
+    description: 'إضافة سجل صيانة جديد (مثل تكييف عطلان، سباكة، كهرباء)',
+    parameters: {
+      type: 'object',
+      properties: {
+        category: { type: 'string', description: 'تصنيف الصيانة (مثلاً: تكييف، سباكة، كهرباء، نجارة، حدادة)' },
+        task: { type: 'string', description: 'وصف المهمة المطلوبة بالتفصيل' },
+        room: { type: 'string', description: 'رقم الغرفة أو المكان (اختياري)' },
+        urgent: { type: 'boolean', description: 'هل هي عاجلة؟' }
+      },
+      required: ['category', 'task']
+    }
+  },
+  {
+    name: 'addSepticRecord',
+    description: 'تسجيل كشف بيارة (سحب مياه بيارة)',
+    parameters: {
+      type: 'object',
+      properties: {
+        name: { type: 'string', description: 'القطاع أو اسم البيارة' },
+        date: { type: 'string', description: 'التاريخ (YYYY-MM-DD)، اختياري' },
+        trips: { type: 'number', description: 'عدد المرات أو الكمية' }
+      },
+      required: ['name']
+    }
+  },
+  {
+    name: 'addWaterStationRecord',
+    description: 'تسجيل صيانة دورية لمحطة مياه',
+    parameters: {
+      type: 'object',
+      properties: {
+        station: { type: 'string', description: 'اسم المحطة (المحطة القديمة أو المحطة الجديدة)' },
+        type: { type: 'string', description: 'نوع الصيانة (مثلاً: غسيل فلتر، تغيير طلمبة، صيانة دورية)' },
+        date: { type: 'string', description: 'التاريخ (YYYY-MM-DD)، اختياري' },
+        nextDate: { type: 'string', description: 'تاريخ الصيانة القادمة (YYYY-MM-DD)، اختياري' },
+        notes: { type: 'string', description: 'ملاحظات إضافية' }
+      },
+      required: ['station', 'type']
+    }
+  }
+];
+
+function _executeAiTool(fnName, args) {
+  var result = '';
+  if (fnName === 'addMaintenanceRecord') {
+    var rec = {
+      id: Date.now(),
+      category: args.category,
+      task: args.task,
+      room: args.room || '',
+      urgent: args.urgent || false,
+      date: new Date().toISOString().split('T')[0],
+      status: 'جديد',
+      createdAt: new Date().toISOString()
+    };
+    maintenanceRecords.push(rec);
+    syncStorage();
+    result = '✅ تم تسجيل صيانة جديدة: ' + args.category + ' - ' + args.task + (args.room ? ' في ' + args.room : '') + ' (عاجل: ' + (args.urgent ? 'نعم' : 'لا') + ')';
+  } else if (fnName === 'addSepticRecord') {
+    var rec = {
+      id: Date.now(),
+      name: args.name,
+      date: args.date || new Date().toISOString().split('T')[0],
+      trips: args.trips || 1,
+      createdAt: new Date().toISOString()
+    };
+    septicRecords.push(rec);
+    syncStorage();
+    result = '✅ تم تسجيل كشف بيارة: ' + args.name + (args.trips ? ' - ' + args.trips + ' مرة' : '');
+  } else if (fnName === 'addWaterStationRecord') {
+    var now = new Date().toISOString().split('T')[0];
+    var rec = {
+      id: 'ws_' + Date.now(),
+      station: args.station,
+      type: args.type,
+      date: args.date || now,
+      nextDate: args.nextDate || '',
+      notes: args.notes || '',
+      status: 'نشطة',
+      createdAt: new Date().toISOString()
+    };
+    waterStations.push(rec);
+    syncStorage();
+    result = '✅ تم تسجيل صيانة محطة مياه: ' + args.station + ' - ' + args.type;
+  }
+  return result;
+}
 
 function renderAiAssistant() {
   var container = document.getElementById('ai-messages');
   if (!container) return;
   container.innerHTML = '';
   if (_aiMessages.length === 0) {
-    container.innerHTML = '<div style="text-align:center;padding:40px 20px;color:#999;"><div style="font-size:48px;margin-bottom:10px;">🤖</div><b style="font-size:15px;">المساعد الذكي</b><div style="font-size:12px;margin-top:4px;">اسأل أي سؤال عن النظام — الموظفين، المخزون، الصيانة، المخبز، المالية...</div><div style="font-size:11px;color:#bbb;margin-top:12px;">مدعوم بـ Gemini AI</div></div>';
+    container.innerHTML = '<div style="text-align:center;padding:40px 20px;color:#999;"><div style="font-size:48px;margin-bottom:10px;">🤖</div><b style="font-size:15px;">المساعد الذكي</b><div style="font-size:12px;margin-top:4px;">اسأل أي سؤال عن النظام — الموظفين، المخزون، الصيانة، المخبز، المالية...</div><div style="font-size:11px;color:#bbb;margin-top:12px;">مدعوم بـ Gemini AI • أقدر أسجل صيانة، بيارات، ومحطات مياه بأمرك</div></div>';
   } else {
     _aiMessages.forEach(function(m) {
       var div = document.createElement('div');
@@ -15224,6 +15316,13 @@ function buildSystemPrompt() {
   parts.push('إذا طلب المستخدم تحليلًا أو إحصاء، احسبها بنفسك من البيانات.');
   parts.push('إذا طلب تنبؤات، استخدم الاتجاهات في البيانات.');
   parts.push('إذا طلب صورة، حللها بناءً على ما تراه.');
+  parts.push('');
+  parts.push('** الأدوات المتاحة لك **');
+  parts.push('عندما يطلب المستخدم تسجيل شيء — استخدم الأداة المناسبة. مثلاً:');
+  parts.push('- "سجل صيانة للغرفة 3 تكييف عطلان" ← استخدم addMaintenanceRecord');
+  parts.push('- "كشف بيارة قطاع المزرعة" ← استخدم addSepticRecord');
+  parts.push('- "سجل صيانة للمحطة الجديدة" ← استخدم addWaterStationRecord');
+  parts.push('ملاحظة: لا تستخدم الأداة إلا إذا طلب المستخدم صراحةً. للأسئلة فقط — جاوب بدون أدوات.');
   parts.push('');
   parts.push('=== بيانات النظام الحالية ===');
   parts.push('عدد الموظفين: ' + (data.employees ? data.employees.length : 0));
@@ -15266,19 +15365,18 @@ function buildSystemPrompt() {
   parts.push('التاريخ والوقت الحالي: ' + _now.toLocaleDateString('ar-EG') + ' ' + _now.toLocaleTimeString('ar-EG'));
   parts.push('');
   parts.push('ملاحظات:');
-  parts.push('- إذا قال المستخدم "حلل الصورة" أو أرفع صورة فاتورة — استخرج الأرقام وحللها');
   parts.push('- حسّن التنسيق باستخدام جداول HTML وقوائم عند عرض البيانات');
   parts.push('- لا تخرج عن سياق النظام — أنت مساعد لادارة المزرعة فقط');
   parts.push('- استخدم الأرقام العربية (0-9) للارقام');
   return parts.join('\n');
 }
 
-async function callGemini(messages) {
-  if (!_aiKey) { addAiMessage('⚠️ من فضلك أدخل مفتاح Gemini API أولاً (اضغط على 🔑 في الأعلى)', 'ai'); return; }
+async function callGeminiWithTools(messages, tools) {
+  if (!_aiKey) { addAiMessage('⚠️ من فضلك أدخل مفتاح Gemini API أولاً (اضغط على 🔑 في الأعلى)', 'ai'); return null; }
   var sysPrompt = buildSystemPrompt();
   var contents = [];
   contents.push({ role: 'user', parts: [{ text: sysPrompt }] });
-  contents.push({ role: 'model', parts: [{ text: 'فهمت! أنا جاهز لأسئلتك عن النظام.' }] });
+  contents.push({ role: 'model', parts: [{ text: 'فهمت! أنا جاهز لأسئلتك وأوامرك.' }] });
   for (var i = 0; i < messages.length; i++) {
     var parts = [{ text: messages[i].text }];
     if (messages[i].role === 'user' && i === messages.length - 1 && _aiImageData) {
@@ -15286,23 +15384,43 @@ async function callGemini(messages) {
     }
     contents.push({ role: messages[i].role === 'ai' ? 'model' : 'user', parts: parts });
   }
+  var body = {
+    contents: contents,
+    tools: tools ? [{ functionDeclarations: tools }] : [],
+    generationConfig: { temperature: 0.4, maxOutputTokens: 4096 }
+  };
   try {
     var resp = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-goog-api-key': _aiKey },
-      body: JSON.stringify({ contents: contents, generationConfig: { temperature: 0.4, maxOutputTokens: 4096 } })
+      body: JSON.stringify(body)
     });
     if (!resp.ok) {
       var errBody = await resp.text();
       if (resp.status === 403 || resp.status === 400) throw new Error('خطأ في المفتاح — تأكد من صحة API Key');
       throw new Error('خطأ ' + resp.status + ': ' + errBody.substring(0,200));
     }
-    var data = await resp.json();
-    var text = (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts && data.candidates[0].content.parts[0].text) || '⚠️ لم أحصل على رد';
-    return text;
-  } catch(e) {
-    throw e;
+    return await resp.json();
+  } catch(e) { throw e; }
+}
+
+function extractFunctionCall(data) {
+  if (!data || !data.candidates || !data.candidates[0]) return null;
+  var c = data.candidates[0].content;
+  if (!c || !c.parts) return null;
+  for (var i = 0; i < c.parts.length; i++) {
+    if (c.parts[i].functionCall) return c.parts[i].functionCall;
   }
+  return null;
+}
+
+function extractText(data) {
+  if (!data || !data.candidates || !data.candidates[0] || !data.candidates[0].content || !data.candidates[0].content.parts) return null;
+  var texts = [];
+  for (var i = 0; i < data.candidates[0].content.parts.length; i++) {
+    if (data.candidates[0].content.parts[i].text) texts.push(data.candidates[0].content.parts[i].text);
+  }
+  return texts.length > 0 ? texts.join('') : null;
 }
 
 function showAiLoading() {
@@ -15330,13 +15448,62 @@ async function sendAiMessage() {
   addAiMessage(text, 'user');
   showAiLoading();
   try {
-    var reply = await callGemini(_aiMessages);
+    var data = await callGeminiWithTools(_aiMessages, _aiTools);
     removeAiLoading();
-    addAiMessage(reply, 'ai');
+    if (!data) return;
+    var fnCall = extractFunctionCall(data);
+    if (fnCall) {
+      var args = fnCall.args || {};
+      var fnName = fnCall.name;
+      var argsStr = JSON.stringify(args);
+      var confirmHtml = '<div style="background:#fff8e1;border:1px solid #ffe082;border-radius:10px;padding:10px;margin:4px 0;font-size:13px;">';
+      confirmHtml += '<div style="font-weight:700;color:#e65100;margin-bottom:6px;">🤖 عاوز تسجيل التالي:</div>';
+      confirmHtml += '<div style="margin-bottom:8px;">' + _describeAction(fnName, args) + '</div>';
+      confirmHtml += '<div style="display:flex;gap:6px;">';
+      confirmHtml += '<button onclick="confirmAiAction()" style="flex:1;padding:6px;background:#1b5e20;color:#fff;border:none;border-radius:6px;cursor:pointer;font-family:Cairo;font-size:12px;">✅ أوافق</button>';
+      confirmHtml += '<button onclick="rejectAiAction()" style="flex:1;padding:6px;background:#c62828;color:#fff;border:none;border-radius:6px;cursor:pointer;font-family:Cairo;font-size:12px;">❌ ألغي</button>';
+      confirmHtml += '</div></div>';
+      addAiMessage(confirmHtml, 'ai');
+      window._pendingAction = { name: fnName, args: args };
+    } else {
+      var reply = extractText(data) || '⚠️ لم أحصل على رد';
+      addAiMessage(reply, 'ai');
+    }
   } catch(e) {
     removeAiLoading();
     addAiMessage('⚠️ ' + e.message, 'ai');
   }
+}
+
+function _describeAction(fnName, args) {
+  if (fnName === 'addMaintenanceRecord') {
+    return '🔧 صيانة: <b>' + args.category + '</b> — ' + args.task + (args.room ? ' في ' + args.room : '') + (args.urgent ? ' 🚨 عاجل' : '');
+  }
+  if (fnName === 'addSepticRecord') {
+    return '💧 كشف بيارة: <b>' + args.name + '</b>' + (args.trips ? ' (' + args.trips + ' مرة)' : '');
+  }
+  if (fnName === 'addWaterStationRecord') {
+    return '💧 صيانة محطة: <b>' + args.station + '</b> — ' + args.type + (args.notes ? ' (' + args.notes + ')' : '');
+  }
+  return JSON.stringify(args);
+}
+
+async function confirmAiAction() {
+  var action = window._pendingAction;
+  if (!action) return;
+  window._pendingAction = null;
+  try {
+    var result = _executeAiTool(action.name, action.args);
+    addAiMessage(result, 'ai');
+    addAiMessage('تم التنفيذ بنجاح ✅', 'ai');
+  } catch(e) {
+    addAiMessage('⚠️ خطأ في التنفيذ: ' + e.message, 'ai');
+  }
+}
+
+function rejectAiAction() {
+  window._pendingAction = null;
+  addAiMessage('❌ تم الإلغاء. حاضر، أي خدمة تانية؟', 'ai');
 }
 
 function quickAi(q) {
