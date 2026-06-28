@@ -2492,7 +2492,7 @@
 
   <div id="tab-ai-assistant" class="tab-content">
     <div id="ai-header" style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:linear-gradient(135deg,#6a1b9a,#4a148c);color:#fff;border-radius:10px;margin-bottom:10px;">
-      <div style="display:flex;align-items:center;gap:8px;"><span style="font-size:22px;">🤖</span><div><b style="font-size:15px;">المساعد الذكي</b><div style="font-size:11px;opacity:.8;">Groq AI (Llama 3.1 8B) — محلل ومستشار النظام</div></div></div>
+      <div style="display:flex;align-items:center;gap:8px;"><span style="font-size:22px;">🤖</span><div><b style="font-size:15px;">المساعد الذكي</b><div style="font-size:11px;opacity:.8;">OpenRouter (Gemma 2) — محلل ومستشار النظام</div></div></div>
       <div style="display:flex;align-items:center;gap:6px;">
         <span id="ai-status" style="font-size:11px;background:rgba(255,255,255,.15);padding:3px 8px;border-radius:10px;">غير متصل</span>
         <button onclick="showAiKeyDialog()" style="background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:6px;padding:4px 10px;cursor:pointer;font-size:11px;font-family:Cairo;">🔑 المفتاح</button>
@@ -15188,8 +15188,8 @@ function toggleEmployeeStatus(empId) {
   });
 })();
 
-// ====== AI Assistant (Groq) with Function Calling ======
-var _aiKey = localStorage.getItem('_groq_key') || '';
+// ====== AI Assistant (OpenRouter) with Function Calling ======
+var _aiKey = localStorage.getItem('_openrouter_key') || '';
 var _aiMessages = _safeJsonParse(localStorage.getItem('_ai_messages'), []);
 var _aiImageData = null;
 
@@ -15290,7 +15290,7 @@ function renderAiAssistant() {
   if (!container) return;
   container.innerHTML = '';
   if (_aiMessages.length === 0) {
-    container.innerHTML = '<div style="text-align:center;padding:40px 20px;color:#999;"><div style="font-size:48px;margin-bottom:10px;">🤖</div><b style="font-size:15px;">المساعد الذكي</b><div style="font-size:12px;margin-top:4px;">اسأل أي سؤال عن النظام — الموظفين، المخزون، الصيانة، المخبز، المالية...</div><div style="font-size:11px;color:#bbb;margin-top:12px;">مدعوم بـ Groq AI (Llama 3.1 8B) • أقدر أسجل صيانة، بيارات، ومحطات مياه بأمرك</div></div>';
+    container.innerHTML = '<div style="text-align:center;padding:40px 20px;color:#999;"><div style="font-size:48px;margin-bottom:10px;">🤖</div><b style="font-size:15px;">المساعد الذكي</b><div style="font-size:12px;margin-top:4px;">اسأل أي سؤال عن النظام — الموظفين، المخزون، الصيانة، المخبز، المالية...</div><div style="font-size:11px;color:#bbb;margin-top:12px;">مدعوم بـ OpenRouter (Gemma 2) • أقدر أسجل صيانة، بيارات، ومحطات مياه بأمرك</div></div>';
   } else {
     _aiMessages.forEach(function(m) {
       var div = document.createElement('div');
@@ -15336,7 +15336,7 @@ async function callGroqWithTools(messages, tools) {
     }
   }
   var body = {
-    model: 'llama-3.1-8b-instant',
+    model: 'google/gemma-2-9b-it:free',
     messages: groqMessages,
     tools: wrapOpenAiTools(tools),
     tool_choice: 'auto',
@@ -15344,9 +15344,9 @@ async function callGroqWithTools(messages, tools) {
     max_tokens: 256
   };
   try {
-    var resp = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    var resp = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + _aiKey },
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + _aiKey, 'HTTP-Referer': 'https://linah-farms.github.io/LINAHSYSTEM', 'X-Title': 'LINAHSYSTEM' },
       body: JSON.stringify(body)
     });
     if (!resp.ok) {
@@ -15491,12 +15491,12 @@ function quickAi(q) {
 }
 
 function showAiKeyDialog() {
-  var key = prompt('🔑 أدخل مفتاح Groq API:\n(احصل عليه مجاناً من console.groq.com/keys → Create API Key)', _aiKey);
+  var key = prompt('🔑 أدخل مفتاح OpenRouter API:\n(احصل عليه مجاناً من openrouter.ai/keys)', _aiKey);
   if (key) {
     _aiKey = key.trim();
-    localStorage.setItem('_groq_key', _aiKey);
+    localStorage.setItem('_openrouter_key', _aiKey);
     document.getElementById('ai-status').textContent = '🟢 متصل';
-    addAiMessage('✅ تم حفظ مفتاح Groq API بنجاح! أنا جاهز.', 'ai');
+    addAiMessage('✅ تم حفظ مفتاح OpenRouter API بنجاح! أنا جاهز.', 'ai');
   }
 }
 
