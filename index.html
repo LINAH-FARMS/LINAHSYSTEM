@@ -15310,30 +15310,10 @@ function addAiMessage(text, role) {
 
 function buildSystemPrompt() {
   var data = getAllDataObject();
-  var d = [];
-  d.push('أنت مساعد LINAHSYSTEM بالمصرية. أجب من البيانات فقط.');
-  d.push('للتسجيل استخدم الأدوات: addMaintenanceRecord, addSepticRecord, addWaterStationRecord. للأوامر فقط.');
-  d.push('');
-  d.push('إحصائيات:');
-  d.push('موظفين: ' + (data.employees?.length||0) + ' | غرف: ' + (data.roomsCapacity?.length||0));
-  d.push('صيانة: ' + (data.maintenanceRecords?.length||0) + ' | بيارات: ' + (data.septicRecords?.length||0));
-  d.push('صيانة دورية: ' + (data.periodicMaintenance?.length||0) + ' | مستبعدين: ' + (data.excludedEmployees?.length||0));
-  d.push('ضيافة: ' + (data.hospitalities?.length||0) + ' | إجازات: ' + (data.vacations?.length||0));
-  d.push('شاي وسكر: ' + (data.teaSugarDisbursements?.length||0) + ' | مقاولين: ' + (data.contractors?.length||0));
-  d.push('مخبز إنتاج: ' + (data.bakeryProductions?.length||0) + ' | توريد: ' + (data.bakeryContractorSupplies?.length||0));
-  d.push('فواتير: ' + (data.bakeryInvoices?.length||0) + ' | مكونات: ' + (data.bakeryIngredients?.length||0));
-  d.push('محطات مياه: ' + (data.waterStations?.length||0) + ' | مخزون: ' + (data.inventoryItems?.length||0) + ' صنف');
-  if (data.employees?.length) {
-    var sec = {}; data.employees.forEach(function(e){ var s=e.sector||e.sectorName||e.قسم||'?'; sec[s]=(sec[s]||0)+1; });
-    d.push('قطاعات: ' + Object.keys(sec).map(function(k){return k+'('+sec[k]+')';}).join(', '));
-  }
-  if (data.waterStations?.length) {
-    var _n = new Date().toISOString().split('T')[0];
-    d.push('صيانات مياه متأخرة: ' + data.waterStations.filter(function(w){return w.nextDate&&w.nextDate<_n;}).length);
-  }
-  d.push('التاريخ: ' + new Date().toLocaleDateString('ar-EG') + ' ' + new Date().toLocaleTimeString('ar-EG'));
-  d.push('استخدم جداول HTML للبيانات. ارقام عربية.');
-  return d.join('\n');
+  return 'أنت مساعد LINAHSYSTEM بالمصرية. أجب من البيانات فقط. استخدم جداول HTML وارقام عربية.\n'
+    + 'موظفين:' + (data.employees?.length||0) + ' صيانة:' + (data.maintenanceRecords?.length||0)
+    + ' مخبز:' + (data.bakeryProductions?.length||0) + ' مخزون:' + (data.inventoryItems?.length||0)
+    + ' | ' + new Date().toLocaleDateString('ar-EG');
 }
 
 function wrapOpenAiTools(tools) {
@@ -15358,10 +15338,8 @@ async function callGroqWithTools(messages, tools) {
   var body = {
     model: 'llama-3.1-8b-instant',
     messages: groqMessages,
-    tools: wrapOpenAiTools(tools),
-    tool_choice: 'auto',
     temperature: 0.4,
-    max_tokens: 1024
+    max_tokens: 512
   };
   try {
     var resp = await fetch('https://api.groq.com/openai/v1/chat/completions', {
