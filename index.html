@@ -5,10 +5,21 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script>
   (function(){
-    var v='3.0';
+    var v='3.1';
     var s=localStorage.getItem('_codeVersion');
-    if(s&&s!==v){localStorage.clear();location.replace(location.pathname+'?v='+Date.now());}
-    localStorage.setItem('_codeVersion',v);
+    if(s&&s!==v){
+      try {
+        var _bak = {};
+        for (var _i = 0; _i < localStorage.length; _i++) {
+          var _k = localStorage.key(_i);
+          if (_k !== '_codeVersion') _bak[_k] = localStorage.getItem(_k);
+        }
+        localStorage.setItem('_preUpdateBackup_' + s, JSON.stringify(_bak));
+      } catch(_e) {}
+      localStorage.setItem('_codeVersion', v);
+    } else {
+      localStorage.setItem('_codeVersion', v);
+    }
   })();
   </script>
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -800,6 +811,13 @@
     .bread-supply-sub-content.active { display:block; }
     .ingredient-low { background:#ffebee !important; }
     .ingredient-ok { background:#e8f5e9 !important; }
+    .ai-suggestion { background:#f3e5f5;border:none;border-radius:6px;padding:5px 8px;font-size:11px;text-align:right;cursor:pointer;font-family:Cairo;transition:.15s;color:#4a148c; }
+    .ai-suggestion:hover { background:#ce93d8; }
+    #ai-messages .msg-user { background:#e8eaf6;align-self:flex-end;border-radius:12px 12px 4px 12px;padding:8px 12px;max-width:85%;font-size:13px; }
+    #ai-messages .msg-ai { background:#f3e5f5;align-self:flex-start;border-radius:12px 12px 12px 4px;padding:8px 12px;max-width:85%;font-size:13px; }
+    #ai-messages .msg-ai table { font-size:11px;border-collapse:collapse;margin:4px 0;width:100%; }
+    #ai-messages .msg-ai td, #ai-messages .msg-ai th { border:1px solid #ddd;padding:3px 6px;text-align:right; }
+    #ai-messages .msg-ai th { background:#e1bee7; }
     .bakery-revenue { color:#1b5e20; font-weight:700; }
     .bakery-cost { color:#d32f2f; font-weight:700; }
     .bakery-profit { color:#e65100; font-weight:700; }
@@ -1011,6 +1029,8 @@
     <button class="tab-btn" onclick="switchTab('tab-finance')" style="background:#e8eaf6; color:#283593; font-weight:700;">💰 المركز المالي والميزانية</button>
     <button class="tab-btn" onclick="switchTab('tab-reports')" style="background:#fce4ec; color:#c62828; font-weight:700;">🚨 بلاغات الأعطال <span class="tab-badge danger" id="badge-reports">0</span></button>
     <button class="tab-btn" onclick="switchTab('tab-data-exchange')" style="background:#e8f5e9; color:#1b5e20; font-weight:700;">🔄 تبادل البيانات</button>
+    <button class="tab-btn" onclick="switchTab('tab-water-stations')" style="background:#e0f7fa; color:#00695c; font-weight:700;">💧 محطات المياه <span class="tab-badge blue" id="badge-water">0</span></button>
+    <button class="tab-btn" onclick="switchTab('tab-ai-assistant')" style="background:#f3e5f5; color:#6a1b9a; font-weight:700;">🤖 المساعد الذكي</button>
   </div>
 
   <div id="tab-dashboard" class="tab-content active">
@@ -2394,6 +2414,122 @@
     </div>
   </div>
 
+  <div id="tab-water-stations" class="tab-content">
+    <div class="stats-container">
+      <div class="stat-card blue"><h3>محطات المياه</h3><div class="value" id="water-station-count">0</div></div>
+      <div class="stat-card orange"><h3>صيانة متأخرة</h3><div class="value" id="water-overdue-count">0</div></div>
+    </div>
+
+    <!-- Add / Edit Station -->
+    <div class="control-panel no-print" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;align-items:flex-end;">
+      <div class="form-group">
+        <label style="font-weight:600;">اسم المحطة</label>
+        <select id="ws-name"><option value="المحطة القديمة">🏚️ المحطة القديمة</option><option value="المحطة الجديدة">🏗️ المحطة الجديدة</option></select>
+      </div>
+      <div class="form-group">
+        <label style="font-weight:600;">نوع الصيانة</label>
+        <select id="ws-type">
+          <option value="فحص دوري">🔍 فحص دوري</option>
+          <option value="تغيير فلاتر">🔄 تغيير فلاتر</option>
+          <option value="تطهير خزانات">🧹 تطهير خزانات</option>
+          <option value="صيانة مضخات">⚙️ صيانة مضخات</option>
+          <option value="صيانة كهرباء">⚡ صيانة كهرباء</option>
+          <option value="أخري">📌 أخرى</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label style="font-weight:600;">التاريخ</label>
+        <input type="date" id="ws-date">
+      </div>
+      <div class="form-group">
+        <label style="font-weight:600;">الموعد القادم</label>
+        <input type="date" id="ws-next">
+      </div>
+      <div class="form-group">
+        <label style="font-weight:600;">ملاحظات</label>
+        <input type="text" id="ws-notes" placeholder="تفاصيل الصيانة">
+      </div>
+      <button class="btn btn-primary" onclick="addWaterRecord()" style="justify-content:center;height:42px;">💾 تسجيل</button>
+    </div>
+
+    <!-- Document Upload -->
+    <div class="control-panel no-print" style="margin-top:10px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+      <span style="font-weight:600;font-size:13px;">📎 ارفع مستند فحص للمحطة:</span>
+      <select id="ws-doc-station" style="padding:6px;border:2px solid #e0e0e0;border-radius:6px;">
+        <option value="المحطة القديمة">🏚️ المحطة القديمة</option>
+        <option value="المحطة الجديدة">🏗️ المحطة الجديدة</option>
+      </select>
+      <input type="file" id="ws-doc-file" accept=".pdf,.jpg,.jpeg,.png" onchange="uploadWaterDoc()" style="display:none;">
+      <button class="btn btn-secondary" onclick="document.getElementById('ws-doc-file').click()" style="background:#00695c;">📤 اختيار ملف</button>
+      <span id="ws-upload-status" style="font-size:12px;color:#888;"></span>
+    </div>
+
+    <!-- Table -->
+    <div class="table-container" style="margin-top:10px;">
+      <table id="table-water-stations">
+        <thead>
+          <tr>
+            <th data-sort-key="station">المحطة</th>
+            <th data-sort-key="type">نوع الصيانة</th>
+            <th data-sort-key="date">التاريخ</th>
+            <th data-sort-key="nextDate">الموعد القادم</th>
+            <th data-sort-key="status">الحالة</th>
+            <th>ملاحظات</th>
+            <th>المستندات</th>
+            <th class="no-print">إجراءات</th>
+          </tr>
+        </thead>
+        <tbody id="water-table-body"></tbody>
+      </table>
+    </div>
+
+    <!-- Documents per station -->
+    <div style="margin-top:15px;">
+      <h3 style="font-size:14px;color:#00695c;">📂 أرشيف مستندات الفحص</h3>
+      <div id="water-docs-list" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px;"></div>
+    </div>
+  </div>
+
+  <div id="tab-ai-assistant" class="tab-content">
+    <div id="ai-header" style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:linear-gradient(135deg,#6a1b9a,#4a148c);color:#fff;border-radius:10px;margin-bottom:10px;">
+      <div style="display:flex;align-items:center;gap:8px;"><span style="font-size:22px;">🤖</span><div><b style="font-size:15px;">المساعد الذكي</b><div style="font-size:11px;opacity:.8;">Gemini AI — محلل ومستشار النظام</div></div></div>
+      <div style="display:flex;align-items:center;gap:6px;">
+        <span id="ai-status" style="font-size:11px;background:rgba(255,255,255,.15);padding:3px 8px;border-radius:10px;">غير متصل</span>
+        <button onclick="showAiKeyDialog()" style="background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:6px;padding:4px 10px;cursor:pointer;font-size:11px;font-family:Cairo;">🔑 المفتاح</button>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;height:calc(100vh - 220px);min-height:400px;">
+      <div style="flex:2;display:flex;flex-direction:column;background:#fff;border-radius:10px;box-shadow:0 1px 6px rgba(0,0,0,.08);overflow:hidden;">
+        <div id="ai-messages" style="flex:1;overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:6px;"></div>
+        <div style="padding:8px;border-top:1px solid #e0e0e0;display:flex;gap:6px;align-items:center;">
+          <button onclick="startVoiceInput()" id="ai-voice-btn" title="تسجيل صوتي" style="background:none;border:none;font-size:20px;cursor:pointer;padding:4px;">🎤</button>
+          <button onclick="document.getElementById('ai-image-input').click()" title="رفع صورة" style="background:none;border:none;font-size:20px;cursor:pointer;padding:4px;">📷</button>
+          <input type="file" id="ai-image-input" accept="image/*" style="display:none;" onchange="handleAiImage(event)">
+          <textarea id="ai-input" rows="2" placeholder="اسأل عن النظام، الموظفين، الرواتب، الصيانة..." onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendAiMessage();}" style="flex:1;padding:8px 12px;border:2px solid #e0e0e0;border-radius:8px;font-size:13px;outline:none;font-family:Cairo;resize:none;"></textarea>
+          <button onclick="sendAiMessage()" id="ai-send-btn" style="padding:8px 16px;background:#6a1b9a;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-family:Cairo;">إرسال</button>
+        </div>
+      </div>
+      <div style="flex:1;display:flex;flex-direction:column;gap:8px;">
+        <div style="background:#fff;border-radius:10px;box-shadow:0 1px 6px rgba(0,0,0,.08);padding:10px;">
+          <b style="font-size:12px;color:#6a1b9a;">💡 اقتراحات</b>
+          <div style="margin-top:6px;display:flex;flex-direction:column;gap:4px;">
+            <button onclick="quickAi('عرض إحصائيات النظام كاملة')" class="ai-suggestion">📊 إحصائيات النظام</button>
+            <button onclick="quickAi('عرض الصيانات المتأخرة')" class="ai-suggestion">🔧 صيانات متأخرة</button>
+            <button onclick="quickAi('عدد الموظفين في كل قطاع')" class="ai-suggestion">👥 الموظفين بالقطاع</button>
+            <button onclick="quickAi('تحليل مصروفات المخبز آخر شهر')" class="ai-suggestion">🍞 تحليل المخبز</button>
+            <button onclick="quickAi('الموظفين اللي عليهم إنذارات')" class="ai-suggestion">⚠️ الإنذارات</button>
+            <button onclick="quickAi('إجمالي أجر التشغيل الشهر الماضي')" class="ai-suggestion">💰 أجر التشغيل</button>
+          </div>
+        </div>
+        <div id="ai-image-preview" style="display:none;background:#fff;border-radius:10px;box-shadow:0 1px 6px rgba(0,0,0,.08);padding:10px;">
+          <b style="font-size:12px;color:#6a1b9a;">📸 الصورة المرفوعة</b>
+          <img id="ai-image-tag" style="width:100%;max-height:200px;object-fit:contain;border-radius:6px;margin-top:4px;">
+          <button onclick="clearAiImage()" style="background:#c62828;color:#fff;border:none;border-radius:4px;padding:2px 8px;font-size:11px;margin-top:4px;cursor:pointer;">إزالة</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div id="tab-tea-sugar" class="tab-content">
     <!-- Batch Supply Summary -->
     <div id="ts-batch-summary" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:15px;"></div>
@@ -2700,14 +2836,6 @@
         <div class="form-group"><label>💷 أجر التشغيل / مصنعية (ج.م)</label><input type="number" id="bprod-opcost" min="0" step="1" value="1200"></div>
         <div class="form-group" style="grid-column:span 2;"><label>ملاحظات</label><input type="text" id="bprod-notes" placeholder="ملاحظات الإنتاج"></div>
         <button class="btn btn-primary" onclick="saveBakeryProduction()" style="height:42px;">🏭 تسجيل الإنتاج</button>
-      </div>
-      <div style="background:#fff;border-radius:10px;box-shadow:0 1px 6px rgba(0,0,0,.08);margin-bottom:12px;overflow:hidden;">
-        <div style="background:#e65100;color:#fff;padding:6px 12px;font-size:13px;font-weight:700;">🧠 تحليل واتساب</div>
-        <div style="display:flex;gap:4px;padding:6px;">
-          <input id="sa-input" placeholder="الصق رسالة واتساب..." onkeydown="if(event.key==='Enter')saAnalyze()" style="flex:1;padding:6px 10px;border:2px solid #ddd;border-radius:6px;font-size:12px;outline:none;font-family:Cairo;height:30px;box-sizing:border-box;">
-          <button onclick="saAnalyze()" style="padding:4px 14px;background:#e65100;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px;font-family:Cairo;">تحليل</button>
-        </div>
-        <div id="sa-result" style="padding:0 6px 6px;"></div>
       </div>
       <div class="control-panel no-print" style="margin-top:10px;">
         <input type="text" id="search-bakery-production" class="search-input" placeholder="بحث في الإنتاج..." oninput="renderBakeryProductions()">
@@ -3304,8 +3432,13 @@
     function _safeJsonParse(val, fallback) { try { var r = JSON.parse(val); return (r !== null && r !== undefined) ? r : fallback; } catch(e) { return fallback; } }
 
     (function _cleanCorruptedLocalStorage() {
+      var tx = localStorage.getItem('_storageTx');
+      if (tx === 'start') {
+        localStorage.removeItem('_storageTx');
+        console.warn('⚠️ تم اكتشاف عملية حفظ غير مكتملة (crash). قد تكون بعض البيانات غير متسقة.');
+      }
       if (localStorage.getItem('_corruptionCleaned_v2')) return;
-      var keys = ['lineh_employees','employees_db','lineh_rooms_capacity','rooms_db','lineh_vacations','lineh_hospitality','lineh_hospitality_bak','lineh_maintenance','lineh_septic','septic_db','lineh_inventory','excludedEmployees','lineh_periodic_maintenance','lineh_tea_sugar','lineh_tea_sugar_batches','lineh_meal_logs','lineh_inventory_items','lineh_contractors','dyn_sectors','ctr_sectors','ctr_rooms','dyn_rooms','dyn_septics','dyn_depts','dyn_titles','lineh_evaluations','lineh_eval_templates','lineh_users','linah_audit_log','linah_bakery_ingredients','linah_bakery_productions','linah_bakery_ctr_supplies','linah_bakery_invoices','linah_bakery_stock_log','lineh_admin_overtime','lineh_room_assets','lineh_archive_data','lineh_quick_actions','lineh_daily_stats'];
+      var keys = ['lineh_employees','employees_db','lineh_rooms_capacity','rooms_db','lineh_vacations','lineh_hospitality','lineh_hospitality_bak','lineh_maintenance','lineh_septic','septic_db','lineh_inventory','excludedEmployees','lineh_periodic_maintenance','lineh_tea_sugar','lineh_tea_sugar_batches','lineh_meal_logs','lineh_inventory_items','lineh_contractors','dyn_sectors','ctr_sectors','ctr_rooms','dyn_rooms','dyn_septics','dyn_depts','dyn_titles','lineh_evaluations','lineh_eval_templates','lineh_users','linah_audit_log','linah_bakery_ingredients','linah_bakery_productions','linah_bakery_ctr_supplies','linah_bakery_invoices','linah_bakery_stock_log','lineh_admin_overtime','lineh_room_assets','lineh_archive_data','lineh_quick_actions','lineh_daily_stats','lineh_water_stations','lineh_water_docs'];
       keys.forEach(function(k) {
         try {
           var raw = localStorage.getItem(k);
@@ -3372,13 +3505,16 @@
     let evaluations = _safeJsonParse(localStorage.getItem('lineh_evaluations'), []);
     let roomAssets = _safeJsonParse(localStorage.getItem('lineh_room_assets'), []);
     let archiveData = _safeJsonParse(localStorage.getItem('lineh_archive_data'), []);
+    let waterStations = _safeJsonParse(localStorage.getItem('lineh_water_stations'), []);
+    let waterDocs = _safeJsonParse(localStorage.getItem('lineh_water_docs'), []);
     let quickActions = _safeJsonParse(localStorage.getItem('lineh_quick_actions'), [
       { icon: '👤', label: 'القوة', action: "switchTab('tab-employees')" },
       { icon: '🏠', label: 'السكن', action: "switchTab('tab-housing')" },
       { icon: '📦', label: 'صرف المخزن', action: "switchTab('tab-inventory')" },
       { icon: '➕', label: 'إضافة موظف', action: "openModal('modal-add-emp')" },
       { icon: '💾', label: 'نسخة احتياطية', action: 'exportBackupSystem()' },
-      { icon: '📊', label: 'تقرير Excel', action: 'exportDashboardToExcel()' }
+      { icon: '📊', label: 'تقرير Excel', action: 'exportDashboardToExcel()' },
+      { icon: '🔍', label: 'فحص سلامة البيانات', action: 'showValidationResult()' }
     ]);
     let dailyStats = _safeJsonParse(localStorage.getItem('lineh_daily_stats'), []);
     /* migrate: strip to only needed fields */
@@ -4022,6 +4158,7 @@
 
     function syncStorage(noTimestamp, skipSync) {
       if (!skipSync) localStorage.setItem('_pendingChanges', 'true');
+      localStorage.setItem('_storageTx', 'start');
       localStorage.setItem('lineh_employees', JSON.stringify(employees));
       localStorage.setItem('employees_db', JSON.stringify(employees));
       localStorage.setItem('lineh_rooms_capacity', JSON.stringify(roomsCapacity));
@@ -4062,10 +4199,13 @@
       localStorage.setItem('lineh_admin_overtime', JSON.stringify(adminOvertime));
       localStorage.setItem('lineh_room_assets', JSON.stringify(roomAssets));
       localStorage.setItem('lineh_archive_data', JSON.stringify(archiveData));
+      localStorage.setItem('lineh_water_stations', JSON.stringify(waterStations));
+      localStorage.setItem('lineh_water_docs', JSON.stringify(waterDocs));
       localStorage.setItem('lineh_quick_actions', JSON.stringify(quickActions));
       localStorage.setItem('lineh_daily_stats', JSON.stringify(dailyStats));
       localStorage.setItem('lineh_sync_deletions', JSON.stringify(syncDeletions));
       localStorage.setItem('_pulledAt', JSON.stringify(_pulledAt));
+      localStorage.removeItem('_storageTx');
       calculateSystemStats();
       if (!noTimestamp) localStorage.setItem('_localChangeTime', Date.now());
       setAction('💾 حفظ');
@@ -4845,7 +4985,7 @@
       if (!tabEl) { console.error('Tab not found:', tabId); return; }
       tabEl.classList.add('active');
       if (el) el.classList.add('active');
-      var tabNames = { 'tab-dashboard':'الرئيسية','tab-employees':'القوة','tab-housing':'السكن','tab-inventory':'المخزن','tab-vacations':'إجازات وإضافي الشئون الإدارية','tab-hospitality':'الضيافة','tab-maintenance':'الصيانة','tab-septic':'البيارات','tab-dynamic':'الإدارة المرنة','tab-excluded':'المستبعدين','tab-periodic-maint':'الصيانة الدورية','tab-tea-sugar':'شاي وسكر','tab-meal-log':'الوجبات','tab-contractors':'المقاولين','tab-bakery':'المخبز','tab-bread-supply':'توريد الخبز','tab-evaluations':'التقييمات','tab-audit':'سجل التعديلات','tab-finance':'المركز المالي والميزانية','tab-reports':'بلاغات الأعطال','tab-data-exchange':'تبادل البيانات' };
+      var tabNames = { 'tab-dashboard':'الرئيسية','tab-employees':'القوة','tab-housing':'السكن','tab-inventory':'المخزن','tab-vacations':'إجازات وإضافي الشئون الإدارية','tab-hospitality':'الضيافة','tab-maintenance':'الصيانة','tab-septic':'البيارات','tab-dynamic':'الإدارة المرنة','tab-excluded':'المستبعدين','tab-periodic-maint':'الصيانة الدورية','tab-tea-sugar':'شاي وسكر','tab-meal-log':'الوجبات','tab-contractors':'المقاولين','tab-bakery':'المخبز','tab-bread-supply':'توريد الخبز','tab-evaluations':'التقييمات','tab-audit':'سجل التعديلات','tab-finance':'المركز المالي والميزانية','tab-reports':'بلاغات الأعطال','tab-data-exchange':'تبادل البيانات','tab-water-stations':'محطات المياه','tab-ai-assistant':'المساعد الذكي' };
       setAction('🔍 ' + (tabNames[tabId] || tabId));
       try { if(tabId === 'tab-dashboard') { renderDashboard(); renderQuickActions(); } } catch(e) { console.error('tab-dashboard error:', e); }
       try { if(tabId === 'tab-housing') { renderHousingLayout(); updateHousingStats(); } } catch(e) { console.error('tab-housing error:', e); }
@@ -4863,6 +5003,8 @@
       try { if(tabId === 'tab-evaluations') { populateEvalEmployees(); renderEvaluations(); } } catch(e) { console.error('tab-evaluations error:', e); }
       try { if(tabId === 'tab-finance') { renderFinanceTab(); } } catch(e) { console.error('tab-finance error:', e); }
       try { if(tabId === 'tab-reports') { fetchReports(); generateReportsQR(); } } catch(e) { console.error('tab-reports error:', e); }
+      try { if(tabId === 'tab-water-stations') { renderWaterStations(); renderWaterDocs(); } } catch(e) { console.error('tab-water-stations error:', e); }
+      try { if(tabId === 'tab-ai-assistant') { renderAiAssistant(); } } catch(e) { console.error('tab-ai-assistant error:', e); }
     }
 
     function printActiveTab() {
@@ -8962,6 +9104,117 @@ function toggleEmployeeStatus(empId) {
       }
     }
 
+    // ====== Water Stations ======
+    function addWaterRecord() {
+      var station = document.getElementById('ws-name').value;
+      var type = document.getElementById('ws-type').value;
+      var date = document.getElementById('ws-date').value;
+      var nextDate = document.getElementById('ws-next').value;
+      var notes = document.getElementById('ws-notes').value.trim();
+      if (!date) return alert('يرجى اختيار التاريخ');
+      waterStations.push({
+        id: 'ws_' + Date.now(),
+        station: station,
+        type: type,
+        date: date,
+        nextDate: nextDate,
+        notes: notes,
+        status: (!nextDate || nextDate >= new Date().toISOString().split('T')[0]) ? 'نشطة' : 'متأخرة',
+        createdAt: new Date().toISOString()
+      });
+      syncStorage();
+      renderWaterStations();
+      document.getElementById('ws-notes').value = '';
+      alert('✅ تم تسجيل صيانة محطة المياه');
+    }
+    function renderWaterStations() {
+      var tbody = document.getElementById('water-table-body');
+      if (!tbody) return;
+      tbody.innerHTML = '';
+      var now = new Date().toISOString().split('T')[0];
+      var overdue = 0;
+      waterStations.forEach(function(w, i) {
+        w.status = (!w.nextDate || w.nextDate >= now) ? 'نشطة' : 'متأخرة';
+        if (w.status === 'متأخرة') overdue++;
+        var docsForThis = waterDocs.filter(function(d) { return d.station === w.station && d.recordId === w.id; });
+        var tr = document.createElement('tr');
+        tr.innerHTML = '<td><b>' + w.station + '</b></td>' +
+          '<td>' + w.type + '</td>' +
+          '<td>' + w.date + '</td>' +
+          '<td style="color:' + (w.status === 'متأخرة' ? '#d32f2f;font-weight:700' : '#00695c;font-weight:600') + ';">' + (w.nextDate || '—') + '</td>' +
+          '<td><span class="status-badge ' + (w.status === 'نشطة' ? 'status-p' : '') + '" style="' + (w.status === 'متأخرة' ? 'background:#ffebee;color:#b71c1c;' : '') + '">' + w.status + '</span></td>' +
+          '<td style="font-size:12px;">' + (w.notes || '—') + '</td>' +
+          '<td>' + (docsForThis.length ? '📎 ' + docsForThis.length : '—') + '</td>' +
+          '<td class="no-print"><button class="btn btn-danger" style="padding:2px 6px;font-size:11px;" onclick="deleteWaterRecord(' + i + ')">🗑️</button></td>';
+        tbody.appendChild(tr);
+      });
+      document.getElementById('water-station-count').innerText = waterStations.length;
+      document.getElementById('water-overdue-count').innerText = overdue;
+      initSortableTable('table-water-stations');
+    }
+    function deleteWaterRecord(idx) {
+      if (!confirm('حذف سجل الصيانة هذا؟')) return;
+      _logDeletion('waterStations', waterStations[idx].id);
+      waterStations.splice(idx, 1);
+      syncStorage();
+      renderWaterStations();
+    }
+    function uploadWaterDoc() {
+      var fileInput = document.getElementById('ws-doc-file');
+      var station = document.getElementById('ws-doc-station').value;
+      var file = fileInput.files[0];
+      if (!file) return;
+      var reader = new FileReader();
+      reader.onload = function(e) {
+        waterDocs.push({
+          id: 'wd_' + Date.now(),
+          station: station,
+          fileName: file.name,
+          fileType: file.type,
+          data: e.target.result,
+          uploadedAt: new Date().toISOString()
+        });
+        syncStorage();
+        renderWaterDocs();
+        document.getElementById('ws-upload-status').textContent = '✅ تم رفع ' + file.name;
+        fileInput.value = '';
+      };
+      reader.readAsDataURL(file);
+    }
+    function renderWaterDocs() {
+      var container = document.getElementById('water-docs-list');
+      if (!container) return;
+      var stations = ['المحطة القديمة', 'المحطة الجديدة'];
+      var html = '';
+      stations.forEach(function(st) {
+        var docs = waterDocs.filter(function(d) { return d.station === st; });
+        html += '<div style="background:#f5f5f5;border-radius:8px;padding:10px;border:1px solid #e0e0e0;">';
+        html += '<h4 style="margin:0 0 6px;font-size:13px;color:#00695c;">' + st + ' (' + docs.length + ' مستند)</h4>';
+        if (docs.length === 0) {
+          html += '<div style="font-size:12px;color:#999;">لا توجد مستندات مرفوعة</div>';
+        } else {
+          html += '<div style="max-height:300px;overflow-y:auto;">';
+          docs.slice().reverse().forEach(function(d) {
+            var isImg = d.fileType && d.fileType.startsWith('image/');
+            html += '<div style="font-size:12px;padding:4px 0;border-bottom:1px solid #eee;display:flex;align-items:center;gap:6px;">';
+            html += isImg ? '<img src="' + d.data + '" style="width:40px;height:40px;object-fit:cover;border-radius:4px;">' : '📄';
+            html += '<a href="' + d.data + '" target="_blank" download="' + d.fileName + '" style="flex:1;color:#1565c0;text-decoration:none;">' + d.fileName + '</a>';
+            html += '<button class="btn btn-danger" style="padding:1px 6px;font-size:10px;" onclick="deleteWaterDoc(\'' + d.id + '\')">✕</button>';
+            html += '</div>';
+          });
+          html += '</div>';
+        }
+        html += '</div>';
+      });
+      container.innerHTML = html;
+    }
+    function deleteWaterDoc(id) {
+      if (!confirm('حذف المستند؟')) return;
+      for (var i = 0; i < waterDocs.length; i++) { if (waterDocs[i].id === id) { waterDocs.splice(i, 1); break; } }
+      syncStorage();
+      renderWaterDocs();
+    }
+
     // --- المقاولين ---
     function populateContractorSectorDropdown() {
       let sel = document.getElementById('ctr-sector');
@@ -11265,178 +11518,6 @@ function toggleEmployeeStatus(empId) {
       }).join('');
     }
 
-    function saAnalyze() {
-      var msg = (document.getElementById('sa-input').value || '').trim();
-      if (!msg) { document.getElementById('sa-result').innerHTML = '<div style="color:#c62828;font-size:12px;padding:4px;">⚠️ الصق رسالة واتساب أولاً</div>'; return; }
-
-      function parseFrac(s) {
-        s = (s||'').trim();
-        if (/نص/.test(s)) return 0.5;
-        if (/ربع/.test(s)) return 0.25;
-        if (/تلت/.test(s)) return 1/3;
-        if (/نص و تلت/.test(s)) return 5/6;
-        var m = s.match(/([\d.\/]+)/);
-        if (!m) return 0;
-        if (m[1].indexOf('/')!==-1) { var p=m[1].split('/'); return parseFloat(p[0])/parseFloat(p[1]); }
-        return parseFloat(m[1])||0;
-      }
-      function N(s) { return parseFloat((s||'').replace(/[^\d.]/g,''))||0; }
-      function extractSalt(text) {
-        var pats = [
-          { r: /(\d+)\s*كيلو\s*ملح/, fn: function(m){return N(m[1]);} },
-          { r: /نص\s*(?:كيلو\s*)?ملح/, fn: function(){return 0.5;} },
-          { r: /ربع\s*(?:كيلو\s*)?ملح/, fn: function(){return 0.25;} },
-          { r: /تلت\s*(?:كيلو\s*)?ملح/, fn: function(){return 1/3;} },
-          { r: /كيلو\s*ملح/, fn: function(){return 1;} },
-          { r: /(\d+)\s*ملح/, fn: function(m){return N(m[1]);} },
-        ];
-        for (var i=0;i<pats.length;i++) { var mm=text.match(pats[i].r); if(mm) return pats[i].fn(mm); }
-        return 0;
-      }
-      function extractYeast(text) {
-        var m = text.match(/((?:نص|ربع|تلت|\d+(?:\.\d+)?)\s*(?:باكو\s*)?)?خم[يى]р[ةه]/);
-        if (!m) return 0;
-        var q = parseFrac(m[1]||'1');
-        return q * 45;
-      }
-
-      /* ── date ── */
-      var dateMatch = msg.match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})/);
-      var dateStr = '';
-      if (dateMatch) {
-        var dd=dateMatch[1].padStart(2,'0'), mm=dateMatch[2].padStart(2,'0'), yy=dateMatch[3];
-        if(yy.length===2) yy='20'+yy;
-        dateStr=yy+'-'+mm+'-'+dd;
-      }
-
-      /* ── split into two sections: before and after "للمقاولين" ── */
-      var ctrIdx = msg.indexOf('للمقاولين');
-      var mainSection = ctrIdx !== -1 ? msg.substring(0, ctrIdx) : msg;
-      var ctrSection = ctrIdx !== -1 ? msg.substring(ctrIdx) : '';
-
-      /* ── main production ── */
-      var mainFlour=0, mainBread=0, delivered=0, inOven=0;
-      var mf = mainSection.match(/(\d+)\s*(?:كيلو\s*)?دقيق\s*=\s*(\d+)/);
-      if (mf) { mainFlour=N(mf[1]); mainBread=N(mf[2]); }
-      var dl = mainSection.match(/تم\s*تسليم\s*(?:المطبخ|المطباخ)\s*(\d+)/);
-      if (dl) delivered=N(dl[1]);
-      var ov = mainSection.match(/يوجد\s*(?:داخل|في)\s*الفرن\s*(\d+)/);
-      if (ov) inOven=N(ov[1]);
-      if (!dl && !ov) { var ov2=mainSection.match(/(?:داخل|في)\s*الفرن\s*(\d+)/); if(ov2) inOven=N(ov2[1]); }
-
-      /* ── main materials ── */
-      var mYeast = extractYeast(mainSection);
-      var mSalt = extractSalt(mainSection);
-      var mBran = N((mainSection.match(/(\d+)\s*كيلو\s*ر[دض]/)||[])[1]);
-      var mHalak = N((mainSection.match(/(\d+)\s*هالك/)||[])[1]);
-
-      /* ── contractor production ── */
-      var ctrFlour=0, ctrBread=0;
-      if (ctrSection) {
-        var ctf = ctrSection.match(/(\d+)\s*(?:كيلو\s*)?دقيق\s*=\s*(\d+)/);
-        if (ctf) { ctrFlour=N(ctf[1]); ctrBread=N(ctf[2]); }
-      }
-
-      /* ── individual contractors ── */
-      var contractors = [];
-      var knownNames = [
-        { regex: /م\.?\s*شعبان/, name: 'م. شعبان' },
-        { regex: /ممدوح/, name: 'ممدوح' },
-        { regex: /مصطفى/, name: 'مصطفى' },
-        { regex: /اسام[هة]/, name: 'اسامه' },
-        { regex: /ابراه[يى]م/, name: 'ابراهيم' },
-        { regex: /فارس/, name: 'فارس' },
-        { regex: /كامل/, name: 'كامل' },
-        { regex: /ابوعمار/, name: 'ابوعمار' },
-        { regex: /محمد\s*حسنى/, name: 'محمد حسنى' },
-        { regex: /محمد\s*شعبان/, name: 'محمد شعبان' },
-        { regex: /ناجح/, name: 'ناجح' },
-        { regex: /اسعد/, name: 'اسعد' },
-        { regex: /ام\s*جبريل/, name: 'ام جبريل' },
-      ];
-      knownNames.forEach(function(p) {
-        var re = new RegExp(p.regex.source + '\\s*(\\d+)','i');
-        var m = msg.match(re);
-        if (m) contractors.push({ name: p.name, count: N(m[1]) });
-      });
-
-      /* ── contractor materials (second section) ── */
-      var ctYeast=0, ctSalt=0, ctBran=0;
-      if (ctrSection) {
-        ctYeast = extractYeast(ctrSection);
-        ctSalt = extractSalt(ctrSection);
-        ctBran = N((ctrSection.match(/(\d+)\s*كيلو\s*ر[دض]/)||[])[1]);
-      }
-
-      /* ── fill production form ── */
-      window._saFilling = true;
-      if (dateStr) document.getElementById('bprod-date').value = dateStr;
-      document.getElementById('bprod-count').value = mainBread||0;
-      if(mainFlour) document.getElementById('bprod-ing-ING001').value = mainFlour;
-      document.getElementById('bprod-ing-ING002').value = mYeast||0;
-      document.getElementById('bprod-ing-ING003').value = mSalt||0;
-      document.getElementById('bprod-ing-ING004').value = mBran||0;
-      document.getElementById('bprod-notes').value = 'تحليل واتساب' + (delivered?' | تسليم: '+delivered:'') + (inOven?' | في الفرن: '+inOven:'') + (mHalak?' | هالك: '+mHalak:'');
-      window._saFilling = false;
-
-      /* ── fill contractor supply form ── */
-      if (ctrBread > 0) {
-        document.getElementById('bctr-date').value = dateStr;
-        document.getElementById('bctr-count').value = ctrBread;
-        document.getElementById('bctr-ing-ING001').value = ctrFlour||0;
-        document.getElementById('bctr-ing-ING002').value = ctYeast||0;
-        document.getElementById('bctr-ing-ING003').value = ctSalt||0;
-        document.getElementById('bctr-ing-ING004').value = ctBran||0;
-      }
-
-      /* ── build result ── */
-      var actualTotal = delivered + inOven;
-      var diff = mainBread > 0 ? mainBread - actualTotal : 0;
-      var flourPerLoaf = mainBread>0 ? ((mainFlour*1000)/mainBread).toFixed(1) : '—';
-      var ctrFlourPerLoaf = ctrBread>0 ? ((ctrFlour*1000)/ctrBread).toFixed(1) : '—';
-      var totalFlour = mainFlour+ctrFlour, totalBread = mainBread+ctrBread;
-
-      var h = '';
-      h += '<div style="background:#e8f5e9;border-radius:8px;padding:8px;margin-bottom:6px;font-size:12px;">';
-      h += '<div style="font-weight:700;color:#1b5e20;margin-bottom:4px;">✅ تم التحليل بنجاح — اضغط "🏭 تسجيل الإنتاج" أو "🚚 تسجيل التوريد" للحفظ</div>';
-      h += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;">';
-      h += '<div>📅 <b>التاريخ:</b> '+(dateStr||'—')+'</div>';
-      h += '<div>🌾 <b>الدقيق (مزرعة):</b> '+mainFlour+' كجم</div>';
-      h += '<div>🍞 <b>الأرغفة:</b> '+mainBread+'</div>';
-      h += '<div>📦 <b>تم التسليم:</b> '+(delivered||'—')+'</div>';
-      h += '<div>🔥 <b>داخل الفرن:</b> '+(inOven||'—')+'</div>';
-      h += '<div>📊 <b>المحصلة:</b> '+(actualTotal||'—')+'</div>';
-      h += '</div></div>';
-
-      if (mainBread>0 && diff!==0) {
-        var dc=diff>0?'#c62828':'#1565c0';
-        h += '<div style="background:'+(diff>0?'#ffebee':'#e3f2fd')+';border-radius:6px;padding:6px;margin-bottom:6px;font-size:12px;">';
-        h += '<b style="color:'+dc+';">⚠️ فرق '+(diff>0?'+':'')+diff+' رغيف (المنتج: '+mainBread+' — المحصلة: '+actualTotal+')</b></div>';
-      }
-
-      h += '<div style="background:#fff3e0;border-radius:8px;padding:6px;margin-bottom:6px;font-size:11px;">';
-      h += '<div style="font-weight:700;color:#e65100;margin-bottom:3px;">🧮 المزرعة</div>';
-      h += '<div>🌾 دقيق: '+mainFlour+' كجم | 🍞 أرغفة: '+mainBread+' | ⚖️ دقيق/رغيف: <b>'+flourPerLoaf+' جرام</b></div>';
-      h += '<div>🧫 خميرة: '+(mYeast||0).toFixed(1)+' كجم | 🧂 ملح: '+(mSalt||0)+' كجم | 🌾 ردة: '+(mBran||0)+' كجم'+(mHalak?' | ⚠️ هالك: '+mHalak+' كجم':'')+'</div>';
-      h += '</div>';
-
-      if (contractors.length>0) {
-        h += '<div style="background:#e3f2fd;border-radius:8px;padding:6px;margin-bottom:6px;font-size:11px;">';
-        h += '<div style="font-weight:700;color:#1565c0;margin-bottom:3px;">🚚 المقاولين — '+ctrBread+' رغيف من '+ctrFlour+' كجم دقيق</div>';
-        contractors.forEach(function(c){ h+='<div>• '+c.name+': <b>'+c.count+'</b> رغيف</div>'; });
-        h += '<div style="margin-top:3px;">⚖️ دقيق/رغيف: <b>'+ctrFlourPerLoaf+' جرام</b></div>';
-        h += '<div>🧫 خميرة: '+(ctYeast||0).toFixed(1)+' كجم | 🧂 ملح: '+(ctSalt||0)+' كجم | 🌾 ردة: '+(ctBran||0)+' كجم</div>';
-        h += '</div>';
-      }
-
-      h += '<div style="background:#f3e5f5;border-radius:8px;padding:6px;font-size:11px;">';
-      h += '<div style="font-weight:700;color:#6a1b9a;margin-bottom:3px;">📋 الإجمالي الكلي</div>';
-      h += '<div>🌾 دقيق: <b>'+totalFlour+' كجم</b> | 🍞 أرغفة: <b>'+totalBread+'</b> | ⚖️ متوسط: <b>'+(totalBread>0?((totalFlour*1000)/totalBread).toFixed(1):'—')+' جرام/رغيف</div>';
-      h += '</div>';
-
-      document.getElementById('sa-result').innerHTML = h;
-    }
-
     function updateBakeryProductionIngredientStocks() {
       ['ING001','ING002','ING003','ING004','ING007'].forEach(function(id) {
         var ing = bakeryIngredients.find(function(i) { return i.id === id; });
@@ -11457,7 +11538,6 @@ function toggleEmployeeStatus(empId) {
     }
 
     function estimateBprodIngredients() {
-      if(window._saFilling)return;
       var breadCount = parseInt(document.getElementById('bprod-count').value) || 0;
       if (breadCount > 0) {
         var flourKg = breadCount / 21;
@@ -12173,6 +12253,8 @@ function toggleEmployeeStatus(empId) {
       excludedEmployees = _safeJsonParse(localStorage.getItem('excludedEmployees'), []);
       inventoryVouchers = _safeJsonParse(localStorage.getItem('lineh_inventory'), []);
       periodicMaintenance = _safeJsonParse(localStorage.getItem('lineh_periodic_maintenance'), []);
+      waterStations = _safeJsonParse(localStorage.getItem('lineh_water_stations'), []);
+      waterDocs = _safeJsonParse(localStorage.getItem('lineh_water_docs'), []);
       teaSugarDisbursements = _safeJsonParse(localStorage.getItem('lineh_tea_sugar'), []);
       teaSugarBatches = _safeJsonParse(localStorage.getItem('lineh_tea_sugar_batches'), []);
       mealLogs = _safeJsonParse(localStorage.getItem('lineh_meal_logs'), []);
@@ -12362,7 +12444,7 @@ function toggleEmployeeStatus(empId) {
     var _syncTimer = null;
     var _pulledAt = {};
     var _forcePull = false;
-    var     _CODE_VERSION = '3.0';
+    var     _CODE_VERSION = '3.1';
     (function() {
       localStorage.setItem('_codeVersion', _CODE_VERSION);
     })();
@@ -12378,7 +12460,7 @@ function toggleEmployeeStatus(empId) {
 
     function getAllDataForSync() {
       var o = getAllDataObject();
-      var keys = ['employees','roomsCapacity','vacations','inventoryVouchers','excludedEmployees','contractors','mealLogs','inventoryItems','hospitalities','adminOvertime','maintenanceRecords','septicRecords','periodicMaintenance','teaSugarDisbursements','teaSugarBatches','dynamicSectors','contractorSectors','contractorRooms','dynamicRooms','dynamicSeptics','dynamicDepts','dynamicTitles','dynamicVisitorTypes','bakeryContractorsNames','evaluations','evalTemplates','appUsers','auditLog','bakeryIngredients','bakeryProductions','bakeryContractorSupplies','bakeryInvoices','bakeryStockLog','roomAssets','archiveData','quickActions','deptTitles','manualTotalBeds','dailyStats','finTransactions','finBudgets','syncDeletions'];
+      var keys = ['employees','roomsCapacity','vacations','inventoryVouchers','excludedEmployees','contractors','mealLogs','inventoryItems','hospitalities','adminOvertime','maintenanceRecords','septicRecords','periodicMaintenance','teaSugarDisbursements','teaSugarBatches','dynamicSectors','contractorSectors','contractorRooms','dynamicRooms','dynamicSeptics','dynamicDepts','dynamicTitles','dynamicVisitorTypes','bakeryContractorsNames','evaluations','evalTemplates','appUsers','auditLog','bakeryIngredients','bakeryProductions','bakeryContractorSupplies','bakeryInvoices','bakeryStockLog','roomAssets','archiveData','quickActions','deptTitles','manualTotalBeds','dailyStats','finTransactions','finBudgets','syncDeletions','waterStations','waterDocs'];
       var result = {};
       for (var ki = 0; ki < keys.length; ki++) { result[keys[ki]] = o[keys[ki]]; }
       return result;
@@ -12507,13 +12589,18 @@ function toggleEmployeeStatus(empId) {
         dynamicDepts: function(d) { return d.name || d; },
         dynamicTitles: function(t) { return t.name || t; },
         finTransactions: function(t) { return (t.date || '') + '|' + (t.task || '') + '|' + (t.orderNum || '') + '|' + (t.itemName || ''); },
-        finBudgets: function(b) { return (b.code || '') + '|' + (b.month || '') + '|' + (b.year || ''); }
+        finBudgets: function(b) { return (b.code || '') + '|' + (b.month || '') + '|' + (b.year || ''); },
+        waterStations: function(w) { return w.id || w.date + '|' + w.station + '|' + w.type; },
+        waterDocs: function(d) { return d.id || d.station + '|' + d.fileName; }
       };
       return keyFns[entity] ? keyFns[entity](item) : JSON.stringify(item);
     }
 
     async function pushToSupabase() {
-      if (!supabaseConnected) return false;
+      if (!supabaseConnected) {
+        showSyncToast('❌ غير متصل بـ Supabase — لم يتم الحفظ في السحابة');
+        return false;
+      }
       if (_pushInProgress) return true;
       _pushInProgress = true;
       try {
@@ -12535,9 +12622,12 @@ function toggleEmployeeStatus(empId) {
           updateLastSyncTime();
         } else {
           syncLog('⚠️ فشل الدفع - ' + resp.status);
+          showSyncToast('⚠️ فشل رفع البيانات إلى السحابة (كود ' + resp.status + ') — البيانات محفوظة محلياً');
+          updateSupabaseStatus('disconnected');
         }
       } catch(e) {
         syncLog('⚠️ خطأ في الدفع: ' + e.message);
+        showSyncToast('❌ خطأ في الاتصال — البيانات محفوظة محلياً فقط');
       }
       _pushInProgress = false;
       return true;
@@ -12683,7 +12773,7 @@ function toggleEmployeeStatus(empId) {
     var debouncedSyncToSupabase = function() { setTimeout(pushToSupabase, 500); };
 
     // backward compat for old function refs
-    var DATA_KEYS = ['employees','roomsCapacity','vacations','hospitalities','maintenanceRecords','septicRecords','inventoryVouchers','inventoryItems','excludedEmployees','periodicMaintenance','teaSugarDisbursements','teaSugarBatches','mealLogs','contractors','dynamicSectors','dynamicRooms','dynamicSeptics','dynamicDepts','dynamicTitles','deptTitles','appUsers','auditLog','bakeryIngredients','bakeryProductions','bakeryContractorSupplies','bakeryInvoices','currentUser','manualTotalBeds','roomAssets','archiveData','quickActions'];
+    var DATA_KEYS = ['employees','roomsCapacity','vacations','hospitalities','maintenanceRecords','septicRecords','inventoryVouchers','inventoryItems','excludedEmployees','periodicMaintenance','teaSugarDisbursements','teaSugarBatches','mealLogs','contractors','dynamicSectors','dynamicRooms','dynamicSeptics','dynamicDepts','dynamicTitles','deptTitles','appUsers','auditLog','bakeryIngredients','bakeryProductions','bakeryContractorSupplies','bakeryInvoices','currentUser','manualTotalBeds','roomAssets','archiveData','quickActions','waterStations','waterDocs'];
 
     // Snapshot after pull — نعرف إيه اللي اتشال عشان push ما يضيفوش تاني
     var _snapshotKeys = {};
@@ -12703,6 +12793,7 @@ function toggleEmployeeStatus(empId) {
       if (key==='appUsers') return appUsers; if (key==='auditLog') return auditLog; if (key==='bakeryIngredients') return bakeryIngredients; if (key==='bakeryProductions') return bakeryProductions;
       if (key==='bakeryContractorSupplies') return bakeryContractorSupplies; if (key==='bakeryInvoices') return bakeryInvoices; if (key==='roomAssets') return roomAssets;
       if (key==='archiveData') return archiveData; if (key==='quickActions') return quickActions;
+      if (key==='waterStations') return waterStations; if (key==='waterDocs') return waterDocs;
       if (key==='adminOvertime') return adminOvertime; if (key==='contractorSectors') return contractorSectors; if (key==='contractorRooms') return contractorRooms;
       if (key==='evaluations') return evaluations; if (key==='evalTemplates') return evalTemplates; if (key==='bakeryStockLog') return bakeryStockLog;
       return null;
@@ -12759,6 +12850,8 @@ function toggleEmployeeStatus(empId) {
       else if (key === 'roomAssets') roomAssets = val;
       else if (key === 'archiveData') archiveData = val;
       else if (key === 'quickActions') quickActions = val;
+      else if (key === 'waterStations') waterStations = val;
+      else if (key === 'waterDocs') waterDocs = val;
       else if (key === 'dailyStats') dailyStats = val;
       else if (key === 'finTransactions') finTransactions = val;
       else if (key === 'finBudgets') finBudgets = val;
@@ -12801,6 +12894,8 @@ function toggleEmployeeStatus(empId) {
       else if (key === 'roomAssets') return roomAssets;
       else if (key === 'archiveData') return archiveData;
       else if (key === 'quickActions') return quickActions;
+      else if (key === 'waterStations') return waterStations;
+      else if (key === 'waterDocs') return waterDocs;
       else if (key === 'dailyStats') return dailyStats;
       else if (key === 'finTransactions') return finTransactions;
       else if (key === 'finBudgets') return finBudgets;
@@ -12905,7 +13000,9 @@ function toggleEmployeeStatus(empId) {
         quickActions: function(q) { return q.label || q; },
         deptTitles: function(d) { return (d.dept||'') + '|' + (d.title||''); },
         evaluations: function(e) { return (e.empCode||e.employeeCode||'') + '|' + (e.date||'') + '|' + (e.month||e.type||'') + '|' + (e.year||''); },
-        evalTemplates: function(e) { return (e.title||'') + '|' + (e.name||e.templateName||''); }
+        evalTemplates: function(e) { return (e.title||'') + '|' + (e.name||e.templateName||''); },
+        waterStations: function(w) { return w.id || w.date + '|' + w.station + '|' + w.type; },
+        waterDocs: function(d) { return d.id || d.station + '|' + d.fileName; }
       };
       syncDeletions.forEach(function(del) {
         var fn = _keyFns[del.entity];
@@ -12976,6 +13073,8 @@ function toggleEmployeeStatus(empId) {
       dedupBy(inventoryVouchers, function(v) { return v.voucherId || v.id || v._id || JSON.stringify(v); });
       dedupBy(finTransactions, function(t) { return (t.date || '') + '|' + (t.task || '') + '|' + (t.orderNum || '') + '|' + (t.itemName || ''); });
       dedupBy(finBudgets, function(b) { return (b.code || '') + '|' + (b.month || '') + '|' + (b.year || ''); });
+      dedupBy(waterStations, function(w) { return w.id || w.date + '|' + w.station + '|' + w.type; });
+      dedupBy(waterDocs, function(d) { return d.id || d.station + '|' + d.fileName; });
     }
 
     function showSyncToast(msg) {
@@ -13180,6 +13279,7 @@ function toggleEmployeeStatus(empId) {
         archiveData,
         quickActions,
         syncDeletions,
+        waterStations, waterDocs,
         dynamicVisitorTypes,
         bakeryContractorsNames
       };
@@ -13742,6 +13842,7 @@ function toggleEmployeeStatus(empId) {
         }, 0);
       }, 0);
 
+      try { var _iv = validateDataIntegrity(); if (_iv.indexOf('⚠️') >= 0) console.warn('⚠️ فحص البيانات:\n' + _iv); } catch(_e) {}
       // ❌ تعطيل التحميل التلقائي من D: drive — الباك أب يدوي من ➕ الإدارة المرنة
       // D: drive restore now only available via manual button
       function updateDashClock() {
@@ -13831,6 +13932,36 @@ function toggleEmployeeStatus(empId) {
       });
     };
 
+
+    // ====== Data Integrity Validation ======
+    function validateDataIntegrity() {
+      var issues = [];
+      if (!Array.isArray(employees)) issues.push('❌ employees مش array');
+      if (!Array.isArray(roomsCapacity)) issues.push('❌ roomsCapacity مش array');
+      if (!Array.isArray(vacations)) issues.push('❌ vacations مش array');
+      if (!Array.isArray(hospitalities)) issues.push('❌ hospitalities مش array');
+      if (!Array.isArray(maintenanceRecords)) issues.push('❌ maintenanceRecords مش array');
+      if (!Array.isArray(septicRecords)) issues.push('❌ septicRecords مش array');
+      employees.forEach(function(e, i) {
+        if (!e || typeof e !== 'object') { issues.push('⚠️ موظف رقم ' + i + ' مش object'); return; }
+        if (!e.name && !e.code) issues.push('⚠️ موظف ' + (e.code || i) + ' مفيش اسم');
+        if (e.room && !roomsCapacity.some(function(r) { return r.number === e.room; })) issues.push('⚠️ ' + (e.name || e.code) + ' مسكن في غرفة غير موجودة: ' + e.room);
+      });
+      roomsCapacity.forEach(function(r, i) {
+        if (!r || typeof r !== 'object') { issues.push('⚠️ غرفة رقم ' + i + ' مش object'); return; }
+        if (!r.number) issues.push('⚠️ غرفة ' + i + ' مفيش رقم');
+      });
+      if (issues.length === 0) return '✅ لا توجد مشاكل في البيانات';
+      return issues.join('\n');
+    }
+    function showValidationResult() {
+      var msg = validateDataIntegrity();
+      if (msg.startsWith('✅')) {
+        alert('✅ فحص البيانات: لا توجد مشاكل');
+      } else {
+        alert('⚠️ تم العثور على مشاكل:\n\n' + msg);
+      }
+    }
 
     // ====== Data Exchange: Excel Export ======
     function getMonthNameAr(dateStr) {
@@ -15055,6 +15186,214 @@ function toggleEmployeeStatus(empId) {
     lbl.setAttribute('for', inp.id);
   });
 })();
+
+// ====== AI Assistant (Gemini) ======
+var _aiKey = localStorage.getItem('_gemini_key') || '';
+var _aiMessages = _safeJsonParse(localStorage.getItem('_ai_messages'), []);
+var _aiImageData = null;
+
+function renderAiAssistant() {
+  var container = document.getElementById('ai-messages');
+  if (!container) return;
+  container.innerHTML = '';
+  if (_aiMessages.length === 0) {
+    container.innerHTML = '<div style="text-align:center;padding:40px 20px;color:#999;"><div style="font-size:48px;margin-bottom:10px;">🤖</div><b style="font-size:15px;">المساعد الذكي</b><div style="font-size:12px;margin-top:4px;">اسأل أي سؤال عن النظام — الموظفين، المخزون، الصيانة، المخبز، المالية...</div><div style="font-size:11px;color:#bbb;margin-top:12px;">مدعوم بـ Gemini AI</div></div>';
+  } else {
+    _aiMessages.forEach(function(m) {
+      var div = document.createElement('div');
+      div.className = m.role === 'user' ? 'msg-user' : 'msg-ai';
+      div.innerHTML = m.role === 'user' ? '👤 ' + m.text : m.text;
+      container.appendChild(div);
+    });
+    container.scrollTop = container.scrollHeight;
+  }
+  document.getElementById('ai-status').textContent = _aiKey ? '🟢 متصل' : '🔴 غير متصل — اضغط 🔑';
+}
+
+function addAiMessage(text, role) {
+  _aiMessages.push({ role: role, text: text, time: new Date().toISOString() });
+  localStorage.setItem('_ai_messages', JSON.stringify(_aiMessages));
+  renderAiAssistant();
+}
+
+function buildSystemPrompt() {
+  var data = getAllDataObject();
+  var parts = [];
+  parts.push('أنت مساعد ذكي لنظام LINAHSYSTEM لإدارة المزرعة. أجب بالعامية المصرية دائمًا.');
+  parts.push('لديك access لكل بيانات النظام أدناه. أجب بناءً على هذه البيانات فقط.');
+  parts.push('إذا طلب المستخدم تحليلًا أو إحصاء، احسبها بنفسك من البيانات.');
+  parts.push('إذا طلب تنبؤات، استخدم الاتجاهات في البيانات.');
+  parts.push('إذا طلب صورة، حللها بناءً على ما تراه.');
+  parts.push('');
+  parts.push('=== بيانات النظام الحالية ===');
+  parts.push('عدد الموظفين: ' + (data.employees ? data.employees.length : 0));
+  if (data.employees && data.employees.length > 0) {
+    var sectors = {}; data.employees.forEach(function(e) { var s = e.sector || e.sectorName || e.قسم || 'غير محدد'; sectors[s] = (sectors[s]||0)+1; });
+    parts.push('توزيع الموظفين بالقطاع: ' + JSON.stringify(sectors));
+    parts.push('عينة موظفين (أول 10): ' + JSON.stringify(data.employees.slice(0,10).map(function(e){return {name:e.name||e.الاسم,code:e.code||e.الكود,sector:e.sector||e.sectorName||e.قسم,phone:e.phone||e.التليفون||e.موبايل}})));
+  }
+  parts.push('عدد الغرف بالسكن: ' + (data.roomsCapacity ? data.roomsCapacity.length : 0));
+  if (data.roomsCapacity && data.roomsCapacity.length > 0) parts.push('عينة غرف: ' + JSON.stringify(data.roomsCapacity.slice(0,5)));
+  parts.push('عدد سجلات الصيانة: ' + (data.maintenanceRecords ? data.maintenanceRecords.length : 0));
+  parts.push('عدد سجلات البيارات: ' + (data.septicRecords ? data.septicRecords.length : 0));
+  parts.push('عدد سجلات الصيانة الدورية: ' + (data.periodicMaintenance ? data.periodicMaintenance.length : 0));
+  parts.push('عدد سجلات العزل: ' + (data.excludedEmployees ? data.excludedEmployees.length : 0));
+  parts.push('عدد سجلات الضيافة: ' + (data.hospitalities ? data.hospitalities.length : 0));
+  parts.push('عدد الإجازات: ' + (data.vacations ? data.vacations.length : 0));
+  parts.push('عدد سجلات شاي وسكر: ' + (data.teaSugarDisbursements ? data.teaSugarDisbursements.length : 0));
+  parts.push('عدد سجلات المخبز (إنتاج): ' + (data.bakeryProductions ? data.bakeryProductions.length : 0));
+  parts.push('عدد سجلات المخبز (توريد): ' + (data.bakeryContractorSupplies ? data.bakeryContractorSupplies.length : 0));
+  parts.push('عدد فواتير المخبز: ' + (data.bakeryInvoices ? data.bakeryInvoices.length : 0));
+  parts.push('عدد مكونات المخبز: ' + (data.bakeryIngredients ? data.bakeryIngredients.length : 0));
+  parts.push('عدد المقاولين: ' + (data.contractors ? data.contractors.length : 0));
+  parts.push('عدد محطات المياه (صيانة): ' + (data.waterStations ? data.waterStations.length : 0));
+  parts.push('عدد مستندات محطات المياه: ' + (data.waterDocs ? data.waterDocs.length : 0));
+  parts.push('عدد سجلات المخزون: ' + (data.inventoryVouchers ? data.inventoryVouchers.length : 0));
+  parts.push('عدد أصناف المخزون: ' + (data.inventoryItems ? data.inventoryItems.length : 0));
+  if (data.bakeryProductions && data.bakeryProductions.length > 0) {
+    var totalBread = 0, totalFlour = 0, totalCost = 0;
+    data.bakeryProductions.forEach(function(p) { totalBread += parseInt(p.breadCount||p.count||0); totalFlour += parseInt(p.flourQty||p.flourKg||0); totalCost += parseFloat(p.opCost||p.operatingCost||0); });
+    parts.push('إجمالي إنتاج المخبز: ' + totalBread + ' رغيف, ' + totalFlour + ' كجم دقيق, تكاليف تشغيل: ' + totalCost.toFixed(2));
+  }
+  if (data.waterStations && data.waterStations.length > 0) {
+    var now = new Date().toISOString().split('T')[0];
+    var overdue = data.waterStations.filter(function(w){return w.nextDate && w.nextDate < now;});
+    parts.push('صيانات محطات المياه المتأخرة: ' + overdue.length);
+    parts.push('آخر صيانة للمحطة القديمة: ' + JSON.stringify(data.waterStations.slice(-3)));
+  }
+  var _now = new Date();
+  parts.push('');
+  parts.push('التاريخ والوقت الحالي: ' + _now.toLocaleDateString('ar-EG') + ' ' + _now.toLocaleTimeString('ar-EG'));
+  parts.push('');
+  parts.push('ملاحظات:');
+  parts.push('- إذا قال المستخدم "حلل الصورة" أو أرفع صورة فاتورة — استخرج الأرقام وحللها');
+  parts.push('- حسّن التنسيق باستخدام جداول HTML وقوائم عند عرض البيانات');
+  parts.push('- لا تخرج عن سياق النظام — أنت مساعد لادارة المزرعة فقط');
+  parts.push('- استخدم الأرقام العربية (0-9) للارقام');
+  return parts.join('\n');
+}
+
+async function callGemini(messages) {
+  if (!_aiKey) { addAiMessage('⚠️ من فضلك أدخل مفتاح Gemini API أولاً (اضغط على 🔑 في الأعلى)', 'ai'); return; }
+  var sysPrompt = buildSystemPrompt();
+  var contents = [];
+  contents.push({ role: 'user', parts: [{ text: sysPrompt }] });
+  contents.push({ role: 'model', parts: [{ text: 'فهمت! أنا جاهز لأسئلتك عن النظام.' }] });
+  for (var i = 0; i < messages.length; i++) {
+    var parts = [{ text: messages[i].text }];
+    if (messages[i].role === 'user' && i === messages.length - 1 && _aiImageData) {
+      parts.push({ inline_data: { mime_type: _aiImageData.mime, data: _aiImageData.data } });
+    }
+    contents.push({ role: messages[i].role === 'ai' ? 'model' : 'user', parts: parts });
+  }
+  try {
+    var resp = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=' + _aiKey, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ contents: contents, generationConfig: { temperature: 0.4, maxOutputTokens: 4096 } })
+    });
+    if (!resp.ok) {
+      var errBody = await resp.text();
+      if (resp.status === 403 || resp.status === 400) throw new Error('خطأ في المفتاح — تأكد من صحة API Key');
+      throw new Error('خطأ ' + resp.status + ': ' + errBody.substring(0,200));
+    }
+    var data = await resp.json();
+    var text = (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts && data.candidates[0].content.parts[0].text) || '⚠️ لم أحصل على رد';
+    return text;
+  } catch(e) {
+    throw e;
+  }
+}
+
+function showAiLoading() {
+  var container = document.getElementById('ai-messages');
+  var div = document.createElement('div');
+  div.className = 'msg-ai';
+  div.id = 'ai-loading';
+  div.innerHTML = '⏳ جاري التفكير...';
+  container.appendChild(div);
+  container.scrollTop = container.scrollHeight;
+}
+
+function removeAiLoading() {
+  var el = document.getElementById('ai-loading');
+  if (el) el.remove();
+}
+
+async function sendAiMessage() {
+  var input = document.getElementById('ai-input');
+  var text = input.value.trim();
+  if (!text) return;
+  if (!_aiKey) { showAiKeyDialog(); return; }
+  input.value = '';
+  clearAiImage();
+  addAiMessage(text, 'user');
+  showAiLoading();
+  try {
+    var reply = await callGemini(_aiMessages);
+    removeAiLoading();
+    addAiMessage(reply, 'ai');
+  } catch(e) {
+    removeAiLoading();
+    addAiMessage('⚠️ ' + e.message, 'ai');
+  }
+}
+
+function quickAi(q) {
+  document.getElementById('ai-input').value = q;
+  sendAiMessage();
+}
+
+function showAiKeyDialog() {
+  var key = prompt('🔑 أدخل مفتاح Gemini API:\n(احصل عليه مجاناً من aistudio.google.com → API Key)', _aiKey);
+  if (key) {
+    _aiKey = key.trim();
+    localStorage.setItem('_gemini_key', _aiKey);
+    document.getElementById('ai-status').textContent = '🟢 متصل';
+    addAiMessage('✅ تم حفظ مفتاح Gemini API بنجاح! أنا جاهز.', 'ai');
+  }
+}
+
+function startVoiceInput() {
+  var SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRecognition) { addAiMessage('⚠️ متصفحك لا يدعم الإدخال الصوتي. استخدم Chrome أو Edge.', 'ai'); return; }
+  var recognition = new SpeechRecognition();
+  recognition.lang = 'ar-EG';
+  recognition.continuous = false;
+  recognition.interimResults = false;
+  var btn = document.getElementById('ai-voice-btn');
+  btn.textContent = '🔴';
+  recognition.onresult = function(event) {
+    var transcript = event.results[0][0].transcript;
+    document.getElementById('ai-input').value = transcript;
+    btn.textContent = '🎤';
+    sendAiMessage();
+  };
+  recognition.onerror = function() { btn.textContent = '🎤'; };
+  recognition.onend = function() { btn.textContent = '🎤'; };
+  recognition.start();
+}
+
+function handleAiImage(event) {
+  var file = event.target.files[0];
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    var dataUrl = e.target.result;
+    _aiImageData = { mime: file.type, data: dataUrl.split(',')[1] };
+    var preview = document.getElementById('ai-image-preview');
+    var img = document.getElementById('ai-image-tag');
+    preview.style.display = 'block';
+    img.src = dataUrl;
+  };
+  reader.readAsDataURL(file);
+}
+
+function clearAiImage() {
+  _aiImageData = null;
+  document.getElementById('ai-image-preview').style.display = 'none';
+  document.getElementById('ai-image-input').value = '';
+}
 </script>
 
 </body>
