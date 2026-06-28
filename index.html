@@ -15200,10 +15200,10 @@ var _aiTools = [
     parameters: {
       type: 'object',
       properties: {
-        category: { type: 'string', description: 'التصنيف' },
-        task: { type: 'string', description: 'الوصف' },
-        room: { type: 'string', description: 'الغرفة' },
-        urgent: { type: 'boolean', description: 'عاجل' }
+        category: { type: 'string' },
+        task: { type: 'string' },
+        room: { type: 'string' },
+        urgent: { type: 'boolean' }
       },
       required: ['category', 'task']
     }
@@ -15214,9 +15214,9 @@ var _aiTools = [
     parameters: {
       type: 'object',
       properties: {
-        name: { type: 'string', description: 'الاسم' },
-        date: { type: 'string', description: 'التاريخ' },
-        trips: { type: 'number', description: 'عدد المرات' }
+        name: { type: 'string' },
+        date: { type: 'string' },
+        trips: { type: 'number' }
       },
       required: ['name']
     }
@@ -15227,11 +15227,11 @@ var _aiTools = [
     parameters: {
       type: 'object',
       properties: {
-        station: { type: 'string', description: 'المحطة' },
-        type: { type: 'string', description: 'نوع الصيانة' },
-        date: { type: 'string', description: 'التاريخ' },
-        nextDate: { type: 'string', description: 'التاريخ القادم' },
-        notes: { type: 'string', description: 'ملاحظات' }
+        station: { type: 'string' },
+        type: { type: 'string' },
+        date: { type: 'string' },
+        nextDate: { type: 'string' },
+        notes: { type: 'string' }
       },
       required: ['station', 'type']
     }
@@ -15309,11 +15309,10 @@ function addAiMessage(text, role) {
 }
 
 function buildSystemPrompt() {
-  var data = getAllDataObject();
-  return 'أنت مساعد LINAHSYSTEM بالمصرية. أجب من البيانات فقط. استخدم جداول HTML وارقام عربية.\n'
-    + 'موظفين:' + (data.employees?.length||0) + ' صيانة:' + (data.maintenanceRecords?.length||0)
-    + ' مخبز:' + (data.bakeryProductions?.length||0) + ' مخزون:' + (data.inventoryItems?.length||0)
-    + ' | ' + new Date().toLocaleDateString('ar-EG');
+  var d = getAllDataObject();
+  return 'أنت مساعد LINAHSYSTEM بالمصرية. للتسجيل استخدم الأدوات.\n'
+    + 'موظفين:' + (d.employees?.length||0) + ' صيانة:' + (d.maintenanceRecords?.length||0)
+    + ' مخبز:' + (d.bakeryProductions?.length||0) + ' | ' + new Date().toLocaleDateString('ar-EG');
 }
 
 function wrapOpenAiTools(tools) {
@@ -15338,8 +15337,10 @@ async function callGroqWithTools(messages, tools) {
   var body = {
     model: 'llama-3.1-8b-instant',
     messages: groqMessages,
+    tools: wrapOpenAiTools(tools),
+    tool_choice: 'auto',
     temperature: 0.4,
-    max_tokens: 512
+    max_tokens: 256
   };
   try {
     var resp = await fetch('https://api.groq.com/openai/v1/chat/completions', {
