@@ -15386,6 +15386,8 @@ function removeAiLoading() {
   if (el) el.remove();
 }
 
+var _pendingActionQuestion = null;
+
 async function sendAiMessage() {
   var input = document.getElementById('ai-input');
   var text = input.value.trim();
@@ -15393,7 +15395,32 @@ async function sendAiMessage() {
   if (!_aiKey) { showAiKeyDialog(); return; }
   input.value = '';
   clearAiImage();
-  addAiMessage(text, 'user');
+
+  // Handle follow-up about pending action
+  if (window._pendingAction) {
+    var a = window._pendingAction;
+    var t = text.trim();
+    if (/^(ايه|إيه|اي|what|شرح|تفاصيل|تفصيل|أيه|\?|؟|هتضيف|هتسجل|يعني|كده|دا|ده)/i.test(t) && t.length < 50) {
+      addAiMessage('👀 تمام، دي تفاصيل اللي هيتم إضافته:<br>' + _describeAction(a.name, a.args, true) + '<br><br>اضغطي ✅ أوافق عشان تنفذ أو ❌ ألغي', 'ai');
+      return;
+    }
+    if (/^(اوافق|موافق|تمام|طيب|oki|ok|yes|ايوه|اه|هيا|تم|اعتماد|تأكيد|نفذ|اعمل|سجل|اكتب|خلاص)/i.test(t)) {
+      addAiMessage('✅ تمام، بتم التنفيذ...', 'ai');
+      await confirmAiAction();
+      return;
+    }
+    if (/^(الغي|لا|مش|مش عاوز|كمل|cancel|no|stop|كفايه|إلغاء)/i.test(t)) {
+      rejectAiAction();
+      return;
+    }
+    // Clear pending and treat as new message
+    _pendingActionQuestion = { name: a.name, args: a.args, details: _describeAction(a.name, a.args, true) };
+    window._pendingAction = null;
+    addAiMessage(text, 'user');
+  } else {
+    addAiMessage(text, 'user');
+  }
+
   showAiLoading();
   try {
     var data = await callGroqWithTools(_aiMessages, _aiTools);
@@ -15403,10 +15430,10 @@ async function sendAiMessage() {
     if (fnCall) {
       var args = fnCall.args || {};
       var fnName = fnCall.name;
-      var argsStr = JSON.stringify(args);
+      var details = '\n' + _describeAction(fnName, args, true);
       var confirmHtml = '<div style="background:#fff8e1;border:1px solid #ffe082;border-radius:10px;padding:10px;margin:4px 0;font-size:13px;">';
       confirmHtml += '<div style="font-weight:700;color:#e65100;margin-bottom:6px;">🤖 عاوز تسجيل التالي:</div>';
-      confirmHtml += '<div style="margin-bottom:8px;">' + _describeAction(fnName, args) + '</div>';
+      confirmHtml += '<div style="margin-bottom:6px;white-space:pre-wrap;font-size:12px;">' + details + '</div>';
       confirmHtml += '<div style="display:flex;gap:6px;">';
       confirmHtml += '<button onclick="confirmAiAction()" style="flex:1;padding:6px;background:#1b5e20;color:#fff;border:none;border-radius:6px;cursor:pointer;font-family:Cairo;font-size:12px;">✅ أوافق</button>';
       confirmHtml += '<button onclick="rejectAiAction()" style="flex:1;padding:6px;background:#c62828;color:#fff;border:none;border-radius:6px;cursor:pointer;font-family:Cairo;font-size:12px;">❌ ألغي</button>';
@@ -15423,14 +15450,17 @@ async function sendAiMessage() {
   }
 }
 
-function _describeAction(fnName, args) {
+function _describeAction(fnName, args, detailed) {
   if (fnName === 'addMaintenanceRecord') {
+    if (detailed) return '📋 هيتم إضافة طلب صيانة جديد:<br>• التصنيف: ' + args.category + '<br>• التفاصيل: ' + args.task + (args.room ? '<br>• المكان: ' + args.room : '') + (args.urgent ? '<br>• 🚨 عاجل' : '<br>• عادي');
     return '🔧 صيانة: <b>' + args.category + '</b> — ' + args.task + (args.room ? ' في ' + args.room : '') + (args.urgent ? ' 🚨 عاجل' : '');
   }
   if (fnName === 'addSepticRecord') {
+    if (detailed) return '📋 هيتم تسجيل كشف بيارة:<br>• البيارة: ' + args.name + (args.trips ? '<br>• عدد المرات: ' + args.trips : '') + (args.date ? '<br>• التاريخ: ' + args.date : '<br>• التاريخ: ' + new Date().toISOString().split('T')[0]);
     return '💧 كشف بيارة: <b>' + args.name + '</b>' + (args.trips ? ' (' + args.trips + ' مرة)' : '');
   }
   if (fnName === 'addWaterStationRecord') {
+    if (detailed) return '📋 هيتم تسجيل صيانة محطة مياه:<br>• المحطة: ' + args.station + '<br>• نوع الصيانة: ' + args.type + (args.date ? '<br>• التاريخ: ' + args.date : '') + (args.notes ? '<br>• ملاحظات: ' + args.notes : '');
     return '💧 صيانة محطة: <b>' + args.station + '</b> — ' + args.type + (args.notes ? ' (' + args.notes + ')' : '');
   }
   return JSON.stringify(args);
