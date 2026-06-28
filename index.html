@@ -15310,65 +15310,30 @@ function addAiMessage(text, role) {
 
 function buildSystemPrompt() {
   var data = getAllDataObject();
-  var parts = [];
-  parts.push('أنت مساعد ذكي لنظام LINAHSYSTEM لإدارة المزرعة. أجب بالعامية المصرية دائمًا.');
-  parts.push('لديك access لكل بيانات النظام أدناه. أجب بناءً على هذه البيانات فقط.');
-  parts.push('إذا طلب المستخدم تحليلًا أو إحصاء، احسبها بنفسك من البيانات.');
-  parts.push('إذا طلب تنبؤات، استخدم الاتجاهات في البيانات.');
-  parts.push('للأسف لا أستطيع رؤية الصور حالياً. إذا رفع المستخدم صورة، أخبره أن الميزة غير متاحة.');
-  parts.push('');
-  parts.push('** الأدوات المتاحة لك **');
-  parts.push('عندما يطلب المستخدم تسجيل شيء — استخدم الأداة المناسبة. مثلاً:');
-  parts.push('- "سجل صيانة للغرفة 3 تكييف عطلان" ← استخدم addMaintenanceRecord');
-  parts.push('- "كشف بيارة قطاع المزرعة" ← استخدم addSepticRecord');
-  parts.push('- "سجل صيانة للمحطة الجديدة" ← استخدم addWaterStationRecord');
-  parts.push('ملاحظة: لا تستخدم الأداة إلا إذا طلب المستخدم صراحةً. للأسئلة فقط — جاوب بدون أدوات.');
-  parts.push('');
-  parts.push('=== بيانات النظام الحالية ===');
-  parts.push('عدد الموظفين: ' + (data.employees ? data.employees.length : 0));
-  if (data.employees && data.employees.length > 0) {
-    var sectors = {}; data.employees.forEach(function(e) { var s = e.sector || e.sectorName || e.قسم || 'غير محدد'; sectors[s] = (sectors[s]||0)+1; });
-    parts.push('توزيع الموظفين بالقطاع: ' + JSON.stringify(sectors));
-    parts.push('عينة موظفين (أول 10): ' + JSON.stringify(data.employees.slice(0,10).map(function(e){return {name:e.name||e.الاسم,code:e.code||e.الكود,sector:e.sector||e.sectorName||e.قسم,phone:e.phone||e.التليفون||e.موبايل}})));
+  var d = [];
+  d.push('أنت مساعد LINAHSYSTEM بالمصرية. أجب من البيانات فقط.');
+  d.push('للتسجيل استخدم الأدوات: addMaintenanceRecord, addSepticRecord, addWaterStationRecord. للأوامر فقط.');
+  d.push('');
+  d.push('إحصائيات:');
+  d.push('موظفين: ' + (data.employees?.length||0) + ' | غرف: ' + (data.roomsCapacity?.length||0));
+  d.push('صيانة: ' + (data.maintenanceRecords?.length||0) + ' | بيارات: ' + (data.septicRecords?.length||0));
+  d.push('صيانة دورية: ' + (data.periodicMaintenance?.length||0) + ' | مستبعدين: ' + (data.excludedEmployees?.length||0));
+  d.push('ضيافة: ' + (data.hospitalities?.length||0) + ' | إجازات: ' + (data.vacations?.length||0));
+  d.push('شاي وسكر: ' + (data.teaSugarDisbursements?.length||0) + ' | مقاولين: ' + (data.contractors?.length||0));
+  d.push('مخبز إنتاج: ' + (data.bakeryProductions?.length||0) + ' | توريد: ' + (data.bakeryContractorSupplies?.length||0));
+  d.push('فواتير: ' + (data.bakeryInvoices?.length||0) + ' | مكونات: ' + (data.bakeryIngredients?.length||0));
+  d.push('محطات مياه: ' + (data.waterStations?.length||0) + ' | مخزون: ' + (data.inventoryItems?.length||0) + ' صنف');
+  if (data.employees?.length) {
+    var sec = {}; data.employees.forEach(function(e){ var s=e.sector||e.sectorName||e.قسم||'?'; sec[s]=(sec[s]||0)+1; });
+    d.push('قطاعات: ' + Object.keys(sec).map(function(k){return k+'('+sec[k]+')';}).join(', '));
   }
-  parts.push('عدد الغرف بالسكن: ' + (data.roomsCapacity ? data.roomsCapacity.length : 0));
-  if (data.roomsCapacity && data.roomsCapacity.length > 0) parts.push('عينة غرف: ' + JSON.stringify(data.roomsCapacity.slice(0,5)));
-  parts.push('عدد سجلات الصيانة: ' + (data.maintenanceRecords ? data.maintenanceRecords.length : 0));
-  parts.push('عدد سجلات البيارات: ' + (data.septicRecords ? data.septicRecords.length : 0));
-  parts.push('عدد سجلات الصيانة الدورية: ' + (data.periodicMaintenance ? data.periodicMaintenance.length : 0));
-  parts.push('عدد سجلات العزل: ' + (data.excludedEmployees ? data.excludedEmployees.length : 0));
-  parts.push('عدد سجلات الضيافة: ' + (data.hospitalities ? data.hospitalities.length : 0));
-  parts.push('عدد الإجازات: ' + (data.vacations ? data.vacations.length : 0));
-  parts.push('عدد سجلات شاي وسكر: ' + (data.teaSugarDisbursements ? data.teaSugarDisbursements.length : 0));
-  parts.push('عدد سجلات المخبز (إنتاج): ' + (data.bakeryProductions ? data.bakeryProductions.length : 0));
-  parts.push('عدد سجلات المخبز (توريد): ' + (data.bakeryContractorSupplies ? data.bakeryContractorSupplies.length : 0));
-  parts.push('عدد فواتير المخبز: ' + (data.bakeryInvoices ? data.bakeryInvoices.length : 0));
-  parts.push('عدد مكونات المخبز: ' + (data.bakeryIngredients ? data.bakeryIngredients.length : 0));
-  parts.push('عدد المقاولين: ' + (data.contractors ? data.contractors.length : 0));
-  parts.push('عدد محطات المياه (صيانة): ' + (data.waterStations ? data.waterStations.length : 0));
-  parts.push('عدد مستندات محطات المياه: ' + (data.waterDocs ? data.waterDocs.length : 0));
-  parts.push('عدد سجلات المخزون: ' + (data.inventoryVouchers ? data.inventoryVouchers.length : 0));
-  parts.push('عدد أصناف المخزون: ' + (data.inventoryItems ? data.inventoryItems.length : 0));
-  if (data.bakeryProductions && data.bakeryProductions.length > 0) {
-    var totalBread = 0, totalFlour = 0, totalCost = 0;
-    data.bakeryProductions.forEach(function(p) { totalBread += parseInt(p.breadCount||p.count||0); totalFlour += parseInt(p.flourQty||p.flourKg||0); totalCost += parseFloat(p.opCost||p.operatingCost||0); });
-    parts.push('إجمالي إنتاج المخبز: ' + totalBread + ' رغيف, ' + totalFlour + ' كجم دقيق, تكاليف تشغيل: ' + totalCost.toFixed(2));
+  if (data.waterStations?.length) {
+    var _n = new Date().toISOString().split('T')[0];
+    d.push('صيانات مياه متأخرة: ' + data.waterStations.filter(function(w){return w.nextDate&&w.nextDate<_n;}).length);
   }
-  if (data.waterStations && data.waterStations.length > 0) {
-    var now = new Date().toISOString().split('T')[0];
-    var overdue = data.waterStations.filter(function(w){return w.nextDate && w.nextDate < now;});
-    parts.push('صيانات محطات المياه المتأخرة: ' + overdue.length);
-    parts.push('آخر صيانة للمحطة القديمة: ' + JSON.stringify(data.waterStations.slice(-3)));
-  }
-  var _now = new Date();
-  parts.push('');
-  parts.push('التاريخ والوقت الحالي: ' + _now.toLocaleDateString('ar-EG') + ' ' + _now.toLocaleTimeString('ar-EG'));
-  parts.push('');
-  parts.push('ملاحظات:');
-  parts.push('- حسّن التنسيق باستخدام جداول HTML وقوائم عند عرض البيانات');
-  parts.push('- لا تخرج عن سياق النظام — أنت مساعد لادارة المزرعة فقط');
-  parts.push('- استخدم الأرقام العربية (0-9) للارقام');
-  return parts.join('\n');
+  d.push('التاريخ: ' + new Date().toLocaleDateString('ar-EG') + ' ' + new Date().toLocaleTimeString('ar-EG'));
+  d.push('استخدم جداول HTML للبيانات. ارقام عربية.');
+  return d.join('\n');
 }
 
 function wrapOpenAiTools(tools) {
@@ -15382,7 +15347,8 @@ async function callGroqWithTools(messages, tools) {
   if (!_aiKey) { addAiMessage('⚠️ من فضلك أدخل مفتاح Groq API أولاً (اضغط على 🔑 في الأعلى)', 'ai'); return null; }
   var sysPrompt = buildSystemPrompt();
   var groqMessages = [{ role: 'system', content: sysPrompt }];
-  for (var i = 0; i < messages.length; i++) {
+  var recentMessages = messages.slice(-8);
+  for (var i = 0; i < recentMessages.length; i++) {
     if (messages[i].role === 'user') {
       groqMessages.push({ role: 'user', content: messages[i].text });
     } else {
