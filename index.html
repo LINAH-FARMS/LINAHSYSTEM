@@ -8897,7 +8897,8 @@ function toggleEmployeeStatus(empId) {
       let filtered = [...maintenanceRecords];
       let st = sortState['table-maintenance'];
       if (!st || !st.key) filtered = sortNewestFirst(filtered, 'date');
-      if (st && st.key) filtered = sortData(filtered, st.key, st.dir);
+      else if (st.key === 'date') filtered = sortData(filtered, 'date', 'desc');
+      else filtered = sortData(filtered, st.key, st.dir);
       filtered.forEach((m) => {
         let realIdx = maintenanceRecords.indexOf(m);
         let statusColors = {'مفتوحة':'#e53935','تحت التنفيذ':'#fb8c00','تمت':'#43a047','ملغاة':'#757575'};
