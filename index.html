@@ -15287,9 +15287,9 @@ async function callGemini(messages) {
     contents.push({ role: messages[i].role === 'ai' ? 'model' : 'user', parts: parts });
   }
   try {
-    var resp = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=' + _aiKey, {
+    var resp = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'x-goog-api-key': _aiKey },
       body: JSON.stringify({ contents: contents, generationConfig: { temperature: 0.4, maxOutputTokens: 4096 } })
     });
     if (!resp.ok) {
