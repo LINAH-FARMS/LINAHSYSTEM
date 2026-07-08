@@ -10577,7 +10577,6 @@ function toggleEmployeeStatus(empId) {
           if (idx.code < 0 && rows[hRow + 1] && typeof rows[hRow + 1][0] === 'number') idx.code = 0;
 
           let added = 0, skipped = 0;
-          alert('rows=' + rows.length + ' hRow=' + hRow + ' colText=' + JSON.stringify(colText) + '\nrow0=' + JSON.stringify(rows[hRow]) + '\nrow1=' + JSON.stringify(rows[hRow+1]));
           for (let i = hRow + 1; i < rows.length; i++) {
             let row = rows[i];
             if (!row) continue;
@@ -10593,8 +10592,6 @@ function toggleEmployeeStatus(empId) {
             let period = idx.period >= 0 ? (row[idx.period] || '').toString().trim() || '' : '';
             let teaVal = idx.tea >= 0 ? parseInt(row[idx.tea]) || 0 : 0;
             let sugarVal = idx.sugar >= 0 ? parseFloat(row[idx.sugar]) || 0 : 0;
-
-            if (!empName) { skipped++; continue; }
 
             // Normalize period to standard format
             if (period) {
