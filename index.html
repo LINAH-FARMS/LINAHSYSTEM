@@ -10526,7 +10526,7 @@ function toggleEmployeeStatus(empId) {
       var items = monthFilter ? teaSugarDisbursements.filter(function(t) { return _tsMonthKey(t.date) === monthFilter; }) : teaSugarDisbursements;
       var data = sortNewestFirst(items, 'date').map(function(t) {
         var emp = employees.find(function(e) { return (e.id || e.code) == t.empId || e.name === t.empName; });
-        return { "التاريخ": t.date || '', "كود الموظف": (emp && emp.code) ? emp.code : (t.empCode || ''), "اسم الموظف": stripEmoji(emp ? emp.name : (t.empName || t.empCode || '')), "الإدارة": stripEmoji(emp ? emp.dept : (t.empDept || '')), "الوظيفة": stripEmoji(emp ? emp.title : (t.empTitle || '')), "الشاي": t.teaPacks || 0, "السكر": t.sugarKg || 0 };
+        return { "التاريخ": t.date || '', "الدورة": t.period || '', "كود الموظف": (emp && emp.code) ? emp.code : (t.empCode || ''), "اسم الموظف": stripEmoji(emp ? emp.name : (t.empName || t.empCode || '')), "الإدارة": stripEmoji(emp ? emp.dept : (t.empDept || '')), "الوظيفة": stripEmoji(emp ? emp.title : (t.empTitle || '')), "الشاي": t.teaPacks || 0, "السكر": t.sugarKg || 0 };
       });
       var ws = XLSX.utils.json_to_sheet(data); var wb = XLSX.utils.book_new();
       var label = monthFilter ? _tsMonthName(monthFilter) : 'الكل';
@@ -10563,7 +10563,7 @@ function toggleEmployeeStatus(empId) {
           // Map column indices by keyword matching
           let colText = cols.map(c => (c || '').toString().trim());
           let idx = {
-            date: colText.findIndex(c => /^(تاريخ التوزيع|تاريخ الصرف)$/.test(c)),
+            date: colText.findIndex(c => /^(تاريخ التوزيع|تاريخ الصرف|التاريخ)$/.test(c)),
             code: colText.findIndex(c => /^(الكود|كود الموظف)$/.test(c)),
             name: colText.findIndex(c => /^(الاسم|اسم الموظف)$/.test(c)),
             title: colText.findIndex(c => /^الوظيفة$/.test(c)),
@@ -10624,7 +10624,7 @@ function toggleEmployeeStatus(empId) {
             let emp = employees.find(e => e.code == empCode || (empCode && e.name === empName) || (!empCode && e.name === empName));
 
             let exists = teaSugarDisbursements.some(t =>
-              (t.empCode == empCode || t.empName === empName || (emp && t.empId == emp.id)) && t.period === period
+              ((empCode && t.empCode == empCode) || (empName && t.empName === empName) || (emp && t.empId == emp.id)) && t.period === period
             );
             if (exists) { skipped++; continue; }
 
