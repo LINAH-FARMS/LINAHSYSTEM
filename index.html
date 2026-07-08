@@ -9638,8 +9638,11 @@ function toggleEmployeeStatus(empId) {
       if (!dateStr) return '';
       var m = dateStr.match(/^(\d{4})-(\d{2})/);
       if (m) return m[1] + '-' + m[2];
+      // Handle Arabic/Asian digits
+      var normalized = dateStr.replace(/[٠-٩]/g, function(c) { return '٠١٢٣٤٥٦٧٨٩'.indexOf(c); });
+      normalized = normalized.replace(/[۰-۹]/g, function(c) { return '۰۱۲۳۴۵۶۷۸۹'.indexOf(c); });
       try {
-        var d = new Date(dateStr);
+        var d = new Date(normalized);
         if (!isNaN(d)) return d.getFullYear() + '-' + ('0'+(d.getMonth()+1)).slice(-2);
       } catch(e) {}
       return '';
