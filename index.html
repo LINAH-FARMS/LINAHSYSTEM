@@ -13324,8 +13324,14 @@ function toggleEmployeeStatus(empId) {
       for (var i = 0; i < keys.length; i++) {
         if (keys[i] === 'syncDeletions') continue;
         var localVal = getEntityVar(keys[i]);
-        if (localVal && Array.isArray(localVal) && localVal.length > 0 && !(d[keys[i]] && d[keys[i]].length > 0)) continue;
-        setEntityVar(keys[i], d[keys[i]]);
+        var remoteVal = d[keys[i]];
+        if (!remoteVal) continue;
+        if (localVal && Array.isArray(localVal) && localVal.length > 0 && Array.isArray(remoteVal) && remoteVal.length > 0) {
+          var merged = _smartMerge(localVal, remoteVal, function(item) { return _getItemKey(item, keys[i]); }, keys[i]);
+          setEntityVar(keys[i], merged);
+        } else {
+          setEntityVar(keys[i], remoteVal);
+        }
       }
       _applyDeletions();
       if (d.finTransactions || d.finBudgets) { try { if (typeof finSave === 'function') finSave(); } catch(e) {} }
