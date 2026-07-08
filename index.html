@@ -10620,7 +10620,8 @@ function toggleEmployeeStatus(empId) {
               period: period,
               date: distDate,
               teaPacks: teaVal || 2,
-              sugarKg: sugarVal || 1
+              sugarKg: sugarVal || 1,
+              modifiedAt: new Date().toISOString()
             });
             added++;
           }
@@ -12910,15 +12911,15 @@ function toggleEmployeeStatus(empId) {
     }
     async function forceFullSync() {
       if (!supabaseConnected) return alert('❌ غير متصل بـ Supabase');
-      if (!confirm('⚡ مزامنة شاملة (سحب + دمج + دفع).\nسيتم دمج بيانات السحابة مع بيانات جهازك تلقائياً. هل أنت متأكد؟')) return;
-      syncLog('🔄 جاري السحب أولاً لتجنب التضارب...');
+      if (!confirm('⚡ مزامنة شاملة (دفع + سحب).\nسيتم حفظ بيانات جهازك أولاً ثم تحديثها من السحابة.')) return;
+      syncLog('🔄 جاري الدفع أولاً...');
+      await pushToSupabase();
+      syncLog('🔄 جاري السحب بعد الدفع...');
       _forcePull = true;
       await pullFromSupabase();
-      syncLog('🔄 جاري الدفع بعد الدمج...');
-      var ok = await pushToSupabase();
       _forcePull = false;
-      if (ok) { syncLog('✅ تمت المزامنة الشاملة بنجاح'); alert('✅ تمت المزامنة الشاملة بنجاح!'); }
-      else { alert('⚠️ فشلت المزامنة — تحقق من الاتصال'); }
+      syncLog('✅ تمت المزامنة الشاملة بنجاح');
+      alert('✅ تمت المزامنة الشاملة بنجاح!');
     }
     async function pullFromSupabase() {
       if (!supabaseConnected) return;
