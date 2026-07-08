@@ -10627,7 +10627,7 @@ function toggleEmployeeStatus(empId) {
 
           syncStorage();
           renderTeaSugarTable();
-          alert(`✅ تم الاستيراد: ${added} سجل جديد، ${updated} سجل محدث`);
+          alert(`✅ تم الاستيراد: ${added} سجل جديد`);
         } catch(err) {
           alert("❌ خطأ في قراءة الملف: " + err.message);
         }
