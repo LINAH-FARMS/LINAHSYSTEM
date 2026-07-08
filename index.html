@@ -2587,8 +2587,6 @@
             <th>م</th>
             <th data-sort-key="empCode">الكود</th>
             <th data-sort-key="empName">الموظف</th>
-            <th data-sort-key="empDept">الإدارة</th>
-            <th data-sort-key="empTitle">الوظيفة</th>
             <th data-sort-key="period">الدورة</th>
             <th data-sort-key="teaPacks">الشاي (باكيت)</th>
             <th data-sort-key="sugarKg">السكر (كجم)</th>
@@ -9675,16 +9673,12 @@ function toggleEmployeeStatus(empId) {
         let emp = employees.find(e => (e.id || e.code) == ts.empId || e.name === ts.empName);
         let displayCode = (emp && emp.code) ? emp.code : (ts.empCode || '—');
         let displayName = emp ? emp.name : (ts.empName || '—');
-        let displayDept = emp ? emp.dept : (ts.empDept || '—');
-        let displayTitle = emp ? emp.title : (ts.empTitle || '—');
         let tr = document.createElement('tr');
         tr.innerHTML = `
           <td class="no-print"><input type="checkbox" class="row-check" data-table="table-tea-sugar"></td>
           <td>${idx + 1}</td>
           <td><b>${displayCode}</b></td>
           <td><b>${displayName}</b></td>
-          <td>${displayDept}</td>
-          <td style="font-size:12px;color:#666;">${displayTitle}</td>
           <td>${ts.period}</td>
           <td><span style="color:var(--warning);font-weight:700;">${ts.teaPacks}</span></td>
           <td><span style="color:var(--warning);font-weight:700;">${ts.sugarKg}</span></td>
@@ -10526,7 +10520,7 @@ function toggleEmployeeStatus(empId) {
       var items = monthFilter ? teaSugarDisbursements.filter(function(t) { return _tsMonthKey(t.date) === monthFilter; }) : teaSugarDisbursements;
       var data = sortNewestFirst(items, 'date').map(function(t) {
         var emp = employees.find(function(e) { return (e.id || e.code) == t.empId || e.name === t.empName; });
-        return { "التاريخ": t.date || '', "الدورة": t.period || '', "كود الموظف": (emp && emp.code) ? emp.code : (t.empCode || ''), "اسم الموظف": stripEmoji(emp ? emp.name : (t.empName || t.empCode || '')), "الإدارة": stripEmoji(emp ? emp.dept : (t.empDept || '')), "الوظيفة": stripEmoji(emp ? emp.title : (t.empTitle || '')), "الشاي": t.teaPacks || 0, "السكر": t.sugarKg || 0 };
+        return { "التاريخ": t.date || '', "الدورة": t.period || '', "كود الموظف": (emp && emp.code) ? emp.code : (t.empCode || ''), "اسم الموظف": stripEmoji(emp ? emp.name : (t.empName || t.empCode || '')), "الشاي": t.teaPacks || 0, "السكر": t.sugarKg || 0 };
       });
       var ws = XLSX.utils.json_to_sheet(data); var wb = XLSX.utils.book_new();
       var label = monthFilter ? _tsMonthName(monthFilter) : 'الكل';
@@ -10586,9 +10580,6 @@ function toggleEmployeeStatus(empId) {
             let dateVal = idx.date >= 0 ? row[idx.date] : null;
             let empCode = idx.code >= 0 ? (row[idx.code] || '').toString().trim() : '';
             let empName = idx.name >= 0 ? (row[idx.name] || '').toString().trim() : '';
-            let jobTitle = idx.title >= 0 ? (row[idx.title] || '').toString().trim() : '';
-            let dept = idx.dept >= 0 ? (row[idx.dept] || '').toString().trim() : '';
-            if (!dept && idx.sector >= 0) dept = (row[idx.sector] || '').toString().trim();
             let period = idx.period >= 0 ? (row[idx.period] || '').toString().trim() || '' : '';
             let teaVal = idx.tea >= 0 ? parseInt(row[idx.tea]) || 0 : 0;
             let sugarVal = idx.sugar >= 0 ? parseFloat(row[idx.sugar]) || 0 : 0;
@@ -10630,8 +10621,6 @@ function toggleEmployeeStatus(empId) {
               empId: emp ? emp.id : '',
               empCode: empCode || (emp ? emp.code : ''),
               empName: empName || (emp ? emp.name : 'غير معروف'),
-              empDept: dept || (emp ? emp.dept : ''),
-              empTitle: jobTitle || (emp ? emp.title : ''),
               period: period,
               date: distDate,
               teaPacks: teaVal || 2,
