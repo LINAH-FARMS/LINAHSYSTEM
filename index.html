@@ -9639,8 +9639,10 @@ function toggleEmployeeStatus(empId) {
       if (!dateStr) return '';
       var m = dateStr.match(/^(\d{4})-(\d{2})/);
       if (m) return m[1] + '-' + m[2];
+      // Strip invisible Unicode chars (LRM, RLM, ZWNJ, ZWJ, ZWSP, BOM, etc.)
+      var n = dateStr.replace(/[\u200B-\u200F\u2028-\u202F\u2060-\u2063\uFEFF]/g, '');
       // Normalize Arabic/Asian digits
-      var n = dateStr.replace(/[٠-٩]/g, function(c) { return '٠١٢٣٤٥٦٧٨٩'.indexOf(c); });
+      n = n.replace(/[٠-٩]/g, function(c) { return '٠١٢٣٤٥٦٧٨٩'.indexOf(c); });
       n = n.replace(/[۰-۹]/g, function(c) { return '۰۱۲۳۴۵۶۷۸۹'.indexOf(c); });
       // Handle D/M/YYYY or D/M/YYYY HH:mm (Arabic locale format)
       var dm = n.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
