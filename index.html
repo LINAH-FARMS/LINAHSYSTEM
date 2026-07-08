@@ -5067,10 +5067,10 @@
 
         renderReportsTable(_reportsData);
         updateReportsStats(_reportsData);
-        if (_prevReportsCount > 0 && reports.length > _prevReportsCount) {
+        if (_prevReportsCount > 0 && _reportsData.length > _prevReportsCount) {
           _flashReportsBadge();
         }
-        _prevReportsCount = reports.length;
+        _prevReportsCount = _reportsData.length;
       logAction('حذف', 'بلاغ أعطال', report['اسم العامل'] || '', '');
     }
 
@@ -12992,6 +12992,11 @@ function toggleEmployeeStatus(empId) {
               if (badge) badge.textContent = totalCount;
               if (_prevReportsCount > 0 && totalCount > _prevReportsCount) {
                 _flashReportsBadge();
+                // لو التاب مفتوح، اعمل تحديث تلقائي
+                var reportsTab = document.getElementById('tab-reports');
+                if (reportsTab && reportsTab.classList.contains('active')) {
+                  fetchReports();
+                }
               }
               _prevReportsCount = totalCount;
             });

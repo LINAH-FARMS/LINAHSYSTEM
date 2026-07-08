@@ -186,17 +186,71 @@ function submitReport() {
   })
   .then(function(r) {
     if (!r.ok) throw new Error('HTTP ' + r.status);
-    document.getElementById('report-form').style.display = 'none';
-    document.getElementById('success-msg').style.display = 'block';
-  })
-  .catch(function(e) {
-    var existing = JSON.parse(localStorage.getItem('linah_reports') || '[]');
-    existing.push(report);
-    localStorage.setItem('linah_reports', JSON.stringify(existing));
-    document.getElementById('report-form').style.display = 'none';
-    document.getElementById('success-msg').style.display = 'block';
-  });
+      document.getElementById('report-form').style.display = 'none';
+      document.getElementById('success-msg').style.display = 'block';
+    })
+    .catch(function(e) {
+      // حفظ محلياً في localStorage بتاع الموبايل
+      var existing = JSON.parse(localStorage.getItem('linah_reports') || '[]');
+      existing.push(report);
+      localStorage.setItem('linah_reports', JSON.stringify(existing));
+      // تخزين في IndexedDB أيضاً للمحاولة لاحقاً
+      try {
+        var req = indexedDB.open('LinahPendingReports', 1);
+        req.onupgradeneeded = function(ev) { ev.target.result.createObjectStore('pending', { keyPath: 'id' }); };
+        req.onsuccess = function(ev) {
+          var tx = ev.target.result.transaction('pending', 'readwrite');
+          tx.objectStore('pending').put(report);
+        };
+      } catch(e2) {}
+      document.getElementById('report-form').style.display = 'none';
+      document.getElementById('success-msg').querySelector('h2').textContent = '⚠️ تم الحفظ محلياً';
+      document.getElementById('success-msg').querySelector('p').textContent = 'لم يتم الاتصال بالسحابة، سيتم الرفع تلقائياً عند توفر الإنترنت.';
+      document.getElementById('success-msg').style.display = 'block';
+    });
 }
+
+// محاولة رفع البلاغات المحفوظة محلياً (لما يكون فيه نت)
+(function retryPending() {
+  try {
+    var local = JSON.parse(localStorage.getItem('linah_reports') || '[]');
+    if (local.length === 0) return;
+    // جلب البلاغات اللي اترفعت قبل كده عشان ندمج
+    fetch(SB + '/rest/v1/sync_data?id=eq.incident_reports', {
+      method: 'GET',
+      headers: { 'apikey': KEY, 'Authorization': 'Bearer ' + KEY }
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(rows) {
+      var reports = [];
+      if (rows && rows.length > 0 && rows[0].data) {
+        try { reports = rows[0].data; if (typeof reports === 'string') reports = JSON.parse(reports); } catch(e) { reports = []; }
+      }
+      var localIds = {};
+      local.forEach(function(lr) { localIds[lr.id] = lr; });
+      var added = 0;
+      local.forEach(function(lr) {
+        if (!reports.some(function(r) { return r.id === lr.id; })) {
+          reports.push(lr);
+          added++;
+        }
+      });
+      if (added === 0) return;
+      var method = rows && rows.length > 0 ? 'PATCH' : 'POST';
+      var url = rows && rows.length > 0 ? SB + '/rest/v1/sync_data?id=eq.incident_reports' : SB + '/rest/v1/sync_data';
+      return fetch(url, {
+        method: method,
+        headers: HEADERS,
+        body: JSON.stringify(method === 'POST' ? { id: 'incident_reports', data: reports, updated_at: new Date().toISOString() } : { data: reports, updated_at: new Date().toISOString() })
+      }).then(function(r) {
+        if (r.ok) {
+          localStorage.removeItem('linah_reports');
+          console.log('✅ تم رفع ' + added + ' بلاغ محلي');
+        }
+      });
+    }).catch(function() {});
+  } catch(e) {}
+})();
 
 function resetForm() {
   document.getElementById('name').value = '';
