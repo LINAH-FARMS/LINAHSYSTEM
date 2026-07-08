@@ -10594,6 +10594,7 @@ function toggleEmployeeStatus(empId) {
             let teaVal = idx.tea >= 0 ? parseInt(row[idx.tea]) || 0 : 0;
             let sugarVal = idx.sugar >= 0 ? parseFloat(row[idx.sugar]) || 0 : 0;
 
+            if (i - hRow == 1) alert('colText:\n' + JSON.stringify(colText) + '\n\nrow raw:\n' + JSON.stringify(row));
             if (!empName) { skipped++; continue; }
 
             // Normalize period to standard format
@@ -10626,7 +10627,6 @@ function toggleEmployeeStatus(empId) {
             let exists = teaSugarDisbursements.some(t =>
               ((empCode && t.empCode == empCode) || (empName && t.empName === empName) || (emp && t.empId == emp.id)) && t.period === period
             );
-            if (i - hRow == 1) alert('أول سجل:\ncode=' + empCode + '\nname=' + empName + '\nperiod=' + period + '\nexists=' + exists + '\ndate=' + distDate);
             if (exists) { skipped++; continue; }
 
             teaSugarDisbursements.push({
