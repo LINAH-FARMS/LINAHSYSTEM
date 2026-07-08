@@ -10592,11 +10592,11 @@ function toggleEmployeeStatus(empId) {
 
             let distDate;
             if (dateVal === null || dateVal === undefined || dateVal === '') {
-              distDate = new Date().toLocaleDateString('ar-EG');
+              distDate = new Date().toISOString().split('T')[0];
               if (!period) period = 'الدورة الأولى (1-7)';
             } else if (typeof dateVal === 'number') {
               let d = new Date((dateVal - 25569) * 86400000);
-              distDate = d.toLocaleDateString('ar-EG');
+              distDate = d.toISOString().split('T')[0];
               if (!period) {
                 let day = d.getDate();
                 if (day >= 1 && day <= 7) period = 'الدورة الأولى (1-7)';
