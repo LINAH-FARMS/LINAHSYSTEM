@@ -9753,7 +9753,9 @@ function toggleEmployeeStatus(empId) {
       var monthSet = {};
       teaSugarBatches.forEach(function(b) { var m = _tsMonthKey(b.date); if (m) monthSet[m] = true; });
       teaSugarDisbursements.forEach(function(d) { var m = _tsMonthKey(d.date); if (m) monthSet[m] = true; });
+      var monthFilter = document.getElementById('ts-month-filter')?.value || '';
       var months = Object.keys(monthSet).sort();
+      if (monthFilter) months = months.filter(function(m) { return m === monthFilter; });
       if (months.length === 0) { container.innerHTML = '<div style="color:#888;font-size:13px;text-align:center;padding:20px;">لا توجد بيانات — سجل دفعة تموين أولاً</div>'; return; }
       var periods = ['الدورة الأولى (1-7)', 'الدورة الثانية (15-21)'];
       var html = '';
