@@ -10570,7 +10570,7 @@ function toggleEmployeeStatus(empId) {
           // Fallback: if code column not found by header, use first numeric column (index 0)
           if (idx.code < 0 && rows[hRow + 1] && typeof rows[hRow + 1][0] === 'number') idx.code = 0;
 
-          let added = 0, skipped = 0;
+          let added = 0, updated = 0;
           for (let i = hRow + 1; i < rows.length; i++) {
             let row = rows[i];
             if (!row) continue;
@@ -10611,10 +10611,18 @@ function toggleEmployeeStatus(empId) {
 
             let emp = employees.find(e => e.code == empCode || (empCode && e.name === empName) || (!empCode && e.name === empName));
 
-            let exists = teaSugarDisbursements.some(t =>
+            let existing = teaSugarDisbursements.find(t =>
               ((empCode && t.empCode == empCode) || (empName && t.empName === empName) || (emp && t.empId == emp.id)) && t.period === period
             );
-            if (exists) { skipped++; continue; }
+            if (existing) {
+              existing.empCode = empCode || existing.empCode;
+              existing.empName = empName || existing.empName;
+              existing.period = period;
+              existing.date = distDate;
+              existing.teaPacks = teaVal || existing.teaPacks;
+              existing.sugarKg = sugarVal || existing.sugarKg;
+              updated++; continue;
+            }
 
             teaSugarDisbursements.push({
               id: 'ts_' + Date.now() + '_' + added,
@@ -10631,7 +10639,7 @@ function toggleEmployeeStatus(empId) {
 
           syncStorage();
           renderTeaSugarTable();
-          alert(`✅ تم الاستيراد: ${added} سجل جديد${skipped ? `، تم تخطي ${skipped} سجل (موجود مسبقاً أو ناقص)` : ''}`);
+          alert(`✅ تم الاستيراد: ${added} سجل جديد، ${updated} سجل محدث`);
         } catch(err) {
           alert("❌ خطأ في قراءة الملف: " + err.message);
         }
