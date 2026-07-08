@@ -1326,7 +1326,8 @@
     <div class="control-panel no-print">
       <button class="btn btn-primary" onclick="populateRoomSectorDropdown(); openModal('modal-add-room')">🏠 إضافة / تعديل سعة غرفة</button>
       <button class="btn btn-danger" onclick="deleteEmptyRooms()" style="background-color: #c62828;">🗑️ حذف الغرف الخالية</button>
-      <button class="btn btn-warning" onclick="diagnoseAndFixHousing()" style="background-color: #e65100;">🔧 إصلاح سكن الموظفين</button>
+      <button class="btn btn-warning" onclick="diagnoseAndFixHousing()" style="background-color: #e65100;">🔧 إصلاح يدوي</button>
+      <button class="btn btn-warning" onclick="autoRepairHousing()" style="background-color: #1565c0;">⚡ إصلاح تلقائي</button>
       <button class="btn btn-secondary" onclick="downloadTemplate_Housing()">📥 نموذج شيت فاضي</button>
       <button class="btn btn-excel" onclick="exportHousingToExcel()" style="background-color: #2e7d32;">📤 تصدير السعة (Excel)</button>
       <button class="btn btn-excel" onclick="document.getElementById('excel-housing-file').click()" style="background-color: #1565c0;">📥 استيراد السعة (Excel)</button>
@@ -3431,6 +3432,142 @@
 
     function _safeJsonParse(val, fallback) { try { var r = JSON.parse(val); return (r !== null && r !== undefined) ? r : fallback; } catch(e) { return fallback; } }
 
+    // ====== IndexedDB for All Data (بديل localStorage) ======
+    var _idbReady = false;
+    function _openIDB() {
+      return new Promise(function(resolve, reject) {
+        if (!window.indexedDB) { reject(new Error('IndexedDB غير مدعوم')); return; }
+        var req = indexedDB.open('LinahSystemDB', 2);
+        req.onupgradeneeded = function(e) {
+          var db = e.target.result;
+          if (!db.objectStoreNames.contains('allData')) {
+            db.createObjectStore('allData', { keyPath: 'key' });
+          }
+        };
+        req.onsuccess = function(e) { _idbReady = true; resolve(e.target.result); };
+        req.onerror = function(e) { reject(e.target.error); };
+      });
+    }
+    function _idbGet(key) {
+      return _openIDB().then(function(db) {
+        return new Promise(function(resolve, reject) {
+          var tx = db.transaction('allData', 'readonly');
+          var store = tx.objectStore('allData');
+          var req = store.get(key);
+          req.onsuccess = function() { resolve(req.result ? req.result.value : null); };
+          req.onerror = function() { reject(req.error); };
+        });
+      });
+    }
+    function _idbSet(key, value) {
+      return _openIDB().then(function(db) {
+        return new Promise(function(resolve, reject) {
+          var tx = db.transaction('allData', 'readwrite');
+          var store = tx.objectStore('allData');
+          store.put({ key: key, value: value });
+          tx.oncomplete = function() { resolve(); };
+          tx.onerror = function() { reject(tx.error); };
+        });
+      });
+    }
+    function _idbRemove(key) {
+      return _openIDB().then(function(db) {
+        return new Promise(function(resolve, reject) {
+          var tx = db.transaction('allData', 'readwrite');
+          var store = tx.objectStore('allData');
+          store.delete(key);
+          tx.oncomplete = function() { resolve(); };
+          tx.onerror = function() { reject(tx.error); };
+        });
+      });
+    }
+    // قائمة بكل مفاتيح الداتا
+    var _ALL_KEYS = [
+      'employees','roomsCapacity','vacations','hospitalities','maintenanceRecords','septicRecords',
+      'inventoryVouchers','excludedEmployees','periodicMaintenance','teaSugarDisbursements','teaSugarBatches',
+      'mealLogs','inventoryItems','contractors','evaluations','evalTemplates','auditLog',
+      'bakeryIngredients','bakeryProductions','bakeryContractorSupplies','bakeryInvoices','bakeryStockLog',
+      'adminOvertime','roomAssets','archiveData','waterStations','waterDocs','quickActions','dailyStats',
+      'dynamicSectors','contractorSectors','contractorRooms','dynamicRooms','dynamicSeptics',
+      'dynamicDepts','dynamicTitles','deptTitles','manualTotalBeds','syncDeletions','appUsers',
+      'finTransactions','finBudgets'
+    ];
+    // حفظ كل الداتا في IndexedDB دفعة واحدة
+    function _idbSaveAll() {
+      if (!window.indexedDB) return Promise.resolve();
+      var data = {};
+      _ALL_KEYS.forEach(function(k) {
+        try {
+          var v = typeof getEntityVar === 'function' ? getEntityVar(k) : null;
+          if (v !== undefined && v !== null) data[k] = v;
+        } catch(e) {}
+      });
+      return _openIDB().then(function(db) {
+        return new Promise(function(resolve, reject) {
+          var tx = db.transaction('allData', 'readwrite');
+          var store = tx.objectStore('allData');
+          store.put({ key: '__ALL__', value: data });
+          tx.oncomplete = function() { resolve(); };
+          tx.onerror = function() { reject(tx.error); };
+        });
+      }).catch(function(err) { console.warn('⚠️ IDB save all failed:', err); });
+    }
+    // تحميل كل الداتا من IndexedDB
+    function _idbLoadAll() {
+      if (!window.indexedDB) return Promise.resolve(false);
+      return _openIDB().then(function(db) {
+        return new Promise(function(resolve, reject) {
+          var tx = db.transaction('allData', 'readonly');
+          var store = tx.objectStore('allData');
+          var req = store.get('__ALL__');
+          req.onsuccess = function() {
+            var data = req.result ? req.result.value : null;
+            if (data && typeof data === 'object') {
+              _ALL_KEYS.forEach(function(k) {
+                if (data[k] !== undefined) {
+                  var v = typeof getEntityVar === 'function' ? getEntityVar(k) : null;
+                  if (Array.isArray(data[k]) && Array.isArray(v) && v.length > 0 && data[k].length > 0) {
+                    if (data[k].length > v.length) { if (typeof setEntityVar === 'function') setEntityVar(k, data[k]); }
+                    else if (data[k].length < v.length) data[k] = v;
+                  } else {
+                    if (typeof setEntityVar === 'function') setEntityVar(k, data[k]);
+                  }
+                }
+              });
+              resolve(true);
+            } else {
+              resolve(false);
+            }
+          };
+          req.onerror = function() { resolve(false); };
+        });
+      }).catch(function() { return false; });
+    }
+    // ترحيل كل الداتا من localStorage لـ IndexedDB
+    function _migrateAllToIDB() {
+      if (localStorage.getItem('_idbMigrated_v2')) return Promise.resolve();
+      var data = {};
+      _ALL_KEYS.forEach(function(k) {
+        try {
+          var v = typeof getEntityVar === 'function' ? getEntityVar(k) : null;
+          if (v !== undefined && v !== null) data[k] = v;
+        } catch(e) {}
+      });
+      return _openIDB().then(function(db) {
+        return new Promise(function(resolve, reject) {
+          var tx = db.transaction('allData', 'readwrite');
+          var store = tx.objectStore('allData');
+          store.put({ key: '__ALL__', value: data });
+          tx.oncomplete = function() {
+            localStorage.setItem('_idbMigrated_v2', '1');
+            console.log('✅ تم ترحيل كل البيانات إلى IndexedDB');
+            resolve();
+          };
+          tx.onerror = function() { reject(tx.error); };
+        });
+      }).catch(function(err) { console.warn('⚠️ فشل الترحيل:', err); });
+    }
+
     (function _cleanCorruptedLocalStorage() {
       var tx = localStorage.getItem('_storageTx');
       if (tx === 'start') {
@@ -3507,6 +3644,14 @@
     let archiveData = _safeJsonParse(localStorage.getItem('lineh_archive_data'), []);
     let waterStations = _safeJsonParse(localStorage.getItem('lineh_water_stations'), []);
     let waterDocs = _safeJsonParse(localStorage.getItem('lineh_water_docs'), []);
+    // Load all data from IndexedDB (async) — يعطي مساحة تخزين غير محدودة
+    (function _initIDB() {
+      _migrateAllToIDB().then(function() {
+        _idbLoadAll().then(function(loaded) {
+          if (loaded && typeof renderWaterDocs === 'function') renderWaterDocs();
+        });
+      }).catch(function() {});
+    })();
     let quickActions = _safeJsonParse(localStorage.getItem('lineh_quick_actions'), [
       { icon: '👤', label: 'القوة', action: "switchTab('tab-employees')" },
       { icon: '🏠', label: 'السكن', action: "switchTab('tab-housing')" },
@@ -3514,7 +3659,8 @@
       { icon: '➕', label: 'إضافة موظف', action: "openModal('modal-add-emp')" },
       { icon: '💾', label: 'نسخة احتياطية', action: 'exportBackupSystem()' },
       { icon: '📊', label: 'تقرير Excel', action: 'exportDashboardToExcel()' },
-      { icon: '🔍', label: 'فحص سلامة البيانات', action: 'showValidationResult()' }
+      { icon: '🔍', label: 'فحص سلامة البيانات', action: 'showValidationResult()' },
+      { icon: '🔧', label: 'إصلاح تلقائي للغرف', action: 'autoRepairHousing()' }
     ]);
     let dailyStats = _safeJsonParse(localStorage.getItem('lineh_daily_stats'), []);
     /* migrate: strip to only needed fields */
@@ -4156,62 +4302,65 @@
       document.getElementById('housing-emp-search').addEventListener('change', showHousingEmployeeResult);
     }
 
+    function _lsSet(key, val) {
+      try { localStorage.setItem(key, val); } catch(e) { /* localStorage full - IDB handles persistence */ }
+    }
     function syncStorage(noTimestamp, skipSync) {
-      if (!skipSync) localStorage.setItem('_pendingChanges', 'true');
-      localStorage.setItem('_storageTx', 'start');
-      localStorage.setItem('lineh_employees', JSON.stringify(employees));
-      localStorage.setItem('employees_db', JSON.stringify(employees));
-      localStorage.setItem('lineh_rooms_capacity', JSON.stringify(roomsCapacity));
-      localStorage.setItem('rooms_db', JSON.stringify(roomsCapacity));
-      localStorage.setItem('lineh_vacations', JSON.stringify(vacations));
-      localStorage.setItem('lineh_hospitality', JSON.stringify(hospitalities));
-      localStorage.setItem('lineh_hospitality_bak', JSON.stringify(hospitalities));
-      localStorage.setItem('lineh_maintenance', JSON.stringify(maintenanceRecords));
-      localStorage.setItem('lineh_septic', JSON.stringify(septicRecords));
-      localStorage.setItem('septic_db', JSON.stringify(septicRecords));
-      localStorage.setItem('lineh_inventory', JSON.stringify(inventoryVouchers));
-      localStorage.setItem('excludedEmployees', JSON.stringify(excludedEmployees));
-      localStorage.setItem('lineh_periodic_maintenance', JSON.stringify(periodicMaintenance));
-      localStorage.setItem('lineh_tea_sugar', JSON.stringify(teaSugarDisbursements));
-      localStorage.setItem('lineh_tea_sugar_batches', JSON.stringify(teaSugarBatches));
-      localStorage.setItem('lineh_meal_logs', JSON.stringify(mealLogs));
-      localStorage.setItem('lineh_inventory_items', JSON.stringify(inventoryItems));
-      localStorage.setItem('lineh_contractors', JSON.stringify(contractors));
-      localStorage.setItem('dyn_sectors', JSON.stringify(dynamicSectors));
-      localStorage.setItem('ctr_sectors', JSON.stringify(contractorSectors));
-      localStorage.setItem('ctr_rooms', JSON.stringify(contractorRooms));
-      localStorage.setItem('dyn_rooms', JSON.stringify(dynamicRooms));
-      localStorage.setItem('dyn_septics', JSON.stringify(dynamicSeptics));
-      localStorage.setItem('dyn_depts', JSON.stringify(dynamicDepts));
-      localStorage.setItem('dyn_titles', JSON.stringify(dynamicTitles));
-      localStorage.setItem('dyn_visitor_types', JSON.stringify(dynamicVisitorTypes));
-      localStorage.setItem('linah_bakery_contractors_names', JSON.stringify(bakeryContractorsNames));
-      localStorage.setItem('lineh_evaluations', JSON.stringify(evaluations));
-      localStorage.setItem('lineh_eval_templates', JSON.stringify(evalTemplates));
-      localStorage.setItem('lineh_users', JSON.stringify(appUsers));
-      localStorage.setItem('linah_audit_log', JSON.stringify(auditLog));
-      localStorage.setItem('lineh_current_user', currentUser);
-      localStorage.setItem('linah_bakery_ingredients', JSON.stringify(bakeryIngredients));
-      localStorage.setItem('linah_bakery_productions', JSON.stringify(bakeryProductions));
-      localStorage.setItem('linah_bakery_ctr_supplies', JSON.stringify(bakeryContractorSupplies));
-      localStorage.setItem('linah_bakery_invoices', JSON.stringify(bakeryInvoices));
-      localStorage.setItem('linah_bakery_stock_log', JSON.stringify(bakeryStockLog));
-      localStorage.setItem('lineh_admin_overtime', JSON.stringify(adminOvertime));
-      localStorage.setItem('lineh_room_assets', JSON.stringify(roomAssets));
-      localStorage.setItem('lineh_archive_data', JSON.stringify(archiveData));
-      localStorage.setItem('lineh_water_stations', JSON.stringify(waterStations));
-      localStorage.setItem('lineh_water_docs', JSON.stringify(waterDocs));
-      localStorage.setItem('lineh_quick_actions', JSON.stringify(quickActions));
-      localStorage.setItem('lineh_daily_stats', JSON.stringify(dailyStats));
-      localStorage.setItem('lineh_sync_deletions', JSON.stringify(syncDeletions));
-      localStorage.setItem('_pulledAt', JSON.stringify(_pulledAt));
-      localStorage.removeItem('_storageTx');
+      if (!skipSync) _lsSet('_pendingChanges', 'true');
+      try { localStorage.setItem('_storageTx', 'start'); } catch(e) {}
+      _lsSet('lineh_employees', JSON.stringify(employees));
+      _lsSet('employees_db', JSON.stringify(employees));
+      _lsSet('lineh_rooms_capacity', JSON.stringify(roomsCapacity));
+      _lsSet('rooms_db', JSON.stringify(roomsCapacity));
+      _lsSet('lineh_vacations', JSON.stringify(vacations));
+      _lsSet('lineh_hospitality', JSON.stringify(hospitalities));
+      _lsSet('lineh_hospitality_bak', JSON.stringify(hospitalities));
+      _lsSet('lineh_maintenance', JSON.stringify(maintenanceRecords));
+      _lsSet('lineh_septic', JSON.stringify(septicRecords));
+      _lsSet('septic_db', JSON.stringify(septicRecords));
+      _lsSet('lineh_inventory', JSON.stringify(inventoryVouchers));
+      _lsSet('excludedEmployees', JSON.stringify(excludedEmployees));
+      _lsSet('lineh_periodic_maintenance', JSON.stringify(periodicMaintenance));
+      _lsSet('lineh_tea_sugar', JSON.stringify(teaSugarDisbursements));
+      _lsSet('lineh_tea_sugar_batches', JSON.stringify(teaSugarBatches));
+      _lsSet('lineh_meal_logs', JSON.stringify(mealLogs));
+      _lsSet('lineh_inventory_items', JSON.stringify(inventoryItems));
+      _lsSet('lineh_contractors', JSON.stringify(contractors));
+      _lsSet('dyn_sectors', JSON.stringify(dynamicSectors));
+      _lsSet('ctr_sectors', JSON.stringify(contractorSectors));
+      _lsSet('ctr_rooms', JSON.stringify(contractorRooms));
+      _lsSet('dyn_rooms', JSON.stringify(dynamicRooms));
+      _lsSet('dyn_septics', JSON.stringify(dynamicSeptics));
+      _lsSet('dyn_depts', JSON.stringify(dynamicDepts));
+      _lsSet('dyn_titles', JSON.stringify(dynamicTitles));
+      _lsSet('dyn_visitor_types', JSON.stringify(dynamicVisitorTypes));
+      _lsSet('linah_bakery_contractors_names', JSON.stringify(bakeryContractorsNames));
+      _lsSet('lineh_evaluations', JSON.stringify(evaluations));
+      _lsSet('lineh_eval_templates', JSON.stringify(evalTemplates));
+      _lsSet('lineh_users', JSON.stringify(appUsers));
+      _lsSet('lineh_current_user', currentUser);
+      _lsSet('linah_bakery_ingredients', JSON.stringify(bakeryIngredients));
+      _lsSet('linah_bakery_productions', JSON.stringify(bakeryProductions));
+      _lsSet('linah_bakery_ctr_supplies', JSON.stringify(bakeryContractorSupplies));
+      _lsSet('linah_bakery_invoices', JSON.stringify(bakeryInvoices));
+      _lsSet('linah_bakery_stock_log', JSON.stringify(bakeryStockLog));
+      _lsSet('lineh_admin_overtime', JSON.stringify(adminOvertime));
+      _lsSet('lineh_room_assets', JSON.stringify(roomAssets));
+      _lsSet('lineh_archive_data', JSON.stringify(archiveData));
+      _lsSet('lineh_water_stations', JSON.stringify(waterStations));
+      _lsSet('lineh_quick_actions', JSON.stringify(quickActions));
+      _lsSet('lineh_daily_stats', JSON.stringify(dailyStats));
+      _lsSet('lineh_sync_deletions', JSON.stringify(syncDeletions));
+      _lsSet('_pulledAt', JSON.stringify(_pulledAt));
+      try { localStorage.removeItem('_storageTx'); } catch(e) {}
       calculateSystemStats();
       if (!noTimestamp) localStorage.setItem('_localChangeTime', Date.now());
       setAction('💾 حفظ');
       _dataChangedSinceBackup = true;
       var bakBtn = document.querySelector('button[onclick*="exportBackupSystem"]');
       if (bakBtn) bakBtn.classList.add('btn-backup-pulse');
+      // Save all data to IndexedDB (async) — quota-free backup
+      _idbSaveAll();
       callUpdateDXStats();
     }
 
@@ -7609,6 +7758,88 @@ function toggleEmployeeStatus(empId) {
       };
 
       showFixer();
+    }
+
+    function autoRepairHousing() {
+      if (!requireAdmin()) return;
+      var validSectors = {};
+      roomsCapacity.forEach(function(rc) { validSectors[rc.sector] = true; });
+      var validSectorList = Object.keys(validSectors);
+      if (validSectorList.length === 0) { alert('⚠️ لا توجد مباني مسجلة. أضف مباني وغرف أولاً.'); return; }
+
+      function wordSimilarity(a, b) {
+        a = a.trim(); b = b.trim();
+        if (a === b) return 1;
+        if (a.includes(b) || b.includes(a)) return 0.9;
+        var wa = a.split(/[\s/]+/), wb = b.split(/[\s/]+/);
+        var matches = 0;
+        wa.forEach(function(w) { if (w && wb.indexOf(w) !== -1) matches++; });
+        wb.forEach(function(w) { if (w && wa.indexOf(w) !== -1) matches++; });
+        return matches / Math.max(wa.length + wb.length, 1);
+      }
+
+      function findBestSector(input) {
+        if (!input || !input.trim()) return null;
+        input = input.trim();
+        if (validSectors[input]) return input;
+        var bestScore = 0, best = null;
+        validSectorList.forEach(function(s) {
+          var score = wordSimilarity(input, s);
+          if (score > bestScore) { bestScore = score; best = s; }
+        });
+        return bestScore > 0.3 ? best : null;
+      }
+
+      function findBestRoom(sector, roomInput) {
+        if (!roomInput) return null;
+        var rooms = roomsCapacity.filter(function(r) { return r.sector === sector; });
+        var exact = rooms.find(function(r) { return r.number === roomInput; });
+        if (exact) return exact.number;
+        var stripped = roomInput.replace(/غرفه|غرفة|جزوارين|جيزوارين|نخالين|قطاع\s*رقم\s*[()]?\s*/g, '').trim();
+        var bestScore = 0, best = null;
+        rooms.forEach(function(r) {
+          var score = wordSimilarity(r.number, roomInput);
+          if (stripped) {
+            var s2 = wordSimilarity(r.number, stripped);
+            if (s2 > score) score = s2;
+          }
+          if (score > bestScore) { bestScore = score; best = r.number; }
+        });
+        if (bestScore > 0.3) return best;
+        var emptyRooms = rooms.filter(function(r) {
+          return !employees.some(function(e) { return e.sector === sector && e.room === r.number; });
+        });
+        if (emptyRooms.length > 0) return emptyRooms[0].number;
+        return null;
+      }
+
+      var fixed = 0, skipped = 0, errors = [];
+      employees.forEach(function(emp) {
+        if (!emp.sector && !emp.room) return;
+        if (emp.sector && emp.room && validSectors[emp.sector] && roomsCapacity.some(function(r) { return r.sector === emp.sector && r.number === emp.room; })) return;
+        var newSector = validSectors[emp.sector] ? emp.sector : findBestSector(emp.sector);
+        if (!newSector) { skipped++; errors.push(emp.name + ': لم يتم العثور على مبنى مناسب'); return; }
+        var newRoom = (newSector === emp.sector) ? findBestRoom(newSector, emp.room) : null;
+        if (!newRoom) {
+          var emptyRooms = roomsCapacity.filter(function(r) {
+            return r.sector === newSector && !employees.some(function(e) { return e.sector === newSector && e.room === r.number; });
+          });
+          newRoom = emptyRooms.length > 0 ? emptyRooms[0].number : roomsCapacity.find(function(r) { return r.sector === newSector; })?.number;
+        }
+        if (!newRoom) { skipped++; errors.push(emp.name + ': لا توجد غرف متاحة في ' + newSector); return; }
+        emp.sector = newSector;
+        emp.room = newRoom;
+        fixed++;
+      });
+      if (fixed > 0) syncStorage();
+      var msg = '🔧 تقرير الإصلاح التلقائي:\n━━━━━━━━━━━━━━━━━━\n';
+      msg += '✅ تم إصلاح: ' + fixed + ' موظف\n';
+      msg += '⏭️ تم التخطي: ' + skipped + ' موظف\n';
+      if (errors.length > 0) msg += '⚠️ أخطاء:\n' + errors.slice(0, 20).join('\n');
+      alert(msg);
+      renderHousingLayout();
+      updateHousingStats();
+      rebuildAllDropdowns();
     }
 
     function deleteBuilding(sector) {
@@ -12256,6 +12487,8 @@ function toggleEmployeeStatus(empId) {
       periodicMaintenance = _safeJsonParse(localStorage.getItem('lineh_periodic_maintenance'), []);
       waterStations = _safeJsonParse(localStorage.getItem('lineh_water_stations'), []);
       waterDocs = _safeJsonParse(localStorage.getItem('lineh_water_docs'), []);
+      // Load full data from IndexedDB (async)
+      _idbLoadAll();
       teaSugarDisbursements = _safeJsonParse(localStorage.getItem('lineh_tea_sugar'), []);
       teaSugarBatches = _safeJsonParse(localStorage.getItem('lineh_tea_sugar_batches'), []);
       mealLogs = _safeJsonParse(localStorage.getItem('lineh_meal_logs'), []);
