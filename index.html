@@ -2535,6 +2535,12 @@
     <!-- Batch Supply Summary -->
     <div id="ts-batch-summary" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:15px;"></div>
 
+    <div style="display:flex;gap:10px;align-items:center;margin-bottom:10px;flex-wrap:wrap;">
+      <label style="font-weight:600;font-size:13px;">📅 تصفية بالشهر:</label>
+      <input type="month" id="ts-month-filter" style="padding:6px;border:1px solid #ccc;border-radius:6px;font-size:13px;font-family:Cairo,sans-serif;" onchange="renderTeaSugarTable()">
+      <button class="btn btn-sm" style="padding:4px 12px;background:#e0e0e0;" onclick="document.getElementById('ts-month-filter').value='';renderTeaSugarTable()">🔄 الكل</button>
+    </div>
+
     <div class="control-panel no-print" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;align-items:flex-end;">
       <div class="form-group" style="grid-column:1/-1;background:#e8f5e9;padding:10px;border-radius:8px;">
         <label style="font-weight:700;color:var(--primary);font-size:14px;">🍵 تسجيل دفعة تموين للصراف</label>
@@ -4807,12 +4813,14 @@
           if (!exists) reports.push(lr);
         });
 
-        _reportsHeaders = ['رقم التليفون', 'اسم العامل', 'نوع العطل', 'وصف العطل', 'الموقع', 'الأولوية', 'الحالة', 'تاريخ الابلاغ', 'وقت الاغلاق'];
+        _reportsHeaders = ['رقم التليفون', 'اسم العامل', 'كود العامل', 'القسم', 'نوع العطل', 'وصف العطل', 'الموقع', 'الأولوية', 'الحالة', 'تاريخ الابلاغ', 'وقت الاغلاق'];
         _reportsData = reports.map(function(r) {
           return {
             _row: r.id || Date.now(),
             'رقم التليفون': r.phone || '',
             'اسم العامل': r.name || '',
+            'كود العامل': r.code || '',
+            'القسم': r.dept || '',
             'نوع العطل': r.type || '',
             'وصف العطل': r.desc || r.description || '',
             'الموقع': r.location || '',
@@ -4827,12 +4835,14 @@
       })
       .catch(function(err) {
         var local = JSON.parse(localStorage.getItem('linah_reports') || '[]');
-        _reportsHeaders = ['رقم التليفون', 'اسم العامل', 'نوع العطل', 'وصف العطل', 'الموقع', 'الأولوية', 'الحالة', 'تاريخ الابلاغ', 'وقت الاغلاق'];
+        _reportsHeaders = ['رقم التليفون', 'اسم العامل', 'كود العامل', 'القسم', 'نوع العطل', 'وصف العطل', 'الموقع', 'الأولوية', 'الحالة', 'تاريخ الابلاغ', 'وقت الاغلاق'];
         _reportsData = local.map(function(r) {
           return {
             _row: r.id || Date.now(),
             'رقم التليفون': r.phone || '',
             'اسم العامل': r.name || '',
+            'كود العامل': r.code || '',
+            'القسم': r.dept || '',
             'نوع العطل': r.type || '',
             'وصف العطل': r.desc || '',
             'الموقع': r.location || '',
@@ -4857,11 +4867,13 @@
       }
 
       var headers = _reportsHeaders.filter(function(h) { return h && h !== '_row' && h.indexOf('Timestamp') === -1; });
-      var colType = _findReportCol(headers, ['القسم', 'نوع', 'الطلب', 'بلاغ']);
+      var colCode = _findReportCol(headers, ['كود العامل', 'الكود', 'code']);
+      var colDept = _findReportCol(headers, ['القسم', 'الإدارة', 'dept']);
+      var colType = _findReportCol(headers, ['نوع العطل', 'نوع', 'الطلب', 'بلاغ']);
       var colDesc = _findReportCol(headers, ['وصف', 'البيان', 'التفاصيل', 'شرح', 'ادخل وصف']);
       var colLocation = _findReportCol(headers, ['موقع', 'المبنى', 'ال Building', 'المكان', 'العنوان']);
       var colStatus = _findReportCol(headers, ['الحالة', 'status']);
-      var colName = _findReportCol(headers, ['اسم', 'الاسم', 'name']);
+      var colName = _findReportCol(headers, ['اسم العامل', 'الاسم', 'اسم', 'name']);
       var colPhone = _findReportCol(headers, ['تليفون', 'موبايل', 'هاتف', 'phone']);
       var colPriority = _findReportCol(headers, ['أولوية', 'priorit', 'عجلة']);
       var colDate = _findReportCol(headers, ['تاريخ', 'التاريخ', 'date', 'timestamp']);
@@ -4870,7 +4882,9 @@
       var displayCols = [];
       displayCols.push({ key: '_num', label: '#', w: '40px' });
       if (colName) displayCols.push({ key: colName, label: colName, w: '120px' });
+      if (colCode) displayCols.push({ key: colCode, label: colCode, w: '80px' });
       if (colPhone) displayCols.push({ key: colPhone, label: colPhone, w: '100px' });
+      if (colDept) displayCols.push({ key: colDept, label: colDept, w: '100px' });
       if (colType) displayCols.push({ key: colType, label: colType, w: '130px' });
       if (colDesc) displayCols.push({ key: colDesc, label: colDesc, w: '350px' });
       if (colLocation) displayCols.push({ key: colLocation, label: colLocation, w: '120px' });
@@ -4944,7 +4958,7 @@
       var total = reports.length;
       var urgent = 0, pending = 0, closed = 0, newCount = 0;
       var headers = _reportsHeaders;
-      var colType = _findReportCol(headers, ['القسم', 'نوع', 'الطلب', 'بلاغ']);
+      var colType = _findReportCol(headers, ['نوع العطل', 'نوع', 'الطلب', 'بلاغ']);
       var colStatus = _findReportCol(headers, ['الحالة', 'status']);
       var colPriority = _findReportCol(headers, ['أولوية', 'priorit', 'عجلة']);
 
@@ -4970,7 +4984,7 @@
       var typeFilter = document.getElementById('reports-filter-type').value;
       var priorityFilter = document.getElementById('reports-filter-priority').value;
       var statusFilter = document.getElementById('reports-filter-status').value;
-      var colType = _findReportCol(_reportsHeaders, ['القسم', 'نوع', 'الطلب', 'بلاغ']);
+      var colType = _findReportCol(_reportsHeaders, ['نوع العطل', 'نوع', 'الطلب', 'بلاغ']);
       var colStatus = _findReportCol(_reportsHeaders, ['الحالة', 'status']);
       var colPriority = _findReportCol(_reportsHeaders, ['أولوية', 'priorit', 'عجلة']);
       var filtered = _reportsData.filter(function(r) {
@@ -5427,9 +5441,12 @@
     function deleteDynamicItem(listId, idx) { if (!requireAdmin()) return;
       if (!confirm('حذف هذا العنصر؟')) return;
       let lists = { sector: dynamicSectors, room: dynamicRooms, septic: dynamicSeptics, dept: dynamicDepts, title: dynamicTitles, 'ctr-sector': contractorSectors, 'visitor-type': dynamicVisitorTypes, 'bakery-ctr': bakeryContractorsNames };
+      let entityMap = { sector: 'dynamicSectors', room: 'dynamicRooms', septic: 'dynamicSeptics', dept: 'dynamicDepts', title: 'dynamicTitles', 'ctr-sector': 'contractorSectors', 'visitor-type': 'dynamicVisitorTypes', 'bakery-ctr': 'bakeryContractorsNames' };
       let arr = lists[listId];
       if (!arr || idx >= arr.length) return;
-      _logDeletion(listId, arr[idx]);
+      let item = arr[idx];
+      let key = (typeof item === 'string') ? item : (item.name || item.label || item.id || JSON.stringify(item));
+      _logDeletion(entityMap[listId] || listId, key);
       arr.splice(idx, 1);
       syncStorage(); rebuildAllDropdowns(); renderDynamicLists();
       if (listId === 'bakery-ctr') populateBctrDatalist();
@@ -7409,7 +7426,7 @@
         assets: assetsVal
       };
       employees.push(_ts(emp));
-      _logDeletion('excludedEmployees', (rec.code || '') + '|' + (rec.name || '') + '|' + (rec.date || ''));
+      _logDeletion('excludedEmployees', rec.code || rec.id || rec.name);
       _removeDeletion('employees', emp.id);
       excludedEmployees.splice(idx, 1);
       sortEmployeesAlphabetically();
@@ -8350,7 +8367,7 @@ function toggleEmployeeStatus(empId) {
 
     function deleteInventoryVoucher(idx) { if (!requireAdmin()) return;
       if(confirm("هل تريد حذف هذا البون من حركة المخزن؟")) {
-        _logDeletion('inventoryVouchers', inventoryVouchers[idx].id || inventoryVouchers[idx]._id);
+        _logDeletion('inventoryVouchers', inventoryVouchers[idx].voucherId || inventoryVouchers[idx].id || inventoryVouchers[idx]._id);
         inventoryVouchers.splice(idx, 1); syncStorage(); renderInventoryTable();
       }
     }
@@ -9157,7 +9174,7 @@ function toggleEmployeeStatus(empId) {
       });
     }
 
-    function deleteMaint(idx) { if (!requireAdmin()) return; _logDeletion('maintenanceRecords', (maintenanceRecords[idx].category||'') + '|' + (maintenanceRecords[idx].task||'') + '|' + (maintenanceRecords[idx].date||'')); maintenanceRecords.splice(idx,1); syncStorage(); renderMaintenanceTable(); }
+    function deleteMaint(idx) { if (!requireAdmin()) return; var rec = maintenanceRecords[idx]; _logDeletion('maintenanceRecords', (rec.category||'') + '|' + (rec.task||'') + '|' + (rec.date||rec.createdAt||'')); maintenanceRecords.splice(idx,1); syncStorage(); renderMaintenanceTable(); }
     function editMaint(idx) {
       let rec = maintenanceRecords[idx];
       if (!rec) return;
@@ -9386,7 +9403,7 @@ function toggleEmployeeStatus(empId) {
     }
     function deleteWaterRecord(idx) {
       if (!confirm('حذف سجل الصيانة هذا؟')) return;
-      _logDeletion('waterStations', waterStations[idx].id);
+      _logDeletion('waterStations', waterStations[idx].id || (waterStations[idx].date + '|' + waterStations[idx].station + '|' + waterStations[idx].type));
       waterStations.splice(idx, 1);
       syncStorage();
       renderWaterStations();
@@ -9617,11 +9634,30 @@ function toggleEmployeeStatus(empId) {
     }
 
     // --- صرف الشاي والسكر ---
+    function _tsMonthKey(dateStr) {
+      if (!dateStr) return '';
+      var m = dateStr.match(/^(\d{4})-(\d{2})/);
+      if (m) return m[1] + '-' + m[2];
+      try {
+        var d = new Date(dateStr);
+        if (!isNaN(d)) return d.getFullYear() + '-' + ('0'+(d.getMonth()+1)).slice(-2);
+      } catch(e) {}
+      return '';
+    }
+    function _tsMonthName(monthKey) {
+      if (!monthKey) return '';
+      var names = ['', 'يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
+      var parts = monthKey.split('-');
+      var m = parseInt(parts[1]) || 0;
+      return names[m] + ' ' + parts[0];
+    }
     function renderTeaSugarTable() {
       let tbody = document.getElementById('ts-table-body');
       if(!tbody) return;
       tbody.innerHTML = '';
+      var monthFilter = document.getElementById('ts-month-filter')?.value || '';
       let filtered = [...teaSugarDisbursements];
+      if (monthFilter) filtered = filtered.filter(function(ts) { return _tsMonthKey(ts.date) === monthFilter; });
       let st = sortState['table-tea-sugar'];
       if (!st || !st.key) filtered = sortNewestFirst(filtered, 'date');
       if (st && st.key) filtered = sortData(filtered, st.key, st.dir);
@@ -9653,10 +9689,10 @@ function toggleEmployeeStatus(empId) {
 
     function deleteTS(idx) { if (!requireAdmin()) return;
       if(confirm("حذف سجل صرف الشاي والسكر؟")) {
-        _logDeletion('teaSugarDisbursements', (teaSugarDisbursements[idx].date||'') + '|' + (teaSugarDisbursements[idx].type||'') + '|' + (teaSugarDisbursements[idx].quantity||''));
+        var d = teaSugarDisbursements[idx];
+        _logDeletion('teaSugarDisbursements', (d.date||'') + '|' + (d.period||d.type||'') + '|' + (d.empCode||d.empId||'') + '|' + (d.teaPacks||d.quantity||'') + '|' + (d.sugarKg||''));
         teaSugarDisbursements.splice(idx, 1);
       syncStorage(); renderTeaSugarTable(); renderTeaSugarBatchSummary();
-      logAction('إضافة', 'صرف شاي وسكر', emp ? emp.name : '', 'دورة: ' + period + ' | شاي: ' + teaPacks + ' باكيت | سكر: ' + sugarKg + ' كجم');
       }
     }
 
@@ -9692,79 +9728,83 @@ function toggleEmployeeStatus(empId) {
       document.getElementById('ts-batch-date').value = '';
       document.getElementById('ts-batch-tea').value = '0';
       document.getElementById('ts-batch-sugar').value = '0';
+      document.getElementById('ts-month-filter').value = date.slice(0, 7);
+      renderTeaSugarTable();
       alert('✅ تم تسجيل دفعة التموين');
     }
 
-    function getTeaSugarPeriodStats(period) {
-      let batches = teaSugarBatches.filter(b => b.period === period);
-      let totalTeaGiven = batches.reduce((s, b) => s + (parseInt(b.teaQty)||0), 0);
-      let totalSugarGiven = batches.reduce((s, b) => s + (parseFloat(b.sugarQty)||0), 0);
-      let disbursed = teaSugarDisbursements.filter(d => d.period === period);
-      let totalTeaUsed = disbursed.reduce((s, d) => s + (parseInt(d.teaPacks)||0), 0);
-      let totalSugarUsed = disbursed.reduce((s, d) => s + (parseFloat(d.sugarKg)||0), 0);
-      return { totalTeaGiven, totalSugarGiven, totalTeaUsed, totalSugarUsed,
+    function getTeaSugarPeriodStats(period, monthKey) {
+      let batches = teaSugarBatches.filter(function(b) { return b.period === period && (!monthKey || _tsMonthKey(b.date) === monthKey); });
+      let totalTeaGiven = batches.reduce(function(s, b) { return s + (parseInt(b.teaQty)||0); }, 0);
+      let totalSugarGiven = batches.reduce(function(s, b) { return s + (parseFloat(b.sugarQty)||0); }, 0);
+      let disbursed = teaSugarDisbursements.filter(function(d) { return d.period === period && (!monthKey || _tsMonthKey(d.date) === monthKey); });
+      let totalTeaUsed = disbursed.reduce(function(s, d) { return s + (parseInt(d.teaPacks)||0); }, 0);
+      let totalSugarUsed = disbursed.reduce(function(s, d) { return s + (parseFloat(d.sugarKg)||0); }, 0);
+      return { totalTeaGiven: totalTeaGiven, totalSugarGiven: totalSugarGiven, totalTeaUsed: totalTeaUsed, totalSugarUsed: totalSugarUsed,
         remainingTea: totalTeaGiven - totalTeaUsed,
         remainingSugar: totalSugarGiven - totalSugarUsed,
-        batchCount: batches.length, empCount: disbursed.length };
+        batchCount: batches.length, empCount: disbursed.length, monthKey: monthKey || '' };
     }
 
     function renderTeaSugarBatchSummary() {
       let container = document.getElementById('ts-batch-summary');
       if (!container) return;
-      let periods = ['الدورة الأولى (1-7)', 'الدورة الثانية (15-21)'];
-      let html = '';
-      periods.forEach(p => {
-        let s = getTeaSugarPeriodStats(p);
-        let teaPct = s.totalTeaGiven > 0 ? Math.min(100, Math.round(s.totalTeaUsed / s.totalTeaGiven * 100)) : 0;
-        let sugarPct = s.totalSugarGiven > 0 ? Math.min(100, Math.round(s.totalSugarUsed / s.totalSugarGiven * 100)) : 0;
-        let teaColor = teaPct >= 90 ? '#d32f2f' : teaPct >= 70 ? '#f57c00' : '#2e7d32';
-        let sugarColor = sugarPct >= 90 ? '#d32f2f' : sugarPct >= 70 ? '#f57c00' : '#2e7d32';
-        html += `<div style="background:white;padding:12px;border-radius:10px;box-shadow:var(--shadow);border-right:4px solid ${s.totalTeaGiven > 0 ? (s.remainingTea <= 0 ? '#d32f2f' : '#4caf50') : '#ccc'};">
-          <div style="font-size:13px;font-weight:700;color:#555;margin-bottom:8px;">${p}</div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:12px;">
-            <div><span style="color:#888;">☕ شاي مسلم:</span> <b style="color:#e65100;">${s.totalTeaGiven}</b></div>
-            <div><span style="color:#888;">🍚 سكر مسلم:</span> <b style="color:#e65100;">${s.totalSugarGiven}</b></div>
-            <div><span style="color:#888;">☕ شاي مصروف:</span> <b>${s.totalTeaUsed}</b></div>
-            <div><span style="color:#888;">🍚 سكر مصروف:</span> <b>${s.totalSugarUsed}</b></div>
-            <div><span style="color:#888;">📦 متبقي شاي:</span> <b style="color:${s.remainingTea <= 0 ? '#d32f2f' : '#2e7d32'};">${Math.max(0,s.remainingTea)}</b></div>
-            <div><span style="color:#888;">📦 متبقي سكر:</span> <b style="color:${s.remainingSugar <= 0 ? '#d32f2f' : '#2e7d32'};">${Math.max(0,s.remainingSugar)}</b></div>
-          </div>
-          <div style="margin-top:8px;">
-            <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;">
-              <span style="font-size:11px;color:#888;">شاي</span>
-              <div style="flex:1;height:8px;background:#e0e0e0;border-radius:4px;overflow:hidden;">
-                <div style="height:100%;width:${teaPct}%;background:${teaColor};border-radius:4px;transition:width .5s;"></div>
-              </div>
-              <span style="font-size:11px;font-weight:600;">${teaPct}%</span>
-            </div>
-            <div style="display:flex;align-items:center;gap:6px;">
-              <span style="font-size:11px;color:#888;">سكر</span>
-              <div style="flex:1;height:8px;background:#e0e0e0;border-radius:4px;overflow:hidden;">
-                <div style="height:100%;width:${sugarPct}%;background:${sugarColor};border-radius:4px;transition:width .5s;"></div>
-              </div>
-              <span style="font-size:11px;font-weight:600;">${sugarPct}%</span>
-            </div>
-          </div>
-          ${s.batchCount > 0 ? `<div style="font-size:10px;color:#999;margin-top:6px;">${s.batchCount} دفعة | ${s.empCount} موظف</div>` : ''}
-          ${(() => {
-            let batches = teaSugarBatches.filter(b => b.period === p);
-            if (!batches.length) return '';
-            let list = batches.map((b, bi) => {
-              let realBIdx = teaSugarBatches.indexOf(b);
-              let bDate = b.date || '—';
-              let bTea = b.teaQty || 0;
-              let bSugar = b.sugarQty || 0;
-              return `<div style="display:flex;align-items:center;justify-content:space-between;padding:4px 8px;margin-top:4px;background:#f5f5f5;border-radius:4px;font-size:11px;">
-                <span>📅 ${bDate} — ☕ ${bTea} 🍚 ${bSugar}</span>
-                <span>
-                  <button class="btn btn-primary" style="padding:1px 5px;font-size:10px;" onclick="editTsBatch(${realBIdx})">✏️</button>
-                  <button class="btn btn-danger" style="padding:1px 5px;font-size:10px;" onclick="deleteTsBatch(${realBIdx})">🗑️</button>
-                </span>
-              </div>`;
-            }).join('');
-            return `<div style="margin-top:6px;border-top:1px dashed #ddd;padding-top:4px;">${list}</div>`;
-          })()}
-        </div>`;
+      // Collect all unique month keys from batches and disbursements
+      var monthSet = {};
+      teaSugarBatches.forEach(function(b) { var m = _tsMonthKey(b.date); if (m) monthSet[m] = true; });
+      teaSugarDisbursements.forEach(function(d) { var m = _tsMonthKey(d.date); if (m) monthSet[m] = true; });
+      var months = Object.keys(monthSet).sort();
+      if (months.length === 0) { container.innerHTML = '<div style="color:#888;font-size:13px;text-align:center;padding:20px;">لا توجد بيانات — سجل دفعة تموين أولاً</div>'; return; }
+      var periods = ['الدورة الأولى (1-7)', 'الدورة الثانية (15-21)'];
+      var html = '';
+      months.forEach(function(m) {
+        var monthName = _tsMonthName(m);
+        html += '<div style="background:#f5f5f5;border-radius:10px;padding:12px;margin-bottom:10px;border:1px solid #e0e0e0;">';
+        html += '<div style="font-size:14px;font-weight:700;color:#1b5e20;margin-bottom:8px;">📅 ' + monthName + '</div>';
+        html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">';
+        periods.forEach(function(p) {
+          var s = getTeaSugarPeriodStats(p, m);
+          var teaPct = s.totalTeaGiven > 0 ? Math.min(100, Math.round(s.totalTeaUsed / s.totalTeaGiven * 100)) : 0;
+          var sugarPct = s.totalSugarGiven > 0 ? Math.min(100, Math.round(s.totalSugarUsed / s.totalSugarGiven * 100)) : 0;
+          var teaColor = teaPct >= 90 ? '#d32f2f' : teaPct >= 70 ? '#f57c00' : '#2e7d32';
+          var sugarColor = sugarPct >= 90 ? '#d32f2f' : sugarPct >= 70 ? '#f57c00' : '#2e7d32';
+          var isEmpty = s.totalTeaGiven === 0 && s.totalSugarGiven === 0;
+          html += '<div style="background:white;padding:10px;border-radius:8px;box-shadow:var(--shadow);border-right:4px solid ' + (isEmpty ? '#ccc' : (s.remainingTea <= 0 ? '#d32f2f' : '#4caf50')) + ';">';
+          html += '<div style="font-size:12px;font-weight:700;color:#555;margin-bottom:6px;">' + p + '</div>';
+          if (isEmpty) {
+            html += '<div style="font-size:11px;color:#999;">لا توجد دفعات لهذا الشهر</div>';
+          } else {
+            html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;font-size:11px;">';
+            html += '<div><span style="color:#888;">☕ شاي:</span> <b style="color:#e65100;">' + s.totalTeaGiven + '</b></div>';
+            html += '<div><span style="color:#888;">🍚 سكر:</span> <b style="color:#e65100;">' + s.totalSugarGiven + '</b></div>';
+            html += '<div><span style="color:#888;">☕ مصروف:</span> <b>' + s.totalTeaUsed + '</b></div>';
+            html += '<div><span style="color:#888;">🍚 مصروف:</span> <b>' + s.totalSugarUsed + '</b></div>';
+            html += '<div><span style="color:#888;">📦 متبقي شاي:</span> <b style="color:' + (s.remainingTea <= 0 ? '#d32f2f' : '#2e7d32') + ';">' + Math.max(0, s.remainingTea) + '</b></div>';
+            html += '<div><span style="color:#888;">📦 متبقي سكر:</span> <b style="color:' + (s.remainingSugar <= 0 ? '#d32f2f' : '#2e7d32') + ';">' + Math.max(0, s.remainingSugar) + '</b></div>';
+            html += '</div>';
+            html += '<div style="margin-top:6px;"><div style="display:flex;align-items:center;gap:4px;margin-bottom:2px;"><span style="font-size:10px;color:#888;">شاي</span><div style="flex:1;height:6px;background:#e0e0e0;border-radius:3px;overflow:hidden;"><div style="height:100%;width:' + teaPct + '%;background:' + teaColor + ';border-radius:3px;"></div></div><span style="font-size:10px;font-weight:600;">' + teaPct + '%</span></div>';
+            html += '<div style="display:flex;align-items:center;gap:4px;"><span style="font-size:10px;color:#888;">سكر</span><div style="flex:1;height:6px;background:#e0e0e0;border-radius:3px;overflow:hidden;"><div style="height:100%;width:' + sugarPct + '%;background:' + sugarColor + ';border-radius:3px;"></div></div><span style="font-size:10px;font-weight:600;">' + sugarPct + '%</span></div></div>';
+            html += '<div style="font-size:10px;color:#999;margin-top:4px;">' + s.batchCount + ' دفعة | ' + s.empCount + ' موظف</div>';
+            // Show batches for this month+period
+            var monthBatches = teaSugarBatches.filter(function(b) { return b.period === p && _tsMonthKey(b.date) === m; });
+            if (monthBatches.length > 0) {
+              html += '<div style="margin-top:4px;border-top:1px dashed #ddd;padding-top:4px;">';
+              monthBatches.forEach(function(b) {
+                var realBIdx = teaSugarBatches.indexOf(b);
+                var bDate = b.date || '—';
+                var bTea = b.teaQty || 0;
+                var bSugar = b.sugarQty || 0;
+                html += '<div style="display:flex;align-items:center;justify-content:space-between;padding:3px 6px;margin-top:2px;background:#f5f5f5;border-radius:3px;font-size:10px;">';
+                html += '<span>📅 ' + bDate + ' — ☕ ' + bTea + ' 🍚 ' + bSugar + '</span>';
+                html += '<span><button class="btn btn-primary" style="padding:1px 4px;font-size:9px;" onclick="editTsBatch(' + realBIdx + ')">✏️</button> <button class="btn btn-danger" style="padding:1px 4px;font-size:9px;" onclick="deleteTsBatch(' + realBIdx + ')">🗑️</button></span>';
+                html += '</div>';
+              });
+              html += '</div>';
+            }
+          }
+          html += '</div>';
+        });
+        html += '</div></div>';
       });
       container.innerHTML = html;
     }
@@ -9796,7 +9836,6 @@ function toggleEmployeeStatus(empId) {
       alert("✅ تم التعديل");
     }
 
-    // Modify addTeaSugarRecord to check balance
     function addTeaSugarRecord() {
       let searchVal = document.getElementById('ts-emp-search').value.trim();
       let empId = document.getElementById('ts-emp-id').value;
@@ -9806,11 +9845,14 @@ function toggleEmployeeStatus(empId) {
 
       if(!empId || !period) return alert("اختر الموظف وحدد الدورة");
 
-      // Check remaining balance
-      let stats = getTeaSugarPeriodStats(period);
-      if (stats.totalTeaGiven <= 0) return alert('⚠️ لم يتم تسجيل دفعة تموين لهذه الدورة. سجل دفعة أولاً.');
-      if (stats.remainingTea < teaPacks) return alert('⚠️ كمية الشاي المتبقية لا تكفي. المتبقي: ' + Math.max(0,stats.remainingTea) + ' باكيت');
-      if (stats.remainingSugar < sugarKg) return alert('⚠️ كمية السكر المتبقية لا تكفي. المتبقي: ' + Math.max(0,stats.remainingSugar) + ' كجم');
+      var today = new Date().toISOString().split('T')[0];
+      var monthKey = today.slice(0, 7);
+
+      // Check remaining balance for THIS month
+      let stats = getTeaSugarPeriodStats(period, monthKey);
+      if (stats.totalTeaGiven <= 0) return alert('⚠️ لم يتم تسجيل دفعة تموين لهذه الدورة في شهر ' + _tsMonthName(monthKey) + '. سجل دفعة أولاً.');
+      if (stats.remainingTea < teaPacks) return alert('⚠️ كمية الشاي المتبقية لهذا الشهر لا تكفي. المتبقي: ' + Math.max(0,stats.remainingTea) + ' باكيت');
+      if (stats.remainingSugar < sugarKg) return alert('⚠️ كمية السكر المتبقية لهذا الشهر لا تكفي. المتبقي: ' + Math.max(0,stats.remainingSugar) + ' كجم');
 
       let emp = employees.find(e => e.id == empId || e.code == empId);
       if (!emp) emp = employees.find(e => searchVal && e.name.includes(searchVal.replace(/^\[\w*\]\s*/, '')));
@@ -9820,7 +9862,7 @@ function toggleEmployeeStatus(empId) {
         empName: emp ? emp.name : 'غير معروف',
         empDept: emp ? emp.dept : '',
         empTitle: emp ? emp.title : '',
-        period, date: new Date().toISOString().split('T')[0],
+        period, date: today,
         teaPacks, sugarKg
       }));
       syncStorage(); renderTeaSugarTable(); renderTeaSugarBatchSummary();
@@ -12720,6 +12762,7 @@ function toggleEmployeeStatus(empId) {
       if (_dataHashes[_dhKeys[_dhk]] && _dataHashes[_dhKeys[_dhk]].length > 100) { _dataHashes = {}; localStorage.removeItem('_pushedHashes'); break; }
     }
     var _pushInProgress = false;
+    var _pullInProgress = false;
 
     // Deletion + Update sync: tracks what was deleted/modified across devices
     var syncDeletions = _safeJsonParse(localStorage.getItem('lineh_sync_deletions'), []);
@@ -12797,7 +12840,7 @@ function toggleEmployeeStatus(empId) {
         mealLogs: function(m) { return m.date; },
         inventoryItems: function(i) { return i.id || i.name; },
         hospitalities: function(h) { return (h.name || '') + '|' + (h.arrival || '') + '|' + (h.type || ''); },
-        adminOvertime: function(o) { return (o.date || '') + '|' + (o.empCode || o.name || '') + '|' + (o.hours || ''); },
+        adminOvertime: function(o) { return (o.date || '') + '|' + (o.empCode || o.name || ''); },
         maintenanceRecords: function(m) { return (m.category || '') + '|' + (m.task || '') + '|' + (m.date || m.createdAt || ''); },
         septicRecords: function(s) { return (s.date || '') + '|' + (s.name || s.sector || '') + '|' + (s.trips || s.quantity || ''); },
         periodicMaintenance: function(p) { return (p.name || p.task || '') + '|' + (p.id || '') + '|' + (p.freq || p.frequency || ''); },
@@ -12815,15 +12858,18 @@ function toggleEmployeeStatus(empId) {
         archiveData: function(a) { return a.id || a.date; },
         quickActions: function(q) { return q.label; },
         dailyStats: function(d) { return d.date; },
-        contractorSectors: function(s) { return s.name || s; },
+        deptTitles: function(d) { return (d.dept||'') + '|' + (d.title||''); },
+        contractorSectors: function(s) { return (typeof s === 'string') ? s : (s.name || s); },
         contractorRooms: function(r) { return (r.sector || '') + '|' + (r.number || ''); },
-        dynamicSectors: function(s) { return s.name || s; },
-        dynamicRooms: function(r) { return r.name || r; },
-        dynamicSeptics: function(s) { return s.name || s; },
-        dynamicDepts: function(d) { return d.name || d; },
-        dynamicTitles: function(t) { return t.name || t; },
+        dynamicSectors: function(s) { return (typeof s === 'string') ? s : (s.name || s); },
+        dynamicRooms: function(r) { return (typeof r === 'string') ? r : (r.name || r.sector+'|'+r.number || r); },
+        dynamicSeptics: function(s) { return (typeof s === 'string') ? s : (s.name || s.id || s); },
+        dynamicDepts: function(d) { return (typeof d === 'string') ? d : (d.name || d.id || d); },
+        dynamicTitles: function(t) { return (typeof t === 'string') ? t : (t.name || t.title || t); },
         finTransactions: function(t) { return (t.date || '') + '|' + (t.task || '') + '|' + (t.orderNum || '') + '|' + (t.itemName || ''); },
         finBudgets: function(b) { return (b.code || '') + '|' + (b.month || '') + '|' + (b.year || ''); },
+        dynamicVisitorTypes: function(t) { return (typeof t === 'string') ? t : (t.name || t); },
+        bakeryContractorsNames: function(b) { return (typeof b === 'string') ? b : (b.name || b); },
         waterStations: function(w) { return w.id || w.date + '|' + w.station + '|' + w.type; },
         waterDocs: function(d) { return d.id || d.station + '|' + d.fileName; }
       };
@@ -12868,11 +12914,15 @@ function toggleEmployeeStatus(empId) {
     }
     async function forceFullSync() {
       if (!supabaseConnected) return alert('❌ غير متصل بـ Supabase');
-      if (!confirm('⚡ سيتم دفع كل البيانات من جهازك إلى السحابة.\nجهازك هو المصدر الوحيد. هل أنت متأكد؟')) return;
-      syncLog('🔄 جاري المزامنة القوية...');
+      if (!confirm('⚡ مزامنة شاملة (سحب + دمج + دفع).\nسيتم دمج بيانات السحابة مع بيانات جهازك تلقائياً. هل أنت متأكد؟')) return;
+      syncLog('🔄 جاري السحب أولاً لتجنب التضارب...');
+      _forcePull = true;
+      await pullFromSupabase();
+      syncLog('🔄 جاري الدفع بعد الدمج...');
       var ok = await pushToSupabase();
-      if (ok) { syncLog('✅ تمت المزامنة القوية بنجاح'); alert('✅ تمت المزامنة القوية بنجاح!'); }
-      else { syncLog('⚠️ فشلت المزامنة القوية'); alert('⚠️ فشلت المزامنة — تحقق من الاتصال'); }
+      _forcePull = false;
+      if (ok) { syncLog('✅ تمت المزامنة الشاملة بنجاح'); alert('✅ تمت المزامنة الشاملة بنجاح!'); }
+      else { alert('⚠️ فشلت المزامنة — تحقق من الاتصال'); }
     }
     async function pullFromSupabase() {
       if (!supabaseConnected) return;
@@ -12968,14 +13018,11 @@ function toggleEmployeeStatus(empId) {
         updateLastSyncTime();
         startPresence();
         document.getElementById('cloud-status').textContent = '☁️ متصل';
-        // ❌ تم تعطيل السحب الأولي — يعتمد على السحب اليدوي فقط
-        // _pulledAt = {};
-        // localStorage.setItem('_pulledAt', JSON.stringify({}));
-        // await pullFromSupabase();
-        // ❌ تم تعطيل السحب الدوري — يعتمد على السحب اليدوي فقط
-        // if (_syncTimer) clearInterval(_syncTimer);
-        // _syncTimer = setInterval(function() { pullFromSupabase(); }, 30000);
-        // فحص بلاغات الأعطال كل دقيقة بدل 30 ثانية
+        // سحب دوري كل 30 ثانية — عشان نتجنب تضارب البيانات
+        if (_syncTimer) clearInterval(_syncTimer);
+        _syncTimer = setInterval(function() { if (!_pullInProgress) { _pullInProgress = true; pullFromSupabase().finally(function() { _pullInProgress = false; }); } }, 30000);
+        setTimeout(function() { if (!_pullInProgress) { _pullInProgress = true; pullFromSupabase().finally(function() { _pullInProgress = false; }); } }, 3000);
+        // فحص بلاغات الأعطال كل دقيقة
         setInterval(function() {
           try {
             fetch(SUPABASE_URL + '/rest/v1/sync_data?id=eq.incident_reports&select=data', {
@@ -13211,7 +13258,7 @@ function toggleEmployeeStatus(empId) {
         employees: function(e) { return e.id || e.code || e.name; },
         roomsCapacity: function(r) { return r.sector + '|' + r.number; },
         vacations: function(v) { return (v.code||v.employeeCode||v.employeeName||v.name||'') + '|' + (v.start||v.startDate||v.dateFrom||'') + '|' + (v.end||v.endDate||v.dateTo||''); },
-        inventoryVouchers: function(v) { return v.id || v._id; },
+        inventoryVouchers: function(v) { return v.voucherId || v.id || v._id; },
         excludedEmployees: function(e) { return e.id || e.code || e.name; },
         contractors: function(c) { return c.name || c.id; },
         mealLogs: function(m) { return m.date; },
@@ -13223,11 +13270,15 @@ function toggleEmployeeStatus(empId) {
         periodicMaintenance: function(p) { return (p.name||p.task||'') + '|' + (p.id||'') + '|' + (p.freq||p.frequency||''); },
         teaSugarDisbursements: function(t) { return (t.date||'') + '|' + (t.period||t.type||'') + '|' + (t.empCode||t.empId||'') + '|' + (t.teaPacks||t.quantity||'') + '|' + (t.sugarKg||''); },
         teaSugarBatches: function(b) { return b.id || b._id; },
-        dynamicSectors: function(s) { return s.name || s; },
-        dynamicRooms: function(r) { return (r.sector||'') + '|' + (r.number||''); },
-        dynamicSeptics: function(s) { return s.name || s.id || s; },
-        dynamicDepts: function(d) { return d.name || d.id || d; },
-        dynamicTitles: function(t) { return t.name || t.title || t; },
+        dynamicSectors: function(s) { return (typeof s === 'string') ? s : (s.name || s); },
+        dynamicRooms: function(r) { return (typeof r === 'string') ? r : (r.name || r.sector+'|'+r.number || r); },
+        dynamicSeptics: function(s) { return (typeof s === 'string') ? s : (s.name || s.id || s); },
+        dynamicDepts: function(d) { return (typeof d === 'string') ? d : (d.name || d.id || d); },
+        dynamicTitles: function(t) { return (typeof t === 'string') ? t : (t.name || t.title || t); },
+        contractorSectors: function(s) { return (typeof s === 'string') ? s : (s.name || s); },
+        contractorRooms: function(r) { return (r.sector||'') + '|' + (r.number||''); },
+        dynamicVisitorTypes: function(t) { return (typeof t === 'string') ? t : (t.name || t); },
+        bakeryContractorsNames: function(b) { return (typeof b === 'string') ? b : (b.name || b); },
         appUsers: function(u) { return u.name || u.username || u; },
         bakeryIngredients: function(b) { return b.name; },
         bakeryProductions: function(p) { return normalizeDateStr(p.date) + '|' + (p.breadCount||''); },
@@ -13342,8 +13393,10 @@ function toggleEmployeeStatus(empId) {
         document.getElementById('cloud-status').textContent = '☁️ قيد الاتصال...';
         await connectSupabase();
         if (!supabaseConnected) { showSyncToast('❌ فشل الاتصال بـ Supabase'); btn.textContent = orig; btn.disabled = false; return; }
+        // سحب أولاً لتفادي التضارب
+        await pullFromSupabase();
         await pushToSupabase();
-        showSyncToast('✅ تم الحفظ في Supabase');
+        showSyncToast('✅ تمت المزامنة بنجاح');
       } catch(e) {
         showSyncToast('❌ فشلت المزامنة');
       }
