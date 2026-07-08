@@ -10610,7 +10610,10 @@ function toggleEmployeeStatus(empId) {
 
             let emp = employees.find(e => e.code == empCode || (empCode && e.name === empName) || (!empCode && e.name === empName));
 
-            if (empCode && teaSugarDisbursements.some(t => t.empCode == empCode && t.period === period)) { continue; }
+            if (empCode) {
+              var existing = teaSugarDisbursements.find(t => t.empCode == empCode && t.period === period);
+              if (existing) { existing.modifiedAt = new Date().toISOString(); continue; }
+            }
 
             teaSugarDisbursements.push({
               id: 'ts_' + Date.now() + '_' + added,
@@ -13322,8 +13325,19 @@ function toggleEmployeeStatus(empId) {
         var remoteVal = d[keys[i]];
         if (!remoteVal) continue;
         if (localVal && Array.isArray(localVal) && localVal.length > 0 && Array.isArray(remoteVal) && remoteVal.length > 0) {
-          var merged = _smartMerge(localVal, remoteVal, function(item) { return _getItemKey(item, keys[i]); }, keys[i]);
-          setEntityVar(keys[i], merged);
+          if (keys[i] === 'teaSugarDisbursements' || keys[i] === 'teaSugarBatches') {
+            var teaKey = function(item) { return _getItemKey(item, keys[i]); };
+            var localKeyed = {};
+            localVal.forEach(function(item) { localKeyed[teaKey(item)] = item; });
+            remoteVal.forEach(function(item) {
+              var k = teaKey(item);
+              if (!localKeyed[k]) { localVal.push(item); localKeyed[k] = item; }
+            });
+            setEntityVar(keys[i], localVal);
+          } else {
+            var merged = _smartMerge(localVal, remoteVal, function(item) { return _getItemKey(item, keys[i]); }, keys[i]);
+            setEntityVar(keys[i], merged);
+          }
         } else {
           setEntityVar(keys[i], remoteVal);
         }
