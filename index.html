@@ -10522,12 +10522,15 @@ function toggleEmployeeStatus(empId) {
       XLSX.utils.book_append_sheet(wb, ws, "الشاي والسكر"); XLSX.writeFile(wb, "نموذج_صرف_الشاي_والسكر_مزارع_لينه.xlsx");
     }
     function exportTeaSugarToExcel() {
-      var data = sortNewestFirst(teaSugarDisbursements, 'date').map(function(t) {
+      var monthFilter = document.getElementById('ts-month-filter')?.value || '';
+      var items = monthFilter ? teaSugarDisbursements.filter(function(t) { return _tsMonthKey(t.date) === monthFilter; }) : teaSugarDisbursements;
+      var data = sortNewestFirst(items, 'date').map(function(t) {
         var emp = employees.find(function(e) { return (e.id || e.code) == t.empId || e.name === t.empName; });
-        return { "التاريخ": t.date || '', "كود الموظف": (emp && emp.code) ? emp.code : (t.empCode || ''), "اسم الموظف": stripEmoji(emp ? emp.name : t.empName), "الإدارة": stripEmoji(emp ? emp.dept : (t.empDept || '')), "الوظيفة": stripEmoji(emp ? emp.title : (t.empTitle || '')), "الشاي": t.teaPacks || 0, "السكر": t.sugarKg || 0 };
+        return { "التاريخ": t.date || '', "كود الموظف": (emp && emp.code) ? emp.code : (t.empCode || ''), "اسم الموظف": stripEmoji(emp ? emp.name : (t.empName || t.empCode || '')), "الإدارة": stripEmoji(emp ? emp.dept : (t.empDept || '')), "الوظيفة": stripEmoji(emp ? emp.title : (t.empTitle || '')), "الشاي": t.teaPacks || 0, "السكر": t.sugarKg || 0 };
       });
       var ws = XLSX.utils.json_to_sheet(data); var wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, "صرف الشاي والسكر"); XLSX.writeFile(wb, "تقرير_الشاي_والسكر_" + new Date().toISOString().split('T')[0].replace(/-/g, '') + ".xlsx");
+      var label = monthFilter ? _tsMonthName(monthFilter) : 'الكل';
+      XLSX.utils.book_append_sheet(wb, ws, "صرف الشاي والسكر"); XLSX.writeFile(wb, "نموذج_صرف_الشاي_والسكر_" + label.replace(/ /g, '_') + ".xlsx");
     }
 
     function importTeaSugarFromExcel(evt) {
