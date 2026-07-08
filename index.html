@@ -10570,7 +10570,7 @@ function toggleEmployeeStatus(empId) {
           // Fallback: if code column not found by header, use first numeric column (index 0)
           if (idx.code < 0 && rows[hRow + 1] && typeof rows[hRow + 1][0] === 'number') idx.code = 0;
 
-          let added = 0, updated = 0;
+          let added = 0;
           for (let i = hRow + 1; i < rows.length; i++) {
             let row = rows[i];
             if (!row) continue;
@@ -10584,7 +10584,6 @@ function toggleEmployeeStatus(empId) {
             let teaVal = idx.tea >= 0 ? parseInt(row[idx.tea]) || 0 : 0;
             let sugarVal = idx.sugar >= 0 ? parseFloat(row[idx.sugar]) || 0 : 0;
 
-            // Normalize period to standard format
             if (period) {
               if (/الاولي|الأولى|1\s*-\s*7/.test(period)) period = 'الدورة الأولى (1-7)';
               else if (/الثانية|الثانيه|15\s*-\s*21/.test(period)) period = 'الدورة الثانية (15-21)';
@@ -10611,18 +10610,7 @@ function toggleEmployeeStatus(empId) {
 
             let emp = employees.find(e => e.code == empCode || (empCode && e.name === empName) || (!empCode && e.name === empName));
 
-            let existing = teaSugarDisbursements.find(t =>
-              ((empCode && t.empCode == empCode) || (empName && t.empName === empName) || (emp && t.empId == emp.id)) && t.period === period
-            );
-            if (existing) {
-              existing.empCode = empCode || existing.empCode;
-              existing.empName = empName || existing.empName;
-              existing.period = period;
-              existing.date = distDate;
-              existing.teaPacks = teaVal || existing.teaPacks;
-              existing.sugarKg = sugarVal || existing.sugarKg;
-              updated++; continue;
-            }
+            if (empCode && teaSugarDisbursements.some(t => t.empCode == empCode && t.period === period)) { continue; }
 
             teaSugarDisbursements.push({
               id: 'ts_' + Date.now() + '_' + added,
