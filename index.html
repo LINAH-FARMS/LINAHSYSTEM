@@ -3487,6 +3487,7 @@
         });
       });
     }
+    var finTransactions = []; var finBudgets = []; var manualTotalBeds = []; var deptTitles = [];
     // قائمة بكل مفاتيح الداتا
     var _ALL_KEYS = [
       'employees','roomsCapacity','vacations','hospitalities','maintenanceRecords','septicRecords',
@@ -3531,7 +3532,7 @@
             if (data && typeof data === 'object') {
               _ALL_KEYS.forEach(function(k) {
                 if (data[k] !== undefined) {
-                  var v = typeof getEntityVar === 'function' ? getEntityVar(k) : null;
+                  var v = null; try { v = typeof getEntityVar === 'function' ? getEntityVar(k) : null; } catch(e) {}
                   if (Array.isArray(data[k]) && Array.isArray(v) && v.length > 0 && data[k].length > 0) {
                     if (data[k].length > v.length) { if (typeof setEntityVar === 'function') setEntityVar(k, data[k]); }
                     else if (data[k].length < v.length) data[k] = v;
