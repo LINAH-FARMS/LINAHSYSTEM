@@ -2701,7 +2701,7 @@
               <input type="text" class="mw-ing-name" placeholder="الصنف" style="flex:2;padding:4px 6px;border:1px solid #ddd;border-radius:4px;font-size:12px;">
               <input type="number" class="mw-ing-qty" placeholder="الكمية" min="0" step="0.01" style="width:70px;padding:4px 6px;border:1px solid #ddd;border-radius:4px;font-size:12px;">
               <select class="mw-ing-unit" style="width:70px;padding:4px;border:1px solid #ddd;border-radius:4px;font-size:12px;">
-                <option value="كجم">كجم</option><option value="لتر">لتر</option><option value="قطعة">قطعة</option><option value="طبق">طبق</option><option value="رغيف">رغيف</option>
+                <option value="كجم">كجم</option><option value="لتر">لتر</option><option value="جرام">جرام</option><option value="عدد">عدد</option>
               </select>
               <button type="button" class="btn btn-danger" style="padding:2px 6px;font-size:10px;" onclick="this.closest('.mw-ing-row').remove()">✕</button>
             </div>
@@ -10225,9 +10225,8 @@ function toggleEmployeeStatus(empId) {
         '<select class="mw-ing-unit" style="width:70px;padding:4px;border:1px solid #ddd;border-radius:4px;font-size:12px;">' +
           '<option value="كجم"' + (unit==='كجم'?' selected':'') + '>كجم</option>' +
           '<option value="لتر"' + (unit==='لتر'?' selected':'') + '>لتر</option>' +
-          '<option value="قطعة"' + (unit==='قطعة'?' selected':'') + '>قطعة</option>' +
-          '<option value="طبق"' + (unit==='طبق'?' selected':'') + '>طبق</option>' +
-          '<option value="رغيف"' + (unit==='رغيف'?' selected':'') + '>رغيف</option>' +
+          '<option value="جرام"' + (unit==='جرام'?' selected':'') + '>جرام</option>' +
+          '<option value="عدد"' + (unit==='عدد'?' selected':'') + '>عدد</option>' +
         '</select>' +
         '<button type="button" class="btn btn-danger" style="padding:2px 6px;font-size:10px;" onclick="this.closest(\'.mw-ing-row\').remove()">✕</button>';
       c.appendChild(d);

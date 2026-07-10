@@ -205,9 +205,8 @@ function addIngRow(name, qty, unit) {
     '<select class="ing-unit" style="width:65px;padding:8px;border:1px solid #ddd;border-radius:6px;font-size:12px;font-family:Cairo;">' +
     '<option value="كجم"' + (unit==='كجم'?' selected':'') + '>كجم</option>' +
     '<option value="لتر"' + (unit==='لتر'?' selected':'') + '>لتر</option>' +
-    '<option value="قطعة"' + (unit==='قطعة'?' selected':'') + '>قطعة</option>' +
-    '<option value="طبق"' + (unit==='طبق'?' selected':'') + '>طبق</option>' +
-    '<option value="رغيف"' + (unit==='رغيف'?' selected':'') + '>رغيف</option>' +
+    '<option value="جرام"' + (unit==='جرام'?' selected':'') + '>جرام</option>' +
+    '<option value="عدد"' + (unit==='عدد'?' selected':'') + '>عدد</option>' +
     '</select>' +
     '<button type="button" class="remove-ing" onclick="this.parentElement.remove();calcWaterAuto();">✕</button>';
   c.appendChild(d);
