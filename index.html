@@ -2662,6 +2662,7 @@
     <div style="margin:12px 0;display:flex;gap:8px;flex-wrap:wrap;">
       <button class="btn btn-danger" onclick="openMealWasteModal()" style="height:42px;">🗑️ تسجيل هدر</button>
       <button class="btn btn-secondary" onclick="toggleMealWasteSection()" style="height:42px;">📊 سجل الهدر</button>
+      <button class="btn btn-primary" onclick="window.open('https://linah-farms.github.io/LINAHSYSTEM/qr-meal-waste.html','_blank')" style="height:42px;">📱 رابط الطباخ</button>
     </div>
     <div id="meal-waste-section" style="display:none;margin:10px 0;padding:15px;background:#fff5f5;border:2px solid #ffcdd2;border-radius:8px;">
       <div id="mw-stats" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:15px;"></div>
@@ -11856,6 +11857,48 @@ function toggleEmployeeStatus(empId) {
         })
         .catch(function(){});
     }
+    function importMealWasteFormData() {
+      fetch(SUPABASE_URL+'/rest/v1/sync_data?id=eq.meal_waste_entries&select=data', { headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY} })
+        .then(function(r){return r.json();})
+        .then(function(rows){
+          var entries = [];
+          if (rows && rows.length > 0 && rows[0].data) {
+            try { entries = typeof rows[0].data === 'string' ? JSON.parse(rows[0].data) : rows[0].data; } catch(e) { entries = []; }
+          }
+          if (!entries.length) return;
+          var imported = 0;
+          entries.forEach(function(e) {
+            if (!e.date || !e.meal) return;
+            var key = (e.date||'') + '|' + (e.meal||'');
+            if (_isDeleted('mealWaste', key)) return;
+            var exists = mealWaste.some(function(mw) { return mw.date === e.date && mw.meal === e.meal; });
+            if (!exists) {
+              mealWaste.push(_ts({
+                date: e.date,
+                meal: e.meal,
+                chef: e.chef || '',
+                ingredients: e.ingredients || [],
+                totalPrepared: e.totalPrepared || 0,
+                wasteEng: e.wasteEng || 0,
+                wasteWrk: e.wasteWrk || 0,
+                engCount: e.engCount || 0,
+                wrkCount: e.wrkCount || 0,
+                waterAdded: e.waterAdded || 0,
+                reason: e.reason || 'زيادة كمية',
+                cost: e.cost || 0,
+                responsible: e.responsible || '',
+                source: e.source || 'chef_form'
+              }));
+              imported++;
+            }
+          });
+          if (imported > 0) {
+            syncStorage();
+            try { renderMealWasteTable(); renderMealWasteStats(); } catch(e) {}
+          }
+        })
+        .catch(function(){});
+    }
 
     function switchBreadSupplySub(id, btn) {
       document.querySelectorAll('.bread-supply-sub-content').forEach(el => el.classList.remove('active'));
@@ -13343,6 +13386,7 @@ function toggleEmployeeStatus(empId) {
             syncStorage(true, true);
             renderAll();
             try { importBakeryFormData(); } catch(e) {}
+            try { importMealWasteFormData(); } catch(e) {}
             syncLog('✅ تم تحديث البيانات من السحابة');
             showSyncToast('تم استلام البيانات');
           } else {
@@ -13387,6 +13431,7 @@ function toggleEmployeeStatus(empId) {
           syncStorage(true, true);
           renderAll();
           try { importBakeryFormData(); } catch(e) {}
+          try { importMealWasteFormData(); } catch(e) {}
           syncLog('✅ تم تحويل البيانات القديمة إلى نظام جديد');
         }
       } catch(e) { syncLog('⚠️ خطأ في التحويل: ' + e.message); }
@@ -13395,7 +13440,7 @@ function toggleEmployeeStatus(empId) {
     // ═══════════════════════════════════════════════
     
     function renderAll() {
-      try { renderTable(); renderHousingLayout(); renderInventoryTable(); renderInventoryItems(); renderVacationsTable(); renderOvertimeCalendar(); renderHospitalityTable(); renderMaintenanceTable(); renderSepticTable(); renderPeriodicMaintenance(); renderTeaSugarTable(); renderMealLogTable(); renderDashboard(); renderQuickActions(); renderContractorsTable(); renderBakeryIngredients(); renderBakeryProductions(); renderBakeryContractorSupplies(); renderBakeryInvoices(); updateBakeryStats(); updateBreadSupplyStats(); rebuildAllDropdowns(); populateBctrDatalist(); renderExcludedTable(); renderDailyStatsTable(); renderEvaluations(); try { renderFinanceTab(); } catch(e) {} try { fetchReports(); } catch(e) {} } catch(e) { console.error('renderAll error:', e); }
+      try { renderTable(); renderHousingLayout(); renderInventoryTable(); renderInventoryItems(); renderVacationsTable(); renderOvertimeCalendar(); renderHospitalityTable(); renderMaintenanceTable(); renderSepticTable(); renderPeriodicMaintenance(); renderTeaSugarTable(); renderMealLogTable(); renderDashboard(); renderQuickActions(); renderContractorsTable(); renderBakeryIngredients(); renderBakeryProductions(); renderBakeryContractorSupplies(); renderBakeryInvoices(); updateBakeryStats(); updateBreadSupplyStats(); rebuildAllDropdowns(); populateBctrDatalist(); renderExcludedTable(); renderDailyStatsTable(); renderEvaluations(); try { renderFinanceTab(); } catch(e) {} try { fetchReports(); } catch(e) {} try { importMealWasteFormData(); } catch(e) {} } catch(e) { console.error('renderAll error:', e); }
     }
 
     function updateLastSyncTime() {
@@ -13445,6 +13490,10 @@ function toggleEmployeeStatus(empId) {
               _prevReportsCount = totalCount;
             });
           } catch(e) {}
+        }, 60000);
+        // فحص هدر الوجبات من فورم الطباخ كل دقيقة
+        setInterval(function() {
+          try { importMealWasteFormData(); } catch(e) {}
         }, 60000);
       } catch(e) { console.log('⚠️ Supabase connect error — retry 3s'); setTimeout(connectSupabase, 3000); }
     }

@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>تسجيل هدر الوجبات - لينه فارمز</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Cairo',sans-serif;background:#f5f5f5;min-height:100vh;padding:12px}
+.card{background:white;border-radius:16px;padding:20px 16px;max-width:500px;width:100%;margin:0 auto;box-shadow:0 4px 20px rgba(0,0,0,0.08)}
+.header{background:linear-gradient(135deg,#c62828,#ef5350);border-radius:14px;padding:20px;margin:-20px -16px 20px;text-align:center;color:white}
+.header .logo{font-size:42px;margin-bottom:4px}
+.header h1{font-size:18px;font-weight:800;margin-bottom:2px}
+.header .sub{font-size:12px;opacity:0.85}
+.step{margin-bottom:18px}
+.step-header{display:flex;align-items:center;gap:10px;margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid #f0f0f0}
+.step-num{background:linear-gradient(135deg,#c62828,#ef5350);color:white;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;flex-shrink:0}
+.step-title{font-size:15px;font-weight:700;color:#333}
+.form-group{margin-bottom:12px}
+label{display:block;font-weight:700;color:#555;margin-bottom:5px;font-size:13px}
+label .unit{font-weight:400;color:#999;font-size:11px}
+input,select,textarea{width:100%;padding:11px 12px;border:2px solid #e0e0e0;border-radius:10px;font-size:14px;font-family:'Cairo',sans-serif;transition:border 0.2s;background:white;-webkit-appearance:none}
+input:focus,select:focus,textarea:focus{border-color:#c62828;outline:none}
+textarea{resize:vertical;min-height:60px}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.form-row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.meal-btns{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px}
+.meal-btn{padding:14px;border:2px solid #e0e0e0;border-radius:12px;background:white;font-family:'Cairo',sans-serif;font-size:15px;font-weight:700;cursor:pointer;transition:all 0.2s;text-align:center}
+.meal-btn.active{background:#c62828;color:white;border-color:#c62828}
+.meal-btn:active{transform:scale(0.96)}
+.ing-row{display:flex;gap:6px;margin-top:8px;align-items:center}
+.ing-row input[type=text]{flex:2}
+.ing-row input[type=number]{width:65px}
+.ing-row select{width:65px}
+.ing-row .remove-ing{background:#c62828;color:white;border:none;border-radius:6px;width:28px;height:28px;cursor:pointer;font-size:14px;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.add-ing-btn{display:flex;align-items:center;justify-content:center;gap:6px;background:white;border:2px dashed #ef5350;border-radius:10px;padding:10px;cursor:pointer;color:#c62828;font-weight:700;font-size:13px;margin-top:8px;transition:background 0.2s;width:100%}
+.add-ing-btn:active{background:#ffebee}
+.info-box{background:#fff3e0;border-radius:8px;padding:10px;margin-top:8px;font-size:12px;line-height:1.8}
+.info-box strong{color:#c62828}
+.btn-submit{width:100%;padding:16px;background:linear-gradient(135deg,#2e7d32,#4caf50);color:white;border:none;border-radius:12px;font-size:18px;font-weight:800;cursor:pointer;font-family:'Cairo',sans-serif;margin-top:6px;transition:transform 0.2s}
+.btn-submit:active{transform:scale(0.98)}
+.btn-submit:disabled{background:#ccc;cursor:not-allowed}
+.success{display:none;text-align:center;padding:40px 16px}
+.success .icon{font-size:60px;margin-bottom:12px}
+.success h2{color:#2e7d32;font-size:20px;margin-bottom:8px}
+.success p{color:#666;font-size:14px;line-height:1.8}
+.btn-reset{width:100%;padding:14px;background:linear-gradient(135deg,#1565c0,#1976d2);color:white;border:none;border-radius:12px;font-size:16px;font-weight:700;cursor:pointer;font-family:'Cairo',sans-serif;margin-top:16px}
+.btn-reset-sm{width:100%;padding:12px;background:linear-gradient(135deg,#c62828,#ef5350);color:white;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:'Cairo',sans-serif;margin-top:12px}
+.error-msg{background:#ffebee;color:#c62828;padding:12px;border-radius:10px;margin-top:10px;font-size:13px;display:none;text-align:center}
+.footer{margin-top:20px;font-size:10px;color:#bbb;text-align:center}
+.auto-hint{font-size:11px;color:#999;margin-top:2px}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="header">
+    <div class="logo">🗑️</div>
+    <h1>تسجيل هدر الوجبات</h1>
+    <div class="sub">الواحات البحريه — قسم الوجبات</div>
+  </div>
+
+  <div id="waste-form">
+    <!-- الخطوة 0: التاريخ والوجبة والشيف -->
+    <div class="step">
+      <div class="step-header">
+        <div class="step-num">0</div>
+        <div class="step-title">معلومات أساسية</div>
+      </div>
+      <div class="form-group">
+        <label>التاريخ</label>
+        <input type="date" id="mw-date">
+      </div>
+      <div class="form-group">
+        <label>الوجبة</label>
+        <div class="meal-btns">
+          <button type="button" class="meal-btn" data-meal="فطار" onclick="selectMeal(this)">🍳 إفطار</button>
+          <button type="button" class="meal-btn" data-meal="غداء" onclick="selectMeal(this)">🍗 غداء</button>
+          <button type="button" class="meal-btn" data-meal="عشاء" onclick="selectMeal(this)">🧀 عشاء</button>
+        </div>
+        <input type="hidden" id="mw-meal" value="">
+      </div>
+      <div class="form-group">
+        <label>اسم الشيف المسؤول</label>
+        <input type="text" id="mw-chef" placeholder="مثلاً: علي حسن">
+      </div>
+    </div>
+
+    <!-- الخطوة 1: الخامات المستهلكة -->
+    <div class="step">
+      <div class="step-header">
+        <div class="step-num">1</div>
+        <div class="step-title">الخامات المستهلكة</div>
+      </div>
+      <div id="ings-container"></div>
+      <button type="button" class="add-ing-btn" onclick="addIngRow()">➕ إضافة صنف</button>
+    </div>
+
+    <!-- الخطوة 2: الهدر -->
+    <div class="step">
+      <div class="step-header">
+        <div class="step-num">2</div>
+        <div class="step-title">بيانات الهدر</div>
+      </div>
+      <div class="form-group">
+        <label>إجمالي الوزن المُعد <span class="unit">(كجم)</span></label>
+        <input type="number" id="mw-total-prepared" min="0" step="0.1" placeholder="مثلاً: 150" oninput="calcWaterAuto()">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>🧑‍💼 هدر المهندسين <span class="unit">(كجم)</span></label>
+          <input type="number" id="mw-waste-eng" min="0" step="0.1" placeholder="0">
+        </div>
+        <div class="form-group">
+          <label>👷 هدر العمال <span class="unit">(كجم)</span></label>
+          <input type="number" id="mw-waste-wrk" min="0" step="0.1" placeholder="0">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>🧑‍💼 عدد المهندسين</label>
+          <input type="number" id="mw-eng-count" min="0" step="1" placeholder="مثلاً: 50">
+        </div>
+        <div class="form-group">
+          <label>👷 عدد العمال</label>
+          <input type="number" id="mw-wrk-count" min="0" step="1" placeholder="مثلاً: 200">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>🌊 الماء المضاف للطبيخ <span class="unit">(كجم — يُحسب تلقائياً)</span></label>
+        <input type="number" id="mw-water" min="0" step="0.1" placeholder="يُحسب تلقائياً">
+        <div class="auto-hint">💡 يحسب تلقائياً ~80% من وزن الخامات (قابل للتعديل)</div>
+      </div>
+      <div class="info-box" id="mw-calc-summary">
+        <strong>⏳</strong> أدخل الخامات والهدر لرؤية الحسابات...
+      </div>
+    </div>
+
+    <!-- الخطوة 3: تفاصيل إضافية -->
+    <div class="step">
+      <div class="step-header">
+        <div class="step-num">3</div>
+        <div class="step-title">تفاصيل إضافية</div>
+      </div>
+      <div class="form-group">
+        <label>السبب</label>
+        <select id="mw-reason">
+          <option value="زيادة كمية">زيادة كمية</option>
+          <option value="خطأ طبخ">خطأ في الطبخ</option>
+          <option value="تلف">تلف/فساد</option>
+          <option value="سوء تخزين">سوء تخزين</option>
+          <option value="تقدير خاطئ">تقدير خاطئ للكمية</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>التكلفة التقريبية (ج.م)</label>
+        <input type="number" id="mw-cost" min="0" step="1" placeholder="مثلاً: 500">
+      </div>
+      <div class="form-group">
+        <label>اسم المسؤول عن التسجيل</label>
+        <input type="text" id="mw-responsible" placeholder="اسم المسؤول">
+      </div>
+    </div>
+
+    <button class="btn-submit" id="submit-btn" onclick="submitWaste()">✅ حفظ بيانات الهدر</button>
+    <div class="error-msg" id="error-msg"></div>
+  </div>
+
+  <div class="success" id="success-msg">
+    <div class="icon">✅</div>
+    <h2>تم تسجيل الهدر بنجاح!</h2>
+    <p>بيانات الهدر اتبعتت للإدارة.<br>شكراً لك!</p>
+    <button class="btn-reset" onclick="resetForm()">📊 تسجيل هدر جديد</button>
+  </div>
+  <div class="footer">LINAH FARMS — Baharia Oasis — Meal Waste Report</div>
+</div>
+
+<script>
+var SB = 'https://cwqghiqykohefaggedjl.supabase.co';
+var KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN3cWdoaXF5a29oZWZhZ2dlZGpsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEwMjUyMjEsImV4cCI6MjA5NjYwMTIyMX0.3a3hRcNdmYQCtjYjBroAT6df1T_7oz-XWUeD3wagYw8';
+var HEADERS = { 'apikey': KEY, 'Authorization': 'Bearer ' + KEY, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' };
+
+// تاريخ اليوم
+(function() {
+  var now = new Date();
+  var today = now.getFullYear() + '-' + ('0'+(now.getMonth()+1)).slice(-2) + '-' + ('0'+now.getDate()).slice(-2);
+  document.getElementById('mw-date').value = today;
+  selectMeal(document.querySelector('.meal-btn[data-meal="غداء"]'));
+  addIngRow();
+})();
+
+function selectMeal(btn) {
+  document.querySelectorAll('.meal-btn').forEach(function(b) { b.classList.remove('active'); });
+  btn.classList.add('active');
+  document.getElementById('mw-meal').value = btn.getAttribute('data-meal');
+}
+
+function addIngRow(name, qty, unit) {
+  var c = document.getElementById('ings-container');
+  var d = document.createElement('div');
+  d.className = 'ing-row';
+  d.innerHTML =
+    '<input type="text" class="ing-name" placeholder="الصنف" value="' + (name||'') + '" style="flex:2;padding:8px;border:1px solid #ddd;border-radius:6px;font-size:12px;font-family:Cairo;">' +
+    '<input type="number" class="ing-qty" placeholder="الكمية" min="0" step="0.01" value="' + (qty||'') + '" style="width:65px;padding:8px;border:1px solid #ddd;border-radius:6px;font-size:12px;font-family:Cairo;" oninput="calcWaterAuto()">' +
+    '<select class="ing-unit" style="width:65px;padding:8px;border:1px solid #ddd;border-radius:6px;font-size:12px;font-family:Cairo;">' +
+    '<option value="كجم"' + (unit==='كجم'?' selected':'') + '>كجم</option>' +
+    '<option value="لتر"' + (unit==='لتر'?' selected':'') + '>لتر</option>' +
+    '<option value="قطعة"' + (unit==='قطعة'?' selected':'') + '>قطعة</option>' +
+    '<option value="طبق"' + (unit==='طبق'?' selected':'') + '>طبق</option>' +
+    '<option value="رغيف"' + (unit==='رغيف'?' selected':'') + '>رغيف</option>' +
+    '</select>' +
+    '<button type="button" class="remove-ing" onclick="this.parentElement.remove();calcWaterAuto();">✕</button>';
+  c.appendChild(d);
+}
+
+function getIngredients() {
+  var rows = document.querySelectorAll('.ing-row');
+  var ings = [];
+  rows.forEach(function(r) {
+    var n = r.querySelector('.ing-name').value.trim();
+    var q = parseFloat(r.querySelector('.ing-qty').value) || 0;
+    var u = r.querySelector('.ing-unit').value;
+    if (n && q > 0) ings.push({ name: n, qty: q, unit: u });
+  });
+  return ings;
+}
+
+function calcWaterAuto() {
+  var ings = getIngredients();
+  var totalIng = ings.reduce(function(s, i) { return s + i.qty; }, 0);
+  var water = parseFloat(document.getElementById('mw-water').value) || 0;
+  if (water <= 0 && totalIng > 0) {
+    document.getElementById('mw-water').value = (totalIng * 0.8).toFixed(1);
+  }
+  // تحديث الملخص
+  var wasteEng = parseFloat(document.getElementById('mw-waste-eng').value) || 0;
+  var wasteWrk = parseFloat(document.getElementById('mw-waste-wrk').value) || 0;
+  var engCount = parseFloat(document.getElementById('mw-eng-count').value) || 0;
+  var wrkCount = parseFloat(document.getElementById('mw-wrk-count').value) || 0;
+  water = parseFloat(document.getElementById('mw-water').value) || 0;
+  var totalWaste = wasteEng + wasteWrk;
+  var totalWeight = totalIng + water;
+  var html = '';
+  if (totalIng > 0) {
+    html += '<div>🥘 وزن الخامات: <strong>' + totalIng.toFixed(1) + '</strong> كجم</div>';
+    html += '<div>🌊 الماء المضاف: <strong>' + water.toFixed(1) + '</strong> كجم</div>';
+    html += '<div>📦 الإجمالي الكلي: <strong>' + totalWeight.toFixed(1) + '</strong> كجم</div>';
+    if (totalWaste > 0 && totalWeight > 0) {
+      var pct = (totalWaste / totalWeight * 100);
+      html += '<div style="margin-top:6px;padding-top:6px;border-top:1px solid #ffe0b2;">📊 الهدر: <strong>' + totalWaste.toFixed(1) + '</strong> كجم = <strong>' + pct.toFixed(2) + '%</strong> من الكلي' + (pct <= 5 ? ' ✅' : ' ⚠️') + '</div>';
+    }
+    if (engCount > 0) html += '<div>🧑‍💼 هدر/فرد مهندسين: <strong>' + (wasteEng / engCount * 1000).toFixed(1) + '</strong> جم</div>';
+    if (wrkCount > 0) html += '<div>👷 هدر/فرد عمال: <strong>' + (wasteWrk / wrkCount * 1000).toFixed(1) + '</strong> جم</div>';
+  } else {
+    html = '<strong>⏳</strong> أدخل الخامات والهدر لرؤية الحسابات...';
+  }
+  document.getElementById('mw-calc-summary').innerHTML = html;
+}
+
+// ربط أحداث الحساب التلقائي
+['mw-waste-eng','mw-waste-wrk','mw-eng-count','mw-wrk-count','mw-water'].forEach(function(id) {
+  document.getElementById(id).addEventListener('input', calcWaterAuto);
+});
+
+function submitWaste() {
+  var date = document.getElementById('mw-date').value;
+  if (!date) { alert('⚠️ اختر التاريخ'); return; }
+  var meal = document.getElementById('mw-meal').value;
+  if (!meal) { alert('⚠️ اختر الوجبة'); return; }
+  var chef = document.getElementById('mw-chef').value.trim();
+  if (!chef) { alert('⚠️ أدخل اسم الشيف'); return; }
+  var ingredients = getIngredients();
+  if (!ingredients.length) { alert('⚠️ أضف على الأقل صنف واحد من الخامات'); return; }
+  var totalPrepared = parseFloat(document.getElementById('mw-total-prepared').value) || 0;
+  if (totalPrepared <= 0) { alert('⚠️ أدخل الوزن المُعد'); return; }
+  var wasteEng = parseFloat(document.getElementById('mw-waste-eng').value) || 0;
+  var wasteWrk = parseFloat(document.getElementById('mw-waste-wrk').value) || 0;
+  if (wasteEng === 0 && wasteWrk === 0) { alert('⚠️ أدخل كمية الهدر في أحد المطعمين على الأقل'); return; }
+  var engCount = parseFloat(document.getElementById('mw-eng-count').value) || 0;
+  var wrkCount = parseFloat(document.getElementById('mw-wrk-count').value) || 0;
+  var waterAdded = parseFloat(document.getElementById('mw-water').value) || 0;
+  var reason = document.getElementById('mw-reason').value;
+  var cost = parseFloat(document.getElementById('mw-cost').value) || 0;
+  var responsible = document.getElementById('mw-responsible').value.trim() || chef;
+
+  var btn = document.getElementById('submit-btn');
+  btn.disabled = true;
+  btn.textContent = 'جاري الحفظ...';
+  document.getElementById('error-msg').style.display = 'none';
+
+  var entry = {
+    date: date,
+    meal: meal,
+    chef: chef,
+    ingredients: ingredients,
+    totalPrepared: totalPrepared,
+    wasteEng: wasteEng,
+    wasteWrk: wasteWrk,
+    engCount: engCount,
+    wrkCount: wrkCount,
+    waterAdded: waterAdded,
+    reason: reason,
+    cost: cost,
+    responsible: responsible,
+    createdAt: new Date().toISOString(),
+    source: 'chef_form'
+  };
+
+  fetch(SB + '/rest/v1/sync_data?id=eq.meal_waste_entries', {
+    method: 'GET',
+    headers: { 'apikey': KEY, 'Authorization': 'Bearer ' + KEY }
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(rows) {
+    var entries = [];
+    if (rows && rows.length > 0 && rows[0].data) {
+      try { entries = rows[0].data; if (typeof entries === 'string') entries = JSON.parse(entries); } catch(e) { entries = []; }
+    }
+    entries.push(entry);
+    if (rows && rows.length > 0) {
+      return fetch(SB + '/rest/v1/sync_data?id=eq.meal_waste_entries', {
+        method: 'PATCH',
+        headers: HEADERS,
+        body: JSON.stringify({ data: entries, updated_at: new Date().toISOString() })
+      });
+    } else {
+      return fetch(SB + '/rest/v1/sync_data', {
+        method: 'POST',
+        headers: HEADERS,
+        body: JSON.stringify({ id: 'meal_waste_entries', data: entries, updated_at: new Date().toISOString() })
+      });
+    }
+  })
+  .then(function(r) {
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    document.getElementById('waste-form').style.display = 'none';
+    document.getElementById('success-msg').style.display = 'block';
+  })
+  .catch(function(e) {
+    var existing = JSON.parse(localStorage.getItem('linah_meal_waste_pending') || '[]');
+    existing.push(entry);
+    localStorage.setItem('linah_meal_waste_pending', JSON.stringify(existing));
+    document.getElementById('waste-form').style.display = 'none';
+    document.getElementById('success-msg').querySelector('h2').textContent = '⚠️ تم الحفظ محلياً';
+    document.getElementById('success-msg').querySelector('p').textContent = 'لم يتم الاتصال، سيتم الرفع تلقائياً عند توفر الإنترنت.';
+    document.getElementById('success-msg').style.display = 'block';
+  });
+}
+
+function resetForm() {
+  document.getElementById('mw-date').value = new Date().toISOString().split('T')[0];
+  selectMeal(document.querySelector('.meal-btn[data-meal="غداء"]'));
+  document.getElementById('mw-chef').value = '';
+  document.getElementById('ings-container').innerHTML = '';
+  addIngRow();
+  document.getElementById('mw-total-prepared').value = '';
+  document.getElementById('mw-waste-eng').value = '';
+  document.getElementById('mw-waste-wrk').value = '';
+  document.getElementById('mw-eng-count').value = '';
+  document.getElementById('mw-wrk-count').value = '';
+  document.getElementById('mw-water').value = '';
+  document.getElementById('mw-reason').value = 'زيادة كمية';
+  document.getElementById('mw-cost').value = '';
+  document.getElementById('mw-responsible').value = '';
+  document.getElementById('mw-calc-summary').innerHTML = '<strong>⏳</strong> أدخل الخامات والهدر لرؤية الحسابات...';
+  document.getElementById('waste-form').style.display = 'block';
+  document.getElementById('success-msg').style.display = 'none';
+  document.getElementById('submit-btn').disabled = false;
+  document.getElementById('submit-btn').textContent = '✅ حفظ بيانات الهدر';
+  document.getElementById('error-msg').style.display = 'none';
+}
+
+// محاولة رفع البلاغات المحفوظة محلياً
+(function retryPending() {
+  try {
+    var local = JSON.parse(localStorage.getItem('linah_meal_waste_pending') || '[]');
+    if (local.length === 0) return;
+    fetch(SB + '/rest/v1/sync_data?id=eq.meal_waste_entries', {
+      method: 'GET',
+      headers: { 'apikey': KEY, 'Authorization': 'Bearer ' + KEY }
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(rows) {
+      var entries = [];
+      if (rows && rows.length > 0 && rows[0].data) {
+        try { entries = rows[0].data; if (typeof entries === 'string') entries = JSON.parse(entries); } catch(e) { entries = []; }
+      }
+      var added = 0;
+      local.forEach(function(lr) {
+        if (!entries.some(function(r) { return r.createdAt === lr.createdAt; })) {
+          entries.push(lr);
+          added++;
+        }
+      });
+      if (added === 0) return;
+      var method = rows && rows.length > 0 ? 'PATCH' : 'POST';
+      var url = rows && rows.length > 0 ? SB + '/rest/v1/sync_data?id=eq.meal_waste_entries' : SB + '/rest/v1/sync_data';
+      return fetch(url, {
+        method: method,
+        headers: HEADERS,
+        body: JSON.stringify(method === 'POST' ? { id: 'meal_waste_entries', data: entries, updated_at: new Date().toISOString() } : { data: entries, updated_at: new Date().toISOString() })
+      }).then(function(r) {
+        if (r.ok) {
+          localStorage.removeItem('linah_meal_waste_pending');
+          console.log('✅ تم رفع ' + added + ' سجل هدر محلي');
+        }
+      });
+    }).catch(function() {});
+  } catch(e) {}
+})();
+</script>
+</body>
+</html>
