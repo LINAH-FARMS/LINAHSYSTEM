@@ -160,7 +160,7 @@ textarea{resize:vertical;min-height:60px}
       <div class="form-row">
         <div class="form-group">
           <label>التكلفة التقريبية (ج.م)</label>
-          <input type="number" id="mw-cost" min="0" step="1" placeholder="مثلاً: 500">
+          <input type="number" id="mw-cost" readonly style="background:#f5f5f5;cursor:not-allowed;" placeholder="تلقائي">
         </div>
       </div>
       <div class="info-box" id="mw-calc-summary">
@@ -214,14 +214,14 @@ function selectMeal(btn) {
   document.getElementById('mw-meal').value = btn.getAttribute('data-meal');
 }
 
-function addIngRow(name, qty, unit) {
+function addIngRow(name, qty, unit, price) {
   var c = document.getElementById('ings-container');
   var d = document.createElement('div');
   d.className = 'ing-row';
   d.innerHTML =
     '<input type="text" class="ing-name" placeholder="الصنف" value="' + (name||'') + '" list="ing-suggestions" style="flex:2;padding:8px;border:1px solid #ddd;border-radius:6px;font-size:12px;font-family:Cairo;">' +
-    '<input type="number" class="ing-qty" placeholder="الكمية" min="0" step="0.01" value="' + (qty||'') + '" style="width:65px;padding:8px;border:1px solid #ddd;border-radius:6px;font-size:12px;font-family:Cairo;" oninput="calcWaterAuto()">' +
-    '<select class="ing-unit" style="width:65px;padding:8px;border:1px solid #ddd;border-radius:6px;font-size:12px;font-family:Cairo;">' +
+    '<input type="number" class="ing-qty" placeholder="الكمية" min="0" step="0.01" value="' + (qty||'') + '" style="width:55px;padding:8px;border:1px solid #ddd;border-radius:6px;font-size:12px;font-family:Cairo;" oninput="calcWaterAuto()">' +
+    '<select class="ing-unit" style="width:60px;padding:8px;border:1px solid #ddd;border-radius:6px;font-size:12px;font-family:Cairo;">' +
     '<option value="كجم"' + (unit==='كجم'?' selected':'') + '>كجم</option>' +
     '<option value="لتر"' + (unit==='لتر'?' selected':'') + '>لتر</option>' +
     '<option value="جرام"' + (unit==='جرام'?' selected':'') + '>جرام</option>' +
@@ -229,6 +229,7 @@ function addIngRow(name, qty, unit) {
     '<option value="طبق"' + (unit==='طبق'?' selected':'') + '>طبق</option>' +
     '<option value="ربطة"' + (unit==='ربطة'?' selected':'') + '>ربطة</option>' +
     '</select>' +
+    '<input type="number" class="ing-price" placeholder="سعر" min="0" step="0.01" value="' + (price||'') + '" style="width:55px;padding:8px;border:1px solid #ddd;border-radius:6px;font-size:12px;font-family:Cairo;" oninput="calcWaterAuto()">' +
     '<button type="button" class="remove-ing" onclick="this.parentElement.remove();calcWaterAuto();">✕</button>';
   c.appendChild(d);
 }
@@ -240,7 +241,8 @@ function getIngredients() {
     var n = r.querySelector('.ing-name').value.trim();
     var q = parseFloat(r.querySelector('.ing-qty').value) || 0;
     var u = r.querySelector('.ing-unit').value;
-    if (n && q > 0) ings.push({ name: n, qty: q, unit: u });
+    var p = parseFloat(r.querySelector('.ing-price').value) || 0;
+    if (n && q > 0) ings.push({ name: n, qty: q, unit: u, price: p });
   });
   return ings;
 }
@@ -269,6 +271,13 @@ function calcWaterAuto() {
   if (engAte > 0) html += '<div>🧑‍💼 هدر/فرد مهندسين: <strong>' + (wasteEng / engAte * 1000).toFixed(1) + '</strong> جم</div>';
   if (wrkAte > 0) html += '<div>👷 هدر/فرد عمال: <strong>' + (wasteWrk / wrkAte * 1000).toFixed(1) + '</strong> جم</div>';
   if (guests > 0) html += '<div>🧑‍🤝‍🧑 هدر/فرد ضيوف: <strong>' + (wasteGuests / guests * 1000).toFixed(1) + '</strong> جم</div>';
+  var totalCost = 0;
+  document.querySelectorAll('.ing-row').forEach(function(r) {
+    var q = parseFloat(r.querySelector('.ing-qty').value) || 0;
+    var p = parseFloat(r.querySelector('.ing-price').value) || 0;
+    totalCost += q * p;
+  });
+  document.getElementById('mw-cost').value = totalCost > 0 ? totalCost.toFixed(0) : '';
   document.getElementById('mw-calc-summary').innerHTML = html;
 }
 
