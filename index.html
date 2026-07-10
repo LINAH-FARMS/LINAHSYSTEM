@@ -2677,7 +2677,7 @@
       </div>
       <div class="table-container">
         <table>
-          <thead><tr><th>التاريخ</th><th>الوجبة</th><th>الشيف</th><th>الخامات</th><th>إجمالي المُعد</th><th>هدر مهندسين</th><th>هدر عمال</th><th>الإجمالي</th><th>%</th><th>السبب</th><th>التكلفة</th><th style="width:80px;">إجراءات</th></tr></thead>
+           <thead><tr><th>التاريخ</th><th>الوجبة</th><th>الشيف</th><th>الخامات</th><th>المُعد (كجم)</th><th>هدر مهندسين (كجم)</th><th>هدر عمال (كجم)</th><th>الإجمالي (كجم)</th><th>%</th><th>السبب</th><th>التكلفة</th><th style="width:80px;">إجراءات</th></tr></thead>
           <tbody id="mw-table-body"></tbody>
         </table>
       </div>
@@ -2711,12 +2711,11 @@
         <div style="grid-column:1/-1;border:1px solid #ffcdd2;border-radius:8px;padding:10px;background:#fff8f8;">
           <label style="font-weight:700;color:#c62828;font-size:13px;">📊 الهدر</label>
           <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:6px;">
-            <div class="form-group"><label>إجمالي الوجبات المُعدة</label><input type="number" id="mw-total-prepared" min="0" step="1" required style="font-size:14px;font-weight:700;border-color:#c62828;"></div>
-            <div class="form-group"><label>🧑‍💼 هدر مطعم المهندسين</label><input type="number" id="mw-waste-eng" min="0" step="1" style="font-size:14px;font-weight:700;"></div>
-            <div class="form-group"><label>👷 هدر مطعم العمال</label><input type="number" id="mw-waste-wrk" min="0" step="1" style="font-size:14px;font-weight:700;"></div>
+            <div class="form-group"><label>الوزن المُعد (كجم)</label><input type="number" id="mw-total-prepared" min="0" step="0.1" required style="font-size:14px;font-weight:700;border-color:#c62828;"></div>
+            <div class="form-group"><label>🧑‍💼 هدر مطعم المهندسين (كجم)</label><input type="number" id="mw-waste-eng" min="0" step="0.1" style="font-size:14px;font-weight:700;"></div>
+            <div class="form-group"><label>👷 هدر مطعم العمال (كجم)</label><input type="number" id="mw-waste-wrk" min="0" step="0.1" style="font-size:14px;font-weight:700;"></div>
           </div>
-          <div style="display:grid;grid-template-columns:1fr 2fr;gap:8px;margin-top:6px;">
-            <div class="form-group"><label>وحدة الكميات</label><select id="mw-waste-unit"><option value="طبق">طبق</option><option value="كجم">كجم</option><option value="رغيف">رغيف</option></select></div>
+          <div style="display:grid;grid-template-columns:1fr;gap:8px;margin-top:6px;">
             <div class="form-group"><label>السبب</label><select id="mw-reason"><option value="زيادة كمية">زيادة كمية</option><option value="خطأ طبخ">خطأ في الطبخ</option><option value="تلف">تلف/فساد</option><option value="سوء تخزين">سوء تخزين</option><option value="تقدير خاطئ">تقدير خاطئ للكمية</option></select></div>
           </div>
         </div>
@@ -10238,7 +10237,6 @@ function toggleEmployeeStatus(empId) {
         document.getElementById('mw-total-prepared').value = w.totalPrepared || 0;
         document.getElementById('mw-waste-eng').value = w.wasteEng || 0;
         document.getElementById('mw-waste-wrk').value = w.wasteWrk || 0;
-        document.getElementById('mw-waste-unit').value = w.wasteUnit || 'طبق';
         document.getElementById('mw-reason').value = w.reason || 'زيادة كمية';
         document.getElementById('mw-cost').value = w.cost || 0;
         document.getElementById('mw-responsible').value = w.responsible || '';
@@ -10256,10 +10254,9 @@ function toggleEmployeeStatus(empId) {
       var c = document.getElementById('mw-ingredients-container');
       if (c) { c.innerHTML = ''; }
       addIngredientRow();
-      document.getElementById('mw-total-prepared').value = '';
+        document.getElementById('mw-total-prepared').value = '';
       document.getElementById('mw-waste-eng').value = '';
       document.getElementById('mw-waste-wrk').value = '';
-      document.getElementById('mw-waste-unit').value = 'طبق';
       document.getElementById('mw-reason').value = 'زيادة كمية';
       document.getElementById('mw-cost').value = '';
       document.getElementById('mw-responsible').value = '';
@@ -10272,12 +10269,11 @@ function toggleEmployeeStatus(empId) {
       if (!chef) return alert('⚠️ أدخل اسم الشيف.');
       var ingredients = getIngredientsFromForm();
       if (!ingredients.length) return alert('⚠️ أضف على الأقل صنف واحد من الخامات.');
-      var totalPrepared = parseInt(document.getElementById('mw-total-prepared').value) || 0;
-      if (totalPrepared <= 0) return alert('⚠️ أدخل إجمالي الوجبات المُعدة.');
-      var wasteEng = parseInt(document.getElementById('mw-waste-eng').value) || 0;
-      var wasteWrk = parseInt(document.getElementById('mw-waste-wrk').value) || 0;
+      var totalPrepared = parseFloat(document.getElementById('mw-total-prepared').value) || 0;
+      if (totalPrepared <= 0) return alert('⚠️ أدخل الوزن المُعد.');
+      var wasteEng = parseFloat(document.getElementById('mw-waste-eng').value) || 0;
+      var wasteWrk = parseFloat(document.getElementById('mw-waste-wrk').value) || 0;
       if (wasteEng === 0 && wasteWrk === 0) return alert('⚠️ أدخل كمية الهدر في أحد المطعمين على الأقل.');
-      var wasteUnit = document.getElementById('mw-waste-unit').value;
       var reason = document.getElementById('mw-reason').value;
       var cost = parseFloat(document.getElementById('mw-cost').value) || 0;
       var responsible = document.getElementById('mw-responsible').value.trim();
@@ -10286,11 +10282,11 @@ function toggleEmployeeStatus(empId) {
       if (editIdx >= 0 && editIdx < mealWaste.length) {
         var w = mealWaste[editIdx];
         w.date = normDate; w.meal = meal; w.chef = chef; w.ingredients = ingredients;
-        w.totalPrepared = totalPrepared; w.wasteEng = wasteEng; w.wasteWrk = wasteWrk; w.wasteUnit = wasteUnit;
+        w.totalPrepared = totalPrepared; w.wasteEng = wasteEng; w.wasteWrk = wasteWrk;
         w.reason = reason; w.cost = cost; w.responsible = responsible;
         w.modifiedAt = new Date().toISOString();
       } else {
-        mealWaste.push({ date: normDate, meal: meal, chef: chef, ingredients: ingredients, totalPrepared: totalPrepared, wasteEng: wasteEng, wasteWrk: wasteWrk, wasteUnit: wasteUnit, reason: reason, cost: cost, responsible: responsible, createdAt: new Date().toISOString() });
+        mealWaste.push({ date: normDate, meal: meal, chef: chef, ingredients: ingredients, totalPrepared: totalPrepared, wasteEng: wasteEng, wasteWrk: wasteWrk, reason: reason, cost: cost, responsible: responsible, createdAt: new Date().toISOString() });
         _removeDeletion('mealWaste', normDate + '|' + meal);
       }
       closeModal('modal-meal-waste');
@@ -10326,8 +10322,8 @@ function toggleEmployeeStatus(empId) {
       var wastePct = totalPrepared > 0 ? (totalWaste / totalPrepared * 100) : 0;
       el.innerHTML = [
         '<div style="background:#c62828;color:white;padding:10px;border-radius:8px;text-align:center;"><div style="font-size:20px;font-weight:700;">' + count + '</div><div style="font-size:11px;">عدد مرات الهدر</div></div>',
-        '<div style="background:#e65100;color:white;padding:10px;border-radius:8px;text-align:center;"><div style="font-size:20px;font-weight:700;">' + totalPrepared + '</div><div style="font-size:11px;">إجمالي المُعد</div></div>',
-        '<div style="background:#d32f2f;color:white;padding:10px;border-radius:8px;text-align:center;"><div style="font-size:20px;font-weight:700;">' + totalWaste + '</div><div style="font-size:11px;">إجمالي الهدر</div></div>',
+        '<div style="background:#e65100;color:white;padding:10px;border-radius:8px;text-align:center;"><div style="font-size:20px;font-weight:700;">' + totalPrepared.toFixed(1) + ' كجم</div><div style="font-size:11px;">إجمالي المُعد</div></div>',
+        '<div style="background:#d32f2f;color:white;padding:10px;border-radius:8px;text-align:center;"><div style="font-size:20px;font-weight:700;">' + totalWaste.toFixed(1) + ' كجم</div><div style="font-size:11px;">إجمالي الهدر</div></div>',
         '<div style="background:' + (wastePct <= 5 ? '#2e7d32' : '#d32f2f') + ';color:white;padding:10px;border-radius:8px;text-align:center;"><div style="font-size:20px;font-weight:700;">' + wastePct.toFixed(1) + '%</div><div style="font-size:11px;">نسبة الهدر (الهدف ≤5%)</div></div>',
         '<div style="background:#37474f;color:white;padding:10px;border-radius:8px;text-align:center;"><div style="font-size:20px;font-weight:700;">' + totalCost.toFixed(0) + ' ج.م</div><div style="font-size:11px;">تكلفة الهدر</div></div>'
       ].join('');
@@ -10363,9 +10359,9 @@ function toggleEmployeeStatus(empId) {
           '<td>' + (w.chef||'') + '</td>' +
           '<td>' + (ingsCount ? ingsCount + ' صنف' : '—') + '</td>' +
           '<td><b>' + (w.totalPrepared||'') + '</b></td>' +
-          '<td style="color:#d32f2f;font-weight:700;">' + (w.wasteEng||0) + '</td>' +
-          '<td style="color:#e65100;font-weight:700;">' + (w.wasteWrk||0) + '</td>' +
-          '<td><b>' + total + '</b></td>' +
+          '<td style="color:#d32f2f;font-weight:700;">' + (w.wasteEng||0) + ' كجم</td>' +
+          '<td style="color:#e65100;font-weight:700;">' + (w.wasteWrk||0) + ' كجم</td>' +
+          '<td><b>' + total + ' كجم</b></td>' +
           '<td style="color:' + (pct > 5 ? '#d32f2f' : '#2e7d32') + ';font-weight:700;">' + pct + '%</td>' +
           '<td>' + (w.reason||'') + '</td>' +
           '<td>' + ((w.cost||0).toFixed(0)) + '</td>' +
@@ -10388,7 +10384,7 @@ function toggleEmployeeStatus(empId) {
       _mwChart = new Chart(ctx, {
         type: 'bar',
         data: {
-          labels: ['إجمالي المُعد', 'هدر المهندسين', 'هدر العمال', 'الهدف (5%)'],
+          labels: ['المُعد (كجم)', 'هدر المهندسين (كجم)', 'هدر العمال (كجم)', 'الهدف (5%)'],
           datasets: [{
             label: 'الكمية',
             data: [totals.totalPrepared, totals.wasteEng, totals.wasteWrk, target],
@@ -10416,7 +10412,7 @@ function toggleEmployeeStatus(empId) {
       if (!filtered.length) return alert('لا توجد بيانات في النطاق المختار');
       var xlData = filtered.map(function(w) {
         var ings = (w.ingredients||[]).map(function(i) { return i.name + ' ' + i.qty + ' ' + i.unit; }).join('، ');
-        return { 'التاريخ':w.date, 'الوجبة':w.meal, 'الشيف':w.chef, 'الخامات':ings, 'إجمالي المُعد':w.totalPrepared, 'هدر مهندسين':w.wasteEng, 'هدر عمال':w.wasteWrk, 'الوحدة':w.wasteUnit, 'نسبة الهدر':(w.totalPrepared>0?(((w.wasteEng||0)+(w.wasteWrk||0))/w.totalPrepared*100).toFixed(1):0)+'%', 'السبب':w.reason, 'التكلفة':w.cost, 'المسؤول':w.responsible };
+        return { 'التاريخ':w.date, 'الوجبة':w.meal, 'الشيف':w.chef, 'الخامات':ings, 'المُعد (كجم)':w.totalPrepared, 'هدر مهندسين (كجم)':w.wasteEng, 'هدر عمال (كجم)':w.wasteWrk, 'نسبة الهدر':(w.totalPrepared>0?(((w.wasteEng||0)+(w.wasteWrk||0))/w.totalPrepared*100).toFixed(1):0)+'%', 'السبب':w.reason, 'التكلفة':w.cost, 'المسؤول':w.responsible };
       });
       var ws = XLSX.utils.json_to_sheet(xlData); var wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, 'سجل الهدر');
