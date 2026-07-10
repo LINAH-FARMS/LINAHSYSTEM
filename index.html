@@ -2711,9 +2711,28 @@
         <div style="grid-column:1/-1;border:1px solid #ffcdd2;border-radius:8px;padding:10px;background:#fff8f8;">
           <label style="font-weight:700;color:#c62828;font-size:13px;">📊 الهدر</label>
           <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:6px;">
-            <div class="form-group"><label>الوزن المُعد (كجم)</label><input type="number" id="mw-total-prepared" min="0" step="0.1" required style="font-size:14px;font-weight:700;border-color:#c62828;"></div>
-            <div class="form-group"><label>🧑‍💼 هدر مطعم المهندسين (كجم)</label><input type="number" id="mw-waste-eng" min="0" step="0.1" style="font-size:14px;font-weight:700;"></div>
-            <div class="form-group"><label>👷 هدر مطعم العمال (كجم)</label><input type="number" id="mw-waste-wrk" min="0" step="0.1" style="font-size:14px;font-weight:700;"></div>
+            <div class="form-group"><label>الوزن المُعد (كجم)</label><input type="number" id="mw-total-prepared" min="0" step="0.1" required style="font-size:14px;font-weight:700;border-color:#c62828;" oninput="updateWasteCalc()"></div>
+            <div class="form-group"><label>🧑‍💼 هدر مهندسين (كجم)</label><input type="number" id="mw-waste-eng" min="0" step="0.1" style="font-size:14px;font-weight:700;" oninput="updateWasteCalc()"></div>
+            <div class="form-group"><label>👷 هدر عمال (كجم)</label><input type="number" id="mw-waste-wrk" min="0" step="0.1" style="font-size:14px;font-weight:700;" oninput="updateWasteCalc()"></div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:6px;">
+            <div class="form-group"><label>🧑‍💼 عدد المهندسين</label><input type="number" id="mw-eng-count" min="0" step="1" oninput="updateWasteCalc()"></div>
+            <div class="form-group"><label>👷 عدد العمال</label><input type="number" id="mw-wrk-count" min="0" step="1" oninput="updateWasteCalc()"></div>
+            <div class="form-group"><label style="font-size:12px;">🌊 الماء المضاف (كجم)</label><input type="number" id="mw-water" min="0" step="0.1" oninput="updateWasteCalc()"></div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:6px;">
+            <div style="background:#e3f2fd;padding:8px;border-radius:6px;text-align:center;font-size:12px;">
+              <span style="color:#666;">🧑‍💼 هدر/فرد مهندسين</span><br>
+              <span id="mw-avg-eng" style="font-weight:700;color:#1565c0;font-size:18px;">—</span>
+            </div>
+            <div style="background:#fff3e0;padding:8px;border-radius:6px;text-align:center;font-size:12px;">
+              <span style="color:#666;">👷 هدر/فرد عمال</span><br>
+              <span id="mw-avg-wrk" style="font-weight:700;color:#e65100;font-size:18px;">—</span>
+            </div>
+            <div style="background:#e8f5e9;padding:8px;border-radius:6px;text-align:center;font-size:12px;">
+              <span style="color:#666;">🌊 هدر % من الخامات + ماء</span><br>
+              <span id="mw-pct-total" style="font-weight:700;color:#2e7d32;font-size:18px;">—</span>
+            </div>
           </div>
           <div style="display:grid;grid-template-columns:1fr;gap:8px;margin-top:6px;">
             <div class="form-group"><label>السبب</label><select id="mw-reason"><option value="زيادة كمية">زيادة كمية</option><option value="خطأ طبخ">خطأ في الطبخ</option><option value="تلف">تلف/فساد</option><option value="سوء تخزين">سوء تخزين</option><option value="تقدير خاطئ">تقدير خاطئ للكمية</option></select></div>
@@ -10201,7 +10220,7 @@ function toggleEmployeeStatus(empId) {
       d.style.cssText = 'display:flex;gap:6px;margin-top:6px;align-items:center;';
       d.innerHTML =
         '<input type="text" class="mw-ing-name" placeholder="الصنف" value="' + (name||'') + '" style="flex:2;padding:4px 6px;border:1px solid #ddd;border-radius:4px;font-size:12px;">' +
-        '<input type="number" class="mw-ing-qty" placeholder="الكمية" min="0" step="0.01" value="' + (qty||'') + '" style="width:70px;padding:4px 6px;border:1px solid #ddd;border-radius:4px;font-size:12px;">' +
+        '<input type="number" class="mw-ing-qty" placeholder="الكمية" min="0" step="0.01" value="' + (qty||'') + '" style="width:70px;padding:4px 6px;border:1px solid #ddd;border-radius:4px;font-size:12px;" oninput="calcAutoWater()">' +
         '<select class="mw-ing-unit" style="width:70px;padding:4px;border:1px solid #ddd;border-radius:4px;font-size:12px;">' +
           '<option value="كجم"' + (unit==='كجم'?' selected':'') + '>كجم</option>' +
           '<option value="لتر"' + (unit==='لتر'?' selected':'') + '>لتر</option>' +
@@ -10223,6 +10242,36 @@ function toggleEmployeeStatus(empId) {
       });
       return ings;
     }
+    function calcAutoWater() {
+      var ings = getIngredientsFromForm();
+      var totalIng = ings.reduce(function(s, i) { return s + i.qty; }, 0);
+      var water = parseFloat(document.getElementById('mw-water').value) || 0;
+      if (water <= 0 && totalIng > 0) {
+        document.getElementById('mw-water').value = (totalIng * 0.8).toFixed(1);
+      }
+      document.getElementById('mw-pct-total').textContent = '—';
+      updateWasteCalc();
+    }
+    function updateWasteCalc() {
+      var wasteEng = parseFloat(document.getElementById('mw-waste-eng').value) || 0;
+      var wasteWrk = parseFloat(document.getElementById('mw-waste-wrk').value) || 0;
+      var engCount = parseFloat(document.getElementById('mw-eng-count').value) || 0;
+      var wrkCount = parseFloat(document.getElementById('mw-wrk-count').value) || 0;
+      var totalPrepared = parseFloat(document.getElementById('mw-total-prepared').value) || 0;
+      var water = parseFloat(document.getElementById('mw-water').value) || 0;
+      if (engCount > 0) { document.getElementById('mw-avg-eng').textContent = (wasteEng / engCount * 1000).toFixed(1) + ' جم/فرد'; }
+      else { document.getElementById('mw-avg-eng').textContent = '—'; }
+      if (wrkCount > 0) { document.getElementById('mw-avg-wrk').textContent = (wasteWrk / wrkCount * 1000).toFixed(1) + ' جم/فرد'; }
+      else { document.getElementById('mw-avg-wrk').textContent = '—'; }
+      var ings = getIngredientsFromForm();
+      var totalIng = ings.reduce(function(s, i) { return s + i.qty; }, 0) + water;
+      if (totalIng > 0) {
+        var totalWaste = wasteEng + wasteWrk;
+        var pct = (totalWaste / totalIng * 100);
+        document.getElementById('mw-pct-total').textContent = pct.toFixed(2) + '%';
+        document.getElementById('mw-pct-total').style.color = pct <= 5 ? '#2e7d32' : '#d32f2f';
+      }
+    }
     function openMealWasteModal(editIdx) {
       if (editIdx !== undefined && editIdx >= 0) {
         var w = mealWaste[editIdx];
@@ -10240,6 +10289,10 @@ function toggleEmployeeStatus(empId) {
         document.getElementById('mw-reason').value = w.reason || 'زيادة كمية';
         document.getElementById('mw-cost').value = w.cost || 0;
         document.getElementById('mw-responsible').value = w.responsible || '';
+        document.getElementById('mw-eng-count').value = w.engCount || 0;
+        document.getElementById('mw-wrk-count').value = w.wrkCount || 0;
+        document.getElementById('mw-water').value = w.waterAdded || 0;
+        setTimeout(updateWasteCalc, 50);
       } else {
         cancelMealWasteEdit();
         if (!document.getElementById('mw-date').value) document.getElementById('mw-date').value = new Date().toISOString().split('T')[0];
@@ -10260,6 +10313,12 @@ function toggleEmployeeStatus(empId) {
       document.getElementById('mw-reason').value = 'زيادة كمية';
       document.getElementById('mw-cost').value = '';
       document.getElementById('mw-responsible').value = '';
+      document.getElementById('mw-eng-count').value = '';
+      document.getElementById('mw-wrk-count').value = '';
+      document.getElementById('mw-water').value = '';
+      document.getElementById('mw-avg-eng').textContent = '—';
+      document.getElementById('mw-avg-wrk').textContent = '—';
+      document.getElementById('mw-pct-total').textContent = '—';
     }
     function saveMealWaste() {
       var date = document.getElementById('mw-date').value;
@@ -10277,6 +10336,9 @@ function toggleEmployeeStatus(empId) {
       var reason = document.getElementById('mw-reason').value;
       var cost = parseFloat(document.getElementById('mw-cost').value) || 0;
       var responsible = document.getElementById('mw-responsible').value.trim();
+      var engCount = parseFloat(document.getElementById('mw-eng-count').value) || 0;
+      var wrkCount = parseFloat(document.getElementById('mw-wrk-count').value) || 0;
+      var waterAdded = parseFloat(document.getElementById('mw-water').value) || 0;
       var editIdx = parseInt(document.getElementById('mw-edit-idx').value);
       var normDate = normalizeDateStr(date);
       if (editIdx >= 0 && editIdx < mealWaste.length) {
@@ -10284,9 +10346,10 @@ function toggleEmployeeStatus(empId) {
         w.date = normDate; w.meal = meal; w.chef = chef; w.ingredients = ingredients;
         w.totalPrepared = totalPrepared; w.wasteEng = wasteEng; w.wasteWrk = wasteWrk;
         w.reason = reason; w.cost = cost; w.responsible = responsible;
+        w.engCount = engCount; w.wrkCount = wrkCount; w.waterAdded = waterAdded;
         w.modifiedAt = new Date().toISOString();
       } else {
-        mealWaste.push({ date: normDate, meal: meal, chef: chef, ingredients: ingredients, totalPrepared: totalPrepared, wasteEng: wasteEng, wasteWrk: wasteWrk, reason: reason, cost: cost, responsible: responsible, createdAt: new Date().toISOString() });
+        mealWaste.push({ date: normDate, meal: meal, chef: chef, ingredients: ingredients, totalPrepared: totalPrepared, wasteEng: wasteEng, wasteWrk: wasteWrk, reason: reason, cost: cost, responsible: responsible, engCount: engCount, wrkCount: wrkCount, waterAdded: waterAdded, createdAt: new Date().toISOString() });
         _removeDeletion('mealWaste', normDate + '|' + meal);
       }
       closeModal('modal-meal-waste');
@@ -10320,11 +10383,21 @@ function toggleEmployeeStatus(empId) {
         totalCost += w.cost || 0;
       });
       var wastePct = totalPrepared > 0 ? (totalWaste / totalPrepared * 100) : 0;
+      var totalEngCount = 0, totalWrkCount = 0, totalWasteFromEng = 0, totalWasteFromWrk = 0;
+      filtered.forEach(function(w) {
+        totalEngCount += w.engCount || 0;
+        totalWrkCount += w.wrkCount || 0;
+        totalWasteFromEng += w.wasteEng || 0;
+        totalWasteFromWrk += w.wasteWrk || 0;
+      });
+      var avgEng = totalEngCount > 0 ? (totalWasteFromEng / totalEngCount * 1000) : 0;
+      var avgWrk = totalWrkCount > 0 ? (totalWasteFromWrk / totalWrkCount * 1000) : 0;
       el.innerHTML = [
         '<div style="background:#c62828;color:white;padding:10px;border-radius:8px;text-align:center;"><div style="font-size:20px;font-weight:700;">' + count + '</div><div style="font-size:11px;">عدد مرات الهدر</div></div>',
         '<div style="background:#e65100;color:white;padding:10px;border-radius:8px;text-align:center;"><div style="font-size:20px;font-weight:700;">' + totalPrepared.toFixed(1) + ' كجم</div><div style="font-size:11px;">إجمالي المُعد</div></div>',
         '<div style="background:#d32f2f;color:white;padding:10px;border-radius:8px;text-align:center;"><div style="font-size:20px;font-weight:700;">' + totalWaste.toFixed(1) + ' كجم</div><div style="font-size:11px;">إجمالي الهدر</div></div>',
         '<div style="background:' + (wastePct <= 5 ? '#2e7d32' : '#d32f2f') + ';color:white;padding:10px;border-radius:8px;text-align:center;"><div style="font-size:20px;font-weight:700;">' + wastePct.toFixed(1) + '%</div><div style="font-size:11px;">نسبة الهدر (الهدف ≤5%)</div></div>',
+        '<div style="background:#1565c0;color:white;padding:10px;border-radius:8px;text-align:center;"><div style="font-size:16px;font-weight:700;">' + (totalEngCount > 0 ? avgEng.toFixed(1) + ' جم/فرد' : '—') + ' / ' + (totalWrkCount > 0 ? avgWrk.toFixed(1) + ' جم/فرد' : '—') + '</div><div style="font-size:11px;">متوسط هدر/فرد (مهندسين / عمال)</div></div>',
         '<div style="background:#37474f;color:white;padding:10px;border-radius:8px;text-align:center;"><div style="font-size:20px;font-weight:700;">' + totalCost.toFixed(0) + ' ج.م</div><div style="font-size:11px;">تكلفة الهدر</div></div>'
       ].join('');
       var chartContainer = document.getElementById('mw-chart-container');
@@ -10353,16 +10426,20 @@ function toggleEmployeeStatus(empId) {
         var total = (w.wasteEng||0) + (w.wasteWrk||0);
         var pct = (w.totalPrepared||0) > 0 ? ((total / (w.totalPrepared||1)) * 100).toFixed(1) : 0;
         var ingsCount = (w.ingredients||[]).length;
+        var avgEng = (w.engCount||0) > 0 ? ((w.wasteEng||0) / (w.engCount||1) * 1000) : 0;
+        var avgWrk = (w.wrkCount||0) > 0 ? ((w.wasteWrk||0) / (w.wrkCount||1) * 1000) : 0;
+        var totalIngW = (w.ingredients||[]).reduce(function(s,i){return s+(i.qty||0);},0) + (w.waterAdded||0);
+        var pctOfTotal = totalIngW > 0 ? ((total / totalIngW) * 100) : 0;
         tbody.innerHTML += '<tr>' +
           '<td>' + toArabicNumerals(w.date) + '</td>' +
           '<td>' + (w.meal||'') + '</td>' +
           '<td>' + (w.chef||'') + '</td>' +
           '<td>' + (ingsCount ? ingsCount + ' صنف' : '—') + '</td>' +
-          '<td><b>' + (w.totalPrepared||'') + '</b></td>' +
-          '<td style="color:#d32f2f;font-weight:700;">' + (w.wasteEng||0) + ' كجم</td>' +
-          '<td style="color:#e65100;font-weight:700;">' + (w.wasteWrk||0) + ' كجم</td>' +
+          '<td><b>' + (w.totalPrepared||'') + ' كجم</b></td>' +
+          '<td style="color:#d32f2f;font-weight:700;">' + (w.wasteEng||0) + ' كجم' + (avgEng > 0 ? '<br><span style="font-size:10px;font-weight:400;color:#999;">' + avgEng.toFixed(0) + ' جم/فرد</span>' : '') + '</td>' +
+          '<td style="color:#e65100;font-weight:700;">' + (w.wasteWrk||0) + ' كجم' + (avgWrk > 0 ? '<br><span style="font-size:10px;font-weight:400;color:#999;">' + avgWrk.toFixed(0) + ' جم/فرد</span>' : '') + '</td>' +
           '<td><b>' + total + ' كجم</b></td>' +
-          '<td style="color:' + (pct > 5 ? '#d32f2f' : '#2e7d32') + ';font-weight:700;">' + pct + '%</td>' +
+          '<td style="color:' + (pct > 5 ? '#d32f2f' : '#2e7d32') + ';font-weight:700;">' + pct + '%' + (pctOfTotal > 0 ? '<br><span style="font-size:10px;font-weight:400;color:#999;">من الكلي: ' + pctOfTotal.toFixed(1) + '%</span>' : '') + '</td>' +
           '<td>' + (w.reason||'') + '</td>' +
           '<td>' + ((w.cost||0).toFixed(0)) + '</td>' +
           '<td class="no-print"><button class="btn btn-warning" style="padding:1px 5px;font-size:10px;" onclick="editMealWaste(' + realIdx + ')">✏️</button> <button class="btn btn-danger" style="padding:1px 5px;font-size:10px;" onclick="deleteMealWaste(' + realIdx + ')">🗑️</button></td>' +
@@ -10412,7 +10489,17 @@ function toggleEmployeeStatus(empId) {
       if (!filtered.length) return alert('لا توجد بيانات في النطاق المختار');
       var xlData = filtered.map(function(w) {
         var ings = (w.ingredients||[]).map(function(i) { return i.name + ' ' + i.qty + ' ' + i.unit; }).join('، ');
-        return { 'التاريخ':w.date, 'الوجبة':w.meal, 'الشيف':w.chef, 'الخامات':ings, 'المُعد (كجم)':w.totalPrepared, 'هدر مهندسين (كجم)':w.wasteEng, 'هدر عمال (كجم)':w.wasteWrk, 'نسبة الهدر':(w.totalPrepared>0?(((w.wasteEng||0)+(w.wasteWrk||0))/w.totalPrepared*100).toFixed(1):0)+'%', 'السبب':w.reason, 'التكلفة':w.cost, 'المسؤول':w.responsible };
+        var avgEng = (w.engCount||0) > 0 ? ((w.wasteEng||0) / (w.engCount||1) * 1000).toFixed(1) + ' جم' : '';
+        var avgWrk = (w.wrkCount||0) > 0 ? ((w.wasteWrk||0) / (w.wrkCount||1) * 1000).toFixed(1) + ' جم' : '';
+        var totalIngW = (w.ingredients||[]).reduce(function(s,i){return s+(i.qty||0);},0) + (w.waterAdded||0);
+        var pctOfTotal = totalIngW > 0 ? ((((w.wasteEng||0)+(w.wasteWrk||0))/totalIngW)*100).toFixed(2) + '%' : '';
+        return { 'التاريخ':w.date, 'الوجبة':w.meal, 'الشيف':w.chef, 'الخامات':ings,
+          'المُعد (كجم)':w.totalPrepared, 'هدر مهندسين (كجم)':w.wasteEng, 'هدر عمال (كجم)':w.wasteWrk,
+          'عدد المهندسين':w.engCount||0, 'عدد العمال':w.wrkCount||0,
+          'هدر/فرد مهندسين (جم)':avgEng, 'هدر/فرد عمال (جم)':avgWrk,
+          'الماء المضاف (كجم)':w.waterAdded||0, 'نسبة الهدر من المُعد':(w.totalPrepared>0?(((w.wasteEng||0)+(w.wasteWrk||0))/w.totalPrepared*100).toFixed(1):0)+'%',
+          'نسبة من الخامات+ماء':pctOfTotal,
+          'السبب':w.reason, 'التكلفة':w.cost, 'المسؤول':w.responsible };
       });
       var ws = XLSX.utils.json_to_sheet(xlData); var wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, 'سجل الهدر');
