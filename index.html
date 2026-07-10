@@ -11885,6 +11885,7 @@ function toggleEmployeeStatus(empId) {
           operatingCost: operatingCost,
           notes: notes
         }));
+        _removeDeletion('bakeryProductions', prodDate + '|' + breadCount);
         syncStorage(); renderBakeryProductions(); updateBakeryProductionIngredientStocks();
         document.getElementById('bprod-count').value = '0';
         document.getElementById('bprod-opcost').value = '1200';
@@ -12052,6 +12053,7 @@ function toggleEmployeeStatus(empId) {
         let revenue = count * price;
         let profit = revenue - prodCost;
         bakeryContractorSupplies.push(_ts({ id: getBakeryNextId('CTR', bakeryContractorSupplies), date: normDate, name, count, price, paid, prodCost, revenue, profit, responsible, notes, ingredients: deducted }));
+        _removeDeletion('bakeryContractorSupplies', (name||'') + '|' + normDate + '|' + (count||''));
         _editingCtrIdx = -1;
         syncStorage(); renderBakeryContractorSupplies(); updateBakeryStats(); updateBreadSupplyStats(); updateBctrIngredientStocks(); updateBakeryProductionIngredientStocks();
         document.getElementById('btn-save-ctr').textContent = '🚚 تسجيل التوريد';
