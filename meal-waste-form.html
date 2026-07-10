@@ -75,8 +75,8 @@ textarea{resize:vertical;min-height:60px}
         <label>الوجبة</label>
         <div class="meal-btns">
           <button type="button" class="meal-btn" data-meal="فطار" onclick="selectMeal(this)">🍳 إفطار</button>
-          <button type="button" class="meal-btn" data-meal="غداء" onclick="selectMeal(this)">🍗 غداء</button>
-          <button type="button" class="meal-btn" data-meal="عشاء" onclick="selectMeal(this)">🧀 عشاء</button>
+          <button type="button" class="meal-btn" data-meal="غداء" onclick="selectMeal(this)">🧀 غداء</button>
+          <button type="button" class="meal-btn" data-meal="عشاء" onclick="selectMeal(this)">🍗 عشاء</button>
         </div>
         <input type="hidden" id="mw-meal" value="">
       </div>
@@ -111,37 +111,35 @@ textarea{resize:vertical;min-height:60px}
         <label>الوزن النهائي بعد الطبخ <span class="unit">(كجم)</span></label>
         <input type="number" id="mw-total-prepared" min="0" step="0.1" placeholder="مثلاً: 150">
       </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label>🧑‍💼 هدر المهندسين <span class="unit">(كجم)</span></label>
-          <input type="number" id="mw-waste-eng" min="0" step="0.1" placeholder="0">
-        </div>
-        <div class="form-group">
-          <label>👷 هدر العمال <span class="unit">(كجم)</span></label>
-          <input type="number" id="mw-waste-wrk" min="0" step="0.1" placeholder="0">
-        </div>
-      </div>
       <div style="background:#e3f2fd;padding:10px;border-radius:10px;margin-bottom:10px;">
-        <div class="form-row">
+        <div class="form-row-3">
           <div class="form-group">
-            <label>🧑‍💼 المهندسين بالمطعم</label>
+            <label>🧑‍💼 هدر المهندسين <span class="unit">(كجم)</span></label>
+            <input type="number" id="mw-waste-eng" min="0" step="0.1" placeholder="0">
+          </div>
+          <div class="form-group">
+            <label>🍽️ بالمطعم</label>
             <input type="number" id="mw-eng-ate" min="0" step="1" placeholder="0">
           </div>
           <div class="form-group">
-            <label>📦 المهندسين تيك أواي</label>
+            <label>📦 تيك أواي</label>
             <input type="number" id="mw-eng-takeaway" min="0" step="1" placeholder="0">
           </div>
         </div>
         <div style="text-align:center;font-size:14px;color:#1565c0;">🧑‍💼 إجمالي المهندسين: <strong id="mw-eng-total-display">0</strong></div>
       </div>
       <div style="background:#fff3e0;padding:10px;border-radius:10px;margin-bottom:10px;">
-        <div class="form-row">
+        <div class="form-row-3">
           <div class="form-group">
-            <label>👷 العمال بالمطعم</label>
+            <label>👷 هدر العمال <span class="unit">(كجم)</span></label>
+            <input type="number" id="mw-waste-wrk" min="0" step="0.1" placeholder="0">
+          </div>
+          <div class="form-group">
+            <label>🍽️ بالمطعم</label>
             <input type="number" id="mw-wrk-ate" min="0" step="1" placeholder="0">
           </div>
           <div class="form-group">
-            <label>📦 العمال تيك أواي</label>
+            <label>📦 تيك أواي</label>
             <input type="number" id="mw-wrk-takeaway" min="0" step="1" placeholder="0">
           </div>
         </div>

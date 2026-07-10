@@ -1138,11 +1138,11 @@
               <div style="font-size:22px;font-weight:700;color:#2e7d32;" id="dash-today-bf">0</div>
             </div>
             <div style="background:#e3f2fd;padding:12px;border-radius:8px;text-align:center;">
-              <div style="font-size:11px;color:#888;">🍗 غداء</div>
+              <div style="font-size:11px;color:#888;">🧀 غداء</div>
               <div style="font-size:22px;font-weight:700;color:#1565c0;" id="dash-today-lh">0</div>
             </div>
             <div style="background:#f3e5f5;padding:12px;border-radius:8px;text-align:center;">
-              <div style="font-size:11px;color:#888;">🧀 عشاء</div>
+              <div style="font-size:11px;color:#888;">🍗 عشاء</div>
               <div style="font-size:22px;font-weight:700;color:#6a1b9a;" id="dash-today-dn">0</div>
             </div>
           </div>
@@ -1658,8 +1658,8 @@
         <label style="font-weight:600;">الوجبات المستحقة لليوم</label>
         <div class="meal-checkboxes">
           <label><input type="checkbox" id="hosp-meal-bf" checked> 🍳 إفطار</label>
-          <label><input type="checkbox" id="hosp-meal-lh" checked> 🍗 غداء</label>
-          <label><input type="checkbox" id="hosp-meal-dn" checked> 🧀 عشاء</label>
+          <label><input type="checkbox" id="hosp-meal-lh" checked> 🧀 غداء</label>
+          <label><input type="checkbox" id="hosp-meal-dn" checked> 🍗 عشاء</label>
         </div>
       </div>
       <input type="hidden" id="hosp-edit-id">
@@ -2614,11 +2614,11 @@
         <div class="value" id="stat-today-bf">0</div>
       </div>
       <div class="stat-card">
-        <h3>🍗 غداء (قوة + ضيوف)</h3>
+        <h3>🧀 غداء (قوة + ضيوف)</h3>
         <div class="value" id="stat-today-lh">0</div>
       </div>
       <div class="stat-card orange">
-        <h3>🧀 عشاء (قوة + ضيوف)</h3>
+        <h3>🍗 عشاء (قوة + ضيوف)</h3>
         <div class="value" id="stat-today-dn">0</div>
       </div>
     </div>
@@ -2645,9 +2645,9 @@
             <th data-sort-key="date">التاريخ</th>
             <th>🍳 إفطار</th>
             <th>🍳 ضيوف إفطار</th>
-            <th>🍗 غداء</th>
+            <th>🧀 غداء</th>
             <th>🍗 ضيوف غداء</th>
-            <th>🧀 عشاء</th>
+            <th>🍗 عشاء</th>
             <th>🧀 ضيوف عشاء</th>
             <th>📊 الإجمالي</th>
             <th>👨‍🍳 الشيف</th>
@@ -2691,7 +2691,7 @@
       <form id="meal-waste-form" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;padding:15px;" onsubmit="return false;">
         <input type="hidden" id="mw-edit-idx" value="-1">
         <div class="form-group"><label>التاريخ</label><input type="date" id="mw-date" required></div>
-        <div class="form-group"><label>الوجبة</label><select id="mw-meal"><option value="فطار">🍳 إفطار</option><option value="غداء">🍗 غداء</option><option value="عشاء">🧀 عشاء</option></select></div>
+        <div class="form-group"><label>الوجبة</label><select id="mw-meal"><option value="فطار">🍳 إفطار</option><option value="غداء">🧀 غداء</option><option value="عشاء">🍗 عشاء</option></select></div>
         <div class="form-group"><label>الشيف</label><input type="text" id="mw-chef" required placeholder="اسم الشيف"></div>
 
         <div style="grid-column:1/-1;border:1px solid #ffcdd2;border-radius:8px;padding:10px;background:#fff8f8;">
@@ -2713,45 +2713,31 @@
 
         <div style="grid-column:1/-1;border:1px solid #ffcdd2;border-radius:8px;padding:10px;background:#fff8f8;">
           <label style="font-weight:700;color:#c62828;font-size:13px;">📊 الهدر</label>
-          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:6px;">
-            <div class="form-group"><label>الوزن النهائي بعد الطبخ (كجم)</label><input type="number" id="mw-total-prepared" min="0" step="0.1" required style="font-size:14px;font-weight:700;border-color:#c62828;" oninput="updateWasteCalc()"></div>
+          <div class="form-group" style="margin-top:6px;"><label>الوزن النهائي بعد الطبخ (كجم)</label><input type="number" id="mw-total-prepared" min="0" step="0.1" required style="font-size:14px;font-weight:700;border-color:#c62828;" oninput="updateWasteCalc()"></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:6px;padding:8px;background:#e3f2fd;border-radius:6px;">
             <div class="form-group"><label>🧑‍💼 هدر مهندسين (كجم)</label><input type="number" id="mw-waste-eng" min="0" step="0.1" style="font-size:14px;font-weight:700;" oninput="updateWasteCalc()"></div>
-            <div class="form-group"><label>👷 هدر عمال (كجم)</label><input type="number" id="mw-waste-wrk" min="0" step="0.1" style="font-size:14px;font-weight:700;" oninput="updateWasteCalc()"></div>
+            <div class="form-group"><label>🍽️ بالمطعم</label><input type="number" id="mw-eng-ate" min="0" step="1" oninput="updateWasteCalc()"></div>
+            <div class="form-group"><label>📦 تيك أواي</label><input type="number" id="mw-eng-takeaway" min="0" step="1" oninput="updateWasteCalc()"></div>
           </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:8px;padding:8px;background:#e3f2fd;border-radius:6px;">
-            <div class="form-group"><label>🧑‍💼 المهندسين بالمطعم</label><input type="number" id="mw-eng-ate" min="0" step="1" oninput="updateWasteCalc()"></div>
-            <div class="form-group"><label>📦 المهندسين تيك أواي</label><input type="number" id="mw-eng-takeaway" min="0" step="1" oninput="updateWasteCalc()"></div>
-            <div style="display:flex;flex-direction:column;justify-content:center;text-align:center;">
-              <span style="font-size:11px;color:#666;">🧑‍💼 إجمالي المهندسين</span>
-              <span id="mw-eng-total-display" style="font-weight:700;color:#1565c0;font-size:22px;">0</span>
-            </div>
+          <div style="display:flex;justify-content:space-between;margin-top:2px;padding:0 8px;">
+            <span style="font-size:11px;color:#999;">🧑‍💼 إجمالي المهندسين: <strong id="mw-eng-total-display" style="color:#1565c0;">0</strong></span>
+            <span style="font-size:11px;color:#999;">🧑‍💼 هدر/فرد: <strong id="mw-avg-eng" style="color:#1565c0;">—</strong></span>
           </div>
           <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:6px;padding:8px;background:#fff3e0;border-radius:6px;">
-            <div class="form-group"><label>👷 العمال بالمطعم</label><input type="number" id="mw-wrk-ate" min="0" step="1" oninput="updateWasteCalc()"></div>
-            <div class="form-group"><label>📦 العمال تيك أواي</label><input type="number" id="mw-wrk-takeaway" min="0" step="1" oninput="updateWasteCalc()"></div>
-            <div style="display:flex;flex-direction:column;justify-content:center;text-align:center;">
-              <span style="font-size:11px;color:#666;">👷 إجمالي العمال</span>
-              <span id="mw-wrk-total-display" style="font-weight:700;color:#e65100;font-size:22px;">0</span>
-            </div>
+            <div class="form-group"><label>👷 هدر عمال (كجم)</label><input type="number" id="mw-waste-wrk" min="0" step="0.1" style="font-size:14px;font-weight:700;" oninput="updateWasteCalc()"></div>
+            <div class="form-group"><label>🍽️ بالمطعم</label><input type="number" id="mw-wrk-ate" min="0" step="1" oninput="updateWasteCalc()"></div>
+            <div class="form-group"><label>📦 تيك أواي</label><input type="number" id="mw-wrk-takeaway" min="0" step="1" oninput="updateWasteCalc()"></div>
           </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:6px;padding:8px;background:#f3e5f5;border-radius:6px;">
+          <div style="display:flex;justify-content:space-between;margin-top:2px;padding:0 8px;">
+            <span style="font-size:11px;color:#999;">👷 إجمالي العمال: <strong id="mw-wrk-total-display" style="color:#e65100;">0</strong></span>
+            <span style="font-size:11px;color:#999;">👷 هدر/فرد: <strong id="mw-avg-wrk" style="color:#e65100;">—</strong></span>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px;padding:8px;background:#f3e5f5;border-radius:6px;">
             <div class="form-group"><label>🧑‍🤝‍🧑 عدد الضيوف</label><input type="number" id="mw-guests" min="0" step="1" oninput="updateWasteCalc()"></div>
             <div class="form-group"><label>🧑‍🤝‍🧑 هدر ضيوف (كجم)</label><input type="number" id="mw-waste-guests" min="0" step="0.1" oninput="updateWasteCalc()"></div>
-            <div></div>
           </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:6px;">
-            <div style="background:#e3f2fd;padding:8px;border-radius:6px;text-align:center;font-size:12px;">
-              <span style="color:#666;">🧑‍💼 هدر/فرد مهندسين</span><br>
-              <span id="mw-avg-eng" style="font-weight:700;color:#1565c0;font-size:18px;">—</span>
-            </div>
-            <div style="background:#fff3e0;padding:8px;border-radius:6px;text-align:center;font-size:12px;">
-              <span style="color:#666;">👷 هدر/فرد عمال</span><br>
-              <span id="mw-avg-wrk" style="font-weight:700;color:#e65100;font-size:18px;">—</span>
-            </div>
-            <div style="background:#f3e5f5;padding:8px;border-radius:6px;text-align:center;font-size:12px;">
-              <span style="color:#666;">🧑‍🤝‍🧑 هدر/فرد ضيوف</span><br>
-              <span id="mw-avg-guests" style="font-weight:700;color:#7b1fa2;font-size:18px;">—</span>
-            </div>
+          <div style="margin-top:2px;padding:0 8px;">
+            <span style="font-size:11px;color:#999;">🧑‍🤝‍🧑 هدر/فرد ضيوف: <strong id="mw-avg-guests" style="color:#7b1fa2;">—</strong></span>
           </div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px;">
             <div class="form-group"><label>التكلفة التقريبية (ج.م)</label><input type="number" id="mw-cost" min="0" step="0.01"></div>
@@ -9043,7 +9029,7 @@ function toggleEmployeeStatus(empId) {
           <td>${h.arrival}</td>
           <td>${h.departure || '—'}</td>
           <td style="text-align:center;font-weight:700;">${h.guests || 1}</td>
-          <td style="text-align:center;">${(h.meals||'').includes('إفطار') ? '<span style="display:inline-block;background:#fff3e0;color:#e65100;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:700;margin:1px;">🍳 فطار</span>' : ''} ${(h.meals||'').includes('غداء') ? '<span style="display:inline-block;background:#e8f5e9;color:#2e7d32;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:700;margin:1px;">🍗 غداء</span>' : ''} ${(h.meals||'').includes('عشاء') ? '<span style="display:inline-block;background:#e3f2fd;color:#1565c0;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:700;margin:1px;">🧀 عشاء</span>' : ''} ${!h.meals || h.meals === '' ? '<span style="color:#999;font-size:11px;">—</span>' : ''}</td>
+          <td style="text-align:center;">${(h.meals||'').includes('إفطار') ? '<span style="display:inline-block;background:#fff3e0;color:#e65100;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:700;margin:1px;">🍳 فطار</span>' : ''} ${(h.meals||'').includes('غداء') ? '<span style="display:inline-block;background:#e8f5e9;color:#2e7d32;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:700;margin:1px;">🧀 غداء</span>' : ''} ${(h.meals||'').includes('عشاء') ? '<span style="display:inline-block;background:#e3f2fd;color:#1565c0;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:700;margin:1px;">🍗 عشاء</span>' : ''} ${!h.meals || h.meals === '' ? '<span style="color:#999;font-size:11px;">—</span>' : ''}</td>
           <td class="no-print" style="white-space:nowrap;">
             <button class="btn btn-secondary" style="padding:2px 6px; font-size:11px;" onclick="editHospitality('${h._id}')">📝</button>
             <button class="btn btn-danger" style="padding:2px 6px; font-size:11px;" onclick="deleteHospitality(${realIdx})">🗑️</button>
