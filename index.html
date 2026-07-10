@@ -12141,9 +12141,15 @@ function toggleEmployeeStatus(empId) {
     function toggleContractorSupplyPaid(idx) {
       let c = bakeryContractorSupplies[idx];
       if (!c) return;
-      if (!confirm(`تحويل توريد ${c.name} بتاريخ ${c.date} إلى مدفوع بالكامل؟`)) return;
       let total = (parseInt(c.count)||0) * (parseFloat(c.price)||0);
-      c.paid = total;
+      let isCurrentlyPaid = (parseFloat(c.paid)||0) >= total;
+      if (isCurrentlyPaid) {
+        if (!confirm(`تحويل توريد ${c.name} بتاريخ ${c.date} إلى غير مدفوع؟`)) return;
+        c.paid = 0;
+      } else {
+        if (!confirm(`تحويل توريد ${c.name} بتاريخ ${c.date} إلى مدفوع بالكامل؟`)) return;
+        c.paid = total;
+      }
       syncStorage(); renderBakeryContractorSupplies(); updateBakeryStats(); updateBreadSupplyStats();
     }
     var _selectedContractors = [];
@@ -12229,7 +12235,7 @@ function toggleEmployeeStatus(empId) {
           <td>${c.responsible||''}</td>
           <td class="no-print">
             <button class="btn btn-secondary" style="padding:2px 6px;font-size:11px;background:#1565c0;color:white;" onclick="editBakeryContractorSupply(${realIdx})" title="تعديل">🖊️</button>
-            <button class="btn btn-success" style="padding:2px 6px;font-size:11px;background:#2e7d32;color:white;" onclick="toggleContractorSupplyPaid(${realIdx})" title="تحويل لمدفوع">💰</button>
+            <button class="btn btn-success" style="padding:2px 6px;font-size:11px;background:#2e7d32;color:white;" onclick="toggleContractorSupplyPaid(${realIdx})" title="${paid === 0 ? 'تحويل لمدفوع' : 'تحويل لغير مدفوع'}">💰</button>
             <button class="btn btn-danger" style="padding:2px 6px;font-size:11px;" onclick="deleteBakeryContractorSupply(${realIdx})">🗑️</button>
           </td>
         </tr>`;
