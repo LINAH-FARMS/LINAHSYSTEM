@@ -49,7 +49,7 @@ textarea{resize:vertical;min-height:60px}
 .btn-reset-sm{width:100%;padding:12px;background:linear-gradient(135deg,#c62828,#ef5350);color:white;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:'Cairo',sans-serif;margin-top:12px}
 .error-msg{background:#ffebee;color:#c62828;padding:12px;border-radius:10px;margin-top:10px;font-size:13px;display:none;text-align:center}
 .footer{margin-top:20px;font-size:10px;color:#bbb;text-align:center}
-.auto-hint{font-size:11px;color:#999;margin-top:2px}
+
 </style>
 </head>
 <body>
@@ -95,6 +95,10 @@ textarea{resize:vertical;min-height:60px}
       <datalist id="ing-suggestions"></datalist>
       <div id="ings-container"></div>
       <button type="button" class="add-ing-btn" onclick="addIngRow()">➕ إضافة صنف</button>
+      <div class="form-group" style="margin-top:10px;">
+        <label>🌊 الماء المضاف للطبيخ (كجم)</label>
+        <input type="number" id="mw-water" min="0" step="0.1" placeholder="0">
+      </div>
     </div>
 
     <!-- الخطوة 2: الهدر -->
@@ -104,8 +108,8 @@ textarea{resize:vertical;min-height:60px}
         <div class="step-title">بيانات الهدر</div>
       </div>
       <div class="form-group">
-        <label>إجمالي الوزن المُعد <span class="unit">(كجم)</span></label>
-        <input type="number" id="mw-total-prepared" min="0" step="0.1" placeholder="مثلاً: 150" oninput="calcWaterAuto()">
+        <label>الوزن النهائي بعد الطبخ <span class="unit">(كجم)</span></label>
+        <input type="number" id="mw-total-prepared" min="0" step="0.1" placeholder="مثلاً: 150">
       </div>
       <div class="form-row">
         <div class="form-group">
@@ -117,50 +121,38 @@ textarea{resize:vertical;min-height:60px}
           <input type="number" id="mw-waste-wrk" min="0" step="0.1" placeholder="0">
         </div>
       </div>
-      <div class="form-row">
+      <div class="form-row-3">
         <div class="form-group">
-          <label>🧑‍💼 عدد المهندسين</label>
-          <input type="number" id="mw-eng-count" min="0" step="1" placeholder="مثلاً: 50">
+          <label>🧑‍💼 إجمالي المهندسين</label>
+          <input type="number" id="mw-eng-total" min="0" step="1" placeholder="مثلاً: 50">
         </div>
         <div class="form-group">
-          <label>👷 عدد العمال</label>
-          <input type="number" id="mw-wrk-count" min="0" step="1" placeholder="مثلاً: 200">
+          <label>🍽️ المهندسين بالمطعم</label>
+          <input type="number" id="mw-eng-ate" min="0" step="1" placeholder="مثلاً: 40">
+        </div>
+        <div class="form-group">
+          <label>👷 إجمالي العمال</label>
+          <input type="number" id="mw-wrk-total" min="0" step="1" placeholder="مثلاً: 200">
         </div>
       </div>
-      <div class="form-group">
-        <label>🌊 الماء المضاف للطبيخ <span class="unit">(كجم — يُحسب تلقائياً)</span></label>
-        <input type="number" id="mw-water" min="0" step="0.1" placeholder="يُحسب تلقائياً">
-        <div class="auto-hint">💡 يحسب تلقائياً ~80% من وزن الخامات (قابل للتعديل)</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>🍽️ العمال بالمطعم</label>
+          <input type="number" id="mw-wrk-ate" min="0" step="1" placeholder="مثلاً: 180">
+        </div>
+        <div class="form-group">
+          <label>التكلفة التقريبية (ج.م)</label>
+          <input type="number" id="mw-cost" min="0" step="1" placeholder="مثلاً: 500">
+        </div>
       </div>
       <div class="info-box" id="mw-calc-summary">
         <strong>⏳</strong> أدخل الخامات والهدر لرؤية الحسابات...
       </div>
     </div>
 
-    <!-- الخطوة 3: تفاصيل إضافية -->
-    <div class="step">
-      <div class="step-header">
-        <div class="step-num">3</div>
-        <div class="step-title">تفاصيل إضافية</div>
-      </div>
-      <div class="form-group">
-        <label>السبب</label>
-        <select id="mw-reason">
-          <option value="زيادة كمية">زيادة كمية</option>
-          <option value="خطأ طبخ">خطأ في الطبخ</option>
-          <option value="تلف">تلف/فساد</option>
-          <option value="سوء تخزين">سوء تخزين</option>
-          <option value="تقدير خاطئ">تقدير خاطئ للكمية</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label>التكلفة التقريبية (ج.م)</label>
-        <input type="number" id="mw-cost" min="0" step="1" placeholder="مثلاً: 500">
-      </div>
-      <div class="form-group">
-        <label>اسم المسؤول عن التسجيل</label>
-        <input type="text" id="mw-responsible" placeholder="اسم المسؤول">
-      </div>
+    <div class="form-group">
+      <label>اسم المسؤول عن التسجيل</label>
+      <input type="text" id="mw-responsible" placeholder="اسم المسؤول">
     </div>
 
     <button class="btn-submit" id="submit-btn" onclick="submitWaste()">✅ حفظ بيانات الهدر</button>
@@ -236,39 +228,28 @@ function getIngredients() {
 }
 
 function calcWaterAuto() {
-  var ings = getIngredients();
-  var totalIng = ings.reduce(function(s, i) { return s + i.qty; }, 0);
-  var water = parseFloat(document.getElementById('mw-water').value) || 0;
-  if (water <= 0 && totalIng > 0) {
-    document.getElementById('mw-water').value = (totalIng * 0.8).toFixed(1);
-  }
   // تحديث الملخص
   var wasteEng = parseFloat(document.getElementById('mw-waste-eng').value) || 0;
   var wasteWrk = parseFloat(document.getElementById('mw-waste-wrk').value) || 0;
-  var engCount = parseFloat(document.getElementById('mw-eng-count').value) || 0;
-  var wrkCount = parseFloat(document.getElementById('mw-wrk-count').value) || 0;
-  water = parseFloat(document.getElementById('mw-water').value) || 0;
+  var engAte = parseFloat(document.getElementById('mw-eng-ate').value) || 0;
+  var wrkAte = parseFloat(document.getElementById('mw-wrk-ate').value) || 0;
+  var totalPrepared = parseFloat(document.getElementById('mw-total-prepared').value) || 0;
+  var water = parseFloat(document.getElementById('mw-water').value) || 0;
   var totalWaste = wasteEng + wasteWrk;
-  var totalWeight = totalIng + water;
   var html = '';
-  if (totalIng > 0) {
-    html += '<div>🥘 وزن الخامات: <strong>' + totalIng.toFixed(1) + '</strong> كجم</div>';
-    html += '<div>🌊 الماء المضاف: <strong>' + water.toFixed(1) + '</strong> كجم</div>';
-    html += '<div>📦 الإجمالي الكلي: <strong>' + totalWeight.toFixed(1) + '</strong> كجم</div>';
-    if (totalWaste > 0 && totalWeight > 0) {
-      var pct = (totalWaste / totalWeight * 100);
-      html += '<div style="margin-top:6px;padding-top:6px;border-top:1px solid #ffe0b2;">📊 الهدر: <strong>' + totalWaste.toFixed(1) + '</strong> كجم = <strong>' + pct.toFixed(2) + '%</strong> من الكلي' + (pct <= 5 ? ' ✅' : ' ⚠️') + '</div>';
-    }
-    if (engCount > 0) html += '<div>🧑‍💼 هدر/فرد مهندسين: <strong>' + (wasteEng / engCount * 1000).toFixed(1) + '</strong> جم</div>';
-    if (wrkCount > 0) html += '<div>👷 هدر/فرد عمال: <strong>' + (wasteWrk / wrkCount * 1000).toFixed(1) + '</strong> جم</div>';
-  } else {
-    html = '<strong>⏳</strong> أدخل الخامات والهدر لرؤية الحسابات...';
+  html += '<div>🥘 الوزن النهائي بعد الطبخ: <strong>' + totalPrepared.toFixed(1) + '</strong> كجم</div>';
+  html += '<div>🌊 الماء المضاف: <strong>' + water.toFixed(1) + '</strong> كجم</div>';
+  if (totalWaste > 0 && totalPrepared > 0) {
+    var pct = (totalWaste / totalPrepared * 100);
+    html += '<div style="margin-top:6px;padding-top:6px;border-top:1px solid #ffe0b2;">📊 الهدر: <strong>' + totalWaste.toFixed(1) + '</strong> كجم = <strong>' + pct.toFixed(2) + '%</strong> من الوزن النهائي' + (pct <= 5 ? ' ✅' : ' ⚠️') + '</div>';
   }
+  if (engAte > 0) html += '<div>🧑‍💼 هدر/فرد مهندسين: <strong>' + (wasteEng / engAte * 1000).toFixed(1) + '</strong> جم</div>';
+  if (wrkAte > 0) html += '<div>👷 هدر/فرد عمال: <strong>' + (wasteWrk / wrkAte * 1000).toFixed(1) + '</strong> جم</div>';
   document.getElementById('mw-calc-summary').innerHTML = html;
 }
 
 // ربط أحداث الحساب التلقائي
-['mw-waste-eng','mw-waste-wrk','mw-eng-count','mw-wrk-count','mw-water'].forEach(function(id) {
+['mw-waste-eng','mw-waste-wrk','mw-eng-total','mw-eng-ate','mw-wrk-total','mw-wrk-ate','mw-water','mw-total-prepared'].forEach(function(id) {
   document.getElementById(id).addEventListener('input', calcWaterAuto);
 });
 
@@ -290,10 +271,11 @@ function submitWaste() {
   var wasteEng = parseFloat(document.getElementById('mw-waste-eng').value) || 0;
   var wasteWrk = parseFloat(document.getElementById('mw-waste-wrk').value) || 0;
   if (wasteEng === 0 && wasteWrk === 0) { alert('⚠️ أدخل كمية الهدر في أحد المطعمين على الأقل'); return; }
-  var engCount = parseFloat(document.getElementById('mw-eng-count').value) || 0;
-  var wrkCount = parseFloat(document.getElementById('mw-wrk-count').value) || 0;
+  var engTotal = parseFloat(document.getElementById('mw-eng-total').value) || 0;
+  var engAte = parseFloat(document.getElementById('mw-eng-ate').value) || 0;
+  var wrkTotal = parseFloat(document.getElementById('mw-wrk-total').value) || 0;
+  var wrkAte = parseFloat(document.getElementById('mw-wrk-ate').value) || 0;
   var waterAdded = parseFloat(document.getElementById('mw-water').value) || 0;
-  var reason = document.getElementById('mw-reason').value;
   var cost = parseFloat(document.getElementById('mw-cost').value) || 0;
   var responsible = document.getElementById('mw-responsible').value.trim() || chef;
 
@@ -310,10 +292,11 @@ function submitWaste() {
     totalPrepared: totalPrepared,
     wasteEng: wasteEng,
     wasteWrk: wasteWrk,
-    engCount: engCount,
-    wrkCount: wrkCount,
+    engTotal: engTotal,
+    engAte: engAte,
+    wrkTotal: wrkTotal,
+    wrkAte: wrkAte,
     waterAdded: waterAdded,
-    reason: reason,
     cost: cost,
     responsible: responsible,
     createdAt: new Date().toISOString(),
@@ -370,10 +353,11 @@ function resetForm() {
   document.getElementById('mw-total-prepared').value = '';
   document.getElementById('mw-waste-eng').value = '';
   document.getElementById('mw-waste-wrk').value = '';
-  document.getElementById('mw-eng-count').value = '';
-  document.getElementById('mw-wrk-count').value = '';
+  document.getElementById('mw-eng-total').value = '';
+  document.getElementById('mw-eng-ate').value = '';
+  document.getElementById('mw-wrk-total').value = '';
+  document.getElementById('mw-wrk-ate').value = '';
   document.getElementById('mw-water').value = '';
-  document.getElementById('mw-reason').value = 'زيادة كمية';
   document.getElementById('mw-cost').value = '';
   document.getElementById('mw-responsible').value = '';
   document.getElementById('mw-calc-summary').innerHTML = '<strong>⏳</strong> أدخل الخامات والهدر لرؤية الحسابات...';
