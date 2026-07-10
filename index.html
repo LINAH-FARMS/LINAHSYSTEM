@@ -13151,7 +13151,7 @@ function toggleEmployeeStatus(empId) {
         excludedEmployees: function(e) { return e.id || e.code || e.name; },
         contractors: function(c) { return c.name || c.id; },
         mealLogs: function(m) { return m.date; },
-        mealWaste: function(w) { return (w.date||'') + '|' + (w.type||'') + '|' + (w.qty||''); },
+        mealWaste: function(w) { return (w.date||'') + '|' + (w.meal||''); },
         inventoryItems: function(i) { return i.id || i.name; },
         hospitalities: function(h) { return (h.name || '') + '|' + (h.arrival || '') + '|' + (h.type || ''); },
         adminOvertime: function(o) { return (o.date || '') + '|' + (o.empCode || o.name || ''); },
