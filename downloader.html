@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Video Downloader</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cairo&display=swap" rel="stylesheet">
+  <style>
+    * { font-family: Cairo, sans-serif; box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #1a1a2e; color: #fff; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
+    .card { background: #16213e; padding: 30px; border-radius: 16px; max-width: 500px; width: 100%; box-shadow: 0 20px 60px rgba(0,0,0,0.5); }
+    h1 { text-align: center; margin-bottom: 8px; font-size: 22px; color: #e94560; }
+    p { text-align: center; color: #aaa; font-size: 13px; margin-bottom: 20px; }
+    input, select, button { width: 100%; padding: 12px; margin-bottom: 12px; border: none; border-radius: 8px; font-size: 14px; }
+    input { background: #0f3460; color: #fff; direction: ltr; text-align: left; }
+    input::placeholder { color: #888; }
+    select { background: #0f3460; color: #fff; }
+    button { background: #e94560; color: #fff; font-weight: 700; cursor: pointer; transition: 0.2s; }
+    button:hover { background: #c73650; }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    #status { margin-top: 10px; padding: 12px; border-radius: 8px; font-size: 13px; display: none; }
+    .info { background: #0f3460; padding: 12px; border-radius: 8px; font-size: 13px; color: #ccc; margin-top: 10px; }
+    a { color: #e94560; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>🎬 Downloader</h1>
+    <p>حمّل فيديوهات من YouTube ومنصات رسمية</p>
+    <input type="text" id="url" placeholder="رابط الفيديو..." dir="ltr">
+    <select id="quality">
+      <option value="best">أفضل جودة</option>
+      <option value="best[height<=720]">720p</option>
+      <option value="best[height<=480]">480p</option>
+      <option value="bestaudio">صوت MP3</option>
+    </select>
+    <button id="dlBtn" onclick="download()">⬇️ تحميل</button>
+    <div id="status"></div>
+    <div class="info">
+      ⚡ شغّل السيرفر أولاً: <code style="background:#333;padding:2px 6px;border-radius:4px;">node downloader-server.js</code><br>
+      الفيديوهات بتنزل في مجلد <b>downloads/</b>
+    </div>
+  </div>
+  <script>
+    async function download() {
+      const url = document.getElementById('url').value.trim();
+      if (!url) { showStatus('⚠️ ضع رابط الفيديو', '#e94560'); return; }
+      const quality = document.getElementById('quality').value;
+      const btn = document.getElementById('dlBtn');
+      btn.disabled = true; btn.textContent = '⏳ جاري التحميل...';
+      showStatus('📥 جاري التحميل...', '#0f3460');
+      try {
+        const res = await fetch('/download', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url, quality })
+        });
+        const data = await res.json();
+        if (data.error) { showStatus('❌ ' + data.error, '#e94560'); return; }
+        showStatus('✅ تم التحميل!', '#2ecc71');
+      } catch(e) {
+        showStatus('❌ السيرفر مش شغال. شغّل: node downloader-server.js', '#e94560');
+      }
+      btn.disabled = false; btn.textContent = '⬇️ تحميل';
+    }
+    function showStatus(msg, color) {
+      const s = document.getElementById('status');
+      s.style.display = 'block';
+      s.style.background = color + '22';
+      s.style.border = '1px solid ' + color;
+      s.innerHTML = msg;
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,422 @@
+{
+   "account_help": {
+      "message": "सहायता"
+   },
+   "account_settings": {
+      "message": "खाता सेटिंग"
+   },
+   "back_to_start": {
+      "message": "शुरुआत पर वापस जाएं"
+   },
+   "back_to_tools": {
+      "message": "उपकरणों पर वापस जाएं"
+   },
+   "basic_compression": {
+      "message": "बेसिक कंप्रेशन"
+   },
+   "bing_search_help": {
+      "message": "Search Bing for one of our tools to process files directly in your search results."
+   },
+   "bing_search_integration": {
+      "message": "Bing Search Integration"
+   },
+   "choose_file_btn": {
+      "message": "फाइल चुनें"
+   },
+   "choose_preset": {
+      "message": "प्रीसेट से चुनें"
+   },
+   "chrome_cws": {
+      "message": "क्रोम वेब स्टोर"
+   },
+   "chrome_seetings": {
+      "message": "क्रोम सेटिंग"
+   },
+   "compress": {
+      "message": "कंप्रेस करें"
+   },
+   "compress_file": {
+      "message": "फाइल कंप्रेस करें"
+   },
+   "compress_pdf": {
+      "message": "PDF कंप्रेस करें"
+   },
+   "continue_with_facebook": {
+      "message": "फेसबुक के साथ जारी रखें"
+   },
+   "continue_with_google": {
+      "message": "गूगल के साथ जारी रखें"
+   },
+   "convert_btn": {
+      "message": "बदलें"
+   },
+   "convert_entire_pages": {
+      "message": "सारे पेज बदलें"
+   },
+   "convert_from_pdf": {
+      "message": "PDF से बदलें"
+   },
+   "convert_image_to_pdf": {
+      "message": "छवि से PDF में बदलें"
+   },
+   "convert_link_to_pdf": {
+      "message": "लिंक से PDF में बदलें"
+   },
+   "convert_page_to_pdf": {
+      "message": "पेज से PDF में बदलें"
+   },
+   "convert_pdf_ppt": {
+      "message": "PDF से पावर पॉइंट में बदलें"
+   },
+   "convert_pdf_to_excel": {
+      "message": "PDF से एक्सेल में बदलें"
+   },
+   "convert_pdf_to_images": {
+      "message": "PDF से छवियों में बदलें"
+   },
+   "convert_pdf_to_word": {
+      "message": "PDF से वर्ड में बदलें"
+   },
+   "convert_pdf_txt": {
+      "message": "PDF से टेक्स्ट में बदलें"
+   },
+   "convert_to_jpg": {
+      "message": "JPG में बदलें"
+   },
+   "convert_to_pdf": {
+      "message": "PDF में बदलें"
+   },
+   "convert_to_pdfa": {
+      "message": "PDF से PDF/A में बदलें"
+   },
+   "convert_to_word": {
+      "message": "वर्ड में बदलें"
+   },
+   "create_pdf": {
+      "message": "PDF बनाएं"
+   },
+   "create_searchable_pdf": {
+      "message": "खोजने योग्य (OCR) बनाएं"
+   },
+   "create_zip": {
+      "message": "ज़िप बनाएं"
+   },
+   "disabled_txt": {
+      "message": "अक्षम"
+   },
+   "djvu_to_pdf": {
+      "message": "DJVU से PDF में बदलें"
+   },
+   "dont_have_an_account_yet": {
+      "message": "क्या आपका कोई खाता नहीं है?"
+   },
+   "dont_show_txt": {
+      "message": "यह दोबारा न दिखाएं"
+   },
+   "download_apps": {
+      "message": "ऐप्स डाउनलोड करें"
+   },
+   "download_btn": {
+      "message": "डाउनलोड करें"
+   },
+   "drop_files_here": {
+      "message": "यहाँ फाइलें छोड़ें"
+   },
+   "edit_pdf": {
+      "message": "PDF संपादित करें"
+   },
+   "email_or_username": {
+      "message": "ईमेल या प्रयोगकर्ता नाम"
+   },
+   "enable_local_file": {
+      "message": "फाइल URL के एक्सेस की अनुमति दें"
+   },
+   "enable_local_file_help": {
+      "message": "क्रोम में खोले गए PDF पर काम करने के लिए PDF2Go को अपने स्थानीय फाइल URL का एक्सेस प्रदान करें।"
+   },
+   "enter_username_or_email": {
+      "message": "अपना प्रयोगकर्ता नाम या ईमेल पता डालें"
+   },
+   "enter_your_password": {
+      "message": "अपना पासवर्ड डालें"
+   },
+   "extension_pdf2go_description": {
+      "message": "PDF फाइलें संपादित और परिवर्तित करें।"
+   },
+   "extension_pdf2go_name": {
+      "message": "ऑनलाइन PDF संपादक (pdf2go.com)"
+   },
+   "extract_single_images": {
+      "message": "सिंगल छवियाँ निकालें"
+   },
+   "feedback_thanks": {
+      "message": "धन्यवाद।"
+   },
+   "forgot_password": {
+      "message": "अपना पासवर्ड भूल गए?"
+   },
+   "free_task_msg": {
+      "message": "प्रति 24 घंटे में उपयोग किए जाने वाले मुफ़्त कार्य"
+   },
+   "get_help": {
+      "message": "मदद पाएं"
+   },
+   "give_us_feedback": {
+      "message": "कृपया हमें अपना फीडबैक दें"
+   },
+   "gmail_download_btn": {
+      "message": "डाउनलोड करें"
+   },
+   "gmail_download_modal_complete": {
+      "message": "अपनी कंप्रेस की गई फाइल डाउनलोड करने के लिए नीचे दिए गए बटन पर क्लिक करें"
+   },
+   "gmail_download_modal_txt": {
+      "message": "अपनी फाइल का अपलोड और कंप्रेसिंग शुरू करने के लिए नीचे दिए गए बटन पर क्लिक करें"
+   },
+   "gmail_modal_txt": {
+      "message": "अपनी फाइल का अपलोड और संसाधन शुरू करने के लिए नीचे दिए गए बटन पर क्लिक करें"
+   },
+   "google_search_help": {
+      "message": "सीधे अपने खोज परिणामों में फाइलों को संसाधित करने के लिए गूगल पर हमारा कोई उपकरण खोजें।"
+   },
+   "google_search_integration": {
+      "message": "गूगल खोज एकीकरण"
+   },
+   "having_trouble": {
+      "message": "कोई परेशानी है?"
+   },
+   "hidden_txt": {
+      "message": "छिपा हुआ!"
+   },
+   "hidden_txt_p1": {
+      "message": "अब आप अपने गूगल खोज परिणामों में Pdf2Go कंवर्ट ड्रॉप क्षेत्र नहीं देखेंगे।"
+   },
+   "hidden_txt_p2": {
+      "message": "आप एक्सटेंशन सेटिंग पेज में इसे किसी भी समय वापस चालू कर सकते हैं।"
+   },
+   "incorrect_username_error": {
+      "message": "गलत प्रयोगकर्ता नाम या पासवर्ड।"
+   },
+   "jpg_to_pdf": {
+      "message": "JPG से PDF में बदलें"
+   },
+   "like_or_dislike": {
+      "message": "क्या आपको PDF2Go पसंद है?"
+   },
+   "linearize_pdf": {
+      "message": "वेब के लिए PDF अनुकूलित करें"
+   },
+   "log_in": {
+      "message": "लॉगइन करें"
+   },
+   "log_in_with_facebook": {
+      "message": "फेसबुक से लॉगइन करें"
+   },
+   "log_in_with_google": {
+      "message": "गूगल से लॉगइन करें"
+   },
+   "log_out": {
+      "message": "लॉग आउट करें"
+   },
+   "login_password": {
+      "message": "पासवर्ड"
+   },
+   "merge_pdf": {
+      "message": "PDF मिलाएं"
+   },
+   "microsoft_edge_cws": {
+      "message": "Edge Add-ons"
+   },
+   "microsoft_edge_seetings": {
+      "message": "Microsoft Edge Settings"
+   },
+   "open_in_web_app": {
+      "message": "वेब ऐप में टूल खोलें"
+   },
+   "open_pdf_tools": {
+      "message": "PDF टूल खोलें"
+   },
+   "options_": {
+      "message": "विकल्प:"
+   },
+   "pdf2go_Or": {
+      "message": "या"
+   },
+   "pdf2go_account": {
+      "message": "खाता"
+   },
+   "pdf2go_website": {
+      "message": "PDF2Go वेबसाइट"
+   },
+   "pdf_to_excel": {
+      "message": "PDF से एक्सेल"
+   },
+   "pdf_to_jpg": {
+      "message": "PDF से JPG"
+   },
+   "pdf_to_txt": {
+      "message": "PDF से टेक्स्ट"
+   },
+   "pdf_to_word": {
+      "message": "PDF से वर्ड"
+   },
+   "pdf_viewer_tools_btn": {
+      "message": "टूल"
+   },
+   "powered_by_txt": {
+      "message": "PDF2Go के सौजन्य से"
+   },
+   "powerpoint_to_pdf": {
+      "message": "पावर पॉइंट से PDF में बदलें"
+   },
+   "processing_msg": {
+      "message": "आपकी फाइल संसाधित हो रही है और हम इस पर काम कर रहे हैं"
+   },
+   "protect_pdf": {
+      "message": "PDF सुरक्षित करें"
+   },
+   "protected_msg": {
+      "message": "फाइल पासवर्ड से सुरक्षित है। कृपया पासवर्ड प्रदान करें।"
+   },
+   "rate_now": {
+      "message": "अभी रेट करें"
+   },
+   "rating_cws_msg": {
+      "message": "क्‍या आप हमें क्रोम स्‍टोर में रेट करना चाहेंगे?"
+   },
+   "repair_pdf": {
+      "message": "PDF की मरम्मत करें"
+   },
+   "resize_pdf": {
+      "message": "PDF का आकार बदलें"
+   },
+   "rotate_pdf": {
+      "message": "PDF घुमाएं"
+   },
+   "search_term_compress_file": {
+      "message": "फाइल कंप्रेस करें"
+   },
+   "search_term_compress_pdf": {
+      "message": "PDF कंप्रेस करें"
+   },
+   "search_term_convert_from_pdf": {
+      "message": "PDF से बदलें"
+   },
+   "search_term_convert_image_to_pdf": {
+      "message": "छवि से PDF में बदलें"
+   },
+   "search_term_convert_page_to_pdf": {
+      "message": "पेज से PDF में बदलें"
+   },
+   "search_term_convert_pdf_ppt": {
+      "message": "PDF से पावर पॉइंट में बदलें"
+   },
+   "search_term_convert_pdf_to_excel": {
+      "message": "PDF से एक्सेल में बदलें"
+   },
+   "search_term_convert_pdf_to_images": {
+      "message": "PDF से छवियों में बदलें"
+   },
+   "search_term_convert_pdf_to_word": {
+      "message": "PDF से वर्ड में बदलें"
+   },
+   "search_term_convert_pdf_txt": {
+      "message": "PDF से टेक्स्ट में बदलें"
+   },
+   "search_term_convert_to_pdf": {
+      "message": "PDF में बदलें"
+   },
+   "search_term_convert_to_pdfa": {
+      "message": "PDF से PDF/A में बदलें"
+   },
+   "search_term_djvu_to_pdf": {
+      "message": "DJVU से PDF में बदलें"
+   },
+   "search_term_edit_pdf": {
+      "message": "PDF संपादित करें"
+   },
+   "search_term_jpg_to_pdf": {
+      "message": "JPG से PDF में बदलें"
+   },
+   "search_term_linearize_pdf": {
+      "message": "वेब के लिए PDF अनुकूलित करें"
+   },
+   "search_term_merge_pdf": {
+      "message": "PDF मिलाएं"
+   },
+   "search_term_pdf_to_excel": {
+      "message": "PDF से एक्सेल"
+   },
+   "search_term_pdf_to_jpg": {
+      "message": "PDF से JPG"
+   },
+   "search_term_pdf_to_txt": {
+      "message": "PDF से टेक्स्ट"
+   },
+   "search_term_pdf_to_word": {
+      "message": "PDF से वर्ड"
+   },
+   "search_term_powerpoint_to_pdf": {
+      "message": "पावर पॉइंट से PDF में बदलें"
+   },
+   "search_term_protect_pdf": {
+      "message": "PDF सुरक्षित करें"
+   },
+   "search_term_repair_pdf": {
+      "message": "PDF की मरम्मत करें"
+   },
+   "search_term_resize_pdf": {
+      "message": "PDF का आकार बदलें"
+   },
+   "search_term_rotate_pdf": {
+      "message": "PDF घुमाएं"
+   },
+   "search_term_sort_and_delete_pdf": {
+      "message": "PDF क्रमबद्ध करें और हटाएं"
+   },
+   "search_term_split_pdf": {
+      "message": "PDF विभाजित करें"
+   },
+   "search_term_unlock_pdf": {
+      "message": "PDF अनलॉक"
+   },
+   "search_term_word_to_pdf": {
+      "message": "वर्ड से PDF में बदलें"
+   },
+   "sign_up": {
+      "message": "साइन अप करें"
+   },
+   "size_and_quality": {
+      "message": "मध्यम साइज़ का फाइल और और उच्च गुणवत्ता"
+   },
+   "small_size_medium_quality": {
+      "message": "छोटे साइज़ का फाइल और मध्यम गुणवत्ता"
+   },
+   "sort_and_delete_pdf": {
+      "message": "PDF क्रमबद्ध करें और हटाएं"
+   },
+   "split_pdf": {
+      "message": "PDF विभाजित करें"
+   },
+   "start_with_tool": {
+      "message": "या टूल के साथ शुरुआत करें"
+   },
+   "strong_compression": {
+      "message": "मजबूत कंप्रेशन"
+   },
+   "support_email": {
+      "message": "time2help@pdf2go.com"
+   },
+   "unlock_pdf": {
+      "message": "PDF फाइल खोलें"
+   },
+   "upload_message": {
+      "message": "आपकी फाइल अपलोड हो रही है और हम इस पर काम कर रहे हैं"
+   },
+   "word_to_pdf": {
+      "message": "वर्ड से PDF में बदलें"
+   },
+   "your_file": {
+      "message": "आपकी फाइल"
+   }
+}

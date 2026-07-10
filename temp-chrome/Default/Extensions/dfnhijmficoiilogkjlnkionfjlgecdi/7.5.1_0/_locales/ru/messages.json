@@ -1,0 +1,422 @@
+{
+   "account_help": {
+      "message": "Справка"
+   },
+   "account_settings": {
+      "message": "Настройки учетной записи"
+   },
+   "back_to_start": {
+      "message": "Вернуться к началу"
+   },
+   "back_to_tools": {
+      "message": "Вернуться к инструментам"
+   },
+   "basic_compression": {
+      "message": "Простое сжатие"
+   },
+   "bing_search_help": {
+      "message": "Search Bing for one of our tools to process files directly in your search results."
+   },
+   "bing_search_integration": {
+      "message": "Bing Search Integration"
+   },
+   "choose_file_btn": {
+      "message": "Выберите файл"
+   },
+   "choose_preset": {
+      "message": "Выберите значение"
+   },
+   "chrome_cws": {
+      "message": "Интернет-магазин Chrome"
+   },
+   "chrome_seetings": {
+      "message": "Настройки Chrome"
+   },
+   "compress": {
+      "message": "Сжать"
+   },
+   "compress_file": {
+      "message": "Сжать файл"
+   },
+   "compress_pdf": {
+      "message": "Сжать PDF"
+   },
+   "continue_with_facebook": {
+      "message": "Продолжить через Facebook"
+   },
+   "continue_with_google": {
+      "message": "Продолжить через Google"
+   },
+   "convert_btn": {
+      "message": "Преобразовать"
+   },
+   "convert_entire_pages": {
+      "message": "Преобразовать целые страницы"
+   },
+   "convert_from_pdf": {
+      "message": "Конвертировать из PDF"
+   },
+   "convert_image_to_pdf": {
+      "message": "Преобразовать изображение в PDF"
+   },
+   "convert_link_to_pdf": {
+      "message": "Преобразовать ссылку в PDF"
+   },
+   "convert_page_to_pdf": {
+      "message": "Преобразовать страницу в PDF"
+   },
+   "convert_pdf_ppt": {
+      "message": "Преобразуйте PDF в PowerPoint"
+   },
+   "convert_pdf_to_excel": {
+      "message": "Преобразовать PDF в Excel"
+   },
+   "convert_pdf_to_images": {
+      "message": "Преобразовать PDF в изображения"
+   },
+   "convert_pdf_to_word": {
+      "message": "Преобразовать PDF в Word"
+   },
+   "convert_pdf_txt": {
+      "message": "Преобразовать PDF в текст"
+   },
+   "convert_to_jpg": {
+      "message": "Преобразовать в JPG"
+   },
+   "convert_to_pdf": {
+      "message": "Преобразовать в PDF"
+   },
+   "convert_to_pdfa": {
+      "message": "Преобразовать PDF в PDF/A"
+   },
+   "convert_to_word": {
+      "message": "Преобразовать в Word"
+   },
+   "create_pdf": {
+      "message": "Создать PDF"
+   },
+   "create_searchable_pdf": {
+      "message": "Сделать доступным для поиска (OCR)"
+   },
+   "create_zip": {
+      "message": "Создать ZIP "
+   },
+   "disabled_txt": {
+      "message": "Отключено"
+   },
+   "djvu_to_pdf": {
+      "message": "Преобразовать DJVU в PDF"
+   },
+   "dont_have_an_account_yet": {
+      "message": "У вас нет аккаунта?"
+   },
+   "dont_show_txt": {
+      "message": "Больше не показывать"
+   },
+   "download_apps": {
+      "message": "Скачать приложения"
+   },
+   "download_btn": {
+      "message": "Скачать"
+   },
+   "drop_files_here": {
+      "message": "Перетащите файлы сюда"
+   },
+   "edit_pdf": {
+      "message": "Редактировать PDF"
+   },
+   "email_or_username": {
+      "message": "Адрес эл. почты или имя пользователя"
+   },
+   "enable_local_file": {
+      "message": "Разрешить доступ к URL-адресам файлов"
+   },
+   "enable_local_file_help": {
+      "message": "Предоставьте PDF2Go доступ к URL-адресам ваших локальных файлов для работы с PDF-файлами, открытыми в Chrome."
+   },
+   "enter_username_or_email": {
+      "message": "Введите имя пользователя или адрес электронной почты"
+   },
+   "enter_your_password": {
+      "message": "Введите пароль"
+   },
+   "extension_pdf2go_description": {
+      "message": "Редактируйте и преобразуйте PDF-файлы."
+   },
+   "extension_pdf2go_name": {
+      "message": "Редактор PDF-файлов (pdf2go.com)"
+   },
+   "extract_single_images": {
+      "message": "Извлечь отдельные изображения"
+   },
+   "feedback_thanks": {
+      "message": "Благодарим вас."
+   },
+   "forgot_password": {
+      "message": "Забыли пароль?"
+   },
+   "free_task_msg": {
+      "message": "использовано бесплатных задач за 24 часа"
+   },
+   "get_help": {
+      "message": "Получить помощь"
+   },
+   "give_us_feedback": {
+      "message": "Оставьте нам отзыв"
+   },
+   "gmail_download_btn": {
+      "message": "Скачать"
+   },
+   "gmail_download_modal_complete": {
+      "message": "Нажмите на кнопку ниже, чтобы загрузить сжатый файл"
+   },
+   "gmail_download_modal_txt": {
+      "message": "Нажмите на кнопку ниже, чтобы начать загрузку и сжатие файла"
+   },
+   "gmail_modal_txt": {
+      "message": "Нажмите на кнопку ниже, чтобы начать загрузку и обработку файла"
+   },
+   "google_search_help": {
+      "message": "Вы можете найти наши инструменты для обработки файлов непосредственно в результатах поиска Google."
+   },
+   "google_search_integration": {
+      "message": "Интеграция с поиском Google"
+   },
+   "having_trouble": {
+      "message": "Возникла проблема?"
+   },
+   "hidden_txt": {
+      "message": "Скрыто!"
+   },
+   "hidden_txt_p1": {
+      "message": "Область перетаскивания Pdf2Go больше не будет отображаться в результатах поиска Google."
+   },
+   "hidden_txt_p2": {
+      "message": "Вы в любое время можете активировать его повторно на странице настроек расширения."
+   },
+   "incorrect_username_error": {
+      "message": "Неверное имя пользователя или пароль."
+   },
+   "jpg_to_pdf": {
+      "message": "Преобразуйте JPG в PDF"
+   },
+   "like_or_dislike": {
+      "message": "Вам нравится PDF2Go?"
+   },
+   "linearize_pdf": {
+      "message": "Оптимизировать PDF для веб"
+   },
+   "log_in": {
+      "message": "Вход"
+   },
+   "log_in_with_facebook": {
+      "message": "Войти через Facebook"
+   },
+   "log_in_with_google": {
+      "message": "Войти через Google"
+   },
+   "log_out": {
+      "message": "Выход"
+   },
+   "login_password": {
+      "message": "Пароль"
+   },
+   "merge_pdf": {
+      "message": "Объединить PDF"
+   },
+   "microsoft_edge_cws": {
+      "message": "Edge Add-ons"
+   },
+   "microsoft_edge_seetings": {
+      "message": "Microsoft Edge Settings"
+   },
+   "open_in_web_app": {
+      "message": "Открыть инструмент в веб-приложении"
+   },
+   "open_pdf_tools": {
+      "message": "Инструменты для работы с PDF"
+   },
+   "options_": {
+      "message": "Опции:"
+   },
+   "pdf2go_Or": {
+      "message": "Или"
+   },
+   "pdf2go_account": {
+      "message": "Учётная запись"
+   },
+   "pdf2go_website": {
+      "message": "Веб-сайт PDF2Go"
+   },
+   "pdf_to_excel": {
+      "message": "PDF в Excel"
+   },
+   "pdf_to_jpg": {
+      "message": "PDF в JPG"
+   },
+   "pdf_to_txt": {
+      "message": "PDF в текст"
+   },
+   "pdf_to_word": {
+      "message": "PDF в Word"
+   },
+   "pdf_viewer_tools_btn": {
+      "message": "Инструменты"
+   },
+   "powered_by_txt": {
+      "message": "На базе PDF2Go"
+   },
+   "powerpoint_to_pdf": {
+      "message": "Преобразовать презентацию в PDF"
+   },
+   "processing_msg": {
+      "message": "Ваш файл обрабатывается. Мы работаем над этим"
+   },
+   "protect_pdf": {
+      "message": "Защитить PDF"
+   },
+   "protected_msg": {
+      "message": "Файл защищён паролем. Введите пароль."
+   },
+   "rate_now": {
+      "message": "Оценить сейчас"
+   },
+   "rating_cws_msg": {
+      "message": "Желаете оценить нас в магазине Chrome?"
+   },
+   "repair_pdf": {
+      "message": "Восстановить PDF"
+   },
+   "resize_pdf": {
+      "message": "Изменить размер PDF"
+   },
+   "rotate_pdf": {
+      "message": "Повернуть PDF"
+   },
+   "search_term_compress_file": {
+      "message": "Сжать файл"
+   },
+   "search_term_compress_pdf": {
+      "message": "Сжать PDF"
+   },
+   "search_term_convert_from_pdf": {
+      "message": "Конвертировать из PDF"
+   },
+   "search_term_convert_image_to_pdf": {
+      "message": "Преобразовать изображение в PDF"
+   },
+   "search_term_convert_page_to_pdf": {
+      "message": "Преобразовать страницу в PDF"
+   },
+   "search_term_convert_pdf_ppt": {
+      "message": "Преобразуйте PDF в PowerPoint"
+   },
+   "search_term_convert_pdf_to_excel": {
+      "message": "Преобразовать PDF в Excel"
+   },
+   "search_term_convert_pdf_to_images": {
+      "message": "Преобразовать PDF в изображения"
+   },
+   "search_term_convert_pdf_to_word": {
+      "message": "Преобразовать PDF в Word"
+   },
+   "search_term_convert_pdf_txt": {
+      "message": "Преобразовать PDF в текст"
+   },
+   "search_term_convert_to_pdf": {
+      "message": "Преобразовать в PDF"
+   },
+   "search_term_convert_to_pdfa": {
+      "message": "Преобразовать PDF в PDF/A"
+   },
+   "search_term_djvu_to_pdf": {
+      "message": "Преобразовать DJVU в PDF"
+   },
+   "search_term_edit_pdf": {
+      "message": "Редактировать PDF"
+   },
+   "search_term_jpg_to_pdf": {
+      "message": "Преобразуйте JPG в PDF"
+   },
+   "search_term_linearize_pdf": {
+      "message": "Оптимизировать PDF для веб"
+   },
+   "search_term_merge_pdf": {
+      "message": "Объединить PDF"
+   },
+   "search_term_pdf_to_excel": {
+      "message": "PDF в Excel"
+   },
+   "search_term_pdf_to_jpg": {
+      "message": "PDF в JPG"
+   },
+   "search_term_pdf_to_txt": {
+      "message": "PDF в текст"
+   },
+   "search_term_pdf_to_word": {
+      "message": "PDF в Word"
+   },
+   "search_term_powerpoint_to_pdf": {
+      "message": "Преобразовать презентацию в PDF"
+   },
+   "search_term_protect_pdf": {
+      "message": "Защитить PDF"
+   },
+   "search_term_repair_pdf": {
+      "message": "Восстановить PDF"
+   },
+   "search_term_resize_pdf": {
+      "message": "Изменить размер PDF"
+   },
+   "search_term_rotate_pdf": {
+      "message": "Повернуть PDF"
+   },
+   "search_term_sort_and_delete_pdf": {
+      "message": "Отсортировать и удалить PDF-страницы"
+   },
+   "search_term_split_pdf": {
+      "message": "Разделить PDF"
+   },
+   "search_term_unlock_pdf": {
+      "message": "Разблокировка PDF"
+   },
+   "search_term_word_to_pdf": {
+      "message": "Преобразовать Word в PDF"
+   },
+   "sign_up": {
+      "message": "Регистрация"
+   },
+   "size_and_quality": {
+      "message": "Файл среднего размера и высокого качества"
+   },
+   "small_size_medium_quality": {
+      "message": "Файл маленького размера и среднего качества"
+   },
+   "sort_and_delete_pdf": {
+      "message": "Отсортировать и удалить PDF-страницы"
+   },
+   "split_pdf": {
+      "message": "Разделить PDF"
+   },
+   "start_with_tool": {
+      "message": "Или начать с инструмента"
+   },
+   "strong_compression": {
+      "message": "Максимальное сжатие"
+   },
+   "support_email": {
+      "message": "time2help@pdf2go.com"
+   },
+   "unlock_pdf": {
+      "message": "Разблокировать PDF"
+   },
+   "upload_message": {
+      "message": "Ваш файл загружается. Мы работаем над этим"
+   },
+   "word_to_pdf": {
+      "message": "Преобразовать Word в PDF"
+   },
+   "your_file": {
+      "message": "Ваш файл"
+   }
+}

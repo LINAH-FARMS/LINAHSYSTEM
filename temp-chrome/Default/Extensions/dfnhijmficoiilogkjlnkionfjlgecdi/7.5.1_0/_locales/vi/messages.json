@@ -1,0 +1,422 @@
+{
+   "account_help": {
+      "message": "Trợ giúp"
+   },
+   "account_settings": {
+      "message": "Cài đặt tài khoản"
+   },
+   "back_to_start": {
+      "message": "Quay về Bắt đầu"
+   },
+   "back_to_tools": {
+      "message": "Quay về các công cụ"
+   },
+   "basic_compression": {
+      "message": "Nén cơ bản"
+   },
+   "bing_search_help": {
+      "message": "Search Bing for one of our tools to process files directly in your search results."
+   },
+   "bing_search_integration": {
+      "message": "Bing Search Integration"
+   },
+   "choose_file_btn": {
+      "message": "Chọn file"
+   },
+   "choose_preset": {
+      "message": "Chọn từ cài đặt có sẵn"
+   },
+   "chrome_cws": {
+      "message": "Cửa hang web Chrome"
+   },
+   "chrome_seetings": {
+      "message": "Cài đặt Chrome"
+   },
+   "compress": {
+      "message": "Nén"
+   },
+   "compress_file": {
+      "message": "Nén file"
+   },
+   "compress_pdf": {
+      "message": "Nén PDF"
+   },
+   "continue_with_facebook": {
+      "message": "Tiếp tục với Facebook"
+   },
+   "continue_with_google": {
+      "message": "Tiếp tục với Google"
+   },
+   "convert_btn": {
+      "message": "Chuyển đổi"
+   },
+   "convert_entire_pages": {
+      "message": "Chuyển đổi toàn bộ trang"
+   },
+   "convert_from_pdf": {
+      "message": "Chuyển đổi từ PDF"
+   },
+   "convert_image_to_pdf": {
+      "message": "Chuyển đổi hình ảnh sang PDF"
+   },
+   "convert_link_to_pdf": {
+      "message": "Chuyển đổi đường dẫn sang PDF"
+   },
+   "convert_page_to_pdf": {
+      "message": "Chuyển đổi trang sang PDF"
+   },
+   "convert_pdf_ppt": {
+      "message": "Chuyển đổi PDF sang PowerPoint"
+   },
+   "convert_pdf_to_excel": {
+      "message": "Chuyển đổi PDF sang Excel"
+   },
+   "convert_pdf_to_images": {
+      "message": "Chuyển đổi PDF sang hình ảnh"
+   },
+   "convert_pdf_to_word": {
+      "message": "Chuyển đổi PDF sang Word"
+   },
+   "convert_pdf_txt": {
+      "message": "Chuyển đổi PDF sang văn bản"
+   },
+   "convert_to_jpg": {
+      "message": "Chuyển đổi sang JPG"
+   },
+   "convert_to_pdf": {
+      "message": "Chuyển đổi sang PDF"
+   },
+   "convert_to_pdfa": {
+      "message": "Chuyển đổi PDF sang PDF/A"
+   },
+   "convert_to_word": {
+      "message": "Chuyển đổi sang Word"
+   },
+   "create_pdf": {
+      "message": "Tạo PDF"
+   },
+   "create_searchable_pdf": {
+      "message": "Có thể tìm kiếm được (OCR)"
+   },
+   "create_zip": {
+      "message": "Tạo ZIP"
+   },
+   "disabled_txt": {
+      "message": "Vô hiệu hóa"
+   },
+   "djvu_to_pdf": {
+      "message": "Chuyển đổi DJVU sang PDF"
+   },
+   "dont_have_an_account_yet": {
+      "message": "Bạn chưa có tài khoản?"
+   },
+   "dont_show_txt": {
+      "message": "Không hiển thị lại nữa"
+   },
+   "download_apps": {
+      "message": "Tải xuống ứng dụng"
+   },
+   "download_btn": {
+      "message": "Tải xuống"
+   },
+   "drop_files_here": {
+      "message": "Thả tập tin tại đây"
+   },
+   "edit_pdf": {
+      "message": "Chỉnh sửa PDF"
+   },
+   "email_or_username": {
+      "message": "Email và tên người dùng"
+   },
+   "enable_local_file": {
+      "message": "Cho phép truy cập vào URL chứa file"
+   },
+   "enable_local_file_help": {
+      "message": "Cấp quyền cho PDF2Go truy cập vào đường dẫn file của bạn để làm việc trên PDF được mở trong Chrome."
+   },
+   "enter_username_or_email": {
+      "message": "Nhập tên người dùng hoặc email của bạn"
+   },
+   "enter_your_password": {
+      "message": "Nhập mật khẩu của bạn"
+   },
+   "extension_pdf2go_description": {
+      "message": "Chỉnh sửa và chuyển đổi tập tin PDF."
+   },
+   "extension_pdf2go_name": {
+      "message": "Trình chỉnh sửa PDF trực tuyến (pdf2go.com)"
+   },
+   "extract_single_images": {
+      "message": "Xuất ảnh"
+   },
+   "feedback_thanks": {
+      "message": "Cám ơn."
+   },
+   "forgot_password": {
+      "message": "Bạn quên mật khẩu?"
+   },
+   "free_task_msg": {
+      "message": "các tác vụ miễn phí được sử dụng mỗi 24 giờ"
+   },
+   "get_help": {
+      "message": "Nhận sự giúp đỡ"
+   },
+   "give_us_feedback": {
+      "message": "Hãy cho chúng tôi biết phản hồi của bạn"
+   },
+   "gmail_download_btn": {
+      "message": "Tải xuống"
+   },
+   "gmail_download_modal_complete": {
+      "message": "Nhấp vào nút bên dưới để tải xuống file nén của bạn"
+   },
+   "gmail_download_modal_txt": {
+      "message": "Nhấp vào nút bên dưới để bắt đầu tải lên và nén file của bạn"
+   },
+   "gmail_modal_txt": {
+      "message": "Nhấp vào nút bên dưới để bắt đầu tải lên và xử lý file của bạn"
+   },
+   "google_search_help": {
+      "message": "Tìm kiếm trên Google một trong những công cụ của chúng tôi để xử lý file trực tiếp trong kết quả tìm kiếm của bạn."
+   },
+   "google_search_integration": {
+      "message": "Tích hợp Tìm kiếm của Google"
+   },
+   "having_trouble": {
+      "message": "Bạn đang gặp rắc rối?"
+   },
+   "hidden_txt": {
+      "message": "Ẩn!"
+   },
+   "hidden_txt_p1": {
+      "message": "Bạn sẽ không thấy mục thả Pdf2Go trong kết quả tìm kiếm của Google nữa."
+   },
+   "hidden_txt_p2": {
+      "message": "Bạn có thể mở lại bất kỳ lúc nào trong trang cài đặt tiện ích mở rộng."
+   },
+   "incorrect_username_error": {
+      "message": "Tên đăng nhập hoặc mật khẩu không chính xác."
+   },
+   "jpg_to_pdf": {
+      "message": "Chuyển đổi JPG sang PDF"
+   },
+   "like_or_dislike": {
+      "message": "Bạn có thích PDF2Go?"
+   },
+   "linearize_pdf": {
+      "message": "Tối ưu PDF cho web"
+   },
+   "log_in": {
+      "message": "Đăng nhập"
+   },
+   "log_in_with_facebook": {
+      "message": "Đăng nhập bằng Facebook"
+   },
+   "log_in_with_google": {
+      "message": "Đăng nhập bằng Google"
+   },
+   "log_out": {
+      "message": "Đăng xuất"
+   },
+   "login_password": {
+      "message": "Mật khẩu"
+   },
+   "merge_pdf": {
+      "message": "Hợp nhất tập tin PDF"
+   },
+   "microsoft_edge_cws": {
+      "message": "Edge Add-ons"
+   },
+   "microsoft_edge_seetings": {
+      "message": "Microsoft Edge Settings"
+   },
+   "open_in_web_app": {
+      "message": "Mở một công cụ trong ứng dụng web"
+   },
+   "open_pdf_tools": {
+      "message": "Mở các công cụ PDF"
+   },
+   "options_": {
+      "message": "Tùy chọn:"
+   },
+   "pdf2go_Or": {
+      "message": "Hoặc"
+   },
+   "pdf2go_account": {
+      "message": "Tài khoản"
+   },
+   "pdf2go_website": {
+      "message": "Trang web PDF2Go"
+   },
+   "pdf_to_excel": {
+      "message": "PDF sang Excel"
+   },
+   "pdf_to_jpg": {
+      "message": "PDF sang JPG"
+   },
+   "pdf_to_txt": {
+      "message": "PDF sang văn bản"
+   },
+   "pdf_to_word": {
+      "message": "PDF sang Word"
+   },
+   "pdf_viewer_tools_btn": {
+      "message": "Các công cụ"
+   },
+   "powered_by_txt": {
+      "message": "Được cung cấp bởi PDF2Go"
+   },
+   "powerpoint_to_pdf": {
+      "message": "Chuyển đổi PowerPoint sang PDF"
+   },
+   "processing_msg": {
+      "message": "File của bạn đang được xử lý và chúng tôi đang làm việc với nó"
+   },
+   "protect_pdf": {
+      "message": "Bảo vệ tập tin PDF"
+   },
+   "protected_msg": {
+      "message": "Các tập tin được bảo mật bằng mật khẩu. Vui lòng cung cấp mật khẩu."
+   },
+   "rate_now": {
+      "message": "Đánh giá ngay bây giờ"
+   },
+   "rating_cws_msg": {
+      "message": "Bạn có muốn đánh giá xếp hạng chúng tôi trong Cửa hàng Chrome không?"
+   },
+   "repair_pdf": {
+      "message": "Sửa lỗi PDF"
+   },
+   "resize_pdf": {
+      "message": "Thay đổi kích thước PDF"
+   },
+   "rotate_pdf": {
+      "message": "Xoay trang PDF"
+   },
+   "search_term_compress_file": {
+      "message": "Nén file"
+   },
+   "search_term_compress_pdf": {
+      "message": "Nén PDF"
+   },
+   "search_term_convert_from_pdf": {
+      "message": "Chuyển đổi từ PDF"
+   },
+   "search_term_convert_image_to_pdf": {
+      "message": "Chuyển đổi hình ảnh sang PDF"
+   },
+   "search_term_convert_page_to_pdf": {
+      "message": "Chuyển đổi trang sang PDF"
+   },
+   "search_term_convert_pdf_ppt": {
+      "message": "Chuyển đổi PDF sang PowerPoint"
+   },
+   "search_term_convert_pdf_to_excel": {
+      "message": "Chuyển đổi PDF sang Excel"
+   },
+   "search_term_convert_pdf_to_images": {
+      "message": "Chuyển đổi PDF sang hình ảnh"
+   },
+   "search_term_convert_pdf_to_word": {
+      "message": "Chuyển đổi PDF sang Word"
+   },
+   "search_term_convert_pdf_txt": {
+      "message": "Chuyển đổi PDF sang văn bản"
+   },
+   "search_term_convert_to_pdf": {
+      "message": "Chuyển đổi sang PDF"
+   },
+   "search_term_convert_to_pdfa": {
+      "message": "Chuyển đổi PDF sang PDF/A"
+   },
+   "search_term_djvu_to_pdf": {
+      "message": "Chuyển đổi DJVU sang PDF"
+   },
+   "search_term_edit_pdf": {
+      "message": "Chỉnh sửa PDF"
+   },
+   "search_term_jpg_to_pdf": {
+      "message": "Chuyển đổi JPG sang PDF"
+   },
+   "search_term_linearize_pdf": {
+      "message": "Tối ưu PDF cho web"
+   },
+   "search_term_merge_pdf": {
+      "message": "Hợp nhất tập tin PDF"
+   },
+   "search_term_pdf_to_excel": {
+      "message": "PDF sang Excel"
+   },
+   "search_term_pdf_to_jpg": {
+      "message": "PDF sang JPG"
+   },
+   "search_term_pdf_to_txt": {
+      "message": "PDF sang văn bản"
+   },
+   "search_term_pdf_to_word": {
+      "message": "PDF sang Word"
+   },
+   "search_term_powerpoint_to_pdf": {
+      "message": "Chuyển đổi PowerPoint sang PDF"
+   },
+   "search_term_protect_pdf": {
+      "message": "Bảo vệ tập tin PDF"
+   },
+   "search_term_repair_pdf": {
+      "message": "Sửa lỗi PDF"
+   },
+   "search_term_resize_pdf": {
+      "message": "Thay đổi kích thước PDF"
+   },
+   "search_term_rotate_pdf": {
+      "message": "Xoay trang PDF"
+   },
+   "search_term_sort_and_delete_pdf": {
+      "message": "Sắp xếp và xóa tập tin PDF"
+   },
+   "search_term_split_pdf": {
+      "message": "Tách tập tin PDF"
+   },
+   "search_term_unlock_pdf": {
+      "message": "Mở khóa PDF"
+   },
+   "search_term_word_to_pdf": {
+      "message": "Chuyển đổi Word sang PDF"
+   },
+   "sign_up": {
+      "message": "Đăng ký"
+   },
+   "size_and_quality": {
+      "message": "Kích thước tập tin trung bình và chất lượng cao"
+   },
+   "small_size_medium_quality": {
+      "message": "Kích thước file nhỏ và chất lượng trung bình"
+   },
+   "sort_and_delete_pdf": {
+      "message": "Sắp xếp và xóa tập tin PDF"
+   },
+   "split_pdf": {
+      "message": "Tách tập tin PDF"
+   },
+   "start_with_tool": {
+      "message": "Hoặc bắt đầu với một công cụ"
+   },
+   "strong_compression": {
+      "message": "Nén mạnh"
+   },
+   "support_email": {
+      "message": "time2help@pdf2go.com"
+   },
+   "unlock_pdf": {
+      "message": "Mở khóa PDF"
+   },
+   "upload_message": {
+      "message": "File của bạn đang được tải lên và chúng tôi đang làm việc với nó"
+   },
+   "word_to_pdf": {
+      "message": "Chuyển đổi Word sang PDF"
+   },
+   "your_file": {
+      "message": "File của bạn"
+   }
+}

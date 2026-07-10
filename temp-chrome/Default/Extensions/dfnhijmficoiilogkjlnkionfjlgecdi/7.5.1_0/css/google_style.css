@@ -1,0 +1,241 @@
+        .ext_pdf2go .u1:first-child {
+            padding-top: 0px;
+        }
+
+        .ext_pdf2go .u1:first-child {
+            padding-top: 0px;
+        }
+
+        .ext_pdf2go .u_a * {
+            font-family:  "Open Sans", Helvetica, Arial, sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }   
+        .ext_pdf2go .u2 {
+            font-size: 16px;
+            font-weight: bold;
+            color: rgb(33, 33, 33);
+        }
+        .ext_pdf2go .u3 {
+            display: flex;
+            position: relative;
+            min-height: 240px;
+            margin: 0px -20px;
+        }
+        .ext_pdf2go .u4 {
+            display: flex;
+            flex: 1 1 auto;
+            padding: 12px;
+            background: #fc0c44!important;
+            border-radius: 8px;
+            cursor: pointer;
+            user-select: none;
+        }
+        .ext_pdf2go .u4_p{
+            display: flex;
+            flex-direction: column;
+            flex: 1 1 auto;
+            border: 1px solid rgb(237, 237, 237);
+            border-radius: 8px; 
+            background: #fff;
+            padding: 12px;
+        }
+        .ext_pdf2go .u5 {
+            position: absolute;
+            clip: rect(1px, 1px, 1px, 1px);
+            padding: 0px;
+            border: 0px;
+            height: 1px;
+            width: 1px;
+            overflow: hidden;
+        }
+        .ext_pdf2go .u6 {
+            display: flex;
+            flex-direction: column;
+            -webkit-box-align: center;
+            align-items: center;
+            -webkit-box-pack: center;
+            justify-content: center;
+            flex: 1 1 auto;
+            padding: 30px 16px 24px;
+            border-radius: 3px;
+            background: #e10337;
+            border-width: 1px;
+            border-style: dashed;
+            border-color: #fff;
+            pointer-events: none;
+        }
+        .ext_pdf2go .bg_w{
+            background: #fff !important;
+        }
+        .ext_pdf2go .u7 {
+            display: flex;
+            -webkit-box-pack: center;
+            justify-content: center;
+            padding-bottom: 12px;
+        }
+        .ext_pdf2go .u8 {
+            line-height: 30px;
+            font-size: 22px;
+            font-stretch: normal;
+            font-weight: 400;
+            text-align: center;
+            color: white;
+            font-size: 1rem;
+        }
+        .ext_pdf2go .u9 {
+            line-height: 30px;
+            font-size: 22px;
+            font-stretch: normal;
+            font-weight: 400;
+            text-align: center;
+            text-decoration: underline;
+            color: white;
+            padding-top: 1rem!important;
+        }
+        .ext_pdf2go .u1 {
+            display: flex;
+            padding: 6px 0px 12px;
+        }
+        .ext_pdf2go .u10 ,.ext_pdf2go .u10 button,.ext_pdf2go .u10 a {
+            font-size: 12px;
+            color: rgb(119, 119, 119) !important;
+            margin: 0px 12px;
+
+        }
+        .ext_pdf2go .u11 {
+            font: inherit;
+            text-decoration: none;
+            background: none;
+            border: 0px;
+            outline: 0px;
+            padding: 0px;
+            margin: 0px;
+            cursor: pointer;
+            appearance: none;
+        }
+        .ext_pdf2go .u12 {
+            flex: 1 1 auto;
+        }
+
+        .ext_pdf2go .uh1 {
+            display: flex;
+            flex-direction: column;
+            -webkit-box-pack: center;
+            justify-content: center;
+            -webkit-box-align: center;
+            align-items: center;
+            flex: 1 1 auto;
+            border: 1px dashed rgb(208, 208, 208);
+            border-radius: 8px;
+        }
+
+        .ext_pdf2go .uh2 {
+            font-size: 16px;
+            font-weight: bold;
+            text-align: center;
+            color: rgb(119, 119, 119);
+            margin-bottom: 12px;
+        }
+
+        .ext_pdf2go .uh3 {
+            font-size: 14px;
+            text-align: center;
+            color: rgb(119, 119, 119);
+        }
+
+        .ext_pdf2go .uh4 {
+            font-size: 14px;
+            text-align: center;
+            color: rgb(119, 119, 119);
+        }
+        .ext_pdf2go #dont-show-pdf2go{
+            cursor: pointer;
+        }
+        .ext_pdf2go .google-progress-div {
+            width: 100%;
+            height: 4px;
+            border-top-left-radius: 8px;
+            border-top-right-radius: 8px;
+            overflow: hidden;
+            display: none;
+            margin: -12px -12px;
+            position: absolute;
+        }
+
+        .ext_pdf2go .g-progress-line {
+            width: 0px;
+            height: 100%;
+            transition: width 0.4s ease-out 0s;
+            background-color: rgb(242, 48, 48);
+        }
+        .u3-popup {
+            display: flex;
+            position: relative;
+            height: 225px;
+            margin: 15px;
+        }
+        .u4-popup {
+            display: flex;
+            position: relative;
+            height: 430px;
+            margin: 15px;
+        }
+        .popup-body{
+            background-color: #f5f5f5 !important;
+        }
+        
+        .vue-uploadbox-file-button{
+            display: flex;
+        }
+        .vue-uploadbox-file-button svg{
+            width: 20px;
+            margin-right: 5px;
+        }
+
+        .fg-normal,.fg-normal-hover:hover {
+            color: #2e2e2e
+        }
+
+        .fg-normal-important {
+            color: #2e2e2e!important
+        }
+
+        .fg-main-hover:hover,.show .fg-main-dropdown-show {
+            color: #1b5e20
+        }
+
+        .fg-white,.fg-white-hover:hover {
+            color: #fff
+        }
+        .vue-uploadbox-file-button {
+            
+            font-size: 1rem !important;
+            padding-left: 30px !important;
+            padding-right: 30px !important;
+            color: #2e2e2e;
+            border-radius: 4px; 
+            border: 2px solid rgba(0,0,0,0);
+            border-radius: 4px;
+            color: #2e2e2e;
+            display: flex;
+            font-size: 1rem;
+            font-weight: 400;
+            line-height: 1.42857143;
+            padding: 0.375rem 0.75rem;
+            text-align: center;
+            -webkit-transition: color .15s ease-in-out,background-color .15s ease-in-out,border-color .15s ease-in-out,box-shadow .15s ease-in-out;
+            transition: color .15s ease-in-out,background-color .15s ease-in-out,border-color .15s ease-in-out,box-shadow .15s ease-in-out;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+            vertical-align: middle;
+
+            padding-right: 30px;
+        }
+        .font-weight-bold {
+            font-weight: 700!important;
+        }
+        .font-size-125 {
+            font-size: 1.25rem;
+        }

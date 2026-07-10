@@ -1,0 +1,14 @@
+2026/06/28-14:55:00.241 7374 Creating DB C:\Users\Salem Magdy\Desktop\LINAHSYSTEM\temp-chrome\Default\Local Storage\leveldb since it was missing.
+2026/06/28-14:55:00.269 7374 Reusing MANIFEST C:\Users\Salem Magdy\Desktop\LINAHSYSTEM\temp-chrome\Default\Local Storage\leveldb/MANIFEST-000001
+2026/06/28-15:13:30.100 48d8 Level-0 table #5: started
+2026/06/28-15:13:30.114 48d8 Level-0 table #5: 26508 bytes OK
+2026/06/28-15:13:30.119 48d8 Delete type=0 #3
+2026/06/28-15:48:52.009 48d8 Level-0 table #7: started
+2026/06/28-15:48:52.016 48d8 Level-0 table #7: 18237 bytes OK
+2026/06/28-15:48:52.020 48d8 Delete type=0 #4
+2026/06/28-15:51:45.659 48d8 Level-0 table #9: started
+2026/06/28-15:51:45.672 48d8 Level-0 table #9: 79042 bytes OK
+2026/06/28-15:51:45.678 48d8 Delete type=0 #6
+2026/06/28-15:56:45.650 48d8 Level-0 table #11: started
+2026/06/28-15:56:45.659 48d8 Level-0 table #11: 40522 bytes OK
+2026/06/28-15:56:45.665 48d8 Delete type=0 #8

@@ -1,0 +1,422 @@
+{
+   "account_help": {
+      "message": "帮助"
+   },
+   "account_settings": {
+      "message": "账户设置"
+   },
+   "back_to_start": {
+      "message": "返回开始"
+   },
+   "back_to_tools": {
+      "message": "返回工具"
+   },
+   "basic_compression": {
+      "message": "基本压缩"
+   },
+   "bing_search_help": {
+      "message": "Search Bing for one of our tools to process files directly in your search results."
+   },
+   "bing_search_integration": {
+      "message": "Bing Search Integration"
+   },
+   "choose_file_btn": {
+      "message": "选择文件"
+   },
+   "choose_preset": {
+      "message": "从预设中选择"
+   },
+   "chrome_cws": {
+      "message": "Chrome 网上应用店"
+   },
+   "chrome_seetings": {
+      "message": "Chrome设置"
+   },
+   "compress": {
+      "message": "压缩"
+   },
+   "compress_file": {
+      "message": "压缩文件"
+   },
+   "compress_pdf": {
+      "message": "压缩 PDF"
+   },
+   "continue_with_facebook": {
+      "message": "继续使用 Facebook"
+   },
+   "continue_with_google": {
+      "message": "继续使用 Google"
+   },
+   "convert_btn": {
+      "message": "转换"
+   },
+   "convert_entire_pages": {
+      "message": "转换整个页面"
+   },
+   "convert_from_pdf": {
+      "message": "把PDF转换成"
+   },
+   "convert_image_to_pdf": {
+      "message": "将图像转换为PDF"
+   },
+   "convert_link_to_pdf": {
+      "message": "将链接转换为PDF"
+   },
+   "convert_page_to_pdf": {
+      "message": "将页面转换为PDF"
+   },
+   "convert_pdf_ppt": {
+      "message": "将PDF转换为PowerPoint"
+   },
+   "convert_pdf_to_excel": {
+      "message": "将 PDF 转换为 Excel"
+   },
+   "convert_pdf_to_images": {
+      "message": "将 PDF 转换为图像"
+   },
+   "convert_pdf_to_word": {
+      "message": "将PDF转换为Word"
+   },
+   "convert_pdf_txt": {
+      "message": "将PDF转换为文本"
+   },
+   "convert_to_jpg": {
+      "message": "转换为JPG"
+   },
+   "convert_to_pdf": {
+      "message": "转换成PDF"
+   },
+   "convert_to_pdfa": {
+      "message": "将 PDF 转换为 PDF/A"
+   },
+   "convert_to_word": {
+      "message": "转换成Word"
+   },
+   "create_pdf": {
+      "message": "创建 PDF"
+   },
+   "create_searchable_pdf": {
+      "message": "可搜索 (OCR)"
+   },
+   "create_zip": {
+      "message": "创建一个 ZIP"
+   },
+   "disabled_txt": {
+      "message": "已禁用"
+   },
+   "djvu_to_pdf": {
+      "message": "将 DJVU 转换为 PDF"
+   },
+   "dont_have_an_account_yet": {
+      "message": "还没有帐户？"
+   },
+   "dont_show_txt": {
+      "message": "不再显示此内容"
+   },
+   "download_apps": {
+      "message": "下载应用程序"
+   },
+   "download_btn": {
+      "message": "下载"
+   },
+   "drop_files_here": {
+      "message": "把文件放这里"
+   },
+   "edit_pdf": {
+      "message": "编辑PDF"
+   },
+   "email_or_username": {
+      "message": "电子邮件或用户名"
+   },
+   "enable_local_file": {
+      "message": "允许打开文件中的链接"
+   },
+   "enable_local_file_help": {
+      "message": "授予 PDF2Go 访问本地文件 URL 的权限，以处理在 Chrome 中打开的 PDF。"
+   },
+   "enter_username_or_email": {
+      "message": "输入您的用户名或电子邮件"
+   },
+   "enter_your_password": {
+      "message": "输入您的密码"
+   },
+   "extension_pdf2go_description": {
+      "message": "编辑和转换PDF文件。"
+   },
+   "extension_pdf2go_name": {
+      "message": "在线PDF编辑器(pdf2go.com)"
+   },
+   "extract_single_images": {
+      "message": "提取单个图像"
+   },
+   "feedback_thanks": {
+      "message": "谢谢"
+   },
+   "forgot_password": {
+      "message": "忘记密码了吗？"
+   },
+   "free_task_msg": {
+      "message": "每 24 小时使用的免费任务"
+   },
+   "get_help": {
+      "message": "帮助"
+   },
+   "give_us_feedback": {
+      "message": "给我们您的反馈"
+   },
+   "gmail_download_btn": {
+      "message": "下载"
+   },
+   "gmail_download_modal_complete": {
+      "message": "单击下面的按钮下载您的压缩文件"
+   },
+   "gmail_download_modal_txt": {
+      "message": "单击下面的按钮开始上传和压缩文件"
+   },
+   "gmail_modal_txt": {
+      "message": "单击下面的按钮开始上传和处理您的文件"
+   },
+   "google_search_help": {
+      "message": "在 Google 中搜索我们的一种工具，用于直接在您的搜索结果中处理文件。"
+   },
+   "google_search_integration": {
+      "message": "谷歌搜索集成"
+   },
+   "having_trouble": {
+      "message": "遇到问题了？"
+   },
+   "hidden_txt": {
+      "message": "隐藏！"
+   },
+   "hidden_txt_p1": {
+      "message": "您不会再在 Google 搜索结果中看到 Pdf2Go 转换放置区。"
+   },
+   "hidden_txt_p2": {
+      "message": "您可以随时在扩展程序设置页面中将其重新打开。"
+   },
+   "incorrect_username_error": {
+      "message": "用户名或密码错误。"
+   },
+   "jpg_to_pdf": {
+      "message": "把JPG转换成PDF"
+   },
+   "like_or_dislike": {
+      "message": "你喜欢 PDF2Go 吗？"
+   },
+   "linearize_pdf": {
+      "message": "优化网络PDF"
+   },
+   "log_in": {
+      "message": "登录"
+   },
+   "log_in_with_facebook": {
+      "message": "使用 Facebook 登录"
+   },
+   "log_in_with_google": {
+      "message": "使用谷歌登录"
+   },
+   "log_out": {
+      "message": "注销登录"
+   },
+   "login_password": {
+      "message": "密码"
+   },
+   "merge_pdf": {
+      "message": "合并 PDF"
+   },
+   "microsoft_edge_cws": {
+      "message": "Edge Add-ons"
+   },
+   "microsoft_edge_seetings": {
+      "message": "Microsoft Edge Settings"
+   },
+   "open_in_web_app": {
+      "message": "在 Web 应用程序中打开工具"
+   },
+   "open_pdf_tools": {
+      "message": "打开PDF工具"
+   },
+   "options_": {
+      "message": "选项："
+   },
+   "pdf2go_Or": {
+      "message": "或者"
+   },
+   "pdf2go_account": {
+      "message": "账户"
+   },
+   "pdf2go_website": {
+      "message": "PDF2Go 网站"
+   },
+   "pdf_to_excel": {
+      "message": "PDF转换成 Excel"
+   },
+   "pdf_to_jpg": {
+      "message": "PDF到JPG"
+   },
+   "pdf_to_txt": {
+      "message": "PDF转文本"
+   },
+   "pdf_to_word": {
+      "message": "PDF 到 Word"
+   },
+   "pdf_viewer_tools_btn": {
+      "message": "工具"
+   },
+   "powered_by_txt": {
+      "message": "由 PDF2Go 提供支持"
+   },
+   "powerpoint_to_pdf": {
+      "message": "将PowerPoint转换为PDF"
+   },
+   "processing_msg": {
+      "message": "您的文件正在处理中，我们正在处理它"
+   },
+   "protect_pdf": {
+      "message": "保护PDF"
+   },
+   "protected_msg": {
+      "message": "该文件受密码保护。 请提供密码。"
+   },
+   "rate_now": {
+      "message": "现在就评价吧"
+   },
+   "rating_cws_msg": {
+      "message": "您想在 Chrome 商店中评价我们吗？"
+   },
+   "repair_pdf": {
+      "message": "修复PDF"
+   },
+   "resize_pdf": {
+      "message": "调整PDF大小"
+   },
+   "rotate_pdf": {
+      "message": "旋转 PDF"
+   },
+   "search_term_compress_file": {
+      "message": "压缩文件"
+   },
+   "search_term_compress_pdf": {
+      "message": "压缩 PDF"
+   },
+   "search_term_convert_from_pdf": {
+      "message": "把PDF转换成"
+   },
+   "search_term_convert_image_to_pdf": {
+      "message": "将图像转换为PDF"
+   },
+   "search_term_convert_page_to_pdf": {
+      "message": "将页面转换为PDF"
+   },
+   "search_term_convert_pdf_ppt": {
+      "message": "将PDF转换为PowerPoint"
+   },
+   "search_term_convert_pdf_to_excel": {
+      "message": "将 PDF 转换为 Excel"
+   },
+   "search_term_convert_pdf_to_images": {
+      "message": "将 PDF 转换为图像"
+   },
+   "search_term_convert_pdf_to_word": {
+      "message": "将PDF转换为Word"
+   },
+   "search_term_convert_pdf_txt": {
+      "message": "将PDF转换为文本"
+   },
+   "search_term_convert_to_pdf": {
+      "message": "转换成PDF"
+   },
+   "search_term_convert_to_pdfa": {
+      "message": "将 PDF 转换为 PDF/A"
+   },
+   "search_term_djvu_to_pdf": {
+      "message": "将 DJVU 转换为 PDF"
+   },
+   "search_term_edit_pdf": {
+      "message": "编辑PDF"
+   },
+   "search_term_jpg_to_pdf": {
+      "message": "把JPG转换成PDF"
+   },
+   "search_term_linearize_pdf": {
+      "message": "优化网络PDF"
+   },
+   "search_term_merge_pdf": {
+      "message": "合并 PDF"
+   },
+   "search_term_pdf_to_excel": {
+      "message": "PDF转换成 Excel"
+   },
+   "search_term_pdf_to_jpg": {
+      "message": "PDF到JPG"
+   },
+   "search_term_pdf_to_txt": {
+      "message": "PDF转文本"
+   },
+   "search_term_pdf_to_word": {
+      "message": "PDF 到 Word"
+   },
+   "search_term_powerpoint_to_pdf": {
+      "message": "将PowerPoint转换为PDF"
+   },
+   "search_term_protect_pdf": {
+      "message": "保护PDF"
+   },
+   "search_term_repair_pdf": {
+      "message": "修复PDF"
+   },
+   "search_term_resize_pdf": {
+      "message": "调整PDF大小"
+   },
+   "search_term_rotate_pdf": {
+      "message": "旋转 PDF"
+   },
+   "search_term_sort_and_delete_pdf": {
+      "message": "排序和删除PDF"
+   },
+   "search_term_split_pdf": {
+      "message": "拆分PDF"
+   },
+   "search_term_unlock_pdf": {
+      "message": "PDF解锁"
+   },
+   "search_term_word_to_pdf": {
+      "message": "将Word转换为PDF"
+   },
+   "sign_up": {
+      "message": "注册"
+   },
+   "size_and_quality": {
+      "message": "中等文件大小和高质量"
+   },
+   "small_size_medium_quality": {
+      "message": "小文件和中等质量"
+   },
+   "sort_and_delete_pdf": {
+      "message": "排序和删除PDF"
+   },
+   "split_pdf": {
+      "message": "拆分PDF"
+   },
+   "start_with_tool": {
+      "message": "或者从工具开始"
+   },
+   "strong_compression": {
+      "message": "强压缩"
+   },
+   "support_email": {
+      "message": "time2help@pdf2go.com"
+   },
+   "unlock_pdf": {
+      "message": "解锁PDF"
+   },
+   "upload_message": {
+      "message": "您的文件正在上传，我们正在处理它"
+   },
+   "word_to_pdf": {
+      "message": "将Word转换为PDF"
+   },
+   "your_file": {
+      "message": "你的文件"
+   }
+}

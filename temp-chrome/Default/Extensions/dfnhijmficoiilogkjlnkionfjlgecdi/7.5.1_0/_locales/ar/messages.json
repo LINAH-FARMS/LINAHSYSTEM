@@ -1,0 +1,422 @@
+{
+   "account_help": {
+      "message": "المساعدة"
+   },
+   "account_settings": {
+      "message": "إعدادات الحساب"
+   },
+   "back_to_start": {
+      "message": "العودة إلى قائمة ابدأ"
+   },
+   "back_to_tools": {
+      "message": "العودة إلى قائمة الأدوات"
+   },
+   "basic_compression": {
+      "message": "الضغط الأساسي"
+   },
+   "bing_search_help": {
+      "message": "Search Bing for one of our tools to process files directly in your search results."
+   },
+   "bing_search_integration": {
+      "message": "Bing Search Integration"
+   },
+   "choose_file_btn": {
+      "message": "اختر ملف"
+   },
+   "choose_preset": {
+      "message": "اختر من الإعدادات المسبقة"
+   },
+   "chrome_cws": {
+      "message": "متجر كروم الالكتروني"
+   },
+   "chrome_seetings": {
+      "message": "إعدادات متصفح كروم"
+   },
+   "compress": {
+      "message": "ضغط"
+   },
+   "compress_file": {
+      "message": "ضغط مف"
+   },
+   "compress_pdf": {
+      "message": "ضغط لملف PDF"
+   },
+   "continue_with_facebook": {
+      "message": "الاستمرار عبر فيسبوك"
+   },
+   "continue_with_google": {
+      "message": "الاستمرار عبر جوجل"
+   },
+   "convert_btn": {
+      "message": "التحويل"
+   },
+   "convert_entire_pages": {
+      "message": "تحويل كامل الصفحات"
+   },
+   "convert_from_pdf": {
+      "message": "تحويل من PDF"
+   },
+   "convert_image_to_pdf": {
+      "message": "تحويل صورة إلى ملف PDF"
+   },
+   "convert_link_to_pdf": {
+      "message": "تحويل رابط إلى ملف PDF"
+   },
+   "convert_page_to_pdf": {
+      "message": "تحويل صفحة إلى ملف PDF"
+   },
+   "convert_pdf_ppt": {
+      "message": "تحويل ملف PDF إلى ملف بوربوينت"
+   },
+   "convert_pdf_to_excel": {
+      "message": "تحويل من PDF إلى إكسيل"
+   },
+   "convert_pdf_to_images": {
+      "message": "تحويل من PDF إلى صور"
+   },
+   "convert_pdf_to_word": {
+      "message": "تحويل ملف PDF إلى ملف وورد"
+   },
+   "convert_pdf_txt": {
+      "message": "تحويل ملف PDF إلى ملف نصي"
+   },
+   "convert_to_jpg": {
+      "message": "التحويل إلى صور JPG"
+   },
+   "convert_to_pdf": {
+      "message": "تحويل إلى PDF"
+   },
+   "convert_to_pdfa": {
+      "message": "تحويل من PDF إلى PDF/A"
+   },
+   "convert_to_word": {
+      "message": "تحويل إلى وورد"
+   },
+   "create_pdf": {
+      "message": "إنشاء ملف pdf"
+   },
+   "create_searchable_pdf": {
+      "message": "جعله قابلاً للبحث (OCR)"
+   },
+   "create_zip": {
+      "message": "إنشاء ملف ZIP"
+   },
+   "disabled_txt": {
+      "message": "تعطيل"
+   },
+   "djvu_to_pdf": {
+      "message": "تحويل من DJVU إلى PDF"
+   },
+   "dont_have_an_account_yet": {
+      "message": "ليس لديك حساب حتّى الآن؟"
+   },
+   "dont_show_txt": {
+      "message": "لا تظهر هذا مرة أخرى"
+   },
+   "download_apps": {
+      "message": "تحميل التطبيقات"
+   },
+   "download_btn": {
+      "message": "تحميل"
+   },
+   "drop_files_here": {
+      "message": "اسحب الملفات هنا"
+   },
+   "edit_pdf": {
+      "message": "تعديل ملف PDF"
+   },
+   "email_or_username": {
+      "message": "البريد الإلكتروني أو اسم المستخدم"
+   },
+   "enable_local_file": {
+      "message": "السماح بالوصول إلى ملف URLs"
+   },
+   "enable_local_file_help": {
+      "message": "امنح PDF2Go إمكانية الوصول إلى عناوين URL لملفاتك المحلية للعمل على ملفات PDF المفتوحة في جوجل كروم."
+   },
+   "enter_username_or_email": {
+      "message": "أدخل اسم المستخدم أو البريد الإلكتروني الخاص بك"
+   },
+   "enter_your_password": {
+      "message": "يرجى إدخال كملة المرور"
+   },
+   "extension_pdf2go_description": {
+      "message": "تعديل وتحويل ملفات PDF."
+   },
+   "extension_pdf2go_name": {
+      "message": "أداة تعديل ملفات PDF أونلاين (pdf2go.com)"
+   },
+   "extract_single_images": {
+      "message": "استخراج صور فردية"
+   },
+   "feedback_thanks": {
+      "message": "شكرًا لك."
+   },
+   "forgot_password": {
+      "message": "نسيت كلمة المرور؟"
+   },
+   "free_task_msg": {
+      "message": "تستخدم المهام المجانية كل 24 ساعة"
+   },
+   "get_help": {
+      "message": "احصل على مساعدة"
+   },
+   "give_us_feedback": {
+      "message": "دعنا نتعرف تقييمك لنا"
+   },
+   "gmail_download_btn": {
+      "message": "تحميل"
+   },
+   "gmail_download_modal_complete": {
+      "message": "انقر فوق الزر أدناه لتنزيل ملفك المضغوط"
+   },
+   "gmail_download_modal_txt": {
+      "message": "انقر فوق الزر أدناه لبدء تحميل وضغط ملفك"
+   },
+   "gmail_modal_txt": {
+      "message": "انقر فوق الزر أدناه لبدء تحميل ومعالجة ملفك"
+   },
+   "google_search_help": {
+      "message": "ابحث في جوجل عن إحدى أدواتنا لمعالجة الملفات مباشرةً في نتائج البحث."
+   },
+   "google_search_integration": {
+      "message": "تكامل بحث جوجل"
+   },
+   "having_trouble": {
+      "message": "تواجهك مشكلة؟"
+   },
+   "hidden_txt": {
+      "message": "مخفي!"
+   },
+   "hidden_txt_p1": {
+      "message": "لن ترى منطقة إسقاط Pdf2Go Convert في نتائج بحث جوجل الخاصة بك بعد الآن."
+   },
+   "hidden_txt_p2": {
+      "message": "يمكنك إعادة تشغيله في أي وقت في صفحة إعدادات الملحقات والإضافات."
+   },
+   "incorrect_username_error": {
+      "message": "اسم المستخدم أو كلمة المرور غير صحيح."
+   },
+   "jpg_to_pdf": {
+      "message": "تحويل من JPG إلى PDF"
+   },
+   "like_or_dislike": {
+      "message": "هل تحب PDF2Go؟"
+   },
+   "linearize_pdf": {
+      "message": "تحسين ملفات PDF للويب"
+   },
+   "log_in": {
+      "message": "تسجيل دخول"
+   },
+   "log_in_with_facebook": {
+      "message": "تسجيل الدخول عبر فيسبوك"
+   },
+   "log_in_with_google": {
+      "message": "تسجيل الدخول عبر جوجل"
+   },
+   "log_out": {
+      "message": "تسجيل الخروج"
+   },
+   "login_password": {
+      "message": "كلمة السر"
+   },
+   "merge_pdf": {
+      "message": "دمج ملف PDF"
+   },
+   "microsoft_edge_cws": {
+      "message": "Edge Add-ons"
+   },
+   "microsoft_edge_seetings": {
+      "message": "Microsoft Edge Settings"
+   },
+   "open_in_web_app": {
+      "message": "فتح أداة في تطبيق الويب"
+   },
+   "open_pdf_tools": {
+      "message": "فتح أدوات ملفات PDF"
+   },
+   "options_": {
+      "message": "الخيارات:"
+   },
+   "pdf2go_Or": {
+      "message": "أو"
+   },
+   "pdf2go_account": {
+      "message": "الحساب"
+   },
+   "pdf2go_website": {
+      "message": "موقع Img2Go"
+   },
+   "pdf_to_excel": {
+      "message": "تحويل من PDF إلى إكسيل"
+   },
+   "pdf_to_jpg": {
+      "message": "PDF إلى JPG"
+   },
+   "pdf_to_txt": {
+      "message": "PDF إلى نص"
+   },
+   "pdf_to_word": {
+      "message": "PDF إلى وورد"
+   },
+   "pdf_viewer_tools_btn": {
+      "message": "الأدوات"
+   },
+   "powered_by_txt": {
+      "message": "مدعوم من PDF2Go"
+   },
+   "powerpoint_to_pdf": {
+      "message": "تحويل عرض تقديمي PowerPoint إلى PDF"
+   },
+   "processing_msg": {
+      "message": "ملفك قيد المعالجة ونحن نعمل عليه"
+   },
+   "protect_pdf": {
+      "message": "حماية ملف PDF"
+   },
+   "protected_msg": {
+      "message": "الملف محمي بكلمة مرور. يرجى إدخال كلمة المرور."
+   },
+   "rate_now": {
+      "message": "قم بالتقييم الآن"
+   },
+   "rating_cws_msg": {
+      "message": "هل ترغب في تقييمنا عبر متجر كروم؟"
+   },
+   "repair_pdf": {
+      "message": "إصلاح ملف PDF"
+   },
+   "resize_pdf": {
+      "message": "تغيير حجم ملف PDF"
+   },
+   "rotate_pdf": {
+      "message": "تدوير ملف PDF"
+   },
+   "search_term_compress_file": {
+      "message": "ضغط مف"
+   },
+   "search_term_compress_pdf": {
+      "message": "ضغط لملف PDF"
+   },
+   "search_term_convert_from_pdf": {
+      "message": "تحويل من PDF"
+   },
+   "search_term_convert_image_to_pdf": {
+      "message": "تحويل صورة إلى ملف PDF"
+   },
+   "search_term_convert_page_to_pdf": {
+      "message": "تحويل صفحة إلى ملف PDF"
+   },
+   "search_term_convert_pdf_ppt": {
+      "message": "تحويل ملف PDF إلى ملف بوربوينت"
+   },
+   "search_term_convert_pdf_to_excel": {
+      "message": "تحويل من PDF إلى إكسيل"
+   },
+   "search_term_convert_pdf_to_images": {
+      "message": "تحويل من PDF إلى صور"
+   },
+   "search_term_convert_pdf_to_word": {
+      "message": "تحويل ملف PDF إلى ملف وورد"
+   },
+   "search_term_convert_pdf_txt": {
+      "message": "تحويل ملف PDF إلى ملف نصي"
+   },
+   "search_term_convert_to_pdf": {
+      "message": "تحويل إلى PDF"
+   },
+   "search_term_convert_to_pdfa": {
+      "message": "تحويل من PDF إلى PDF/A"
+   },
+   "search_term_djvu_to_pdf": {
+      "message": "تحويل من DJVU إلى PDF"
+   },
+   "search_term_edit_pdf": {
+      "message": "تعديل ملف PDF"
+   },
+   "search_term_jpg_to_pdf": {
+      "message": "تحويل من JPG إلى PDF"
+   },
+   "search_term_linearize_pdf": {
+      "message": "تحسين ملفات PDF للويب"
+   },
+   "search_term_merge_pdf": {
+      "message": "دمج ملف PDF"
+   },
+   "search_term_pdf_to_excel": {
+      "message": "تحويل من PDF إلى إكسيل"
+   },
+   "search_term_pdf_to_jpg": {
+      "message": "PDF إلى JPG"
+   },
+   "search_term_pdf_to_txt": {
+      "message": "PDF إلى نص"
+   },
+   "search_term_pdf_to_word": {
+      "message": "PDF إلى وورد"
+   },
+   "search_term_powerpoint_to_pdf": {
+      "message": "تحويل عرض تقديمي PowerPoint إلى PDF"
+   },
+   "search_term_protect_pdf": {
+      "message": "حماية ملف PDF"
+   },
+   "search_term_repair_pdf": {
+      "message": "إصلاح ملف PDF"
+   },
+   "search_term_resize_pdf": {
+      "message": "تغيير حجم ملف PDF"
+   },
+   "search_term_rotate_pdf": {
+      "message": "تدوير ملف PDF"
+   },
+   "search_term_sort_and_delete_pdf": {
+      "message": "ترتيب وحذف ملفات PDF"
+   },
+   "search_term_split_pdf": {
+      "message": "فصل مستند PDF"
+   },
+   "search_term_unlock_pdf": {
+      "message": "فتح قفل PDF"
+   },
+   "search_term_word_to_pdf": {
+      "message": "تحويل من وورد إلى PDF"
+   },
+   "sign_up": {
+      "message": "انشاء حساب"
+   },
+   "size_and_quality": {
+      "message": "حجم ملف متوسّط وجودة عالية"
+   },
+   "small_size_medium_quality": {
+      "message": "حجم ملف صغير وجودة متوسّطة"
+   },
+   "sort_and_delete_pdf": {
+      "message": "ترتيب وحذف ملفات PDF"
+   },
+   "split_pdf": {
+      "message": "فصل مستند PDF"
+   },
+   "start_with_tool": {
+      "message": "أو ابدأ باستخدام أداة"
+   },
+   "strong_compression": {
+      "message": "ضغط قوي"
+   },
+   "support_email": {
+      "message": "time2help@pdf2go.com"
+   },
+   "unlock_pdf": {
+      "message": "فتح قفل PDF"
+   },
+   "upload_message": {
+      "message": "يتم تحميل ملفك ونحن نعمل على ذلك"
+   },
+   "word_to_pdf": {
+      "message": "تحويل من وورد إلى PDF"
+   },
+   "your_file": {
+      "message": "ملفك الشخصي"
+   }
+}

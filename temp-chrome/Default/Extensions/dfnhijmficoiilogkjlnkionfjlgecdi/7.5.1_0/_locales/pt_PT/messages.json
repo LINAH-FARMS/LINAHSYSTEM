@@ -1,0 +1,422 @@
+{
+   "account_help": {
+      "message": "Ajuda"
+   },
+   "account_settings": {
+      "message": "Configurações da conta"
+   },
+   "back_to_start": {
+      "message": "Voltar ao início"
+   },
+   "back_to_tools": {
+      "message": "Voltar às ferramentas"
+   },
+   "basic_compression": {
+      "message": "Compactação básica"
+   },
+   "bing_search_help": {
+      "message": "Search Bing for one of our tools to process files directly in your search results."
+   },
+   "bing_search_integration": {
+      "message": "Bing Search Integration"
+   },
+   "choose_file_btn": {
+      "message": "Escolher arquivo"
+   },
+   "choose_preset": {
+      "message": "Escolha uma predefinição"
+   },
+   "chrome_cws": {
+      "message": "Chrome Web Store"
+   },
+   "chrome_seetings": {
+      "message": "Configurações do Chrome"
+   },
+   "compress": {
+      "message": "Compactação"
+   },
+   "compress_file": {
+      "message": "Compactar arquivo"
+   },
+   "compress_pdf": {
+      "message": "Compactar PDF"
+   },
+   "continue_with_facebook": {
+      "message": "Continue com o Facebook"
+   },
+   "continue_with_google": {
+      "message": "Continue com o Google"
+   },
+   "convert_btn": {
+      "message": "Converter"
+   },
+   "convert_entire_pages": {
+      "message": "Converter páginas inteiras"
+   },
+   "convert_from_pdf": {
+      "message": "Converter de PDF"
+   },
+   "convert_image_to_pdf": {
+      "message": "Converter imagem para PDF"
+   },
+   "convert_link_to_pdf": {
+      "message": "Converter link para PDF"
+   },
+   "convert_page_to_pdf": {
+      "message": "Converter página para PDF"
+   },
+   "convert_pdf_ppt": {
+      "message": "Converter PDF para PowerPoint"
+   },
+   "convert_pdf_to_excel": {
+      "message": "Converter PDF para Excel"
+   },
+   "convert_pdf_to_images": {
+      "message": "Converter PDF para Imagens"
+   },
+   "convert_pdf_to_word": {
+      "message": "Converter PDF para Word"
+   },
+   "convert_pdf_txt": {
+      "message": "Converter PDF para texto"
+   },
+   "convert_to_jpg": {
+      "message": "Converter para JPG"
+   },
+   "convert_to_pdf": {
+      "message": "Converter para PDF"
+   },
+   "convert_to_pdfa": {
+      "message": "Converter PDF para PDF/A"
+   },
+   "convert_to_word": {
+      "message": "Converter para Word"
+   },
+   "create_pdf": {
+      "message": "Criar PDF"
+   },
+   "create_searchable_pdf": {
+      "message": "Tornar pesquisável (OCR)"
+   },
+   "create_zip": {
+      "message": "Criar um ZIP"
+   },
+   "disabled_txt": {
+      "message": "Desativado"
+   },
+   "djvu_to_pdf": {
+      "message": "Converter DJVU para PDF"
+   },
+   "dont_have_an_account_yet": {
+      "message": "Você ainda não tem uma conta?"
+   },
+   "dont_show_txt": {
+      "message": "Não exibir novamente"
+   },
+   "download_apps": {
+      "message": "Baixar apps"
+   },
+   "download_btn": {
+      "message": "Baixar"
+   },
+   "drop_files_here": {
+      "message": "Solte os arquivos aqui"
+   },
+   "edit_pdf": {
+      "message": "Editar PDF"
+   },
+   "email_or_username": {
+      "message": "E-mail ou nome do usuário"
+   },
+   "enable_local_file": {
+      "message": "Permitir acesso a URLs de arquivos"
+   },
+   "enable_local_file_help": {
+      "message": "Conceda ao PDF2Go acesso às URLs de arquivos locais para trabalhar em PDFs abertos no Chrome."
+   },
+   "enter_username_or_email": {
+      "message": "Insira seu nome de usuário ou e-mail"
+   },
+   "enter_your_password": {
+      "message": "Insira sua senha"
+   },
+   "extension_pdf2go_description": {
+      "message": "Edite e converta arquivos PDF."
+   },
+   "extension_pdf2go_name": {
+      "message": "Editor PDF online (pdf2go.com)"
+   },
+   "extract_single_images": {
+      "message": "Extrair imagens únicas"
+   },
+   "feedback_thanks": {
+      "message": "Muito obrigado."
+   },
+   "forgot_password": {
+      "message": "Esqueceu sua senha?"
+   },
+   "free_task_msg": {
+      "message": "tarefas gratuitas usadas por 24 horas"
+   },
+   "get_help": {
+      "message": "Ajuda"
+   },
+   "give_us_feedback": {
+      "message": "Dê-nos a sua opinião"
+   },
+   "gmail_download_btn": {
+      "message": "Baixar"
+   },
+   "gmail_download_modal_complete": {
+      "message": "Clique no botão abaixo para baixar seu arquivo compactado"
+   },
+   "gmail_download_modal_txt": {
+      "message": "Clique no botão abaixo para iniciar o carregamento e compactação do seu arquivo"
+   },
+   "gmail_modal_txt": {
+      "message": "Clique no botão abaixo para iniciar o carregamento e processamento do seu arquivo"
+   },
+   "google_search_help": {
+      "message": "Pesquise no Google por uma de nossas ferramentas para processar arquivos diretamente em seus resultados de busca."
+   },
+   "google_search_integration": {
+      "message": "Integração com a Busca do Google"
+   },
+   "having_trouble": {
+      "message": "Está com problemas?"
+   },
+   "hidden_txt": {
+      "message": "Oculto!"
+   },
+   "hidden_txt_p1": {
+      "message": "Você não verá mais a área suspensa do Pdf2Go Convert nos resultados de busca do Google."
+   },
+   "hidden_txt_p2": {
+      "message": "Você pode ativar novamente a qualquer momento na página de configurações da extensão."
+   },
+   "incorrect_username_error": {
+      "message": "Usuário ou senha incorretos."
+   },
+   "jpg_to_pdf": {
+      "message": "Converter JPG para PDF"
+   },
+   "like_or_dislike": {
+      "message": "Gosta do PDF2Go?"
+   },
+   "linearize_pdf": {
+      "message": "Otimizar PDF para web"
+   },
+   "log_in": {
+      "message": "Iniciar sessão"
+   },
+   "log_in_with_facebook": {
+      "message": "Entre com o Facebook"
+   },
+   "log_in_with_google": {
+      "message": "Entre com o Google"
+   },
+   "log_out": {
+      "message": "Encerrar sessão"
+   },
+   "login_password": {
+      "message": "Senha"
+   },
+   "merge_pdf": {
+      "message": "Unir PDF"
+   },
+   "microsoft_edge_cws": {
+      "message": "Edge Add-ons"
+   },
+   "microsoft_edge_seetings": {
+      "message": "Microsoft Edge Settings"
+   },
+   "open_in_web_app": {
+      "message": "Abra uma ferramenta no aplicativo para web"
+   },
+   "open_pdf_tools": {
+      "message": "Abrir ferramentas de PDF"
+   },
+   "options_": {
+      "message": "Opções:"
+   },
+   "pdf2go_Or": {
+      "message": "Ou"
+   },
+   "pdf2go_account": {
+      "message": "Conta"
+   },
+   "pdf2go_website": {
+      "message": "Site do PDF2Go"
+   },
+   "pdf_to_excel": {
+      "message": "PDF para Excel"
+   },
+   "pdf_to_jpg": {
+      "message": "PDF para JPG"
+   },
+   "pdf_to_txt": {
+      "message": "PDF para texto"
+   },
+   "pdf_to_word": {
+      "message": "PDF para Word"
+   },
+   "pdf_viewer_tools_btn": {
+      "message": "Ferramentas"
+   },
+   "powered_by_txt": {
+      "message": "Desenvolvido por PDF2Go"
+   },
+   "powerpoint_to_pdf": {
+      "message": "Converter PowerPoint para PDF"
+   },
+   "processing_msg": {
+      "message": "Seu arquivo está sendo processado e estamos trabalhando nele"
+   },
+   "protect_pdf": {
+      "message": "Proteger PDF"
+   },
+   "protected_msg": {
+      "message": "O arquivo está protegido por senha. Forneça a senha."
+   },
+   "rate_now": {
+      "message": "Avaliar agora"
+   },
+   "rating_cws_msg": {
+      "message": "Gostaria de nos avaliar na Chrome Store?"
+   },
+   "repair_pdf": {
+      "message": "Reparar PDF"
+   },
+   "resize_pdf": {
+      "message": "Redimensionar PDF"
+   },
+   "rotate_pdf": {
+      "message": "Girar PDF"
+   },
+   "search_term_compress_file": {
+      "message": "Compactar arquivo"
+   },
+   "search_term_compress_pdf": {
+      "message": "Compactar PDF"
+   },
+   "search_term_convert_from_pdf": {
+      "message": "Converter de PDF"
+   },
+   "search_term_convert_image_to_pdf": {
+      "message": "Converter imagem para PDF"
+   },
+   "search_term_convert_page_to_pdf": {
+      "message": "Converter página para PDF"
+   },
+   "search_term_convert_pdf_ppt": {
+      "message": "Converter PDF para PowerPoint"
+   },
+   "search_term_convert_pdf_to_excel": {
+      "message": "Converter PDF para Excel"
+   },
+   "search_term_convert_pdf_to_images": {
+      "message": "Converter PDF para Imagens"
+   },
+   "search_term_convert_pdf_to_word": {
+      "message": "Converter PDF para Word"
+   },
+   "search_term_convert_pdf_txt": {
+      "message": "Converter PDF para texto"
+   },
+   "search_term_convert_to_pdf": {
+      "message": "Converter para PDF"
+   },
+   "search_term_convert_to_pdfa": {
+      "message": "Converter PDF para PDF/A"
+   },
+   "search_term_djvu_to_pdf": {
+      "message": "Converter DJVU para PDF"
+   },
+   "search_term_edit_pdf": {
+      "message": "Editar PDF"
+   },
+   "search_term_jpg_to_pdf": {
+      "message": "Converter JPG para PDF"
+   },
+   "search_term_linearize_pdf": {
+      "message": "Otimizar PDF para web"
+   },
+   "search_term_merge_pdf": {
+      "message": "Unir PDF"
+   },
+   "search_term_pdf_to_excel": {
+      "message": "PDF para Excel"
+   },
+   "search_term_pdf_to_jpg": {
+      "message": "PDF para JPG"
+   },
+   "search_term_pdf_to_txt": {
+      "message": "PDF para texto"
+   },
+   "search_term_pdf_to_word": {
+      "message": "PDF para Word"
+   },
+   "search_term_powerpoint_to_pdf": {
+      "message": "Converter PowerPoint para PDF"
+   },
+   "search_term_protect_pdf": {
+      "message": "Proteger PDF"
+   },
+   "search_term_repair_pdf": {
+      "message": "Reparar PDF"
+   },
+   "search_term_resize_pdf": {
+      "message": "Redimensionar PDF"
+   },
+   "search_term_rotate_pdf": {
+      "message": "Girar PDF"
+   },
+   "search_term_sort_and_delete_pdf": {
+      "message": "Ordenar e excluir PDF"
+   },
+   "search_term_split_pdf": {
+      "message": "Dividir PDF"
+   },
+   "search_term_unlock_pdf": {
+      "message": "Desbloquear PDF"
+   },
+   "search_term_word_to_pdf": {
+      "message": "Converter Word para PDF"
+   },
+   "sign_up": {
+      "message": "Cadastrar-se"
+   },
+   "size_and_quality": {
+      "message": "Tamanho médio de arquivo e alta qualidade"
+   },
+   "small_size_medium_quality": {
+      "message": "Tamanho de arquivo pequeno e qualidade média"
+   },
+   "sort_and_delete_pdf": {
+      "message": "Ordenar e excluir PDF"
+   },
+   "split_pdf": {
+      "message": "Dividir PDF"
+   },
+   "start_with_tool": {
+      "message": "Ou comece com uma ferramenta"
+   },
+   "strong_compression": {
+      "message": "Compactação forte"
+   },
+   "support_email": {
+      "message": "time2help@pdf2go.com"
+   },
+   "unlock_pdf": {
+      "message": "Desbloquear PDF"
+   },
+   "upload_message": {
+      "message": "Seu arquivo está sendo enviado e estamos trabalhando nele"
+   },
+   "word_to_pdf": {
+      "message": "Converter Word para PDF"
+   },
+   "your_file": {
+      "message": "Seu arquivo"
+   }
+}

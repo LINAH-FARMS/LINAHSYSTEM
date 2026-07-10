@@ -1,0 +1,422 @@
+{
+   "account_help": {
+      "message": "Bantuan"
+   },
+   "account_settings": {
+      "message": "Pengaturan akun"
+   },
+   "back_to_start": {
+      "message": "Kembali ke Mulai"
+   },
+   "back_to_tools": {
+      "message": "Kembali ke alat"
+   },
+   "basic_compression": {
+      "message": "Kompresi Dasar"
+   },
+   "bing_search_help": {
+      "message": "Search Bing for one of our tools to process files directly in your search results."
+   },
+   "bing_search_integration": {
+      "message": "Bing Search Integration"
+   },
+   "choose_file_btn": {
+      "message": "Pilih file"
+   },
+   "choose_preset": {
+      "message": "Pilih dari preset"
+   },
+   "chrome_cws": {
+      "message": "Chrome Web Store"
+   },
+   "chrome_seetings": {
+      "message": "Pengaturan Chrome"
+   },
+   "compress": {
+      "message": "Kompres"
+   },
+   "compress_file": {
+      "message": "Kompres file"
+   },
+   "compress_pdf": {
+      "message": "Kompres PDF"
+   },
+   "continue_with_facebook": {
+      "message": "Lanjutkan dengan Facebook"
+   },
+   "continue_with_google": {
+      "message": "Lanjutkan dengan Google"
+   },
+   "convert_btn": {
+      "message": "Konversi"
+   },
+   "convert_entire_pages": {
+      "message": "Konversi semua halaman"
+   },
+   "convert_from_pdf": {
+      "message": "Konversi dari PDF"
+   },
+   "convert_image_to_pdf": {
+      "message": "Konversi gambar ke PDF"
+   },
+   "convert_link_to_pdf": {
+      "message": "Konversi link ke PDF"
+   },
+   "convert_page_to_pdf": {
+      "message": "Konversi halaman ke PDF"
+   },
+   "convert_pdf_ppt": {
+      "message": "Konversi PDF ke PowerPoint"
+   },
+   "convert_pdf_to_excel": {
+      "message": "Konversi PDF ke Excel"
+   },
+   "convert_pdf_to_images": {
+      "message": "Konversi PDF ke Gambar"
+   },
+   "convert_pdf_to_word": {
+      "message": "Konversi PDF ke Word"
+   },
+   "convert_pdf_txt": {
+      "message": "Konversi PDF ke Text"
+   },
+   "convert_to_jpg": {
+      "message": "Konversi ke JPG"
+   },
+   "convert_to_pdf": {
+      "message": "Konversi ke PDF"
+   },
+   "convert_to_pdfa": {
+      "message": "Konversi PDF Ke PDF/A"
+   },
+   "convert_to_word": {
+      "message": "Konversi ke Word"
+   },
+   "create_pdf": {
+      "message": "Buat PDF"
+   },
+   "create_searchable_pdf": {
+      "message": "Jadikan bisa dicari (OCR)"
+   },
+   "create_zip": {
+      "message": "Buat ZIP"
+   },
+   "disabled_txt": {
+      "message": "Dinonaktifkan"
+   },
+   "djvu_to_pdf": {
+      "message": "Konversi DJVU ke PDF"
+   },
+   "dont_have_an_account_yet": {
+      "message": "Belum memiliki akun?"
+   },
+   "dont_show_txt": {
+      "message": "Jangan tampilkan ini lagi"
+   },
+   "download_apps": {
+      "message": "Download aplikasi"
+   },
+   "download_btn": {
+      "message": "Download"
+   },
+   "drop_files_here": {
+      "message": "Jatuhkan file di sini"
+   },
+   "edit_pdf": {
+      "message": "Edit PDF"
+   },
+   "email_or_username": {
+      "message": "Email atau Nama Pengguna"
+   },
+   "enable_local_file": {
+      "message": "Izinkan akses ke URL file"
+   },
+   "enable_local_file_help": {
+      "message": "Berikan PDF2Go akses ke URL file lokal Anda agar berfungsi pada PDF yang dibuka di Chrome."
+   },
+   "enter_username_or_email": {
+      "message": "Masukkan nama pengguna atau email Anda"
+   },
+   "enter_your_password": {
+      "message": "Masukkan kata sandi Anda"
+   },
+   "extension_pdf2go_description": {
+      "message": "Edit dan konversi file PDF."
+   },
+   "extension_pdf2go_name": {
+      "message": "Editor PDF Online (pdf2go.com)"
+   },
+   "extract_single_images": {
+      "message": "Ekstrak satu gambar"
+   },
+   "feedback_thanks": {
+      "message": "Terima kasih."
+   },
+   "forgot_password": {
+      "message": "Lupa kata sandi Anda?"
+   },
+   "free_task_msg": {
+      "message": "tugas gratis yang digunakan per 24 jam"
+   },
+   "get_help": {
+      "message": "Dapatkan bantuan"
+   },
+   "give_us_feedback": {
+      "message": "Beri kami tanggapan Anda"
+   },
+   "gmail_download_btn": {
+      "message": "Download"
+   },
+   "gmail_download_modal_complete": {
+      "message": "Klik tombol di bawah untuk mendownload file Anda yang sudah dikompres"
+   },
+   "gmail_download_modal_txt": {
+      "message": "Klik tombol di bawah ini untuk mulai mengupload dan mengompres file Anda"
+   },
+   "gmail_modal_txt": {
+      "message": "Klik tombol di bawah ini untuk mulai mengupload dan memproses file Anda"
+   },
+   "google_search_help": {
+      "message": "Telusuri alat kami di Google untuk memproses file secara langsung di hasil penelusuran Anda."
+   },
+   "google_search_integration": {
+      "message": "Integrasi Google Search"
+   },
+   "having_trouble": {
+      "message": "Ada masalah?"
+   },
+   "hidden_txt": {
+      "message": "Tersembunyi!"
+   },
+   "hidden_txt_p1": {
+      "message": "Anda tidak akan lagi melihat drop area Pdf2Go Convert di hasil penelusuran Google Anda."
+   },
+   "hidden_txt_p2": {
+      "message": "Anda bisa mengaktifkannya kembali kapan pun di halaman pengaturan ekstensi."
+   },
+   "incorrect_username_error": {
+      "message": "Nama pengguna atau kata sandi salah."
+   },
+   "jpg_to_pdf": {
+      "message": "Konversi JPG ke PDF"
+   },
+   "like_or_dislike": {
+      "message": "Anda suka PDF2Go?"
+   },
+   "linearize_pdf": {
+      "message": "Optimalkan PDF Untuk Web"
+   },
+   "log_in": {
+      "message": "Masuk"
+   },
+   "log_in_with_facebook": {
+      "message": "Masuk dengan Facebook"
+   },
+   "log_in_with_google": {
+      "message": "Masuk dengan Google"
+   },
+   "log_out": {
+      "message": "Keluar"
+   },
+   "login_password": {
+      "message": "Kata Sandi"
+   },
+   "merge_pdf": {
+      "message": "Gabungkan PDF"
+   },
+   "microsoft_edge_cws": {
+      "message": "Edge Add-ons"
+   },
+   "microsoft_edge_seetings": {
+      "message": "Microsoft Edge Settings"
+   },
+   "open_in_web_app": {
+      "message": "Buka alat di aplikasi web"
+   },
+   "open_pdf_tools": {
+      "message": "Buka Alat PDF"
+   },
+   "options_": {
+      "message": "Opsi:"
+   },
+   "pdf2go_Or": {
+      "message": "Atau"
+   },
+   "pdf2go_account": {
+      "message": "Akun"
+   },
+   "pdf2go_website": {
+      "message": "Situs Web PDF2Go"
+   },
+   "pdf_to_excel": {
+      "message": "PDF ke Excel"
+   },
+   "pdf_to_jpg": {
+      "message": "pdf ke jpg"
+   },
+   "pdf_to_txt": {
+      "message": "PDF ke teks"
+   },
+   "pdf_to_word": {
+      "message": "pdf ke word"
+   },
+   "pdf_viewer_tools_btn": {
+      "message": "Alat"
+   },
+   "powered_by_txt": {
+      "message": "Didukung oleh PDF2Go"
+   },
+   "powerpoint_to_pdf": {
+      "message": "Konversi PowerPoint ke PDF"
+   },
+   "processing_msg": {
+      "message": "File Anda sedang diproses dan kami sedang mengerjakannya"
+   },
+   "protect_pdf": {
+      "message": "Lindungi PDF"
+   },
+   "protected_msg": {
+      "message": "File ini dilindungi kata sandi. Silakan masukkan kata sandi."
+   },
+   "rate_now": {
+      "message": "Beri rating sekarang"
+   },
+   "rating_cws_msg": {
+      "message": "Apakah Anda ingin memberi rating di Chrome Store?"
+   },
+   "repair_pdf": {
+      "message": "Perbaiki PDF"
+   },
+   "resize_pdf": {
+      "message": "Ubah ukuran PDF"
+   },
+   "rotate_pdf": {
+      "message": "Putar PDF"
+   },
+   "search_term_compress_file": {
+      "message": "Kompres file"
+   },
+   "search_term_compress_pdf": {
+      "message": "Kompres PDF"
+   },
+   "search_term_convert_from_pdf": {
+      "message": "Konversi dari PDF"
+   },
+   "search_term_convert_image_to_pdf": {
+      "message": "Konversi gambar ke PDF"
+   },
+   "search_term_convert_page_to_pdf": {
+      "message": "Konversi halaman ke PDF"
+   },
+   "search_term_convert_pdf_ppt": {
+      "message": "Konversi PDF ke PowerPoint"
+   },
+   "search_term_convert_pdf_to_excel": {
+      "message": "Konversi PDF ke Excel"
+   },
+   "search_term_convert_pdf_to_images": {
+      "message": "Konversi PDF ke Gambar"
+   },
+   "search_term_convert_pdf_to_word": {
+      "message": "Konversi PDF ke Word"
+   },
+   "search_term_convert_pdf_txt": {
+      "message": "Konversi PDF ke Text"
+   },
+   "search_term_convert_to_pdf": {
+      "message": "Konversi ke PDF"
+   },
+   "search_term_convert_to_pdfa": {
+      "message": "Konversi PDF Ke PDF/A"
+   },
+   "search_term_djvu_to_pdf": {
+      "message": "Konversi DJVU ke PDF"
+   },
+   "search_term_edit_pdf": {
+      "message": "Edit PDF"
+   },
+   "search_term_jpg_to_pdf": {
+      "message": "Konversi JPG ke PDF"
+   },
+   "search_term_linearize_pdf": {
+      "message": "Optimalkan PDF Untuk Web"
+   },
+   "search_term_merge_pdf": {
+      "message": "Gabungkan PDF"
+   },
+   "search_term_pdf_to_excel": {
+      "message": "PDF ke Excel"
+   },
+   "search_term_pdf_to_jpg": {
+      "message": "pdf ke jpg"
+   },
+   "search_term_pdf_to_txt": {
+      "message": "PDF ke teks"
+   },
+   "search_term_pdf_to_word": {
+      "message": "pdf ke word"
+   },
+   "search_term_powerpoint_to_pdf": {
+      "message": "Konversi PowerPoint ke PDF"
+   },
+   "search_term_protect_pdf": {
+      "message": "Lindungi PDF"
+   },
+   "search_term_repair_pdf": {
+      "message": "Perbaiki PDF"
+   },
+   "search_term_resize_pdf": {
+      "message": "Ubah ukuran PDF"
+   },
+   "search_term_rotate_pdf": {
+      "message": "Putar PDF"
+   },
+   "search_term_sort_and_delete_pdf": {
+      "message": "Sortir dan hapus PDF"
+   },
+   "search_term_split_pdf": {
+      "message": "Pisahkan PDF"
+   },
+   "search_term_unlock_pdf": {
+      "message": "Buka kunci PDF"
+   },
+   "search_term_word_to_pdf": {
+      "message": "Konversi Word ke PDF"
+   },
+   "sign_up": {
+      "message": "Daftar"
+   },
+   "size_and_quality": {
+      "message": "Ukuran file sedang dan berkualitas tinggi"
+   },
+   "small_size_medium_quality": {
+      "message": "Ukuran file kecil dan kualitas sedang"
+   },
+   "sort_and_delete_pdf": {
+      "message": "Sortir dan hapus PDF"
+   },
+   "split_pdf": {
+      "message": "Pisahkan PDF"
+   },
+   "start_with_tool": {
+      "message": "Atau mulai dengan alat"
+   },
+   "strong_compression": {
+      "message": "Kompresi Kuat"
+   },
+   "support_email": {
+      "message": "time2help@pdf2go.com"
+   },
+   "unlock_pdf": {
+      "message": "Buka kunci PDF"
+   },
+   "upload_message": {
+      "message": "File Anda sedang diupload dan kami sedang mengerjakannya"
+   },
+   "word_to_pdf": {
+      "message": "Konversi Word ke PDF"
+   },
+   "your_file": {
+      "message": "File Anda"
+   }
+}

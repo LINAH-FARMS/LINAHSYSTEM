@@ -1,0 +1,50 @@
+{
+   "action": {
+      "default_icon": "icons/icon_64.png",
+      "default_popup": "popup.html"
+   },
+   "author": "https://pdf2go.com",
+   "background": {
+      "service_worker": "background.js"
+   },
+   "content_scripts": [ {
+      "css": [ "style.css" ],
+      "js": [ "translate_content.js", "gmail_content.js" ],
+      "matches": [ "https://mail.google.com/*" ]
+   }, {
+      "css": [ "css/google_style.css", "style.css" ],
+      "js": [ "translate_content.js" ],
+      "matches": [ "https://www.google.com/*", "https://www.bing.com/*" ],
+      "run_at": "document_end"
+   }, {
+      "exclude_matches": [ "https://www.google.com/*", "https://www.bing.com/*", "https://mail.google.com/*" ],
+      "js": [ "translate_content.js", "pdf_content.js", "pdf_injected.js" ],
+      "matches": [ "http://*/*", "https://*/*", "file://*/*" ],
+      "run_at": "document_idle"
+   } ],
+   "default_locale": "en",
+   "description": "__MSG_extension_pdf2go_description__",
+   "externally_connectable": {
+      "matches": [ "*://*.pdf2go.com/*", "*://*.pdf2go.test/*" ]
+   },
+   "host_permissions": [ "http://*/*", "https://*/*", "file://*/*" ],
+   "icons": {
+      "128": "icons/icon_128.png",
+      "16": "icons/icon_16.png",
+      "32": "icons/icon_32.png",
+      "64": "icons/icon_64.png"
+   },
+   "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAjdB1BGtkTnpKDkwPuHYb4pBUQ8Z0uEoEIBnZbBTmjyZZgdE3+/VJXEdcMFgHZBZKvKq/L9cPWIs/dxJKB9A/OlhPIu/fItT5izum0eMa5pvmouXbk6yiAs8BMtZBJoaBvulnMwmw5GQ2/GkyFZqFA1a2p5EJR8Z0TD2OAw5ybvbwl3zE7PQ2OcTpxGRakrZIQ4l5X/dU6pexR5IyGtr0sdBdbhwXLKhAsqKAgSgTHkc5u2L5F9iinrWHMJ8ROxuZ8vzVya4e/XFYMXyUpF3/oN4Y8kPugrqU+u8h4rXYgJ9rBJRvKktg7Sdu4z40QPZLnFSivN9Bed8kP6UwKlDIlwIDAQAB",
+   "manifest_version": 3,
+   "minimum_chrome_version": "93",
+   "name": "__MSG_extension_pdf2go_name__",
+   "options_page": "settings.html",
+   "permissions": [ "contextMenus", "storage", "scripting" ],
+   "short_name": "PDF2Go",
+   "update_url": "https://clients2.google.com/service/update2/crx",
+   "version": "7.5.1",
+   "web_accessible_resources": [ {
+      "matches": [ "http://*/*", "https://*/*", "file://*/*" ],
+      "resources": [ "pdf_injected.js", "gmail_injected_lib.js", "gmail_injected.js", "assets/*", "css/*", "img/*", "webfonts/*", "_locales/*", "iframe.html" ]
+   } ]
+}

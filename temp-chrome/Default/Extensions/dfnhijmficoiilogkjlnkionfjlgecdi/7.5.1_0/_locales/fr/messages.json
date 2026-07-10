@@ -1,0 +1,422 @@
+{
+   "account_help": {
+      "message": "Aide"
+   },
+   "account_settings": {
+      "message": "Paramètres du compte"
+   },
+   "back_to_start": {
+      "message": "Retour au début"
+   },
+   "back_to_tools": {
+      "message": "Retour à la boite d'outils"
+   },
+   "basic_compression": {
+      "message": "Compression basique"
+   },
+   "bing_search_help": {
+      "message": "Search Bing for one of our tools to process files directly in your search results."
+   },
+   "bing_search_integration": {
+      "message": "Bing Search Integration"
+   },
+   "choose_file_btn": {
+      "message": "Choisissez un fichier"
+   },
+   "choose_preset": {
+      "message": "Choisissez un préréglage"
+   },
+   "chrome_cws": {
+      "message": "Chrome Web Store"
+   },
+   "chrome_seetings": {
+      "message": "Paramètres de Chrome"
+   },
+   "compress": {
+      "message": "Compresser"
+   },
+   "compress_file": {
+      "message": "Compresser le fichier"
+   },
+   "compress_pdf": {
+      "message": "Compresser un fichier PDF"
+   },
+   "continue_with_facebook": {
+      "message": "Continuer avec Facebook"
+   },
+   "continue_with_google": {
+      "message": "Continuer avec Google"
+   },
+   "convert_btn": {
+      "message": "Convertir"
+   },
+   "convert_entire_pages": {
+      "message": "Convertir des pages entières"
+   },
+   "convert_from_pdf": {
+      "message": "Convertir depuis un PDF"
+   },
+   "convert_image_to_pdf": {
+      "message": "Convertir image en PDF"
+   },
+   "convert_link_to_pdf": {
+      "message": "Convertir un lien en PDF"
+   },
+   "convert_page_to_pdf": {
+      "message": "Convertir une page en PDF"
+   },
+   "convert_pdf_ppt": {
+      "message": "Convertir PDF en PowerPoint"
+   },
+   "convert_pdf_to_excel": {
+      "message": "Convertir PDF en Excel"
+   },
+   "convert_pdf_to_images": {
+      "message": "Convertir PDF en images"
+   },
+   "convert_pdf_to_word": {
+      "message": "Convertir PDF en Word"
+   },
+   "convert_pdf_txt": {
+      "message": "Convertir PDF en fichier texte"
+   },
+   "convert_to_jpg": {
+      "message": "Convertir en JPG"
+   },
+   "convert_to_pdf": {
+      "message": "Convertir en PDF"
+   },
+   "convert_to_pdfa": {
+      "message": "Convertir PDF en PDF/A"
+   },
+   "convert_to_word": {
+      "message": "Convertir en Word"
+   },
+   "create_pdf": {
+      "message": "Créer un PDF"
+   },
+   "create_searchable_pdf": {
+      "message": "Rendre consultable (OCR)"
+   },
+   "create_zip": {
+      "message": "Créer un ZIP"
+   },
+   "disabled_txt": {
+      "message": "Désactivé"
+   },
+   "djvu_to_pdf": {
+      "message": "Convertir  DJVU en PDF"
+   },
+   "dont_have_an_account_yet": {
+      "message": "Vous n'avez pas encore de compte ?"
+   },
+   "dont_show_txt": {
+      "message": "Ne plus l'afficher"
+   },
+   "download_apps": {
+      "message": "Télécharger l'application"
+   },
+   "download_btn": {
+      "message": "Télécharger"
+   },
+   "drop_files_here": {
+      "message": "Déposez les fichiers ici"
+   },
+   "edit_pdf": {
+      "message": "Modifier le PDF"
+   },
+   "email_or_username": {
+      "message": "Adresse e-mail ou nom d'utilisateur"
+   },
+   "enable_local_file": {
+      "message": "Autoriser l'accès aux URL des fichiers"
+   },
+   "enable_local_file_help": {
+      "message": "Donnez à PDF2Go l'accès à vos URL de fichiers locaux pour travailler sur des PDF ouverts dans Chrome."
+   },
+   "enter_username_or_email": {
+      "message": "Entrez votre nom d'utilisateur ou votre e-mail"
+   },
+   "enter_your_password": {
+      "message": "Saisissez votre mot de passe"
+   },
+   "extension_pdf2go_description": {
+      "message": "Modifiez et convertissez des fichiers PDF."
+   },
+   "extension_pdf2go_name": {
+      "message": "Éditeur de PDF en ligne (pdf2go.com)"
+   },
+   "extract_single_images": {
+      "message": "Extraire des images individuelles"
+   },
+   "feedback_thanks": {
+      "message": "Merci."
+   },
+   "forgot_password": {
+      "message": "Mot de passe oublié ?"
+   },
+   "free_task_msg": {
+      "message": "tâches gratuites utilisées par 24 heures"
+   },
+   "get_help": {
+      "message": "Obtenir de l'aide"
+   },
+   "give_us_feedback": {
+      "message": "Donnez-nous votre avis"
+   },
+   "gmail_download_btn": {
+      "message": "Télécharger"
+   },
+   "gmail_download_modal_complete": {
+      "message": "Cliquez sur le bouton ci-dessous pour télécharger votre fichier compressé"
+   },
+   "gmail_download_modal_txt": {
+      "message": "Cliquez sur le bouton ci-dessous pour lancer le téléchargement et la compression de votre fichier"
+   },
+   "gmail_modal_txt": {
+      "message": "Cliquez sur le bouton ci-dessous pour lancer le téléchargement et le traitement de votre fichier"
+   },
+   "google_search_help": {
+      "message": "Recherchez l'un de nos outils sur Google pour traiter les fichiers directement dans vos résultats de recherche."
+   },
+   "google_search_integration": {
+      "message": "Intégration des recherches Google"
+   },
+   "having_trouble": {
+      "message": "Vous rencontrez des difficultés  ?"
+   },
+   "hidden_txt": {
+      "message": "Caché !"
+   },
+   "hidden_txt_p1": {
+      "message": "La zone de dépôt de Pdf2Go Convert n'apparaîtra plus dans vos résultats de recherche Google."
+   },
+   "hidden_txt_p2": {
+      "message": "Vous pouvez la réactiver à tout moment dans la page des paramètres de l'extension."
+   },
+   "incorrect_username_error": {
+      "message": "Nom d'utilisateur ou mot de passe incorrect."
+   },
+   "jpg_to_pdf": {
+      "message": "Convertir JPG en PDF"
+   },
+   "like_or_dislike": {
+      "message": "Vous aimez PDF2Go ?"
+   },
+   "linearize_pdf": {
+      "message": "Optimiser PDF pour le Web"
+   },
+   "log_in": {
+      "message": "Connexion"
+   },
+   "log_in_with_facebook": {
+      "message": "Se connecter avec Facebook"
+   },
+   "log_in_with_google": {
+      "message": "Se connecter avec Google"
+   },
+   "log_out": {
+      "message": "Déconnexion"
+   },
+   "login_password": {
+      "message": "Mot de passe"
+   },
+   "merge_pdf": {
+      "message": "Fusionner des PDF"
+   },
+   "microsoft_edge_cws": {
+      "message": "Edge Add-ons"
+   },
+   "microsoft_edge_seetings": {
+      "message": "Microsoft Edge Settings"
+   },
+   "open_in_web_app": {
+      "message": "Ouvrir un outil dans l'application web"
+   },
+   "open_pdf_tools": {
+      "message": "Ouvrir les outils d'édition de PDF"
+   },
+   "options_": {
+      "message": "Options :"
+   },
+   "pdf2go_Or": {
+      "message": "Ou"
+   },
+   "pdf2go_account": {
+      "message": "Compte"
+   },
+   "pdf2go_website": {
+      "message": "Site Web de PDF2Go"
+   },
+   "pdf_to_excel": {
+      "message": "PDF en Excel"
+   },
+   "pdf_to_jpg": {
+      "message": "PDF en JPG"
+   },
+   "pdf_to_txt": {
+      "message": "PDF en text"
+   },
+   "pdf_to_word": {
+      "message": "PDF en Word"
+   },
+   "pdf_viewer_tools_btn": {
+      "message": "Outils"
+   },
+   "powered_by_txt": {
+      "message": "Réalisé par PDF2Go"
+   },
+   "powerpoint_to_pdf": {
+      "message": "Convertir PowerPoint en PDF"
+   },
+   "processing_msg": {
+      "message": "Votre fichier est en cours de traitement et nous nous en occupons"
+   },
+   "protect_pdf": {
+      "message": "Protéger le PDF"
+   },
+   "protected_msg": {
+      "message": "Le fichier est protégé par mot de passe. Veuillez fournir le mot de passe."
+   },
+   "rate_now": {
+      "message": "Évaluer dès maintenant"
+   },
+   "rating_cws_msg": {
+      "message": "Voulez-vous nous évaluer dans le Chrome Store ?"
+   },
+   "repair_pdf": {
+      "message": "Réparer le PDF"
+   },
+   "resize_pdf": {
+      "message": "Redimensionner le PDF"
+   },
+   "rotate_pdf": {
+      "message": "Faire pivoter le PDF"
+   },
+   "search_term_compress_file": {
+      "message": "Compresser le fichier"
+   },
+   "search_term_compress_pdf": {
+      "message": "Compresser un fichier PDF"
+   },
+   "search_term_convert_from_pdf": {
+      "message": "Convertir depuis un PDF"
+   },
+   "search_term_convert_image_to_pdf": {
+      "message": "Convertir image en PDF"
+   },
+   "search_term_convert_page_to_pdf": {
+      "message": "Convertir une page en PDF"
+   },
+   "search_term_convert_pdf_ppt": {
+      "message": "Convertir PDF en PowerPoint"
+   },
+   "search_term_convert_pdf_to_excel": {
+      "message": "Convertir PDF en Excel"
+   },
+   "search_term_convert_pdf_to_images": {
+      "message": "Convertir PDF en images"
+   },
+   "search_term_convert_pdf_to_word": {
+      "message": "Convertir PDF en Word"
+   },
+   "search_term_convert_pdf_txt": {
+      "message": "Convertir PDF en fichier texte"
+   },
+   "search_term_convert_to_pdf": {
+      "message": "Convertir en PDF"
+   },
+   "search_term_convert_to_pdfa": {
+      "message": "Convertir PDF en PDF/A"
+   },
+   "search_term_djvu_to_pdf": {
+      "message": "Convertir  DJVU en PDF"
+   },
+   "search_term_edit_pdf": {
+      "message": "Modifier le PDF"
+   },
+   "search_term_jpg_to_pdf": {
+      "message": "Convertir JPG en PDF"
+   },
+   "search_term_linearize_pdf": {
+      "message": "Optimiser PDF pour le Web"
+   },
+   "search_term_merge_pdf": {
+      "message": "Fusionner des PDF"
+   },
+   "search_term_pdf_to_excel": {
+      "message": "PDF en Excel"
+   },
+   "search_term_pdf_to_jpg": {
+      "message": "PDF en JPG"
+   },
+   "search_term_pdf_to_txt": {
+      "message": "PDF en text"
+   },
+   "search_term_pdf_to_word": {
+      "message": "PDF en Word"
+   },
+   "search_term_powerpoint_to_pdf": {
+      "message": "Convertir PowerPoint en PDF"
+   },
+   "search_term_protect_pdf": {
+      "message": "Protéger le PDF"
+   },
+   "search_term_repair_pdf": {
+      "message": "Réparer le PDF"
+   },
+   "search_term_resize_pdf": {
+      "message": "Redimensionner le PDF"
+   },
+   "search_term_rotate_pdf": {
+      "message": "Faire pivoter le PDF"
+   },
+   "search_term_sort_and_delete_pdf": {
+      "message": "Trier et supprimer un PDF"
+   },
+   "search_term_split_pdf": {
+      "message": "Scinder PDF"
+   },
+   "search_term_unlock_pdf": {
+      "message": "Déverrouillage d'un PDF"
+   },
+   "search_term_word_to_pdf": {
+      "message": "Convertir Word en PDF"
+   },
+   "sign_up": {
+      "message": "Inscription"
+   },
+   "size_and_quality": {
+      "message": "Qualité élevée et fichier de taille moyenne"
+   },
+   "small_size_medium_quality": {
+      "message": "Qualité moyenne et fichier de petite taille"
+   },
+   "sort_and_delete_pdf": {
+      "message": "Trier et supprimer un PDF"
+   },
+   "split_pdf": {
+      "message": "Scinder PDF"
+   },
+   "start_with_tool": {
+      "message": "Ou démarrer avec un outil"
+   },
+   "strong_compression": {
+      "message": "Compression forte"
+   },
+   "support_email": {
+      "message": "time2help@pdf2go.com"
+   },
+   "unlock_pdf": {
+      "message": "Déverrouiller PDF"
+   },
+   "upload_message": {
+      "message": "Votre fichier est en train d'être téléchargé et nous nous en occupons"
+   },
+   "word_to_pdf": {
+      "message": "Convertir Word en PDF"
+   },
+   "your_file": {
+      "message": "Votre fichier"
+   }
+}

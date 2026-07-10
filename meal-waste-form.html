@@ -121,25 +121,45 @@ textarea{resize:vertical;min-height:60px}
           <input type="number" id="mw-waste-wrk" min="0" step="0.1" placeholder="0">
         </div>
       </div>
-      <div class="form-row-3">
-        <div class="form-group">
-          <label>🧑‍💼 إجمالي المهندسين</label>
-          <input type="number" id="mw-eng-total" min="0" step="1" placeholder="مثلاً: 50">
+      <div style="background:#e3f2fd;padding:10px;border-radius:10px;margin-bottom:10px;">
+        <div class="form-row">
+          <div class="form-group">
+            <label>🧑‍💼 المهندسين بالمطعم</label>
+            <input type="number" id="mw-eng-ate" min="0" step="1" placeholder="0">
+          </div>
+          <div class="form-group">
+            <label>📦 المهندسين تيك أواي</label>
+            <input type="number" id="mw-eng-takeaway" min="0" step="1" placeholder="0">
+          </div>
         </div>
-        <div class="form-group">
-          <label>🍽️ المهندسين بالمطعم</label>
-          <input type="number" id="mw-eng-ate" min="0" step="1" placeholder="مثلاً: 40">
+        <div style="text-align:center;font-size:14px;color:#1565c0;">🧑‍💼 إجمالي المهندسين: <strong id="mw-eng-total-display">0</strong></div>
+      </div>
+      <div style="background:#fff3e0;padding:10px;border-radius:10px;margin-bottom:10px;">
+        <div class="form-row">
+          <div class="form-group">
+            <label>👷 العمال بالمطعم</label>
+            <input type="number" id="mw-wrk-ate" min="0" step="1" placeholder="0">
+          </div>
+          <div class="form-group">
+            <label>📦 العمال تيك أواي</label>
+            <input type="number" id="mw-wrk-takeaway" min="0" step="1" placeholder="0">
+          </div>
         </div>
-        <div class="form-group">
-          <label>👷 إجمالي العمال</label>
-          <input type="number" id="mw-wrk-total" min="0" step="1" placeholder="مثلاً: 200">
+        <div style="text-align:center;font-size:14px;color:#e65100;">👷 إجمالي العمال: <strong id="mw-wrk-total-display">0</strong></div>
+      </div>
+      <div style="background:#f3e5f5;padding:10px;border-radius:10px;margin-bottom:10px;">
+        <div class="form-row">
+          <div class="form-group">
+            <label>🧑‍🤝‍🧑 عدد الضيوف</label>
+            <input type="number" id="mw-guests" min="0" step="1" placeholder="0">
+          </div>
+          <div class="form-group">
+            <label>🧑‍🤝‍🧑 هدر ضيوف (كجم)</label>
+            <input type="number" id="mw-waste-guests" min="0" step="0.1" placeholder="0">
+          </div>
         </div>
       </div>
       <div class="form-row">
-        <div class="form-group">
-          <label>🍽️ العمال بالمطعم</label>
-          <input type="number" id="mw-wrk-ate" min="0" step="1" placeholder="مثلاً: 180">
-        </div>
         <div class="form-group">
           <label>التكلفة التقريبية (ج.م)</label>
           <input type="number" id="mw-cost" min="0" step="1" placeholder="مثلاً: 500">
@@ -228,14 +248,19 @@ function getIngredients() {
 }
 
 function calcWaterAuto() {
-  // تحديث الملخص
   var wasteEng = parseFloat(document.getElementById('mw-waste-eng').value) || 0;
   var wasteWrk = parseFloat(document.getElementById('mw-waste-wrk').value) || 0;
+  var wasteGuests = parseFloat(document.getElementById('mw-waste-guests').value) || 0;
   var engAte = parseFloat(document.getElementById('mw-eng-ate').value) || 0;
+  var engTakeaway = parseFloat(document.getElementById('mw-eng-takeaway').value) || 0;
   var wrkAte = parseFloat(document.getElementById('mw-wrk-ate').value) || 0;
+  var wrkTakeaway = parseFloat(document.getElementById('mw-wrk-takeaway').value) || 0;
+  var guests = parseFloat(document.getElementById('mw-guests').value) || 0;
   var totalPrepared = parseFloat(document.getElementById('mw-total-prepared').value) || 0;
   var water = parseFloat(document.getElementById('mw-water').value) || 0;
-  var totalWaste = wasteEng + wasteWrk;
+  document.getElementById('mw-eng-total-display').textContent = engAte + engTakeaway;
+  document.getElementById('mw-wrk-total-display').textContent = wrkAte + wrkTakeaway;
+  var totalWaste = wasteEng + wasteWrk + wasteGuests;
   var html = '';
   html += '<div>🥘 الوزن النهائي بعد الطبخ: <strong>' + totalPrepared.toFixed(1) + '</strong> كجم</div>';
   html += '<div>🌊 الماء المضاف: <strong>' + water.toFixed(1) + '</strong> كجم</div>';
@@ -245,11 +270,12 @@ function calcWaterAuto() {
   }
   if (engAte > 0) html += '<div>🧑‍💼 هدر/فرد مهندسين: <strong>' + (wasteEng / engAte * 1000).toFixed(1) + '</strong> جم</div>';
   if (wrkAte > 0) html += '<div>👷 هدر/فرد عمال: <strong>' + (wasteWrk / wrkAte * 1000).toFixed(1) + '</strong> جم</div>';
+  if (guests > 0) html += '<div>🧑‍🤝‍🧑 هدر/فرد ضيوف: <strong>' + (wasteGuests / guests * 1000).toFixed(1) + '</strong> جم</div>';
   document.getElementById('mw-calc-summary').innerHTML = html;
 }
 
 // ربط أحداث الحساب التلقائي
-['mw-waste-eng','mw-waste-wrk','mw-eng-total','mw-eng-ate','mw-wrk-total','mw-wrk-ate','mw-water','mw-total-prepared'].forEach(function(id) {
+['mw-waste-eng','mw-waste-wrk','mw-waste-guests','mw-eng-ate','mw-eng-takeaway','mw-wrk-ate','mw-wrk-takeaway','mw-guests','mw-water','mw-total-prepared'].forEach(function(id) {
   document.getElementById(id).addEventListener('input', calcWaterAuto);
 });
 
@@ -270,11 +296,13 @@ function submitWaste() {
   if (totalPrepared <= 0) { alert('⚠️ أدخل الوزن المُعد'); return; }
   var wasteEng = parseFloat(document.getElementById('mw-waste-eng').value) || 0;
   var wasteWrk = parseFloat(document.getElementById('mw-waste-wrk').value) || 0;
-  if (wasteEng === 0 && wasteWrk === 0) { alert('⚠️ أدخل كمية الهدر في أحد المطعمين على الأقل'); return; }
-  var engTotal = parseFloat(document.getElementById('mw-eng-total').value) || 0;
+  var wasteGuests = parseFloat(document.getElementById('mw-waste-guests').value) || 0;
+  if (wasteEng === 0 && wasteWrk === 0 && wasteGuests === 0) { alert('⚠️ أدخل كمية الهدر على الأقل'); return; }
   var engAte = parseFloat(document.getElementById('mw-eng-ate').value) || 0;
-  var wrkTotal = parseFloat(document.getElementById('mw-wrk-total').value) || 0;
+  var engTakeaway = parseFloat(document.getElementById('mw-eng-takeaway').value) || 0;
   var wrkAte = parseFloat(document.getElementById('mw-wrk-ate').value) || 0;
+  var wrkTakeaway = parseFloat(document.getElementById('mw-wrk-takeaway').value) || 0;
+  var guests = parseFloat(document.getElementById('mw-guests').value) || 0;
   var waterAdded = parseFloat(document.getElementById('mw-water').value) || 0;
   var cost = parseFloat(document.getElementById('mw-cost').value) || 0;
   var responsible = document.getElementById('mw-responsible').value.trim() || chef;
@@ -292,10 +320,12 @@ function submitWaste() {
     totalPrepared: totalPrepared,
     wasteEng: wasteEng,
     wasteWrk: wasteWrk,
-    engTotal: engTotal,
+    wasteGuests: wasteGuests,
     engAte: engAte,
-    wrkTotal: wrkTotal,
+    engTakeaway: engTakeaway,
     wrkAte: wrkAte,
+    wrkTakeaway: wrkTakeaway,
+    guests: guests,
     waterAdded: waterAdded,
     cost: cost,
     responsible: responsible,
@@ -353,11 +383,15 @@ function resetForm() {
   document.getElementById('mw-total-prepared').value = '';
   document.getElementById('mw-waste-eng').value = '';
   document.getElementById('mw-waste-wrk').value = '';
-  document.getElementById('mw-eng-total').value = '';
+  document.getElementById('mw-waste-guests').value = '';
   document.getElementById('mw-eng-ate').value = '';
-  document.getElementById('mw-wrk-total').value = '';
+  document.getElementById('mw-eng-takeaway').value = '';
   document.getElementById('mw-wrk-ate').value = '';
+  document.getElementById('mw-wrk-takeaway').value = '';
+  document.getElementById('mw-guests').value = '';
   document.getElementById('mw-water').value = '';
+  document.getElementById('mw-eng-total-display').textContent = '0';
+  document.getElementById('mw-wrk-total-display').textContent = '0';
   document.getElementById('mw-cost').value = '';
   document.getElementById('mw-responsible').value = '';
   document.getElementById('mw-calc-summary').innerHTML = '<strong>⏳</strong> أدخل الخامات والهدر لرؤية الحسابات...';

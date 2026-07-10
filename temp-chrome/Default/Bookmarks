@@ -1,0 +1,103 @@
+{
+   "checksum": "cb6ece583c69bb908b4a6c8bbe87126b",
+   "roots": {
+      "bookmark_bar": {
+         "children": [  ],
+         "date_added": "13427121300097381",
+         "date_last_used": "0",
+         "date_modified": "0",
+         "guid": "0bc5d13f-2cba-5d74-951f-3f233fe6c908",
+         "id": "1",
+         "name": "Bookmarks bar",
+         "type": "folder"
+      },
+      "other": {
+         "children": [  ],
+         "date_added": "13427121300097381",
+         "date_last_used": "0",
+         "date_modified": "0",
+         "guid": "82b081ec-3dd3-529c-8475-ab6c344590dd",
+         "id": "2",
+         "name": "Other bookmarks",
+         "type": "folder"
+      },
+      "synced": {
+         "children": [ {
+            "date_added": "13323217165072145",
+            "date_last_used": "0",
+            "guid": "3775683d-a41a-498c-8369-c1adcc80227a",
+            "id": "5",
+            "meta_info": {
+               "power_bookmark_meta": ""
+            },
+            "name": "XOS Launcher",
+            "type": "url",
+            "url": "https://ooppgazxdheuqteggme.com/Mowing_war/index.html?utm_source=Launcher_instantapp_rec-0_77739#fc6e7964-3fcf-4926-9963-8458bdc5bf83"
+         }, {
+            "date_added": "13326239549027695",
+            "date_last_used": "0",
+            "guid": "f8d39ec2-7ea0-4209-8d0a-9612c2791a76",
+            "id": "6",
+            "meta_info": {
+               "power_bookmark_meta": ""
+            },
+            "name": "nabd.com",
+            "type": "url",
+            "url": "https://nabd.com/s/117632042-2503ed/%D8%B1%D9%81%D8%B6%D8%AA-%D8%A7%D9%84%D8%AA%D8%AE%D9%84%D9%8A-%D8%B9%D9%86-%D8%A3%D8%B7%D9%81%D8%A7%D9%84%D9%87%D8%A7..-%D8%AA%D9%81%D8%A7%D8%B5%D9%8A%D9%84-%D8%B5%D8%A7%D8%AF%D9%85%D8%A9-%D9%81%D9%8A-%D8%AD%D9%8A%D8%A7%D8%A9-%D8%B3%D9%8A%D8%AF%D8%A9-%D8%A3%D9%83%D8%AA%D9%88%D8%A8%D8%B1-%D9%82%D8%AA%D9%84%D8%AA-%D8%A3%D9%85%D8%A7%D9%85-%D8%A7%D9%84%D9%85%D8%A7%D8%B1%D8%A9-%D9%81%D9%8A-%D9%86%D9%87%D8%A7%D8%B1-%D8%B1%D9%85%D8%B6%D8%A7%D9%86/?cfin=1&h=7a7007m029c01mb050ec19&utm_campaign=infinix&utm_medium=referral&utm_source=infinix"
+         }, {
+            "date_added": "13326886200151827",
+            "date_last_used": "0",
+            "guid": "a5456754-2bdc-432d-a783-7a8a53039284",
+            "id": "7",
+            "meta_info": {
+               "power_bookmark_meta": ""
+            },
+            "name": "nabd.com",
+            "type": "url",
+            "url": "https://nabd.com/s/118209391-9a29a1/%D8%A3%D9%88%D9%87%D9%85-%D8%A7%D9%84%D8%AC%D9%85%D9%8A%D8%B9-%D8%A8%D9%88%D9%81%D8%A7%D8%AA%D9%87-%D9%84%D9%84%D9%87%D8%B1%D8%A8-%D9%85%D9%86-%D8%A7%D9%84%D8%B3%D8%AC%D9%86..-%D8%B6%D8%A8%D8%B7-%D9%85%D8%BA%D8%AA%D8%B5%D8%A8-%D8%A7%D9%84%D9%81%D9%8A%D8%B3-%D8%A8%D9%88%D9%83-%D8%A8%D8%B9%D8%AF-%D9%83%D8%B4%D9%81-%D8%AC%D8%B1%D9%8A%D9%85%D8%AA%D9%87/?cfin=1&h=7a7007m029c01mb050ec19&utm_campaign=infinix&utm_medium=referral&utm_source=infinix"
+         }, {
+            "date_added": "13329244926610575",
+            "date_last_used": "0",
+            "guid": "a7c2be02-731b-491e-8fcb-957c2e0538f9",
+            "id": "8",
+            "meta_info": {
+               "power_bookmark_meta": ""
+            },
+            "name": "nabd.com",
+            "type": "url",
+            "url": "https://nabd.com/s/118320721-d79b2c/%D8%A5%D8%B3%D9%83%D9%86%D8%AF%D8%B1%D8%A7%D9%86%D9%8A%D8%A9-%D9%88%D8%AC%D9%88%D8%B2%D9%8A-%D9%85%D8%B4-%D8%B1%D8%AC%D9%84-%D8%A3%D8%B9%D9%85%D8%A7%D9%84..-%D8%AC%D9%88%D8%B1%D9%8A-%D8%A8%D9%83%D8%B1-%D8%AA%D9%83%D8%B4%D9%81-%D8%A3%D8%B3%D8%B1%D8%A7%D8%B1%D8%A7-%D8%B9%D9%86-%D8%AD%D9%8A%D8%A7%D8%AA%D9%87%D8%A7-%D8%A7%D9%84%D8%AE%D8%A7%D8%B5%D8%A9/?cfin=1&h=7a7007m029c01mb050ec19&utm_campaign=infinix&utm_medium=referral&utm_source=infinix"
+         }, {
+            "date_added": "13339529526588512",
+            "date_last_used": "0",
+            "guid": "49e64643-99f4-4295-9d06-5c569514bf13",
+            "id": "9",
+            "meta_info": {
+               "power_bookmark_meta": ""
+            },
+            "name": "XOS Launcher",
+            "type": "url",
+            "url": "https://www.volcanoh5game.com/SubwayChicago/index.html?utm_source=Launcher_instantapp_rec-3419_79095#fc6e7964-3fcf-4926-9963-8458bdc5bf83"
+         }, {
+            "date_added": "13427121802717420",
+            "date_last_used": "0",
+            "guid": "cd967cca-5966-42c7-9fa0-d60969b24424",
+            "id": "10",
+            "meta_info": {
+               "power_bookmark_meta": ""
+            },
+            "name": "(١) WhatsApp Business",
+            "type": "url",
+            "url": "https://web.whatsapp.com/"
+         } ],
+         "date_added": "13427121300097381",
+         "date_last_used": "0",
+         "date_modified": "13427121802717420",
+         "guid": "4cf2e351-0e85-532b-bb37-df045d8f8d0f",
+         "id": "3",
+         "name": "Mobile bookmarks",
+         "type": "folder"
+      }
+   },
+   "sync_metadata": "CswCCqsCCIiBAhKkAiAAkgGPAgqMAgoOY2hyb21lX3N5bmNfYm0SBTUxIWJtGhIJRASUFk9VBgARRASUFk9VBgAiNAk2OGkWT1UGABADGf9RivMeEfufIAEqHDUxIWJtL2ZkOjkxNjM3MjM1NTk0Njg4OTMxNjEiNAk2OGkWT1UGABADGf9RivMeEfufIAEqHDUxIWJtL2ZkOjkxNjM3MjM1NTk0Njg4OTMxNjEiNAk2OGkWT1UGABADGf9RivMeEfufIAEqHDUxIWJtL2ZkOjkxNjM3MjM1NTk0Njg4OTMxNjEiNAk2OGkWT1UGABADGf9RivMeEfufIAEqHDUxIWJtL2ZkOjkxNjM3MjM1NTk0Njg4OTMxNjEpbxmUFk9VBgDqAQwI3ZmE0gYQiJftjAMSACoYVno5WVhQVnFBRWEzUW9OS2V6MDFPUT09SAMSqwEIARKmAQoceXhKLzZmdmtlY3I3a3A1RVF6QjR0V0xwZGJFPRJOWjpBRHF0QVp3MEFKL3BkOFBXZ21BK2JvbDI3RkRjdSthYXVMY2Q0d3ZDUnYrRlZlaER0TThJc3FHZk9FQ1U3M3NyZUhFMVNtUENDa0hIGAAgACgAMLbwpLPxqZUDOABAAEocYVJDV0xnaEY5YjVJbnFLSUR2dUovanZRa0ZjPVoAZQAAAAAS7AEIChLnAQocTVNWZHVBaGhRdlVGeDF6cDdVeXpodDNOMTF3PRJmWjpBRHF0QVp5eG5vaWVFelNuYkVHWHBmYVVTNXFxRjdCOEJsdjRIaFdXZkFQNDB4Qjh6TUY2MEUxelV6MkNya0FXaDNjSFhrRm5mMm8wZFdndVlhNkduYzgxbGRSVFNSWTZOQT09GAAgHigeMLKYkYiIqpUDON3L8/DwM0Cditzz8DNKHEF0dFhUb3dYbE5CcGI4UnBqOCtycEN3QWFBcz1aHyId+3dhMjFsSHhZMVJnRUlZcmVHWGQ0NHVnWTVVND1lSTUUXxLDAQgCEr4BChxZY1NUb252RVNQd3FDczRMMmNyVmh2NjhMOTg9EmZaOkFEcXRBWnhFYnVQMjNjeVBKL2hYc1Z6cG10UDhTcmJiRTlrM0hlblNzS09SRDMwRjlzMnQzYUlNMC9IbDgycU5QQ3JXa01HZ1hWWUh4R1Y3VWgyOGdra3pFMHNQTDlEamx3PT0YACAAKAAwtvCks/GplQM4AEAAShxvUFZraHdCUmJWNjVLQ1dSMitJT05IV29PdTg9WgBlAAAAABLsAQgJEucBChw2MnlMMTBWRXVzQTBtYzFIdHlEY212T0hnZTA9EmZaOkFEcXRBWnl4bm9pZUV6U25iRUdYcGZhVVM1cXErZDhGVkNwN2RDaG1sZkhTVStoMi84YXExQU8ya2xySmV0eFBPeW52dWw4MEJsZzhlSm5kQ1Q2VXlQNW51T1A1STBmMm1nPT0YACAAKAAw9ZGpmPbsiQM4varTyaoxQL2q08mqMUocUmZLM0FkZ05kQmFDNndIYUNUM0R0Ylc5RUl3PVofIh32aUVpTlRLTmNkcXREeEtWbkJWSVZOM0NuRmdRPWUAAAAAEuwBCAgS5wEKHFozU01pYUIrWnRzd1BxdDY5ZnVDb0sybjJXYz0SZlo6QURxdEFaeXhub2llRXpTbmJFR1hwZmFVUzVxcUxDZ1BGdmxyd0hkbHdxQVl5N1V3YXp2aFEwaUY2dG5oamhsRmZlaldjN1dJWm96dDlBV2REcmJKbFB4OGxxeTNUVXZ1dWc9PRgAIAAoADD1kamY9uyJAziTlcmhhDFAk5XJoYQxShxFWUNaSTlTSVdZTTZLdjJwcFlkOS9XSjFHbE09Wh8iHe04cE4wRjIzM1p6WCtHalBBYTNyOHF4YnZBNkU9ZQAAAAAS7AEIBxLnAQocWGphNXI4RUl3d2Y4VFdDUUhiekZjSFFPZ3BzPRJmWjpBRHF0QVp5eG5vaWVFelNuYkVHWHBmYVVTNXFxVXRvL0JWWU4xSVRaN2pMR3RaTnRSY2JEa3o4MmttL0k2U3QzZHVBdG1XZ3pFaitxWEczNm80NUFTOGpJVHVtZWt1bEQvdz09GAAgACgAMPWRqZj27IkDONj267z7MEDY9uu8+zBKHDRVdUwzTXlQY2JudWVycXFSZWRReGVFYnF0OD1aHyId205xWEVxSWxtd1RCZTdoVlJPWUo5ZzNrNDZucz1lAAAAABLsAQgGEucBChx0MnAvMWtRRHo2ZUFnZkRkaEVIMmlrRmQwZTg9EmZaOkFEcXRBWnl4bm9pZUV6U25iRUdYcGZhVVM1cXEyZWVpT2RpdEdRaEpHd1FEeE1ZVjNuNFhYRXBudE51OXpLYmtvT2lGUWYyU1BsSUNyZzZLMWNIaUMxV3VyUDVMcDlOWm9nPT0YACAAKAAw9ZGpmPbsiQM45Ly/iPkwQOS8v4j5MEocdDdZNVF4NisvRVE2eDQxakJtSHRDRDkvSjhFPVofIh22Ukhpd09GVWdQdUs5WTFGYnp6VnR2VzVGYlo4PWUAAAAAEusBCAUS5gEKHDFEbWNvZCs5RnBMYTZTbG1iQ0ZJUHdwL1QyRT0SZlo6QURxdEFaeXhub2llRXpTbmJFR1hwZmFVUzVxcSthMWx5S3Q3ZGp4Um1xZkk2K3Z3ZzJuMVluTEhWRmUrN3Y1Z00wcUlkbkdHajZNTUlCL1kvUC9zcVdzcHQ5WC9PZW9SR3c9PRgAIAAoADD1kamY9uyJAziS5qfn7TBAkuan5+0wShxGcTU2U0RCZWFtME5HdDN0WVJKaVlOTHp5ekk9Wh4iHGxlNVJFZmsxUk44OTZGa0t4V0ZPYVFYUG5uST1lAAAAABLDAQgDEr4BChxuamdEdTg4ZUNydlhwODZwRDdmSEdjcUZwODg9EmZaOkFEcXRBWnk3dUdHY2UvM3NXam0reXRKdEpmQ1Y1b0dndi9YUDhlZTNJNlZwbUNTZXZsR1VFNmtxWEJUSytxVTBLdWd5Qm4zY1NnNmxWaTl3ZlkwNlFGaVNVTXhyL2RHOE5BPT0YACAAKAAwtvCks/GplQM4AEAAShx5ek5CMDFjbjU0QTdjUlUwdVQrL1BnbVR0VW89WgBlAAAAADABOAA=",
+   "version": 1
+}

@@ -1,0 +1,285 @@
+.ext_pdf2go .second-row-button{
+    padding-top: 4px;
+}
+
+.ext_pdf2go .qg_extension_backdrop {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: rgba(0, 0, 0, 0.2);
+    z-index: 99999;
+}
+
+.ext_pdf2go .qg_extension_modal {
+    width: 270px;
+    background-color: rgb(255, 255, 255);
+    box-shadow: rgb(0 0 0 / 20%) 0 0 24px 0;
+    border-radius: 8px;
+}
+
+.ext_pdf2go .qg_extension_modal_header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-sizing: border-box;
+    height: 48px;
+    padding: 0 0 0 8px;
+    border-bottom: 1px solid #eee;
+}
+
+.ext_pdf2go .qg_extension_modal_header_text {
+    height: calc(100% - 10px);
+    display: flex;
+    align-items: center;
+}
+
+.ext_pdf2go .qg_extension_modal_header_text img {
+    height: 100%;
+    max-width: 100%;
+}
+
+.ext_pdf2go .qg_extension_modal_close_btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 48px;
+    width: 36px;
+    cursor: pointer;
+}
+
+.ext_pdf2go .qg_extension_modal_close_btn:after {
+    content: "\00d7";
+    display: block;
+    font-size: 25px;
+}
+
+.chevron-arrow-right {
+    display: inline-block;
+    border-right: 3px solid;
+    border-bottom: 3px solid;
+    width: 7px; height: 7px;
+    transform: rotate(-45deg);
+}
+
+.bg-main-1 {
+    background: #247128;
+    color: white;
+    border-color: white !important;
+}
+.bg-main-2 {
+    background: #388E3C;
+    color: white;
+    border-color: white !important;
+}
+.bg-main-3 {
+    background: #43A047;
+    color: white;
+    border-color: white !important;
+}
+.bg-main-4 {
+    background: #4CAF50;
+    color: white;
+    border-color: white !important;
+}
+.bg-main-5 {
+    background: #66BB6A;
+    color: white;
+    border-color: white !important;
+}
+.bg-main-6 {
+    background: #81C784;
+    color: white;
+    border-color: white !important;
+}
+.bg-main-7 {
+    background: #A5D6A7;
+    color: white;
+    border-color: white !important;
+}
+.bg-main-8 {
+    background: #C8E6C9;
+    color: white;
+    border-color: white !important;
+}
+
+.ext_pdf2go .qg_extension_feature {
+    position: relative;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-sizing: border-box;
+    height: 48px;
+    padding: 0 0 0 12px;
+    cursor: pointer;
+}
+
+.ext_pdf2go .qg_extension_feature_name {
+    line-height: 18px;
+    font-size: 14px;
+    font-family: "Source Sans Pro", Helvetica, Arial, sans-serif;
+    font-stretch: normal;
+    font-weight: 600;
+    flex: 1 1 auto;
+    padding: 0 6px;
+}
+
+.ext_pdf2go .qg_extension_feature_arrow_container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 48px;
+    width: 36px;
+    cursor: default;
+}
+
+.ext_pdf2go .btn-submit{
+    text-align: center;
+    transition: color .15s ease-in-out,background-color .15s ease-in-out,border-color .15s ease-in-out,box-shadow .15s ease-in-out;
+    user-select: none;
+    vertical-align: middle;
+    font-size: 17.5px;
+    line-height: 1.5;
+    padding: .5rem 1rem;
+    background: #e10337 !important;
+    box-shadow: 0 0 5px 0 rgb(0 0 0 / 10%);
+    color: #fff;
+    border: 0;
+    cursor: pointer;
+    font-family: Open Sans,Helvetica,Arial,sans-serif;
+    text-transform: uppercase;
+    align-items: center;
+    justify-content: center;
+    display: inline-flex;
+    width: calc(100% - 20px);
+    border-radius: 4px;
+    margin-left: 10px;
+    margin-bottom: 10px;
+}
+
+.ext_pdf2go .btn-submit:hover, #pdf2go_qg_extension_container .btn-submit:hover {
+    background: rgb(183 5 46) !important;
+}
+
+.m-r-5 {
+    margin-right: 5px;
+}
+
+.px-1 {
+    padding-left: 10px;
+    padding-right: 10px;
+}
+
+.ext_pdf2go .spinner {
+    height: 40px;
+    text-align: center;
+    font-size: 10px;
+    display: flex;
+    justify-content: space-between;
+    width: 65px;
+    margin: auto auto 10px;
+}
+
+.ext_pdf2go .spinner > div {
+    background-color: #f5bf00;
+    height: 100%;
+    width: 6px;
+    display: inline-block;
+
+    -webkit-animation: sk-stretchdelay 1.2s infinite ease-in-out;
+    animation: sk-stretchdelay 1.2s infinite ease-in-out;
+}
+
+.ext_pdf2go .spinner .rect2 {
+    background-color: #e88800;
+    -webkit-animation-delay: -1.1s;
+    animation-delay: -1.1s;
+}
+
+.ext_pdf2go .spinner .rect3 {
+    background-color: #e10337;
+    -webkit-animation-delay: -1.0s;
+    animation-delay: -1.0s;
+}
+
+.ext_pdf2go .spinner .rect4 {
+    background-color: #ba0263;
+    -webkit-animation-delay: -0.9s;
+    animation-delay: -0.9s;
+}
+
+.ext_pdf2go .spinner .rect5 {
+    background-color: #873f95;
+    -webkit-animation-delay: -0.8s;
+    animation-delay: -0.8s;
+}
+
+.ext_pdf2go .spinner .rect6 {
+    background-color: #3c70b3;
+    -webkit-animation-delay: -0.8s;
+    animation-delay: -0.7s;
+}
+
+.ext_pdf2go .spinner .rect7 {
+    background-color: #04ac80;
+    -webkit-animation-delay: -0.8s;
+    animation-delay: -0.6s;
+}
+
+.ext_pdf2go .spinner .rect8 {
+    background-color: #88c15f;
+    -webkit-animation-delay: -0.8s;
+    animation-delay: -0.5s;
+}
+
+@-webkit-keyframes sk-stretchdelay {
+    0%, 40%, 100% { -webkit-transform: scaleY(0.4) }
+    20% { -webkit-transform: scaleY(1.0) }
+}
+
+@keyframes sk-stretchdelay {
+    0%, 40%, 100% {
+        transform: scaleY(0.4);
+        -webkit-transform: scaleY(0.4);
+        }  20% {
+           transform: scaleY(1.0);
+           -webkit-transform: scaleY(1.0);
+       }
+   }
+
+
+   .gmail-progress-div {
+      width: 100%;
+      height: 4px;
+      border-top-left-radius: 8px;
+      border-top-right-radius: 8px;
+      overflow: hidden;
+      display: none;
+      margin: 0px;
+      position: absolute;
+      bottom: 0%;
+      z-index: 1098;
+  }
+
+  .gmail-progress-line {
+    width: 0px;
+    height: 100%;
+    transition: width 0.4s ease-out 0s;
+    background-color: rgb(242, 48, 48);
+}
+.custom-gmail-icon{
+    background-color: #fff !important;
+    margin-left: 8px !important;
+    max-width: 500px !important;
+    min-width: 30px !important;
+    height: 30px !important;
+    outline: none !important;
+    padding: 0px !important;
+}
+.custom-gmail-icon:hover{
+    background-color: rgba(32,33,36,0.122) !important;
+    
+    box-shadow: 0 1px 2px 0 rgb(228 228 228), 0 1px 3px 1px rgb(228 228 228) !important;
+    
+}
