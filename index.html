@@ -2658,6 +2658,61 @@
         <tbody id="meal-log-table-body"></tbody>
       </table>
     </div>
+
+    <div style="margin:12px 0;display:flex;gap:8px;flex-wrap:wrap;">
+      <button class="btn btn-danger" onclick="openMealWasteModal()" style="height:42px;">🗑️ تسجيل هدر</button>
+      <button class="btn btn-secondary" onclick="toggleMealWasteSection()" style="height:42px;">📊 سجل الهدر</button>
+    </div>
+    <div id="meal-waste-section" style="display:none;margin:10px 0;padding:15px;background:#fff5f5;border:2px solid #ffcdd2;border-radius:8px;">
+      <div id="mw-stats" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:15px;"></div>
+      <div id="mw-chart-container" style="height:0;overflow:hidden;transition:height 0.3s;margin-bottom:10px;">
+        <canvas id="mw-chart" style="max-height:200px;"></canvas>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;align-items:end;">
+        <div style="display:flex;gap:4px;align-items:center;">
+          <label style="font-size:11px;">من</label><input type="date" id="mw-filter-from" onchange="renderMealWasteTable()" style="padding:3px 6px;font-size:12px;border:1px solid #ccc;border-radius:4px;">
+          <label style="font-size:11px;">إلى</label><input type="date" id="mw-filter-to" onchange="renderMealWasteTable()" style="padding:3px 6px;font-size:12px;border:1px solid #ccc;border-radius:4px;">
+        </div>
+        <select id="mw-filter-type" onchange="renderMealWasteTable()" style="padding:3px 6px;font-size:12px;border:1px solid #ccc;border-radius:4px;">
+          <option value="">كل الأنواع</option>
+          <option value="تخزين">🥩 هالك تخزين</option>
+          <option value="تجهيز">🔪 هالك تجهيز</option>
+          <option value="إنتاج">🍳 هالك إنتاج</option>
+          <option value="توزيع">🍽️ هالك توزيع</option>
+        </select>
+        <button class="btn btn-excel" onclick="exportMealWasteToExcel()" style="height:32px;font-size:12px;padding:4px 10px;">📤 Excel</button>
+      </div>
+      <div class="table-container">
+        <table>
+          <thead><tr><th>التاريخ</th><th>الوجبة</th><th>النوع</th><th>الصنف</th><th>الكمية</th><th>السبب</th><th>التكلفة</th><th>التصرف</th><th>المسؤول</th><th style="width:80px;">إجراءات</th></tr></thead>
+          <tbody id="mw-table-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div id="modal-meal-waste" class="modal">
+    <div class="modal-content" style="max-width:600px;border-top:5px solid #c62828;">
+      <div class="modal-header"><h2>🗑️ تسجيل هدر</h2><span class="close-btn" onclick="closeModal('modal-meal-waste')">&times;</span></div>
+      <form id="meal-waste-form" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:15px;" onsubmit="return false;">
+        <input type="hidden" id="mw-edit-idx" value="-1">
+        <div class="form-group"><label>التاريخ</label><input type="date" id="mw-date" required></div>
+        <div class="form-group"><label>الوجبة</label><select id="mw-meal"><option value="فطار">🍳 إفطار</option><option value="غداء">🍗 غداء</option><option value="عشاء">🧀 عشاء</option><option value="خامات">🥩 خامات</option></select></div>
+        <div class="form-group"><label>نوع الهدر</label><select id="mw-type"><option value="تخزين">🥩 هالك تخزين</option><option value="تجهيز">🔪 هالك تجهيز</option><option value="إنتاج">🍳 هالك إنتاج</option><option value="توزيع">🍽️ هالك توزيع</option></select></div>
+        <div class="form-group"><label>الصنف</label><input type="text" id="mw-item" placeholder="رز / لحمة / دجاج" required></div>
+        <div class="form-group"><label>الكمية</label><input type="number" id="mw-qty" min="0" step="0.01" required></div>
+        <div class="form-group"><label>الوحدة</label><select id="mw-unit"><option value="طبق">طبق</option><option value="كجم">كجم</option><option value="رغيف">رغيف</option><option value="لتر">لتر</option><option value="قطعة">قطعة</option></select></div>
+        <div class="form-group" style="grid-column:1/-1;"><label>السبب</label><select id="mw-reason"><option value="زيادة كمية">زيادة كمية</option><option value="خطأ طبخ">خطأ في الطبخ</option><option value="تلف">تلف/فساد</option><option value="سوء تخزين">سوء تخزين</option><option value="تقدير خاطئ">تقدير خاطئ للكمية</option></select></div>
+        <div class="form-group"><label>التكلفة التقريبية (ج.م)</label><input type="number" id="mw-cost" min="0" step="0.01"></div>
+        <div class="form-group"><label>التصرف</label><select id="mw-disposal"><option value="سماد">سماد</option><option value="حيوانات">علف حيوانات</option><option value="تخلص">تخلص</option></select></div>
+        <div class="form-group"><label>المسؤول</label><input type="text" id="mw-responsible"></div>
+        <div class="form-group" style="grid-column:1/-1;"><label>الإجراء المتخذ</label><select id="mw-action"><option value="">—</option><option value="تقليل الكمية">تقليل الكمية المطلوبة</option><option value="تحسين تخزين">تحسين التخزين</option><option value="تغيير مورد">تغيير المورد</option><option value="تدريب">تدريب العمالة</option></select></div>
+        <div class="form-group" style="grid-column:1/-1;display:flex;gap:8px;">
+          <button type="button" class="btn btn-danger" onclick="saveMealWaste()" style="height:42px;font-size:16px;flex:1;">💾 حفظ</button>
+          <button type="button" class="btn btn-secondary" onclick="closeModal('modal-meal-waste');cancelMealWasteEdit()" style="height:42px;">إلغاء</button>
+        </div>
+      </form>
+    </div>
   </div>
 
   <div id="tab-contractors" class="tab-content">
@@ -3610,6 +3665,7 @@
     let teaSugarDisbursements = _safeJsonParse(localStorage.getItem('lineh_tea_sugar'), []);
     let teaSugarBatches = _safeJsonParse(localStorage.getItem('lineh_tea_sugar_batches'), []);
     let mealLogs = (typeof SEED_MEALS !== 'undefined' && SEED_MEALS.length > 0) ? SEED_MEALS : (_safeJsonParse(localStorage.getItem('lineh_meal_logs'), []));
+    let mealWaste = _safeJsonParse(localStorage.getItem('linah_meal_waste'), []);
     let inventoryItems = _safeJsonParse(localStorage.getItem('lineh_inventory_items'), []);
     let contractors = _safeJsonParse(localStorage.getItem('lineh_contractors'), []);
     let bakeryIngredients = _safeJsonParse(localStorage.getItem('linah_bakery_ingredients'), [
@@ -4329,6 +4385,7 @@
       _lsSet('lineh_tea_sugar', JSON.stringify(teaSugarDisbursements));
       _lsSet('lineh_tea_sugar_batches', JSON.stringify(teaSugarBatches));
       _lsSet('lineh_meal_logs', JSON.stringify(mealLogs));
+      _lsSet('linah_meal_waste', JSON.stringify(mealWaste));
       _lsSet('lineh_inventory_items', JSON.stringify(inventoryItems));
       _lsSet('lineh_contractors', JSON.stringify(contractors));
       _lsSet('dyn_sectors', JSON.stringify(dynamicSectors));
@@ -10119,6 +10176,173 @@ function toggleEmployeeStatus(empId) {
       document.getElementById('meal-p-bf').focus();
     }
 
+    /* ===== Meal Waste Module ===== */
+    var _mwChart = null;
+    function openMealWasteModal(editIdx) {
+      if (editIdx !== undefined && editIdx >= 0) {
+        var w = mealWaste[editIdx];
+        if (!w) return;
+        document.getElementById('mw-edit-idx').value = editIdx;
+        document.getElementById('mw-date').value = w.date;
+        document.getElementById('mw-meal').value = w.meal;
+        document.getElementById('mw-type').value = w.type;
+        document.getElementById('mw-item').value = w.item;
+        document.getElementById('mw-qty').value = w.qty;
+        document.getElementById('mw-unit').value = w.unit;
+        document.getElementById('mw-reason').value = w.reason;
+        document.getElementById('mw-cost').value = w.cost || 0;
+        document.getElementById('mw-disposal').value = w.disposal;
+        document.getElementById('mw-responsible').value = w.responsible || '';
+        document.getElementById('mw-action').value = w.action || '';
+      } else {
+        cancelMealWasteEdit();
+        if (!document.getElementById('mw-date').value) document.getElementById('mw-date').value = new Date().toISOString().split('T')[0];
+      }
+      openModal('modal-meal-waste');
+    }
+    function cancelMealWasteEdit() {
+      document.getElementById('mw-edit-idx').value = '-1';
+      document.getElementById('mw-date').value = '';
+      document.getElementById('mw-meal').value = 'فطار';
+      document.getElementById('mw-type').value = 'تخزين';
+      document.getElementById('mw-item').value = '';
+      document.getElementById('mw-qty').value = '';
+      document.getElementById('mw-unit').value = 'طبق';
+      document.getElementById('mw-reason').value = 'زيادة كمية';
+      document.getElementById('mw-cost').value = '';
+      document.getElementById('mw-disposal').value = 'سماد';
+      document.getElementById('mw-responsible').value = '';
+      document.getElementById('mw-action').value = '';
+    }
+    function saveMealWaste() {
+      var date = document.getElementById('mw-date').value;
+      if (!date) return alert('⚠️ اختر التاريخ.');
+      var meal = document.getElementById('mw-meal').value;
+      var type = document.getElementById('mw-type').value;
+      var item = document.getElementById('mw-item').value.trim();
+      if (!item) return alert('⚠️ أدخل الصنف.');
+      var qty = parseFloat(document.getElementById('mw-qty').value) || 0;
+      if (qty <= 0) return alert('⚠️ أدخل الكمية.');
+      var unit = document.getElementById('mw-unit').value;
+      var reason = document.getElementById('mw-reason').value;
+      var cost = parseFloat(document.getElementById('mw-cost').value) || 0;
+      var disposal = document.getElementById('mw-disposal').value;
+      var responsible = document.getElementById('mw-responsible').value.trim();
+      var action = document.getElementById('mw-action').value;
+      var editIdx = parseInt(document.getElementById('mw-edit-idx').value);
+      var normDate = normalizeDateStr(date);
+      if (editIdx >= 0 && editIdx < mealWaste.length) {
+        var w = mealWaste[editIdx];
+        w.date = normDate; w.meal = meal; w.type = type; w.item = item; w.qty = qty; w.unit = unit;
+        w.reason = reason; w.cost = cost; w.disposal = disposal; w.responsible = responsible; w.action = action;
+        w.modifiedAt = new Date().toISOString();
+      } else {
+        mealWaste.push({ date: normDate, meal: meal, type: type, item: item, qty: qty, unit: unit, reason: reason, cost: cost, disposal: disposal, responsible: responsible, action: action, createdAt: new Date().toISOString() });
+        _removeDeletion('mealWaste', normDate + '|' + type + '|' + item + '|' + qty);
+      }
+      closeModal('modal-meal-waste');
+      cancelMealWasteEdit();
+      syncStorage(); renderMealWasteTable(); renderMealWasteStats();
+      logAction('تسجيل', 'هدر', 'تاريخ: ' + normDate + ' | ' + type + ' | ' + item + ' | ' + qty + ' ' + unit);
+      alert('✅ تم تسجيل الهدر');
+    }
+    function deleteMealWaste(idx) { if (!requireAdmin()) return;
+      if (!confirm('حذف سجل الهدر؟')) return;
+      var w = mealWaste[idx];
+      _logDeletion('mealWaste', (w.date||'') + '|' + (w.type||'') + '|' + (w.item||'') + '|' + (w.qty||''));
+      mealWaste.splice(idx, 1);
+      syncStorage(); renderMealWasteTable(); renderMealWasteStats();
+    }
+    function editMealWaste(idx) { openMealWasteModal(idx); }
+    function toggleMealWasteSection() {
+      var el = document.getElementById('meal-waste-section');
+      if (!el) return;
+      el.style.display = el.style.display === 'none' ? 'block' : 'none';
+      if (el.style.display === 'block') { renderMealWasteStats(); renderMealWasteTable(); }
+    }
+    function renderMealWasteStats() {
+      var el = document.getElementById('mw-stats');
+      if (!el) return;
+      var filtered = getFilteredMealWaste();
+      var totalQty = 0, totalCost = 0, count = filtered.length;
+      filtered.forEach(function(w) { totalQty += w.qty || 0; totalCost += w.cost || 0; });
+      var totalMeals = mealLogs.reduce(function(sum, m) { return sum + (m.breakfast||0) + (m.lunch||0) + (m.dinner||0) + (m.guestBf||0) + (m.guestLh||0) + (m.guestDn||0); }, 0);
+      var wastePct = totalMeals > 0 ? (totalQty / totalMeals * 100) : 0;
+      el.innerHTML = [
+        '<div style="background:#c62828;color:white;padding:10px;border-radius:8px;text-align:center;"><div style="font-size:20px;font-weight:700;">' + count + '</div><div style="font-size:11px;">إجمالي حوادث الهدر</div></div>',
+        '<div style="background:#e65100;color:white;padding:10px;border-radius:8px;text-align:center;"><div style="font-size:20px;font-weight:700;">' + totalQty + '</div><div style="font-size:11px;">إجمالي كمية الهدر</div></div>',
+        '<div style="background:#d32f2f;color:white;padding:10px;border-radius:8px;text-align:center;"><div style="font-size:20px;font-weight:700;">' + wastePct.toFixed(1) + '%</div><div style="font-size:11px;">نسبة الهدر</div></div>',
+        '<div style="background:#37474f;color:white;padding:10px;border-radius:8px;text-align:center;"><div style="font-size:20px;font-weight:700;">' + totalCost.toFixed(0) + ' ج.م</div><div style="font-size:11px;">تكلفة الهدر</div></div>'
+      ].join('');
+      // Show/hide chart
+      var chartContainer = document.getElementById('mw-chart-container');
+      if (chartContainer && count > 1) {
+        chartContainer.style.height = '210px';
+        renderMealWasteChart(filtered);
+      } else if (chartContainer) { chartContainer.style.height = '0'; }
+    }
+    function getFilteredMealWaste() {
+      var from = document.getElementById('mw-filter-from') ? document.getElementById('mw-filter-from').value : '';
+      var to = document.getElementById('mw-filter-to') ? document.getElementById('mw-filter-to').value : '';
+      var typeFilter = document.getElementById('mw-filter-type') ? document.getElementById('mw-filter-type').value : '';
+      return mealWaste.filter(function(w) {
+        if (typeFilter && w.type !== typeFilter) return false;
+        if (from && normalizeDateStr(w.date) < normalizeDateStr(from)) return false;
+        if (to && normalizeDateStr(w.date) > normalizeDateStr(to)) return false;
+        return true;
+      }).sort(function(a, b) { return normalizeDateStr(b.date).localeCompare(normalizeDateStr(a.date)); });
+    }
+    function renderMealWasteTable() {
+      var tbody = document.getElementById('mw-table-body');
+      if (!tbody) return;
+      var filtered = getFilteredMealWaste();
+      if (!filtered.length) { tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;color:#999;padding:20px;">لا توجد سجلات هدر</td></tr>'; return; }
+      tbody.innerHTML = '';
+      filtered.forEach(function(w) {
+        var realIdx = mealWaste.indexOf(w);
+        tbody.innerHTML += '<tr>' +
+          '<td>' + toArabicNumerals(w.date) + '</td>' +
+          '<td>' + (w.meal||'') + '</td>' +
+          '<td>' + (w.type||'') + '</td>' +
+          '<td>' + (w.item||'') + '</td>' +
+          '<td>' + (w.qty||'') + ' ' + (w.unit||'') + '</td>' +
+          '<td>' + (w.reason||'') + '</td>' +
+          '<td>' + ((w.cost||0).toFixed(0)) + ' ج.م</td>' +
+          '<td>' + (w.disposal||'') + '</td>' +
+          '<td>' + (w.responsible||'') + '</td>' +
+          '<td class="no-print"><button class="btn btn-warning" style="padding:1px 5px;font-size:10px;" onclick="editMealWaste(' + realIdx + ')">✏️</button> <button class="btn btn-danger" style="padding:1px 5px;font-size:10px;" onclick="deleteMealWaste(' + realIdx + ')">🗑️</button></td>' +
+        '</tr>';
+      });
+    }
+    function renderMealWasteChart(data) {
+      var canvas = document.getElementById('mw-chart');
+      if (!canvas) return;
+      if (_mwChart) { _mwChart.destroy(); _mwChart = null; }
+      var ctx = canvas.getContext('2d');
+      var grouped = {};
+      data.forEach(function(w) { grouped[w.type] = (grouped[w.type]||0) + (w.qty||0); });
+      var labels = Object.keys(grouped);
+      var values = labels.map(function(l) { return grouped[l]; });
+      var colors = { 'تخزين':'#d32f2f', 'تجهيز':'#e65100', 'إنتاج':'#f57c00', 'توزيع':'#ff8a65' };
+      _mwChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: labels,
+          datasets: [{ data: values, backgroundColor: labels.map(function(l) { return colors[l] || '#999'; }) }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { font: { size: 11 } } } } }
+      });
+    }
+    function exportMealWasteToExcel() {
+      if (!mealWaste.length) return alert('لا توجد بيانات');
+      var filtered = getFilteredMealWaste();
+      if (!filtered.length) return alert('لا توجد بيانات في النطاق المختار');
+      var xlData = filtered.map(function(w) { return { 'التاريخ':w.date, 'الوجبة':w.meal, 'نوع الهدر':w.type, 'الصنف':w.item, 'الكمية':w.qty + ' ' + w.unit, 'السبب':w.reason, 'التكلفة':w.cost, 'التصرف':w.disposal, 'المسؤول':w.responsible, 'الإجراء':w.action||'' }; });
+      var ws = XLSX.utils.json_to_sheet(xlData); var wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'سجل الهدر');
+      XLSX.writeFile(wb, 'سجل_الهدر_' + new Date().toISOString().split('T')[0] + '.xlsx');
+    }
+
     function addSepticRecord() {
       let name = document.getElementById('septic-name-select').value;
       let trips = document.getElementById('septic-trips').value;
@@ -12543,6 +12767,7 @@ function toggleEmployeeStatus(empId) {
       teaSugarBatches = _safeJsonParse(localStorage.getItem('lineh_tea_sugar_batches'), []);
       mealLogs = _safeJsonParse(localStorage.getItem('lineh_meal_logs'), []);
       normalizeMealLogDates();
+      mealWaste = _safeJsonParse(localStorage.getItem('linah_meal_waste'), []);
       inventoryItems = _safeJsonParse(localStorage.getItem('lineh_inventory_items'), []);
       contractors = _safeJsonParse(localStorage.getItem('lineh_contractors'), []);
       bakeryIngredients = _safeJsonParse(localStorage.getItem('linah_bakery_ingredients'), bakeryIngredients);
@@ -12744,7 +12969,7 @@ function toggleEmployeeStatus(empId) {
 
     function getAllDataForSync() {
       var o = getAllDataObject();
-      var keys = ['employees','roomsCapacity','vacations','inventoryVouchers','excludedEmployees','contractors','mealLogs','inventoryItems','hospitalities','adminOvertime','maintenanceRecords','septicRecords','periodicMaintenance','teaSugarDisbursements','teaSugarBatches','dynamicSectors','contractorSectors','contractorRooms','dynamicRooms','dynamicSeptics','dynamicDepts','dynamicTitles','dynamicVisitorTypes','bakeryContractorsNames','evaluations','evalTemplates','appUsers','auditLog','bakeryIngredients','bakeryProductions','bakeryContractorSupplies','bakeryInvoices','bakeryStockLog','roomAssets','archiveData','quickActions','deptTitles','manualTotalBeds','dailyStats','finTransactions','finBudgets','syncDeletions','waterStations','waterDocs'];
+      var keys = ['employees','roomsCapacity','vacations','inventoryVouchers','excludedEmployees','contractors','mealLogs','mealWaste','inventoryItems','hospitalities','adminOvertime','maintenanceRecords','septicRecords','periodicMaintenance','teaSugarDisbursements','teaSugarBatches','dynamicSectors','contractorSectors','contractorRooms','dynamicRooms','dynamicSeptics','dynamicDepts','dynamicTitles','dynamicVisitorTypes','bakeryContractorsNames','evaluations','evalTemplates','appUsers','auditLog','bakeryIngredients','bakeryProductions','bakeryContractorSupplies','bakeryInvoices','bakeryStockLog','roomAssets','archiveData','quickActions','deptTitles','manualTotalBeds','dailyStats','finTransactions','finBudgets','syncDeletions','waterStations','waterDocs'];
       var result = {};
       for (var ki = 0; ki < keys.length; ki++) { result[keys[ki]] = o[keys[ki]]; }
       return result;
@@ -12846,6 +13071,7 @@ function toggleEmployeeStatus(empId) {
         excludedEmployees: function(e) { return e.id || e.code || e.name; },
         contractors: function(c) { return c.name || c.id; },
         mealLogs: function(m) { return m.date; },
+        mealWaste: function(w) { return (w.date||'') + '|' + (w.type||'') + '|' + (w.item||'') + '|' + (w.qty||''); },
         inventoryItems: function(i) { return i.id || i.name; },
         hospitalities: function(h) { return (h.name || '') + '|' + (h.arrival || '') + '|' + (h.type || ''); },
         adminOvertime: function(o) { return (o.date || '') + '|' + (o.empCode || o.name || ''); },
@@ -12970,7 +13196,7 @@ function toggleEmployeeStatus(empId) {
 
     async function _migrateToAlldata() {
       try {
-        var entityKeys = ['employees','roomsCapacity','vacations','inventoryVouchers','excludedEmployees','contractors','mealLogs','inventoryItems','hospitalities','adminOvertime','maintenanceRecords','septicRecords','periodicMaintenance','teaSugarDisbursements','teaSugarBatches','dynamicSectors','contractorSectors','contractorRooms','dynamicRooms','dynamicSeptics','dynamicDepts','dynamicTitles','evaluations','evalTemplates','appUsers','auditLog','bakeryIngredients','bakeryProductions','bakeryContractorSupplies','bakeryInvoices','bakeryStockLog','roomAssets','archiveData','quickActions','deptTitles','manualTotalBeds','dailyStats','finTransactions','finBudgets','syncDeletions'];
+        var entityKeys = ['employees','roomsCapacity','vacations','inventoryVouchers','excludedEmployees','contractors','mealLogs','mealWaste','inventoryItems','hospitalities','adminOvertime','maintenanceRecords','septicRecords','periodicMaintenance','teaSugarDisbursements','teaSugarBatches','dynamicSectors','contractorSectors','contractorRooms','dynamicRooms','dynamicSeptics','dynamicDepts','dynamicTitles','evaluations','evalTemplates','appUsers','auditLog','bakeryIngredients','bakeryProductions','bakeryContractorSupplies','bakeryInvoices','bakeryStockLog','roomAssets','archiveData','quickActions','deptTitles','manualTotalBeds','dailyStats','finTransactions','finBudgets','syncDeletions'];
         var resp = await fetch(_sbEndpoint + '?select=id,data,updated_at', { method: 'GET', headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } });
         if (!resp.ok) return;
         var rows = await resp.json();
@@ -13067,7 +13293,7 @@ function toggleEmployeeStatus(empId) {
     var debouncedSyncToSupabase = function() { setTimeout(pushToSupabase, 500); };
 
     // backward compat for old function refs
-    var DATA_KEYS = ['employees','roomsCapacity','vacations','hospitalities','maintenanceRecords','septicRecords','inventoryVouchers','inventoryItems','excludedEmployees','periodicMaintenance','teaSugarDisbursements','teaSugarBatches','mealLogs','contractors','dynamicSectors','dynamicRooms','dynamicSeptics','dynamicDepts','dynamicTitles','deptTitles','appUsers','auditLog','bakeryIngredients','bakeryProductions','bakeryContractorSupplies','bakeryInvoices','currentUser','manualTotalBeds','roomAssets','archiveData','quickActions','waterStations','waterDocs'];
+    var DATA_KEYS = ['employees','roomsCapacity','vacations','hospitalities','maintenanceRecords','septicRecords','inventoryVouchers','inventoryItems','excludedEmployees','periodicMaintenance','teaSugarDisbursements','teaSugarBatches','mealLogs','mealWaste','contractors','dynamicSectors','dynamicRooms','dynamicSeptics','dynamicDepts','dynamicTitles','deptTitles','appUsers','auditLog','bakeryIngredients','bakeryProductions','bakeryContractorSupplies','bakeryInvoices','currentUser','manualTotalBeds','roomAssets','archiveData','quickActions','waterStations','waterDocs'];
 
     // Snapshot after pull — نعرف إيه اللي اتشال عشان push ما يضيفوش تاني
     var _snapshotKeys = {};
@@ -13082,7 +13308,7 @@ function toggleEmployeeStatus(empId) {
       if (key==='hospitalities') return hospitalities; if (key==='maintenanceRecords') return maintenanceRecords; if (key==='septicRecords') return septicRecords;
       if (key==='inventoryVouchers') return inventoryVouchers; if (key==='inventoryItems') return inventoryItems; if (key==='excludedEmployees') return excludedEmployees;
       if (key==='periodicMaintenance') return periodicMaintenance; if (key==='teaSugarDisbursements') return teaSugarDisbursements; if (key==='teaSugarBatches') return teaSugarBatches;
-      if (key==='mealLogs') return mealLogs; if (key==='contractors') return contractors; if (key==='dynamicSectors') return dynamicSectors; if (key==='dynamicRooms') return dynamicRooms;
+      if (key==='mealLogs') return mealLogs; if (key==='mealWaste') return mealWaste; if (key==='contractors') return contractors; if (key==='dynamicSectors') return dynamicSectors; if (key==='dynamicRooms') return dynamicRooms;
       if (key==='dynamicSeptics') return dynamicSeptics; if (key==='dynamicDepts') return dynamicDepts; if (key==='dynamicTitles') return dynamicTitles; if (key==='deptTitles') return deptTitles;
       if (key==='appUsers') return appUsers; if (key==='auditLog') return auditLog; if (key==='bakeryIngredients') return bakeryIngredients; if (key==='bakeryProductions') return bakeryProductions;
       if (key==='bakeryContractorSupplies') return bakeryContractorSupplies; if (key==='bakeryInvoices') return bakeryInvoices; if (key==='roomAssets') return roomAssets;
@@ -13115,6 +13341,7 @@ function toggleEmployeeStatus(empId) {
       else if (key === 'excludedEmployees') excludedEmployees = val;
       else if (key === 'contractors') contractors = val;
       else if (key === 'mealLogs') mealLogs = val;
+      else if (key === 'mealWaste') mealWaste = val;
       else if (key === 'inventoryItems') inventoryItems = val;
       else if (key === 'hospitalities') hospitalities = val;
       else if (key === 'adminOvertime') adminOvertime = val;
@@ -13161,6 +13388,7 @@ function toggleEmployeeStatus(empId) {
       else if (key === 'excludedEmployees') return excludedEmployees;
       else if (key === 'contractors') return contractors;
       else if (key === 'mealLogs') return mealLogs;
+      else if (key === 'mealWaste') return mealWaste;
       else if (key === 'inventoryItems') return inventoryItems;
       else if (key === 'hospitalities') return hospitalities;
       else if (key === 'adminOvertime') return adminOvertime;
@@ -13270,6 +13498,7 @@ function toggleEmployeeStatus(empId) {
         excludedEmployees: function(e) { return e.id || e.code || e.name; },
         contractors: function(c) { return c.name || c.id; },
         mealLogs: function(m) { return m.date; },
+        mealWaste: function(w) { return (w.date||'') + '|' + (w.type||'') + '|' + (w.item||'') + '|' + (w.qty||''); },
         inventoryItems: function(i) { return i.id || i.name; },
         hospitalities: function(h) { return (h.name||'') + '|' + (h.arrival||'') + '|' + (h.type||''); },
         adminOvertime: function(o) { return (o.date||'') + '|' + (o.empCode||o.name||''); },
@@ -13377,6 +13606,7 @@ function toggleEmployeeStatus(empId) {
       dedupBy(septicRecords, function(s) { return (s.date || '') + '|' + (s.name || s.sector || '') + '|' + (s.trips || s.quantity || ''); });
       dedupBy(teaSugarDisbursements, function(t) { return (t.date || '') + '|' + (t.period || t.type || '') + '|' + (t.empCode || t.empId || '') + '|' + (t.teaPacks || t.quantity || '') + '|' + (t.sugarKg || ''); });
       dedupBy(mealLogs, function(m) { return m.date || JSON.stringify(m); });
+      dedupBy(mealWaste, function(w) { return (w.date||'') + '|' + (w.type||'') + '|' + (w.item||'') + '|' + (w.qty||''); });
       dedupBy(bakeryInvoices, function(inv) { return inv.id || inv._id || JSON.stringify(inv); });
       dedupBy(employees, function(e) { return e.code || e.name || JSON.stringify(e); });
       dedupBy(contractors, function(c) { return c.name || c.id || JSON.stringify(c); });
