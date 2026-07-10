@@ -10377,11 +10377,13 @@ function toggleEmployeeStatus(empId) {
       var el = document.getElementById('mw-stats');
       if (!el) return;
       var filtered = getFilteredMealWaste();
-      var totalWaste = 0, totalCost = 0, count = filtered.length, totalPrepared = 0;
+      var totalWaste = 0, totalCost = 0, count = filtered.length, totalPrepared = 0, totalCookedQty = 0;
       filtered.forEach(function(w) {
         totalPrepared += w.totalPrepared || 0;
         totalWaste += (w.wasteEng||0) + (w.wasteWrk||0);
         totalCost += w.cost || 0;
+        var ingSum = (w.ingredients||[]).reduce(function(s,i){return s+(i.qty||0);},0);
+        totalCookedQty += ingSum + (w.waterAdded||0);
       });
       var wastePct = totalPrepared > 0 ? (totalWaste / totalPrepared * 100) : 0;
       var totalEngCount = 0, totalWrkCount = 0, totalWasteFromEng = 0, totalWasteFromWrk = 0;
@@ -10394,7 +10396,7 @@ function toggleEmployeeStatus(empId) {
       var avgEng = totalEngCount > 0 ? (totalWasteFromEng / totalEngCount * 1000) : 0;
       var avgWrk = totalWrkCount > 0 ? (totalWasteFromWrk / totalWrkCount * 1000) : 0;
       el.innerHTML = [
-        '<div style="background:#c62828;color:white;padding:10px;border-radius:8px;text-align:center;"><div style="font-size:20px;font-weight:700;">' + count + '</div><div style="font-size:11px;">عدد مرات الهدر</div></div>',
+        '<div style="background:#4a148c;color:white;padding:10px;border-radius:8px;text-align:center;"><div style="font-size:20px;font-weight:700;">' + totalCookedQty.toFixed(1) + ' كجم</div><div style="font-size:11px;">إجمالي الكميات المطهوة</div></div>',
         '<div style="background:#e65100;color:white;padding:10px;border-radius:8px;text-align:center;"><div style="font-size:20px;font-weight:700;">' + totalPrepared.toFixed(1) + ' كجم</div><div style="font-size:11px;">إجمالي المُعد</div></div>',
         '<div style="background:#d32f2f;color:white;padding:10px;border-radius:8px;text-align:center;"><div style="font-size:20px;font-weight:700;">' + totalWaste.toFixed(1) + ' كجم</div><div style="font-size:11px;">إجمالي الهدر</div></div>',
         '<div style="background:' + (wastePct <= 5 ? '#2e7d32' : '#d32f2f') + ';color:white;padding:10px;border-radius:8px;text-align:center;"><div style="font-size:20px;font-weight:700;">' + wastePct.toFixed(1) + '%</div><div style="font-size:11px;">نسبة الهدر (الهدف ≤5%)</div></div>',
