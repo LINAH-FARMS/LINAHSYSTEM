@@ -178,8 +178,24 @@ var HEADERS = { 'apikey': KEY, 'Authorization': 'Bearer ' + KEY, 'Content-Type':
 function updateIngSuggestions() {
   var dl = document.getElementById('ing-suggestions');
   if (!dl) return;
+  var master = JSON.parse(localStorage.getItem('linah_ingredient_master') || '[]');
+  if (master.length) {
+    dl.innerHTML = master.map(function(ing) { return '<option value="' + ing.name.replace(/"/g,'&quot;') + '">'; }).join('');
+    return;
+  }
   var names = JSON.parse(localStorage.getItem('linah_chef_ingredient_names') || '["دقيق","رز","مكرونة","لحم","دجاج","خضار مشكل","بصل","طماطم","ثوم","عدس","فول","بطاطس","سمنة","زيت","بيض","ملح","بهارات","شبت","كزبرة","بقدونس","نعناع","كرات","خس","جزر","خيار","كوسة","باذنجان","فلفل","ليمون","زبادي","جبن","لبن","عسل","سكر","عجين","سمك","جمبري","قلقاس","بامية","ملوخية","سبانخ","كرنب","قرنبيط","بروكلي","فاصوليا","بسلة","ذرة","عيش","توست","مربى","شاي","قهوة"]');
   dl.innerHTML = names.map(function(n) { return '<option value="' + n.replace(/"/g,'&quot;') + '">'; }).join('');
+}
+
+function fillPriceFromMaster(input) {
+  var row = input.closest('.ing-row');
+  if (!row) return;
+  var name = input.value.trim();
+  var master = JSON.parse(localStorage.getItem('linah_ingredient_master') || '[]');
+  var match = master.find(function(ing) { return ing.name === name; });
+  var priceInput = row.querySelector('.ing-price');
+  if (match && priceInput) priceInput.value = match.price;
+  calcWaterAuto();
 }
 
 function selectMeal(btn) {
@@ -193,7 +209,7 @@ function addIngRow(name, qty, unit, price) {
   var d = document.createElement('div');
   d.className = 'ing-row';
   d.innerHTML =
-    '<input type="text" class="ing-name" placeholder="الصنف" value="' + (name||'') + '" list="ing-suggestions" style="flex:2;padding:8px;border:1px solid #ddd;border-radius:6px;font-size:12px;font-family:Cairo;">' +
+    '<input type="text" class="ing-name" placeholder="الصنف" value="' + (name||'') + '" list="ing-suggestions" style="flex:2;padding:8px;border:1px solid #ddd;border-radius:6px;font-size:12px;font-family:Cairo;" onchange="fillPriceFromMaster(this)">' +
     '<input type="number" class="ing-qty" placeholder="الكمية" min="0" step="0.01" value="' + (qty||'') + '" style="width:55px;padding:8px;border:1px solid #ddd;border-radius:6px;font-size:12px;font-family:Cairo;" oninput="calcWaterAuto()">' +
     '<select class="ing-unit" style="width:60px;padding:8px;border:1px solid #ddd;border-radius:6px;font-size:12px;font-family:Cairo;">' +
     '<option value="كجم"' + (unit==='كجم'?' selected':'') + '>كجم</option>' +

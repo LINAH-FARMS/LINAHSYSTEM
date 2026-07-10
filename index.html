@@ -239,6 +239,8 @@
     .btn-primary { background-color: var(--primary); color: white; }
     .btn-secondary { background-color: var(--secondary); color: white; }
     .btn-danger { background-color: var(--danger); color: white; }
+    .btn-success { background-color: var(--success, #2e7d32); color: white; }
+    .btn-info { background-color: #1565c0; color: white; }
     .btn-warning { background-color: var(--warning); color: white; }
     .btn-excel { background-color: var(--excel-color); color: white; }
 
@@ -2708,6 +2710,7 @@
             </div>
           </div>
           <button type="button" class="btn btn-secondary" onclick="addIngredientRow()" style="padding:3px 10px;font-size:11px;margin-top:6px;">➕ إضافة صنف</button>
+          <button type="button" class="btn btn-info" onclick="openIngredientMasterModal()" style="padding:3px 10px;font-size:11px;margin-top:6px;margin-right:4px;">📦 إدارة الخامات</button>
           <div class="form-group" style="margin-top:8px;"><label style="font-size:12px;color:#c62828;">🌊 الماء المضاف للطبيخ (كجم)</label><input type="number" id="mw-water" min="0" step="0.1" style="border-color:#ffcdd2;" oninput="updateWasteCalc()"></div>
         </div>
 
@@ -2750,6 +2753,20 @@
           <button type="button" class="btn btn-secondary" onclick="closeModal('modal-meal-waste');cancelMealWasteEdit()" style="height:42px;">إلغاء</button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <div id="modal-ingredient-master" class="modal">
+    <div class="modal-content" style="max-width:500px;border-top:5px solid #2e7d32;">
+      <div class="modal-header"><h2>📦 إدارة الخامات</h2><span class="close-btn" onclick="closeModal('modal-ingredient-master')">&times;</span></div>
+      <div style="padding:15px;">
+        <div style="display:flex;gap:8px;margin-bottom:10px;">
+          <input type="text" id="im-name" placeholder="اسم الخامة" style="flex:2;padding:8px;border:1px solid #ddd;border-radius:4px;font-size:13px;">
+          <input type="number" id="im-price" placeholder="سعر الوحدة (ج.م)" min="0" step="0.01" style="width:130px;padding:8px;border:1px solid #ddd;border-radius:4px;font-size:13px;">
+          <button class="btn btn-success" onclick="addIngredientMasterItem()" style="white-space:nowrap;">➕ إضافة</button>
+        </div>
+        <div style="max-height:300px;overflow-y:auto;" id="im-list"></div>
+      </div>
     </div>
   </div>
 
@@ -3704,6 +3721,7 @@
     let teaSugarBatches = _safeJsonParse(localStorage.getItem('lineh_tea_sugar_batches'), []);
     let mealLogs = (typeof SEED_MEALS !== 'undefined' && SEED_MEALS.length > 0) ? SEED_MEALS : (_safeJsonParse(localStorage.getItem('lineh_meal_logs'), []));
     let mealWaste = _safeJsonParse(localStorage.getItem('linah_meal_waste'), []);
+    let ingredientMaster = _safeJsonParse(localStorage.getItem('linah_ingredient_master'), []);
     let inventoryItems = _safeJsonParse(localStorage.getItem('lineh_inventory_items'), []);
     let contractors = _safeJsonParse(localStorage.getItem('lineh_contractors'), []);
     let bakeryIngredients = _safeJsonParse(localStorage.getItem('linah_bakery_ingredients'), [
@@ -10219,6 +10237,10 @@ function toggleEmployeeStatus(empId) {
     function updateIngredientSuggestions() {
       var datalist = document.getElementById('mw-ing-suggestions');
       if (!datalist) return;
+      if (ingredientMaster.length) {
+        datalist.innerHTML = ingredientMaster.map(function(ing) { return '<option value="' + ing.name.replace(/"/g,'&quot;') + '">'; }).join('');
+        return;
+      }
       var names = {};
       mealWaste.forEach(function(w) {
         (w.ingredients||[]).forEach(function(i) { if (i.name && i.name.trim()) names[i.name.trim()] = true; });
@@ -10227,6 +10249,15 @@ function toggleEmployeeStatus(empId) {
       if (!allNames.length) { allNames = ['دقيق','رز','مكرونة','لحم','دجاج','خضار مشكل','بصل','طماطم','ثوم','عدس','فول','بطاطس','سمنة','زيت','بيض', 'ملح','بهارات']; }
       datalist.innerHTML = allNames.map(function(n) { return '<option value="' + n.replace(/"/g,'&quot;') + '">'; }).join('');
     }
+    function fillPriceFromMaster(input) {
+      var row = input.closest('.mw-ing-row');
+      if (!row) return;
+      var name = input.value.trim();
+      var match = ingredientMaster.find(function(ing) { return ing.name === name; });
+      var priceInput = row.querySelector('.mw-ing-price');
+      if (match && priceInput) priceInput.value = match.price;
+      updateWasteCalc();
+    }
     function addIngredientRow(name, qty, unit, price) {
       var c = document.getElementById('mw-ingredients-container');
       if (!c) return;
@@ -10234,7 +10265,7 @@ function toggleEmployeeStatus(empId) {
       d.className = 'mw-ing-row';
       d.style.cssText = 'display:flex;gap:6px;margin-top:6px;align-items:center;';
       d.innerHTML =
-        '<input type="text" class="mw-ing-name" placeholder="الصنف" value="' + (name||'') + '" list="mw-ing-suggestions" style="flex:2;padding:4px 6px;border:1px solid #ddd;border-radius:4px;font-size:12px;" oninput="updateIngredientSuggestions()">' +
+        '<input type="text" class="mw-ing-name" placeholder="الصنف" value="' + (name||'') + '" list="mw-ing-suggestions" style="flex:2;padding:4px 6px;border:1px solid #ddd;border-radius:4px;font-size:12px;" oninput="updateIngredientSuggestions()" onchange="fillPriceFromMaster(this)">' +
         '<input type="number" class="mw-ing-qty" placeholder="الكمية" min="0" step="0.01" value="' + (qty||'') + '" style="width:60px;padding:4px 6px;border:1px solid #ddd;border-radius:4px;font-size:12px;" oninput="calcAutoWater()">' +
         '<select class="mw-ing-unit" style="width:60px;padding:4px;border:1px solid #ddd;border-radius:4px;font-size:12px;">' +
           '<option value="كجم"' + (unit==='كجم'?' selected':'') + '>كجم</option>' +
@@ -10383,6 +10414,43 @@ function toggleEmployeeStatus(empId) {
       syncStorage(); renderMealWasteTable(); renderMealWasteStats();
       logAction('تسجيل', 'هدر', 'تاريخ: ' + normDate + ' | ' + meal + ' | ' + 'مهندسين: ' + wasteEng + ' عمال: ' + wasteWrk);
       alert('✅ تم تسجيل الهدر');
+    }
+    function saveIngredientMaster() {
+      localStorage.setItem('linah_ingredient_master', JSON.stringify(ingredientMaster));
+      updateIngredientSuggestions();
+    }
+    function openIngredientMasterModal() {
+      renderIngredientMasterList();
+      openModal('modal-ingredient-master');
+    }
+    function renderIngredientMasterList() {
+      var el = document.getElementById('im-list');
+      if (!el) return;
+      if (!ingredientMaster.length) { el.innerHTML = '<div style="text-align:center;color:#999;padding:20px;">لا توجد خامات مضافة. أضف خامات جديدة أعلاه.</div>'; return; }
+      el.innerHTML = ingredientMaster.map(function(ing, idx) {
+        return '<div style="display:flex;align-items:center;justify-content:space-between;padding:8px;border-bottom:1px solid #eee;">' +
+          '<span><strong>' + ing.name + '</strong> — <span style="color:#2e7d32;">' + ing.price + ' ج.م</span></span>' +
+          '<button class="btn btn-danger" style="padding:2px 8px;font-size:11px;" onclick="deleteIngredientMaster(' + idx + ')">✕</button></div>';
+      }).join('');
+    }
+    function addIngredientMasterItem() {
+      var name = document.getElementById('im-name').value.trim();
+      var price = parseFloat(document.getElementById('im-price').value) || 0;
+      if (!name) return alert('⚠️ أدخل اسم الخامة.');
+      if (price <= 0) return alert('⚠️ أدخل السعر.');
+      var existing = ingredientMaster.findIndex(function(ing) { return ing.name === name; });
+      if (existing >= 0) { ingredientMaster[existing].price = price; }
+      else { ingredientMaster.push({ name: name, price: price }); }
+      saveIngredientMaster();
+      document.getElementById('im-name').value = '';
+      document.getElementById('im-price').value = '';
+      document.getElementById('im-name').focus();
+      renderIngredientMasterList();
+    }
+    function deleteIngredientMaster(idx) {
+      ingredientMaster.splice(idx, 1);
+      saveIngredientMaster();
+      renderIngredientMasterList();
     }
     function deleteMealWaste(idx) { if (!requireAdmin()) return;
       if (!confirm('حذف سجل الهدر؟')) return;
