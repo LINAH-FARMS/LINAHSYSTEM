@@ -2684,7 +2684,7 @@
       </div>
       <div class="table-container">
         <table>
-          <thead><tr><th>التاريخ</th><th>الوجبة</th><th>النوع</th><th>الصنف</th><th>الكمية</th><th>السبب</th><th>التكلفة</th><th>التصرف</th><th>المسؤول</th><th style="width:80px;">إجراءات</th></tr></thead>
+          <thead><tr><th>التاريخ</th><th>الوجبة</th><th>النوع</th><th>الكمية</th><th>السبب</th><th>التكلفة</th><th>المسؤول</th><th style="width:80px;">إجراءات</th></tr></thead>
           <tbody id="mw-table-body"></tbody>
         </table>
       </div>
@@ -2699,14 +2699,11 @@
         <div class="form-group"><label>التاريخ</label><input type="date" id="mw-date" required></div>
         <div class="form-group"><label>الوجبة</label><select id="mw-meal"><option value="فطار">🍳 إفطار</option><option value="غداء">🍗 غداء</option><option value="عشاء">🧀 عشاء</option><option value="خامات">🥩 خامات</option></select></div>
         <div class="form-group"><label>نوع الهدر</label><select id="mw-type"><option value="تخزين">🥩 هالك تخزين</option><option value="تجهيز">🔪 هالك تجهيز</option><option value="إنتاج">🍳 هالك إنتاج</option><option value="توزيع">🍽️ هالك توزيع</option></select></div>
-        <div class="form-group"><label>الصنف</label><input type="text" id="mw-item" placeholder="رز / لحمة / دجاج" required></div>
         <div class="form-group"><label>الكمية</label><input type="number" id="mw-qty" min="0" step="0.01" required></div>
         <div class="form-group"><label>الوحدة</label><select id="mw-unit"><option value="طبق">طبق</option><option value="كجم">كجم</option><option value="رغيف">رغيف</option><option value="لتر">لتر</option><option value="قطعة">قطعة</option></select></div>
         <div class="form-group" style="grid-column:1/-1;"><label>السبب</label><select id="mw-reason"><option value="زيادة كمية">زيادة كمية</option><option value="خطأ طبخ">خطأ في الطبخ</option><option value="تلف">تلف/فساد</option><option value="سوء تخزين">سوء تخزين</option><option value="تقدير خاطئ">تقدير خاطئ للكمية</option></select></div>
         <div class="form-group"><label>التكلفة التقريبية (ج.م)</label><input type="number" id="mw-cost" min="0" step="0.01"></div>
-        <div class="form-group"><label>التصرف</label><select id="mw-disposal"><option value="سماد">سماد</option><option value="حيوانات">علف حيوانات</option><option value="تخلص">تخلص</option></select></div>
         <div class="form-group"><label>المسؤول</label><input type="text" id="mw-responsible"></div>
-        <div class="form-group" style="grid-column:1/-1;"><label>الإجراء المتخذ</label><select id="mw-action"><option value="">—</option><option value="تقليل الكمية">تقليل الكمية المطلوبة</option><option value="تحسين تخزين">تحسين التخزين</option><option value="تغيير مورد">تغيير المورد</option><option value="تدريب">تدريب العمالة</option></select></div>
         <div class="form-group" style="grid-column:1/-1;display:flex;gap:8px;">
           <button type="button" class="btn btn-danger" onclick="saveMealWaste()" style="height:42px;font-size:16px;flex:1;">💾 حفظ</button>
           <button type="button" class="btn btn-secondary" onclick="closeModal('modal-meal-waste');cancelMealWasteEdit()" style="height:42px;">إلغاء</button>
@@ -10186,14 +10183,11 @@ function toggleEmployeeStatus(empId) {
         document.getElementById('mw-date').value = w.date;
         document.getElementById('mw-meal').value = w.meal;
         document.getElementById('mw-type').value = w.type;
-        document.getElementById('mw-item').value = w.item;
         document.getElementById('mw-qty').value = w.qty;
         document.getElementById('mw-unit').value = w.unit;
         document.getElementById('mw-reason').value = w.reason;
         document.getElementById('mw-cost').value = w.cost || 0;
-        document.getElementById('mw-disposal').value = w.disposal;
         document.getElementById('mw-responsible').value = w.responsible || '';
-        document.getElementById('mw-action').value = w.action || '';
       } else {
         cancelMealWasteEdit();
         if (!document.getElementById('mw-date').value) document.getElementById('mw-date').value = new Date().toISOString().split('T')[0];
@@ -10205,51 +10199,44 @@ function toggleEmployeeStatus(empId) {
       document.getElementById('mw-date').value = '';
       document.getElementById('mw-meal').value = 'فطار';
       document.getElementById('mw-type').value = 'تخزين';
-      document.getElementById('mw-item').value = '';
       document.getElementById('mw-qty').value = '';
       document.getElementById('mw-unit').value = 'طبق';
       document.getElementById('mw-reason').value = 'زيادة كمية';
       document.getElementById('mw-cost').value = '';
-      document.getElementById('mw-disposal').value = 'سماد';
       document.getElementById('mw-responsible').value = '';
-      document.getElementById('mw-action').value = '';
     }
     function saveMealWaste() {
       var date = document.getElementById('mw-date').value;
       if (!date) return alert('⚠️ اختر التاريخ.');
       var meal = document.getElementById('mw-meal').value;
       var type = document.getElementById('mw-type').value;
-      var item = document.getElementById('mw-item').value.trim();
-      if (!item) return alert('⚠️ أدخل الصنف.');
       var qty = parseFloat(document.getElementById('mw-qty').value) || 0;
       if (qty <= 0) return alert('⚠️ أدخل الكمية.');
       var unit = document.getElementById('mw-unit').value;
       var reason = document.getElementById('mw-reason').value;
       var cost = parseFloat(document.getElementById('mw-cost').value) || 0;
-      var disposal = document.getElementById('mw-disposal').value;
       var responsible = document.getElementById('mw-responsible').value.trim();
-      var action = document.getElementById('mw-action').value;
       var editIdx = parseInt(document.getElementById('mw-edit-idx').value);
       var normDate = normalizeDateStr(date);
       if (editIdx >= 0 && editIdx < mealWaste.length) {
         var w = mealWaste[editIdx];
-        w.date = normDate; w.meal = meal; w.type = type; w.item = item; w.qty = qty; w.unit = unit;
-        w.reason = reason; w.cost = cost; w.disposal = disposal; w.responsible = responsible; w.action = action;
+        w.date = normDate; w.meal = meal; w.type = type; w.qty = qty; w.unit = unit;
+        w.reason = reason; w.cost = cost; w.responsible = responsible;
         w.modifiedAt = new Date().toISOString();
       } else {
-        mealWaste.push({ date: normDate, meal: meal, type: type, item: item, qty: qty, unit: unit, reason: reason, cost: cost, disposal: disposal, responsible: responsible, action: action, createdAt: new Date().toISOString() });
-        _removeDeletion('mealWaste', normDate + '|' + type + '|' + item + '|' + qty);
+        mealWaste.push({ date: normDate, meal: meal, type: type, qty: qty, unit: unit, reason: reason, cost: cost, responsible: responsible, createdAt: new Date().toISOString() });
+        _removeDeletion('mealWaste', normDate + '|' + type + '|' + qty);
       }
       closeModal('modal-meal-waste');
       cancelMealWasteEdit();
       syncStorage(); renderMealWasteTable(); renderMealWasteStats();
-      logAction('تسجيل', 'هدر', 'تاريخ: ' + normDate + ' | ' + type + ' | ' + item + ' | ' + qty + ' ' + unit);
+      logAction('تسجيل', 'هدر', 'تاريخ: ' + normDate + ' | ' + type + ' | ' + qty + ' ' + unit);
       alert('✅ تم تسجيل الهدر');
     }
     function deleteMealWaste(idx) { if (!requireAdmin()) return;
       if (!confirm('حذف سجل الهدر؟')) return;
       var w = mealWaste[idx];
-      _logDeletion('mealWaste', (w.date||'') + '|' + (w.type||'') + '|' + (w.item||'') + '|' + (w.qty||''));
+      _logDeletion('mealWaste', (w.date||'') + '|' + (w.type||'') + '|' + (w.qty||''));
       mealWaste.splice(idx, 1);
       syncStorage(); renderMealWasteTable(); renderMealWasteStats();
     }
@@ -10296,7 +10283,7 @@ function toggleEmployeeStatus(empId) {
       var tbody = document.getElementById('mw-table-body');
       if (!tbody) return;
       var filtered = getFilteredMealWaste();
-      if (!filtered.length) { tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;color:#999;padding:20px;">لا توجد سجلات هدر</td></tr>'; return; }
+      if (!filtered.length) { tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#999;padding:20px;">لا توجد سجلات هدر</td></tr>'; return; }
       tbody.innerHTML = '';
       filtered.forEach(function(w) {
         var realIdx = mealWaste.indexOf(w);
@@ -10304,11 +10291,9 @@ function toggleEmployeeStatus(empId) {
           '<td>' + toArabicNumerals(w.date) + '</td>' +
           '<td>' + (w.meal||'') + '</td>' +
           '<td>' + (w.type||'') + '</td>' +
-          '<td>' + (w.item||'') + '</td>' +
           '<td>' + (w.qty||'') + ' ' + (w.unit||'') + '</td>' +
           '<td>' + (w.reason||'') + '</td>' +
           '<td>' + ((w.cost||0).toFixed(0)) + ' ج.م</td>' +
-          '<td>' + (w.disposal||'') + '</td>' +
           '<td>' + (w.responsible||'') + '</td>' +
           '<td class="no-print"><button class="btn btn-warning" style="padding:1px 5px;font-size:10px;" onclick="editMealWaste(' + realIdx + ')">✏️</button> <button class="btn btn-danger" style="padding:1px 5px;font-size:10px;" onclick="deleteMealWaste(' + realIdx + ')">🗑️</button></td>' +
         '</tr>';
@@ -10337,7 +10322,7 @@ function toggleEmployeeStatus(empId) {
       if (!mealWaste.length) return alert('لا توجد بيانات');
       var filtered = getFilteredMealWaste();
       if (!filtered.length) return alert('لا توجد بيانات في النطاق المختار');
-      var xlData = filtered.map(function(w) { return { 'التاريخ':w.date, 'الوجبة':w.meal, 'نوع الهدر':w.type, 'الصنف':w.item, 'الكمية':w.qty + ' ' + w.unit, 'السبب':w.reason, 'التكلفة':w.cost, 'التصرف':w.disposal, 'المسؤول':w.responsible, 'الإجراء':w.action||'' }; });
+      var xlData = filtered.map(function(w) { return { 'التاريخ':w.date, 'الوجبة':w.meal, 'نوع الهدر':w.type, 'الكمية':w.qty + ' ' + w.unit, 'السبب':w.reason, 'التكلفة':w.cost, 'المسؤول':w.responsible }; });
       var ws = XLSX.utils.json_to_sheet(xlData); var wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, 'سجل الهدر');
       XLSX.writeFile(wb, 'سجل_الهدر_' + new Date().toISOString().split('T')[0] + '.xlsx');
@@ -13071,7 +13056,7 @@ function toggleEmployeeStatus(empId) {
         excludedEmployees: function(e) { return e.id || e.code || e.name; },
         contractors: function(c) { return c.name || c.id; },
         mealLogs: function(m) { return m.date; },
-        mealWaste: function(w) { return (w.date||'') + '|' + (w.type||'') + '|' + (w.item||'') + '|' + (w.qty||''); },
+        mealWaste: function(w) { return (w.date||'') + '|' + (w.type||'') + '|' + (w.qty||''); },
         inventoryItems: function(i) { return i.id || i.name; },
         hospitalities: function(h) { return (h.name || '') + '|' + (h.arrival || '') + '|' + (h.type || ''); },
         adminOvertime: function(o) { return (o.date || '') + '|' + (o.empCode || o.name || ''); },
@@ -13498,7 +13483,7 @@ function toggleEmployeeStatus(empId) {
         excludedEmployees: function(e) { return e.id || e.code || e.name; },
         contractors: function(c) { return c.name || c.id; },
         mealLogs: function(m) { return m.date; },
-        mealWaste: function(w) { return (w.date||'') + '|' + (w.type||'') + '|' + (w.item||'') + '|' + (w.qty||''); },
+        mealWaste: function(w) { return (w.date||'') + '|' + (w.type||'') + '|' + (w.qty||''); },
         inventoryItems: function(i) { return i.id || i.name; },
         hospitalities: function(h) { return (h.name||'') + '|' + (h.arrival||'') + '|' + (h.type||''); },
         adminOvertime: function(o) { return (o.date||'') + '|' + (o.empCode||o.name||''); },
@@ -13606,7 +13591,7 @@ function toggleEmployeeStatus(empId) {
       dedupBy(septicRecords, function(s) { return (s.date || '') + '|' + (s.name || s.sector || '') + '|' + (s.trips || s.quantity || ''); });
       dedupBy(teaSugarDisbursements, function(t) { return (t.date || '') + '|' + (t.period || t.type || '') + '|' + (t.empCode || t.empId || '') + '|' + (t.teaPacks || t.quantity || '') + '|' + (t.sugarKg || ''); });
       dedupBy(mealLogs, function(m) { return m.date || JSON.stringify(m); });
-      dedupBy(mealWaste, function(w) { return (w.date||'') + '|' + (w.type||'') + '|' + (w.item||'') + '|' + (w.qty||''); });
+      dedupBy(mealWaste, function(w) { return (w.date||'') + '|' + (w.type||'') + '|' + (w.qty||''); });
       dedupBy(bakeryInvoices, function(inv) { return inv.id || inv._id || JSON.stringify(inv); });
       dedupBy(employees, function(e) { return e.code || e.name || JSON.stringify(e); });
       dedupBy(contractors, function(c) { return c.name || c.id || JSON.stringify(c); });
