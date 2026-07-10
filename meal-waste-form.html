@@ -92,6 +92,7 @@ textarea{resize:vertical;min-height:60px}
         <div class="step-num">1</div>
         <div class="step-title">الخامات المستهلكة</div>
       </div>
+      <datalist id="ing-suggestions"></datalist>
       <div id="ings-container"></div>
       <button type="button" class="add-ing-btn" onclick="addIngRow()">➕ إضافة صنف</button>
     </div>
@@ -187,7 +188,15 @@ var HEADERS = { 'apikey': KEY, 'Authorization': 'Bearer ' + KEY, 'Content-Type':
   document.getElementById('mw-date').value = today;
   selectMeal(document.querySelector('.meal-btn[data-meal="غداء"]'));
   addIngRow();
+  updateIngSuggestions();
 })();
+
+function updateIngSuggestions() {
+  var dl = document.getElementById('ing-suggestions');
+  if (!dl) return;
+  var names = JSON.parse(localStorage.getItem('linah_chef_ingredient_names') || '["دقيق","رز","مكرونة","لحم","دجاج","خضار مشكل","بصل","طماطم","ثوم","عدس","فول","بطاطس","سمنة","زيت","بيض","ملح","بهارات","شبت","كزبرة","بقدونس","نعناع","كرات","خس","جزر","خيار","كوسة","باذنجان","فلفل","ليمون","زبادي","جبن","لبن","عسل","سكر","عجين","سمك","جمبري","قلقاس","بامية","ملوخية","سبانخ","كرنب","قرنبيط","بروكلي","فاصوليا","بسلة","ذرة","عيش","توست","مربى","شاي","قهوة"]');
+  dl.innerHTML = names.map(function(n) { return '<option value="' + n.replace(/"/g,'&quot;') + '">'; }).join('');
+}
 
 function selectMeal(btn) {
   document.querySelectorAll('.meal-btn').forEach(function(b) { b.classList.remove('active'); });
@@ -200,13 +209,15 @@ function addIngRow(name, qty, unit) {
   var d = document.createElement('div');
   d.className = 'ing-row';
   d.innerHTML =
-    '<input type="text" class="ing-name" placeholder="الصنف" value="' + (name||'') + '" style="flex:2;padding:8px;border:1px solid #ddd;border-radius:6px;font-size:12px;font-family:Cairo;">' +
+    '<input type="text" class="ing-name" placeholder="الصنف" value="' + (name||'') + '" list="ing-suggestions" style="flex:2;padding:8px;border:1px solid #ddd;border-radius:6px;font-size:12px;font-family:Cairo;">' +
     '<input type="number" class="ing-qty" placeholder="الكمية" min="0" step="0.01" value="' + (qty||'') + '" style="width:65px;padding:8px;border:1px solid #ddd;border-radius:6px;font-size:12px;font-family:Cairo;" oninput="calcWaterAuto()">' +
     '<select class="ing-unit" style="width:65px;padding:8px;border:1px solid #ddd;border-radius:6px;font-size:12px;font-family:Cairo;">' +
     '<option value="كجم"' + (unit==='كجم'?' selected':'') + '>كجم</option>' +
     '<option value="لتر"' + (unit==='لتر'?' selected':'') + '>لتر</option>' +
     '<option value="جرام"' + (unit==='جرام'?' selected':'') + '>جرام</option>' +
     '<option value="عدد"' + (unit==='عدد'?' selected':'') + '>عدد</option>' +
+    '<option value="طبق"' + (unit==='طبق'?' selected':'') + '>طبق</option>' +
+    '<option value="ربطة"' + (unit==='ربطة'?' selected':'') + '>ربطة</option>' +
     '</select>' +
     '<button type="button" class="remove-ing" onclick="this.parentElement.remove();calcWaterAuto();">✕</button>';
   c.appendChild(d);
@@ -270,6 +281,10 @@ function submitWaste() {
   if (!chef) { alert('⚠️ أدخل اسم الشيف'); return; }
   var ingredients = getIngredients();
   if (!ingredients.length) { alert('⚠️ أضف على الأقل صنف واحد من الخامات'); return; }
+  // حفظ أسماء الخامات للاقتراحات المستقبلية
+  var knownNames = JSON.parse(localStorage.getItem('linah_chef_ingredient_names') || '[]');
+  ingredients.forEach(function(i) { if (i.name && knownNames.indexOf(i.name) === -1) knownNames.push(i.name); });
+  localStorage.setItem('linah_chef_ingredient_names', JSON.stringify(knownNames));
   var totalPrepared = parseFloat(document.getElementById('mw-total-prepared').value) || 0;
   if (totalPrepared <= 0) { alert('⚠️ أدخل الوزن المُعد'); return; }
   var wasteEng = parseFloat(document.getElementById('mw-waste-eng').value) || 0;

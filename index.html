@@ -2678,7 +2678,7 @@
       </div>
       <div class="table-container">
         <table>
-           <thead><tr><th>التاريخ</th><th>الوجبة</th><th>الشيف</th><th>الخامات</th><th>المُعد (كجم)</th><th>هدر مهندسين (كجم)</th><th>هدر عمال (كجم)</th><th>الإجمالي (كجم)</th><th>%</th><th>السبب</th><th>التكلفة</th><th style="width:80px;">إجراءات</th></tr></thead>
+           <thead><tr><th>التاريخ</th><th>الوجبة</th><th>الشيف</th><th>الخامات</th><th>المُعد (كجم)</th><th>هدر مهندسين (كجم)</th><th>هدر عمال (كجم)</th><th>الإجمالي (كجم)</th><th>%</th><th>التكلفة</th><th style="width:80px;">إجراءات</th></tr></thead>
           <tbody id="mw-table-body"></tbody>
         </table>
       </div>
@@ -2696,12 +2696,13 @@
 
         <div style="grid-column:1/-1;border:1px solid #ffcdd2;border-radius:8px;padding:10px;background:#fff8f8;">
           <label style="font-weight:700;color:#c62828;font-size:13px;">🥘 الخامات المستهلكة للوجبة</label>
+          <datalist id="mw-ing-suggestions"></datalist>
           <div id="mw-ingredients-container">
             <div class="mw-ing-row" style="display:flex;gap:6px;margin-top:6px;align-items:center;">
-              <input type="text" class="mw-ing-name" placeholder="الصنف" style="flex:2;padding:4px 6px;border:1px solid #ddd;border-radius:4px;font-size:12px;">
+              <input type="text" class="mw-ing-name" placeholder="الصنف" list="mw-ing-suggestions" style="flex:2;padding:4px 6px;border:1px solid #ddd;border-radius:4px;font-size:12px;">
               <input type="number" class="mw-ing-qty" placeholder="الكمية" min="0" step="0.01" style="width:70px;padding:4px 6px;border:1px solid #ddd;border-radius:4px;font-size:12px;">
               <select class="mw-ing-unit" style="width:70px;padding:4px;border:1px solid #ddd;border-radius:4px;font-size:12px;">
-                <option value="كجم">كجم</option><option value="لتر">لتر</option><option value="جرام">جرام</option><option value="عدد">عدد</option>
+                <option value="كجم">كجم</option><option value="لتر">لتر</option><option value="جرام">جرام</option><option value="عدد">عدد</option><option value="طبق">طبق</option><option value="ربطة">ربطة</option>
               </select>
               <button type="button" class="btn btn-danger" style="padding:2px 6px;font-size:10px;" onclick="this.closest('.mw-ing-row').remove()">✕</button>
             </div>
@@ -2735,8 +2736,9 @@
               <span id="mw-pct-total" style="font-weight:700;color:#2e7d32;font-size:18px;">—</span>
             </div>
           </div>
-          <div style="display:grid;grid-template-columns:1fr;gap:8px;margin-top:6px;">
-            <div class="form-group"><label>السبب</label><select id="mw-reason"><option value="زيادة كمية">زيادة كمية</option><option value="خطأ طبخ">خطأ في الطبخ</option><option value="تلف">تلف/فساد</option><option value="سوء تخزين">سوء تخزين</option><option value="تقدير خاطئ">تقدير خاطئ للكمية</option></select></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px;">
+            <div class="form-group"><label>التكلفة التقريبية (ج.م)</label><input type="number" id="mw-cost" min="0" step="0.01"></div>
+            <div class="form-group"><label>المسؤول</label><input type="text" id="mw-responsible"></div>
           </div>
         </div>
 
@@ -10213,6 +10215,17 @@ function toggleEmployeeStatus(empId) {
 
     /* ===== Meal Waste Module ===== */
     var _mwChart = null;
+    function updateIngredientSuggestions() {
+      var datalist = document.getElementById('mw-ing-suggestions');
+      if (!datalist) return;
+      var names = {};
+      mealWaste.forEach(function(w) {
+        (w.ingredients||[]).forEach(function(i) { if (i.name && i.name.trim()) names[i.name.trim()] = true; });
+      });
+      var allNames = Object.keys(names).sort();
+      if (!allNames.length) { allNames = ['دقيق','رز','مكرونة','لحم','دجاج','خضار مشكل','بصل','طماطم','ثوم','عدس','فول','بطاطس','سمنة','زيت','بيض', 'ملح','بهارات']; }
+      datalist.innerHTML = allNames.map(function(n) { return '<option value="' + n.replace(/"/g,'&quot;') + '">'; }).join('');
+    }
     function addIngredientRow(name, qty, unit) {
       var c = document.getElementById('mw-ingredients-container');
       if (!c) return;
@@ -10220,13 +10233,15 @@ function toggleEmployeeStatus(empId) {
       d.className = 'mw-ing-row';
       d.style.cssText = 'display:flex;gap:6px;margin-top:6px;align-items:center;';
       d.innerHTML =
-        '<input type="text" class="mw-ing-name" placeholder="الصنف" value="' + (name||'') + '" style="flex:2;padding:4px 6px;border:1px solid #ddd;border-radius:4px;font-size:12px;">' +
+        '<input type="text" class="mw-ing-name" placeholder="الصنف" value="' + (name||'') + '" list="mw-ing-suggestions" style="flex:2;padding:4px 6px;border:1px solid #ddd;border-radius:4px;font-size:12px;" oninput="updateIngredientSuggestions()">' +
         '<input type="number" class="mw-ing-qty" placeholder="الكمية" min="0" step="0.01" value="' + (qty||'') + '" style="width:70px;padding:4px 6px;border:1px solid #ddd;border-radius:4px;font-size:12px;" oninput="calcAutoWater()">' +
         '<select class="mw-ing-unit" style="width:70px;padding:4px;border:1px solid #ddd;border-radius:4px;font-size:12px;">' +
           '<option value="كجم"' + (unit==='كجم'?' selected':'') + '>كجم</option>' +
           '<option value="لتر"' + (unit==='لتر'?' selected':'') + '>لتر</option>' +
           '<option value="جرام"' + (unit==='جرام'?' selected':'') + '>جرام</option>' +
           '<option value="عدد"' + (unit==='عدد'?' selected':'') + '>عدد</option>' +
+          '<option value="طبق"' + (unit==='طبق'?' selected':'') + '>طبق</option>' +
+          '<option value="ربطة"' + (unit==='ربطة'?' selected':'') + '>ربطة</option>' +
         '</select>' +
         '<button type="button" class="btn btn-danger" style="padding:2px 6px;font-size:10px;" onclick="this.closest(\'.mw-ing-row\').remove()">✕</button>';
       c.appendChild(d);
@@ -10286,7 +10301,6 @@ function toggleEmployeeStatus(empId) {
         document.getElementById('mw-total-prepared').value = w.totalPrepared || 0;
         document.getElementById('mw-waste-eng').value = w.wasteEng || 0;
         document.getElementById('mw-waste-wrk').value = w.wasteWrk || 0;
-        document.getElementById('mw-reason').value = w.reason || 'زيادة كمية';
         document.getElementById('mw-cost').value = w.cost || 0;
         document.getElementById('mw-responsible').value = w.responsible || '';
         document.getElementById('mw-eng-count').value = w.engCount || 0;
@@ -10310,7 +10324,6 @@ function toggleEmployeeStatus(empId) {
         document.getElementById('mw-total-prepared').value = '';
       document.getElementById('mw-waste-eng').value = '';
       document.getElementById('mw-waste-wrk').value = '';
-      document.getElementById('mw-reason').value = 'زيادة كمية';
       document.getElementById('mw-cost').value = '';
       document.getElementById('mw-responsible').value = '';
       document.getElementById('mw-eng-count').value = '';
@@ -10333,7 +10346,6 @@ function toggleEmployeeStatus(empId) {
       var wasteEng = parseFloat(document.getElementById('mw-waste-eng').value) || 0;
       var wasteWrk = parseFloat(document.getElementById('mw-waste-wrk').value) || 0;
       if (wasteEng === 0 && wasteWrk === 0) return alert('⚠️ أدخل كمية الهدر في أحد المطعمين على الأقل.');
-      var reason = document.getElementById('mw-reason').value;
       var cost = parseFloat(document.getElementById('mw-cost').value) || 0;
       var responsible = document.getElementById('mw-responsible').value.trim();
       var engCount = parseFloat(document.getElementById('mw-eng-count').value) || 0;
@@ -10345,11 +10357,11 @@ function toggleEmployeeStatus(empId) {
         var w = mealWaste[editIdx];
         w.date = normDate; w.meal = meal; w.chef = chef; w.ingredients = ingredients;
         w.totalPrepared = totalPrepared; w.wasteEng = wasteEng; w.wasteWrk = wasteWrk;
-        w.reason = reason; w.cost = cost; w.responsible = responsible;
+        w.cost = cost; w.responsible = responsible;
         w.engCount = engCount; w.wrkCount = wrkCount; w.waterAdded = waterAdded;
         w.modifiedAt = new Date().toISOString();
       } else {
-        mealWaste.push({ date: normDate, meal: meal, chef: chef, ingredients: ingredients, totalPrepared: totalPrepared, wasteEng: wasteEng, wasteWrk: wasteWrk, reason: reason, cost: cost, responsible: responsible, engCount: engCount, wrkCount: wrkCount, waterAdded: waterAdded, createdAt: new Date().toISOString() });
+        mealWaste.push({ date: normDate, meal: meal, chef: chef, ingredients: ingredients, totalPrepared: totalPrepared, wasteEng: wasteEng, wasteWrk: wasteWrk, cost: cost, responsible: responsible, engCount: engCount, wrkCount: wrkCount, waterAdded: waterAdded, createdAt: new Date().toISOString() });
         _removeDeletion('mealWaste', normDate + '|' + meal);
       }
       closeModal('modal-meal-waste');
@@ -12990,6 +13002,7 @@ function toggleEmployeeStatus(empId) {
       currentUser = localStorage.getItem('lineh_current_user') || currentUser;
       syncDeletions = _safeJsonParse(localStorage.getItem('lineh_sync_deletions'), []);
       _applyDeletions();
+      updateIngredientSuggestions();
       // Auto-populate bakery contractors list from existing supplies
       bakeryContractorSupplies.forEach(function(c) { if (c.name && bakeryContractorsNames.indexOf(c.name) === -1) { bakeryContractorsNames.push(c.name); } });
 
