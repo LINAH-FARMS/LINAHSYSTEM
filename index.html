@@ -2712,6 +2712,10 @@
           <button type="button" class="btn btn-secondary" onclick="addIngredientRow()" style="padding:3px 10px;font-size:11px;margin-top:6px;">➕ إضافة صنف</button>
           <button type="button" class="btn btn-info" onclick="openIngredientMasterModal()" style="padding:3px 10px;font-size:11px;margin-top:6px;margin-right:4px;">📦 إدارة الخامات</button>
           <div class="form-group" style="margin-top:8px;"><label style="font-size:12px;color:#c62828;">🌊 الماء المضاف للطبيخ (كجم)</label><input type="number" id="mw-water" min="0" step="0.1" style="border-color:#ffcdd2;" oninput="updateWasteCalc()"></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:6px;">
+            <div class="form-group"><label style="font-size:11px;color:#555;">🔥 تكلفة الغاز (ج.م)</label><input type="number" id="mw-gas-cost" min="0" step="1" value="1650" style="font-size:12px;" oninput="updateWasteCalc()"></div>
+            <div class="form-group"><label style="font-size:11px;color:#555;">👨‍💼 تكلفة الرواتب (ج.م)</label><input type="number" id="mw-salary-cost" min="0" step="1" value="8333" style="font-size:12px;" oninput="updateWasteCalc()"></div>
+          </div>
         </div>
 
         <div style="grid-column:1/-1;border:1px solid #ffcdd2;border-radius:8px;padding:10px;background:#fff8f8;">
@@ -10324,7 +10328,10 @@ function toggleEmployeeStatus(empId) {
         var p = parseFloat(r.querySelector('.mw-ing-price').value) || 0;
         totalCost += q * p;
       });
-      document.getElementById('mw-cost').value = totalCost > 0 ? totalCost.toFixed(0) : '';
+      var gasCost = parseFloat(document.getElementById('mw-gas-cost').value) || 0;
+      var salaryCost = parseFloat(document.getElementById('mw-salary-cost').value) || 0;
+      var operatingCost = totalCost + gasCost + salaryCost;
+      document.getElementById('mw-cost').value = operatingCost > 0 ? operatingCost.toFixed(0) : '';
     }
     function openMealWasteModal(editIdx) {
       if (editIdx !== undefined && editIdx >= 0) {
@@ -10349,6 +10356,8 @@ function toggleEmployeeStatus(empId) {
         document.getElementById('mw-guests').value = w.guests || 0;
         document.getElementById('mw-waste-guests').value = w.wasteGuests || 0;
         document.getElementById('mw-water').value = w.waterAdded || 0;
+        document.getElementById('mw-gas-cost').value = w.gasCost || 1650;
+        document.getElementById('mw-salary-cost').value = w.salaryCost || 8333;
         setTimeout(updateWasteCalc, 50);
       } else {
         cancelMealWasteEdit();
@@ -10375,6 +10384,8 @@ function toggleEmployeeStatus(empId) {
       document.getElementById('mw-guests').value = '';
       document.getElementById('mw-waste-guests').value = '';
       document.getElementById('mw-water').value = '';
+      document.getElementById('mw-gas-cost').value = '1650';
+      document.getElementById('mw-salary-cost').value = '8333';
       document.getElementById('mw-eng-total-display').textContent = '0';
       document.getElementById('mw-wrk-total-display').textContent = '0';
       document.getElementById('mw-avg-eng').textContent = '—';
@@ -10403,6 +10414,8 @@ function toggleEmployeeStatus(empId) {
       var guests = parseFloat(document.getElementById('mw-guests').value) || 0;
       var wasteGuests = parseFloat(document.getElementById('mw-waste-guests').value) || 0;
       var waterAdded = parseFloat(document.getElementById('mw-water').value) || 0;
+      var gasCost = parseFloat(document.getElementById('mw-gas-cost').value) || 0;
+      var salaryCost = parseFloat(document.getElementById('mw-salary-cost').value) || 0;
       var editIdx = parseInt(document.getElementById('mw-edit-idx').value);
       var normDate = normalizeDateStr(date);
       if (editIdx >= 0 && editIdx < mealWaste.length) {
@@ -10410,10 +10423,10 @@ function toggleEmployeeStatus(empId) {
         w.date = normDate; w.meal = meal; w.chef = chef; w.ingredients = ingredients;
         w.totalPrepared = totalPrepared; w.wasteEng = wasteEng; w.wasteWrk = wasteWrk;
         w.cost = cost; w.responsible = responsible;
-        w.engAte = engAte; w.engTakeaway = engTakeaway; w.wrkAte = wrkAte; w.wrkTakeaway = wrkTakeaway; w.guests = guests; w.wasteGuests = wasteGuests; w.waterAdded = waterAdded;
+        w.engAte = engAte; w.engTakeaway = engTakeaway; w.wrkAte = wrkAte; w.wrkTakeaway = wrkTakeaway; w.guests = guests; w.wasteGuests = wasteGuests; w.waterAdded = waterAdded; w.gasCost = gasCost; w.salaryCost = salaryCost;
         w.modifiedAt = new Date().toISOString();
       } else {
-        mealWaste.push({ date: normDate, meal: meal, chef: chef, ingredients: ingredients, totalPrepared: totalPrepared, wasteEng: wasteEng, wasteWrk: wasteWrk, cost: cost, responsible: responsible, engAte: engAte, engTakeaway: engTakeaway, wrkAte: wrkAte, wrkTakeaway: wrkTakeaway, guests: guests, wasteGuests: wasteGuests, waterAdded: waterAdded, createdAt: new Date().toISOString() });
+        mealWaste.push({ date: normDate, meal: meal, chef: chef, ingredients: ingredients, totalPrepared: totalPrepared, wasteEng: wasteEng, wasteWrk: wasteWrk, cost: cost, responsible: responsible, engAte: engAte, engTakeaway: engTakeaway, wrkAte: wrkAte, wrkTakeaway: wrkTakeaway, guests: guests, wasteGuests: wasteGuests, waterAdded: waterAdded, gasCost: gasCost, salaryCost: salaryCost, createdAt: new Date().toISOString() });
         _removeDeletion('mealWaste', normDate + '|' + meal);
       }
       closeModal('modal-meal-waste');
@@ -10599,7 +10612,7 @@ function toggleEmployeeStatus(empId) {
           'بالمطعم مهندسين':w.engAte||0, 'تيك أواي مهندسين':w.engTakeaway||0, 'بالمطعم عمال':w.wrkAte||0, 'تيك أواي عمال':w.wrkTakeaway||0, 'ضيوف':w.guests||0,
           'هدر/فرد مهندسين (جم)':avgEng, 'هدر/فرد عمال (جم)':avgWrk,
           'الماء المضاف (كجم)':w.waterAdded||0, 'نسبة الهدر':(w.totalPrepared>0?(((w.wasteEng||0)+(w.wasteWrk||0))/w.totalPrepared*100).toFixed(1):0)+'%',
-          'التكلفة':w.cost, 'المسؤول':w.responsible };
+          'تكلفة الغاز':w.gasCost||0, 'تكلفة الرواتب':w.salaryCost||0, 'إجمالي التكلفة':w.cost, 'المسؤول':w.responsible };
       });
       var ws = XLSX.utils.json_to_sheet(xlData); var wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, 'سجل الهدر');
