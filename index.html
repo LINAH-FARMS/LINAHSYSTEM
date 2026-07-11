@@ -13971,6 +13971,8 @@ function toggleEmployeeStatus(empId) {
             var merged = _smartMerge(localVal, remoteVal, function(item) { return _getItemKey(item, keys[i]); }, keys[i]);
             setEntityVar(keys[i], merged);
           }
+        } else if (Array.isArray(remoteVal) && remoteVal.length === 0 && localVal && Array.isArray(localVal) && localVal.length > 0) {
+          // لا تستبدل array محلية مليانة بـ array فاضية من السحابة
         } else {
           setEntityVar(keys[i], remoteVal);
         }
