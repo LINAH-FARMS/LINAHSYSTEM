@@ -15,7 +15,7 @@ def fetch():
 
 def last_saturday():
     today = datetime.now()
-    return today - timedelta(days=(today.weekday() + 1) % 7 + 1)
+    return today - timedelta(days=(today.weekday() - 5) % 7)
 
 def fmt(d):
     return d.strftime('%Y-%m-%d')
@@ -78,6 +78,7 @@ maint = [m for m in data.get('maintenanceRecords', []) if m.get('date','') >= fm
 septic = [s for s in data.get('septicRecords', []) if s.get('date','') >= fmt(sun) and s.get('date','') <= fmt(sat)]
 incidents = [i for i in data.get('incident_reports', []) if i.get('date','')[:10] >= fmt(sun) and i.get('date','')[:10] <= fmt(sat)]
 tea_sugar = [t for t in data.get('teaSugarDisbursements', []) if t.get('date','') >= fmt(sun) and t.get('date','') <= fmt(sat)]
+ts_batches = [b for b in data.get('teaSugarBatches', []) if b.get('date','') >= fmt(sun) and b.get('date','') <= fmt(sat)]
 
 today_str = datetime.now().strftime('%Y-%m-%d')
 filename = f'C:\\Users\\Salem Magdy\\Desktop\\Lina_Weekly_{today_str}.xlsx'
@@ -96,7 +97,7 @@ style_sheet(ws, ['Item', 'Count'], [
     ['Hospitality', len(hosp)], ['Bakery Production', len(prods)],
     ['Contractor Supply', len(ctr_sup)], ['Meals', len(meals)],
     ['Maintenance', len(maint)], ['Septic', len(septic)],
-    ['Incidents', len(incidents)], ['Tea & Sugar', len(tea_sugar)]
+    ['Incidents', len(incidents)],     ['Tea & Sugar (Batches)', len(ts_batches)], ['Tea & Sugar (Disbursed)', len(tea_sugar)]
 ], [25, 12], title=f'Weekly Report {fmt(sun)} to {fmt(sat)}')
 
 if prods:
@@ -165,6 +166,13 @@ if tea_sugar:
         [t.get('date',''), t.get('empCode',t.get('name','')), t.get('teaPacks',0), t.get('sugarKg',0), t.get('period',t.get('type',''))]
         for t in sorted(tea_sugar, key=lambda x: x.get('date',''))
     ], [14,20,10,10,12], title='Tea & Sugar')
+
+if ts_batches:
+    ws10 = wb.create_sheet('TeaSugarBatches')
+    style_sheet(ws10, ['Date', 'Period', 'Tea Qty', 'Sugar Qty'], [
+        [b.get('date',''), b.get('period',''), b.get('teaQty',0), b.get('sugarQty',0)]
+        for b in sorted(ts_batches, key=lambda x: x.get('date',''))
+    ], [14,20,10,10], title='Tea Sugar Batches (الدورات)')
 
 wb.save(filename)
 print(f'[تم] {filename}')
