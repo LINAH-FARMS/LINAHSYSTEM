@@ -13540,19 +13540,16 @@ function toggleEmployeeStatus(empId) {
             mergedData[row.id] = typeof row.data === 'string' ? JSON.parse(row.data) : row.data;
             foundOldFormat = true;
           }
-          // Pass 2: alldata (lowest priority — only fills keys not set by bare entities)
+          // Pass 2: alldata (overwrites bare entities — skip syncDeletions)
           for (var ri = 0; ri < rows.length; ri++) {
             var row = rows[ri];
             if (!row.id || !row.data || row.id !== 'alldata') continue;
             foundOldFormat = true;
-            var oldData = typeof row.data === 'string' ? JSON.parse(row.data) : row.data;
-            if (oldData && typeof oldData === 'object') {
-              var oldKeys = Object.keys(oldData);
-              for (var oi = 0; oi < oldKeys.length; oi++) {
-                if (oldKeys[oi] === 'syncDeletions') continue; // تجاهل syncDeletions من alldata
-                if (!mergedData.hasOwnProperty(oldKeys[oi])) {
-                  mergedData[oldKeys[oi]] = oldData[oldKeys[oi]];
-                }
+            var _ad = typeof row.data === 'string' ? JSON.parse(row.data) : row.data;
+            if (_ad && typeof _ad === 'object') {
+              var _aks = Object.keys(_ad);
+              for (var _ai = 0; _ai < _aks.length; _ai++) {
+                if (_aks[_ai] !== 'syncDeletions') mergedData[_aks[_ai]] = _ad[_aks[_ai]];
               }
             }
           }
