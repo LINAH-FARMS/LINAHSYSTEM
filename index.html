@@ -13929,6 +13929,18 @@ function toggleEmployeeStatus(empId) {
         if (filtered.length !== arr.length) setEntityVar(del.entity, filtered);
       });
     }
+    function _simpleUnion(remote, local, keyFn) {
+      if (!remote || !remote.length) return local || [];
+      if (!local || !local.length) return remote;
+      var result = remote.slice();
+      var remoteKeys = {};
+      remote.forEach(function(item) { remoteKeys[keyFn(item)] = true; });
+      local.forEach(function(item) {
+        var k = keyFn(item);
+        if (!remoteKeys[k]) { result.push(item); remoteKeys[k] = true; }
+      });
+      return result;
+    }
     function applyRemoteData(d) {
       if (!d) return;
       if (typeof d === 'string') { try { d = JSON.parse(d); } catch(e) { return; } }
@@ -13961,7 +13973,7 @@ function toggleEmployeeStatus(empId) {
             });
             setEntityVar(keys[i], localVal);
           } else {
-            var merged = _smartMerge(localVal, remoteVal, function(item) { return _getItemKey(item, keys[i]); }, keys[i]);
+            var merged = _simpleUnion(remoteVal, localVal, function(item) { return _getItemKey(item, keys[i]); });
             setEntityVar(keys[i], merged);
           }
         } else if (Array.isArray(remoteVal) && remoteVal.length === 0 && localVal && Array.isArray(localVal) && localVal.length > 0) {
