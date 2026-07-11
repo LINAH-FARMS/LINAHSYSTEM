@@ -13,9 +13,12 @@ def fetch():
     raw = r.json()[0]['data']
     return json.loads(raw) if isinstance(raw, str) else raw
 
-def last_saturday():
+def last_completed_friday():
     today = datetime.now()
-    return today - timedelta(days=(today.weekday() - 5) % 7)
+    days_since_friday = (today.weekday() - 4) % 7
+    if days_since_friday == 0:
+        days_since_friday = 7
+    return today - timedelta(days=days_since_friday)
 
 def fmt(d):
     return d.strftime('%Y-%m-%d')
@@ -64,21 +67,22 @@ def filt(arr, entity):
 for ent in ['employees','hospitalities','maintenanceRecords','bakeryProductions','bakeryContractorSupplies','septicRecords','teaSugarDisbursements']:
     if data.get(ent): data[ent] = filt(data[ent], ent)
 
-sun, sat = last_saturday(), last_saturday() + timedelta(days=6)
-print(f'[الفترة] {fmt(sun)} إلى {fmt(sat)}')
+end = last_completed_friday()
+start = end - timedelta(days=6)
+print(f'[الفترة] {fmt(start)} إلى {fmt(end)}')
 
 emps = data.get('employees', [])
 p_count = sum(1 for e in emps if e.get('status') == 'P')
 v_count = sum(1 for e in emps if e.get('status') == 'V')
-hosp = [h for h in data.get('hospitalities', []) if h.get('arrival','')[:10] >= fmt(sun) and h.get('arrival','')[:10] <= fmt(sat)]
-prods = [p for p in data.get('bakeryProductions', []) if p.get('date','') >= fmt(sun) and p.get('date','') <= fmt(sat)]
-ctr_sup = [c for c in data.get('bakeryContractorSupplies', []) if c.get('date','') >= fmt(sun) and c.get('date','') <= fmt(sat)]
-meals = [m for m in data.get('mealLogs', []) if m.get('date','') >= fmt(sun) and m.get('date','') <= fmt(sat)]
-maint = [m for m in data.get('maintenanceRecords', []) if m.get('date','') >= fmt(sun) and m.get('date','') <= fmt(sat)]
-septic = [s for s in data.get('septicRecords', []) if s.get('date','') >= fmt(sun) and s.get('date','') <= fmt(sat)]
-incidents = [i for i in data.get('incident_reports', []) if i.get('date','')[:10] >= fmt(sun) and i.get('date','')[:10] <= fmt(sat)]
-tea_sugar = [t for t in data.get('teaSugarDisbursements', []) if t.get('date','') >= fmt(sun) and t.get('date','') <= fmt(sat)]
-ts_batches = [b for b in data.get('teaSugarBatches', []) if b.get('date','') >= fmt(sun) and b.get('date','') <= fmt(sat)]
+hosp = [h for h in data.get('hospitalities', []) if h.get('arrival','')[:10] >= fmt(start) and h.get('arrival','')[:10] <= fmt(end)]
+prods = [p for p in data.get('bakeryProductions', []) if p.get('date','') >= fmt(start) and p.get('date','') <= fmt(end)]
+ctr_sup = [c for c in data.get('bakeryContractorSupplies', []) if c.get('date','') >= fmt(start) and c.get('date','') <= fmt(end)]
+meals = [m for m in data.get('mealLogs', []) if m.get('date','') >= fmt(start) and m.get('date','') <= fmt(end)]
+maint = [m for m in data.get('maintenanceRecords', []) if m.get('date','') >= fmt(start) and m.get('date','') <= fmt(end)]
+septic = [s for s in data.get('septicRecords', []) if s.get('date','') >= fmt(start) and s.get('date','') <= fmt(end)]
+incidents = [i for i in data.get('incident_reports', []) if i.get('date','')[:10] >= fmt(start) and i.get('date','')[:10] <= fmt(end)]
+tea_sugar = [t for t in data.get('teaSugarDisbursements', []) if t.get('date','') >= fmt(start) and t.get('date','') <= fmt(end)]
+ts_batches = [b for b in data.get('teaSugarBatches', []) if b.get('date','') >= fmt(start) and b.get('date','') <= fmt(end)]
 
 today_str = datetime.now().strftime('%Y-%m-%d')
 filename = f'C:\\Users\\Salem Magdy\\Desktop\\Lina_Weekly_{today_str}.xlsx'
@@ -97,8 +101,8 @@ style_sheet(ws, ['Item', 'Count'], [
     ['Hospitality', len(hosp)], ['Bakery Production', len(prods)],
     ['Contractor Supply', len(ctr_sup)], ['Meals', len(meals)],
     ['Maintenance', len(maint)], ['Septic', len(septic)],
-    ['Incidents', len(incidents)],     ['Tea & Sugar (Batches)', len(ts_batches)], ['Tea & Sugar (Disbursed)', len(tea_sugar)]
-], [25, 12], title=f'Weekly Report {fmt(sun)} to {fmt(sat)}')
+    ['Incidents', len(incidents)], ['Tea & Sugar (Batches)', len(ts_batches)], ['Tea & Sugar (Disbursed)', len(tea_sugar)]
+], [25, 12], title=f'Weekly Report {fmt(start)} to {fmt(end)}')
 
 if prods:
     ws2 = wb.create_sheet('Bakery')
