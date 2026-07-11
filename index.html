@@ -13527,6 +13527,7 @@ function toggleEmployeeStatus(empId) {
         if (!resp.ok) { syncLog('⚠️ فشل السحب كود ' + resp.status); return; }
         var rows = await resp.json();
         if (rows && rows.length > 0) {
+          syncLog('📋 وجد ' + rows.length + ' rows: ' + rows.map(function(r){return r.id;}).join(', '));
           var mergedData = {};
           var entityCount = 0;
           var foundOldFormat = false;
