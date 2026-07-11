@@ -13531,35 +13531,29 @@ function toggleEmployeeStatus(empId) {
         console.log('[pull] rows found:', rows ? rows.length : 0, rows ? rows.map(function(r){return r.id;}) : []);
         if (rows && rows.length > 0) {
           var mergedData = {};
-          // 1) alldata كأساسي (فيها كل حاجة من كل الأجهزة)
+          var _entityUpdates = {};
+          // 1) alldata كأساسي
           for (var ri = 0; ri < rows.length; ri++) {
             var row = rows[ri]; if (!row.id || !row.data || row.id !== 'alldata') continue;
             var _ad = typeof row.data === 'string' ? JSON.parse(row.data) : row.data;
             if (_ad && typeof _ad === 'object') { for (var _aki in _ad) { if (_aki === 'syncDeletions') continue; mergedData[_aki] = _ad[_aki]; } }
           }
-          // 2) entity_* يدوس على alldata (الأحدث)
+          // 2) entity_* يدوس على alldata بس لو أحدث
           for (var ri = 0; ri < rows.length; ri++) {
             var row = rows[ri]; if (!row.id || !row.data || !row.id.startsWith('entity_')) continue;
-            mergedData[row.id.substring(7)] = typeof row.data === 'string' ? JSON.parse(row.data) : row.data;
+            var name = row.id.substring(7);
+            if (name.indexOf('data_') === 0 || name.indexOf('presence_') === 0) continue;
+            var remoteData = typeof row.data === 'string' ? JSON.parse(row.data) : row.data;
+            var existing = mergedData[name];
+            if (Array.isArray(remoteData) && Array.isArray(existing)) {
+              mergedData[name] = remoteData.length >= existing.length ? remoteData : existing;
+            } else {
+              mergedData[name] = remoteData;
+            }
           }
-          // 3) للـ mealLogs: حدد الأكبر واستخدمه مباشرة
-          var _alldataMeals = null, _entityMeals = null;
-          for (var ri = 0; ri < rows.length; ri++) {
-            var row = rows[ri]; if (!row.data) continue;
-            var d = typeof row.data === 'string' ? JSON.parse(row.data) : row.data;
-            if (row.id === 'alldata' && d && d.mealLogs && Array.isArray(d.mealLogs)) _alldataMeals = d.mealLogs;
-            if (row.id === 'entity_mealLogs' && Array.isArray(d)) _entityMeals = d;
-          }
-          if (_alldataMeals || _entityMeals) {
-            var _bestMeals = (_alldataMeals && _entityMeals) ? (_alldataMeals.length >= _entityMeals.length ? _alldataMeals : _entityMeals) : (_alldataMeals || _entityMeals);
-            mealLogs = _bestMeals;
-            syncDeletions = [];
-            localStorage.removeItem('lineh_sync_deletions');
-            delete mergedData.mealLogs;
-          }
+          syncDeletions = [];
+          localStorage.removeItem('lineh_sync_deletions');
           if (Object.keys(mergedData).length > 0) {
-            syncDeletions = [];
-            localStorage.removeItem('lineh_sync_deletions');
             applyRemoteData(mergedData);
           }
           syncLog('📦 تم استلام ' + Object.keys(mergedData).length + ' entities من Supabase');
