@@ -13523,7 +13523,7 @@ function toggleEmployeeStatus(empId) {
     async function pullFromSupabase() {
       if (!supabaseConnected) return;
       try {
-        var resp = await fetch(_sbEndpoint + '?select=id,data,updated_at', { method: 'GET', headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } });
+        var resp = await fetch(_sbEndpoint + '?select=id,data,updated_at', { method: 'GET', headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Range': '0-*' } });
         if (!resp.ok) { syncLog('⚠️ فشل السحب كود ' + resp.status); return; }
         var rows = await resp.json();
         if (rows && rows.length > 0) {
@@ -13595,7 +13595,7 @@ function toggleEmployeeStatus(empId) {
     async function _migrateToAlldata() {
       try {
         var entityKeys = ['employees','roomsCapacity','vacations','inventoryVouchers','excludedEmployees','contractors','mealLogs','mealWaste','inventoryItems','hospitalities','adminOvertime','maintenanceRecords','septicRecords','periodicMaintenance','teaSugarDisbursements','teaSugarBatches','dynamicSectors','contractorSectors','contractorRooms','dynamicRooms','dynamicSeptics','dynamicDepts','dynamicTitles','evaluations','evalTemplates','appUsers','auditLog','bakeryIngredients','bakeryProductions','bakeryContractorSupplies','bakeryInvoices','bakeryStockLog','roomAssets','archiveData','quickActions','deptTitles','manualTotalBeds','dailyStats','finTransactions','finBudgets','syncDeletions'];
-        var resp = await fetch(_sbEndpoint + '?select=id,data,updated_at', { method: 'GET', headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } });
+        var resp = await fetch(_sbEndpoint + '?select=id,data,updated_at', { method: 'GET', headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Range': '0-*' } });
         if (!resp.ok) return;
         var rows = await resp.json();
         var merged = {};
