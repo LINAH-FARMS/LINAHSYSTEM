@@ -3260,7 +3260,7 @@
         <thead>
           <tr>
             <th style="width:40px;">#</th>
-            <th>اسم العامل</th>
+            <th>اسم المُبلِّغ</th>
             <th>رقم الموبايل</th>
             <th>نوع العطل</th>
             <th>وصف العطل</th>
@@ -4955,13 +4955,13 @@
           if (!exists) reports.push(lr);
         });
 
-        _reportsHeaders = ['رقم التليفون', 'اسم العامل', 'كود العامل', 'القسم', 'نوع العطل', 'وصف العطل', 'الموقع', 'الأولوية', 'الحالة', 'تاريخ الابلاغ', 'وقت الاغلاق'];
+        _reportsHeaders = ['رقم التليفون', 'اسم المُبلِّغ', 'الكود الوظيفي', 'القسم', 'نوع العطل', 'وصف العطل', 'الموقع', 'الأولوية', 'الحالة', 'تاريخ الابلاغ', 'وقت الاغلاق'];
         _reportsData = reports.map(function(r) {
           return {
             _row: r.id || Date.now(),
             'رقم التليفون': r.phone || '',
-            'اسم العامل': r.name || '',
-            'كود العامل': r.code || '',
+            'اسم المُبلِّغ': r.name || '',
+            'الكود الوظيفي': r.code || '',
             'القسم': r.dept || '',
             'نوع العطل': r.type || '',
             'وصف العطل': r.desc || r.description || '',
@@ -4977,13 +4977,13 @@
       })
       .catch(function(err) {
         var local = JSON.parse(localStorage.getItem('linah_reports') || '[]');
-        _reportsHeaders = ['رقم التليفون', 'اسم العامل', 'كود العامل', 'القسم', 'نوع العطل', 'وصف العطل', 'الموقع', 'الأولوية', 'الحالة', 'تاريخ الابلاغ', 'وقت الاغلاق'];
+        _reportsHeaders = ['رقم التليفون', 'اسم المُبلِّغ', 'الكود الوظيفي', 'القسم', 'نوع العطل', 'وصف العطل', 'الموقع', 'الأولوية', 'الحالة', 'تاريخ الابلاغ', 'وقت الاغلاق'];
         _reportsData = local.map(function(r) {
           return {
             _row: r.id || Date.now(),
             'رقم التليفون': r.phone || '',
-            'اسم العامل': r.name || '',
-            'كود العامل': r.code || '',
+            'اسم المُبلِّغ': r.name || '',
+            'الكود الوظيفي': r.code || '',
             'القسم': r.dept || '',
             'نوع العطل': r.type || '',
             'وصف العطل': r.desc || '',
@@ -5009,13 +5009,13 @@
       }
 
       var headers = _reportsHeaders.filter(function(h) { return h && h !== '_row' && h.indexOf('Timestamp') === -1; });
-      var colCode = _findReportCol(headers, ['كود العامل', 'الكود', 'code']);
+      var colCode = _findReportCol(headers, ['الكود الوظيفي', 'الكود', 'code']);
       var colDept = _findReportCol(headers, ['القسم', 'الإدارة', 'dept']);
       var colType = _findReportCol(headers, ['نوع العطل', 'نوع', 'الطلب', 'بلاغ']);
       var colDesc = _findReportCol(headers, ['وصف', 'البيان', 'التفاصيل', 'شرح', 'ادخل وصف']);
       var colLocation = _findReportCol(headers, ['موقع', 'المبنى', 'ال Building', 'المكان', 'العنوان']);
       var colStatus = _findReportCol(headers, ['الحالة', 'status']);
-      var colName = _findReportCol(headers, ['اسم العامل', 'الاسم', 'اسم', 'name']);
+      var colName = _findReportCol(headers, ['اسم المُبلِّغ', 'الاسم', 'اسم', 'name']);
       var colPhone = _findReportCol(headers, ['تليفون', 'موبايل', 'هاتف', 'phone']);
       var colPriority = _findReportCol(headers, ['أولوية', 'priorit', 'عجلة']);
       var colDate = _findReportCol(headers, ['تاريخ', 'التاريخ', 'date', 'timestamp']);
@@ -5188,13 +5188,29 @@
       .catch(function(e) { console.error('Status sync error:', e); });
 
       updateReportsStats(_reportsData);
-      logAction('تعديل', 'حالة بلاغ', report['اسم العامل'] || '', 'الى ' + newStatus);
+      logAction('تعديل', 'حالة بلاغ', report['اسم المُبلِّغ'] || '', 'الى ' + newStatus);
+      if (newStatus === 'مغلق') {
+        try {
+          fetch('http://localhost:3456/send-resolution', {
+            method:'POST', headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({
+              id: report._row,
+              phone: report['رقم التليفون'],
+              name: report['اسم المُبلِّغ'],
+              type: report['نوع العطل'],
+              desc: report['وصف العطل'],
+              opened_at: report['تاريخ الابلاغ'],
+              closed_at: report['وقت الاغلاق']
+            })
+          }).catch(function(){});
+        } catch(e) {}
+      }
     }
 
     function deleteReport(index) {
       var report = _reportsData[index];
       if (!report) return;
-      if (!confirm('هل أنت متأكد من حذف بلاغ "' + (report['اسم العامل'] || '') + '"؟')) return;
+      if (!confirm('هل أنت متأكد من حذف بلاغ "' + (report['اسم المُبلِّغ'] || '') + '"؟')) return;
 
       _logDeletion('incident_reports', report.id || report._row || index);
       _reportsData.splice(index, 1);
@@ -5227,7 +5243,7 @@
           _flashReportsBadge();
         }
         _prevReportsCount = _reportsData.length;
-      logAction('حذف', 'بلاغ أعطال', report['اسم العامل'] || '', '');
+      logAction('حذف', 'بلاغ أعطال', report['اسم المُبلِّغ'] || '', '');
     }
 
     function saveReportsApiUrl() {

@@ -188,6 +188,8 @@ function submitReport() {
     if (!r.ok) throw new Error('HTTP ' + r.status);
       document.getElementById('report-form').style.display = 'none';
       document.getElementById('success-msg').style.display = 'block';
+      // إرسال إشعار واتساب عبر البوت المحلي
+      try { fetch('http://localhost:3456/send-complaint', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(report) }).catch(function(){}); } catch(e) {}
     })
     .catch(function(e) {
       // حفظ محلياً في localStorage بتاع الموبايل
@@ -207,6 +209,7 @@ function submitReport() {
       document.getElementById('success-msg').querySelector('h2').textContent = '⚠️ تم الحفظ محلياً';
       document.getElementById('success-msg').querySelector('p').textContent = 'لم يتم الاتصال بالسحابة، سيتم الرفع تلقائياً عند توفر الإنترنت.';
       document.getElementById('success-msg').style.display = 'block';
+      try { fetch('http://localhost:3456/send-complaint', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(report) }).catch(function(){}); } catch(e) {}
     });
 }
 
