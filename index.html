@@ -13550,9 +13550,14 @@ function toggleEmployeeStatus(empId) {
             if (row.id === 'alldata' && d && d.mealLogs && Array.isArray(d.mealLogs)) _alldataMeals = d.mealLogs;
             if (row.id === 'entity_mealLogs' && Array.isArray(d)) _entityMeals = d;
           }
+          console.log('[pull] _alldataMeals:', _alldataMeals ? _alldataMeals.length : 'null', '_entityMeals:', _entityMeals ? _entityMeals.length : 'null');
+          console.log('[pull] mergedData.mealLogs BEFORE step3:', mergedData.mealLogs ? mergedData.mealLogs.length : 'missing');
           if (_alldataMeals && _entityMeals) {
             mergedData['mealLogs'] = _alldataMeals.length >= _entityMeals.length ? _alldataMeals : _entityMeals;
+          } else if (_alldataMeals && !_entityMeals) {
+            mergedData['mealLogs'] = _alldataMeals;
           }
+          console.log('[pull] mergedData.mealLogs AFTER step3:', mergedData.mealLogs ? mergedData.mealLogs.length : 'missing');
           if (Object.keys(mergedData).length > 0) {
             syncDeletions = [];
             localStorage.removeItem('lineh_sync_deletions');
@@ -13974,6 +13979,7 @@ function toggleEmployeeStatus(empId) {
             setEntityVar(keys[i], localVal);
           } else {
             var merged = _smartMerge(localVal, remoteVal, function(item) { return _getItemKey(item, keys[i]); }, keys[i]);
+            if (keys[i] === 'mealLogs') console.log('[applyRemote] mealLogs merge: local=' + localVal.length + ' remote=' + remoteVal.length + ' result=' + merged.length);
             setEntityVar(keys[i], merged);
           }
         } else if (Array.isArray(remoteVal) && remoteVal.length === 0 && localVal && Array.isArray(localVal) && localVal.length > 0) {
