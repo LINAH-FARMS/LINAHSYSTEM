@@ -13368,16 +13368,7 @@ function toggleEmployeeStatus(empId) {
     var syncDeletions = _safeJsonParse(localStorage.getItem('lineh_sync_deletions'), []);
     var _syncAfterDeleteTimer = null;
     function _schedulePushAfterDelete() {
-      clearTimeout(_syncAfterDeleteTimer);
-      _syncAfterDeleteTimer = setTimeout(function() {
-        if (typeof supabaseConnected !== 'undefined' && supabaseConnected && typeof pushToSupabase === 'function') {
-          syncLog('🗑️ جاري حذف من السحابة...');
-          pushToSupabase().then(function(ok) {
-            if (ok) syncLog('✅ تم الحذف من السحابة');
-            else syncLog('⚠️ فشل حذف من السحابة');
-          });
-        }
-      }, 2000);
+      // ❌ مزامنة يدوية — المستخدم يضغط دفع بنفسه
     }
     function _logDeletion(entity, key) {
       syncDeletions.push({ entity: entity, key: key, deletedAt: new Date().toISOString() });
@@ -13487,25 +13478,27 @@ function toggleEmployeeStatus(empId) {
       try {
         var ts = new Date().toISOString();
         var allData = getAllDataForSync();
-        var payload = { id: 'alldata', data: allData, updated_at: ts, device_id: _deviceId };
-        var resp = await fetch(_sbEndpoint, {
-          method: 'POST',
-          headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/json', 'Prefer': 'resolution=merge-duplicates' },
-          body: JSON.stringify(payload)
-        });
-        if (resp.ok) {
-          _lastUpdatedAt = ts;
-          _pulledAt['alldata'] = ts;
-          localStorage.setItem('_pulledAt', JSON.stringify(_pulledAt));
-          _takeSnapshot();
-          syncStorage(true, true);
-          syncLog('✅ تم دفع جميع البيانات');
-          updateLastSyncTime();
-        } else {
-          syncLog('⚠️ فشل الدفع - ' + resp.status);
-          showSyncToast('⚠️ فشل رفع البيانات إلى السحابة (كود ' + resp.status + ') — البيانات محفوظة محلياً');
-          updateSupabaseStatus('disconnected');
+        var entityKeys = Object.keys(allData);
+        var okCount = 0, failCount = 0;
+        for (var pi = 0; pi < entityKeys.length; pi++) {
+          var ek = entityKeys[pi];
+          var entityId = 'entity_' + ek;
+          var payload = { id: entityId, data: allData[ek], updated_at: ts, device_id: _deviceId };
+          var resp = await fetch(_sbEndpoint, {
+            method: 'POST',
+            headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/json', 'Prefer': 'resolution=merge-duplicates' },
+            body: JSON.stringify(payload)
+          });
+          if (resp.ok) okCount++; else failCount++;
         }
+        _lastUpdatedAt = ts;
+        _pulledAt['_lastPush'] = ts;
+        localStorage.setItem('_pulledAt', JSON.stringify(_pulledAt));
+        _takeSnapshot();
+        syncStorage(true, true);
+        syncLog('✅ تم دفع ' + okCount + ' entity (' + failCount + ' فشل)');
+        updateLastSyncTime();
+        if (failCount > 0) showSyncToast('⚠️ ' + failCount + ' entity فشل دفعها');
       } catch(e) {
         syncLog('⚠️ خطأ في الدفع: ' + e.message);
         showSyncToast('❌ خطأ في الاتصال — البيانات محفوظة محلياً فقط');
@@ -13530,34 +13523,35 @@ function toggleEmployeeStatus(empId) {
     async function pullFromSupabase() {
       if (!supabaseConnected) return;
       try {
-        var resp = await fetch(_sbEndpoint + '?id=eq.alldata&select=data,updated_at', { method: 'GET', headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } });
+        var resp = await fetch(_sbEndpoint + '?select=id,data,updated_at', { method: 'GET', headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } });
         if (!resp.ok) { syncLog('⚠️ فشل السحب كود ' + resp.status); return; }
         var rows = await resp.json();
         if (rows && rows.length > 0) {
-          var remote = rows[0];
-          var localTs = _pulledAt['alldata'] || '';
-          if (remote.updated_at > localTs || _forcePull) {
-            var remoteData = typeof remote.data === 'string' ? JSON.parse(remote.data) : remote.data;
-            if (!remoteData || typeof remoteData !== 'object') { syncLog('⚠️ remoteData فاضي أو مش object'); return; }
-            var _keys = Object.keys(remoteData);
-            syncLog('📦 تم استلام ' + _keys.length + ' keys من Supabase');
-            if (remoteData.bakeryContractorSupplies) syncLog('🍞 توريد الخبز: ' + remoteData.bakeryContractorSupplies.length + ' سجل');
-            applyRemoteData(remoteData);
-            _pulledAt['alldata'] = remote.updated_at;
-            localStorage.setItem('_pulledAt', JSON.stringify(_pulledAt));
-            _takeSnapshot();
-            syncStorage(true, true);
-            renderAll();
-            try { importBakeryFormData(); } catch(e) {}
-            try { importMealWasteFormData(); } catch(e) {}
-            syncLog('✅ تم تحديث البيانات من السحابة');
-            showSyncToast('تم استلام البيانات');
-          } else {
-            syncLog('✅ البيانات محدثة');
+          var mergedData = {};
+          var entityCount = 0;
+          for (var ri = 0; ri < rows.length; ri++) {
+            var row = rows[ri];
+            if (!row.id || !row.id.startsWith('entity_') || !row.data) continue;
+            var entityName = row.id.substring(7); // remove 'entity_'
+            var entityData = typeof row.data === 'string' ? JSON.parse(row.data) : row.data;
+            mergedData[entityName] = entityData;
+            entityCount++;
           }
+          syncLog('📦 تم استلام ' + entityCount + ' entities من Supabase');
+          applyRemoteData(mergedData);
+          _pulledAt['_lastPull'] = new Date().toISOString();
+          localStorage.setItem('_pulledAt', JSON.stringify(_pulledAt));
+          _takeSnapshot();
+          syncStorage(true, true);
+          renderAll();
+          try { importBakeryFormData(); } catch(e) {}
+          try { importMealWasteFormData(); } catch(e) {}
+          syncLog('✅ تم تحديث البيانات من السحابة');
+          showSyncToast('تم استلام البيانات');
         } else {
-          syncLog('ℹ️ لا توجد بيانات في السحابة — جاري التحويل...');
-          await _migrateToAlldata();
+          // No entity rows yet — push initial data
+          syncLog('ℹ️ لا توجد entities في السحابة — جاري رفع البيانات...');
+          await pushToSupabase();
         }
       } catch(e) {
         syncLog('⚠️ خطأ في السحب: ' + e.message);

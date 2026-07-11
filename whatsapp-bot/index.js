@@ -128,9 +128,175 @@ client.on('qr', qr => {
   qrcode.generate(qr, { small: true });
 });
 
-client.on('ready', () => {
+// ── Helper: normalize phone to international format ──
+function normalizePhone(raw) {
+  if (!raw) return null;
+  var digits = raw.replace(/[^0-9]/g, '');
+  if (digits.length === 11 && digits.startsWith('0')) {
+    digits = '2' + digits;
+  }
+  return digits;
+}
+
+// ── Send WhatsApp to an individual ──
+async function sendToPhone(phoneRaw, text) {
+  var phone = normalizePhone(phoneRaw);
+  if (!phone) { console.warn('⚠️ No phone to send to'); return false; }
+  try {
+    var chatId = phone + '@c.us';
+    await client.sendMessage(chatId, text);
+    console.log('📤 Sent to ' + phone + ': ' + text.substring(0, 50));
+    return true;
+  } catch (e) {
+    console.error('❌ Failed to send to ' + phone + ': ' + e.message);
+    return false;
+  }
+}
+
+// ── Send thank-you for new complaint ──
+async function sendThankYou(report) {
+  if (!client?.info?.wid) { console.warn('⚠️ Bot not ready'); return false; }
+  if (!report || !report.phone) { console.warn('⚠️ No phone in report'); return false; }
+  var msg = 'شكراً لك ' + (report.name || 'المُبلِّغ') + ' 🙏\nتم استلام بلاغك رقم #' + report.id + ' بنجاح.\nسنقوم بمعالجته في أقرب وقت.\n\n📋 نوع العطل: ' + (report.type || report.desc || '') + '\n📅 تاريخ الإبلاغ: ' + (report.opened_at || report.date || '') + '\n\nللمتابعة: https://linahfarms.github.io/LinahSystem/';
+  return await sendToPhone(report.phone, msg);
+}
+
+// ── Send resolution notification ──
+async function sendResolution(report) {
+  if (!client?.info?.wid) { console.warn('⚠️ Bot not ready'); return false; }
+  if (!report || !report.phone) { console.warn('⚠️ No phone in report'); return false; }
+  var msg = 'تم إصلاح البلاغ رقم #' + report.id + ' ✅\n\n📋 ' + (report.type || report.desc || '') + '\nتاريخ الإبلاغ: ' + (report.opened_at || report.date || '') + '\nتم الإغلاق: ' + (report.closed_at || '') + '\n\nنشكرك على تواصلك معنا.';
+  return await sendToPhone(report.phone, msg);
+}
+
+// ── Poll for new complaints (interval: 60s, ~3KB per check) ──
+async function pollNewComplaints() {
+  if (!client?.info?.wid) return;
+  try {
+    var resp = await fetch(SB_ENDPOINT + '?id=eq.incident_reports&select=data', { method: 'GET', headers: sbHeaders() });
+    if (!resp.ok) return;
+    var rows = await resp.json();
+    if (!rows || !rows[0] || !rows[0].data) return;
+    var reports = typeof rows[0].data === 'string' ? JSON.parse(rows[0].data) : rows[0].data;
+    if (!Array.isArray(reports)) return;
+
+    var changed = false;
+    for (var i = 0; i < reports.length; i++) {
+      var r = reports[i];
+      if (!r.phone) continue;
+      // Send thank-you if new and not yet thanked
+      if (r.status === 'جديد' && !r._whatsappThankYou) {
+        if (await sendThankYou(r)) {
+          r._whatsappThankYou = true;
+          changed = true;
+        }
+      }
+      // Send resolution if closed and not yet resolved (regardless of thank-you)
+      if (r.status === 'مغلق' && !r._whatsappResolved) {
+        // Send thank-you first if not sent yet (complaint was closed before poll)
+        if (!r._whatsappThankYou) {
+          if (await sendThankYou(r)) {
+            r._whatsappThankYou = true;
+            changed = true;
+          }
+        }
+        if (await sendResolution(r)) {
+          r._whatsappResolved = true;
+          changed = true;
+        }
+      }
+    }
+    if (changed) {
+      await fetch(SB_ENDPOINT, {
+        method: 'POST',
+        headers: Object.assign(sbHeaders(), { 'Prefer': 'resolution=merge-duplicates' }),
+        body: JSON.stringify({ id: 'incident_reports', data: reports, updated_at: new Date().toISOString(), device_id: 'whatsapp-bot' })
+      });
+    }
+  } catch (e) {
+    console.error('❌ poll error:', e.message);
+  }
+}
+
+// ── HTTP server for instant closure notifications ──
+var http = require('http');
+var HTTP_PORT = 3456;
+
+var httpServer = http.createServer(function(req, res) {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  if (req.method === 'OPTIONS') { res.writeHead(204); res.end(); return; }
+  if (req.method !== 'POST') { res.writeHead(405); res.end('Method not allowed'); return; }
+
+  var body = '';
+  req.on('data', function(chunk) { body += chunk; });
+  req.on('end', async function() {
+    var data;
+    try { data = JSON.parse(body); } catch(e) { res.writeHead(400); res.end('Invalid JSON'); return; }
+    var ok = false;
+
+    if (req.url === '/send-complaint') {
+      ok = await sendThankYou(data);
+      if (ok) {
+        try {
+          var r1 = await fetch(SB_ENDPOINT + '?id=eq.incident_reports&select=data', { method: 'GET', headers: sbHeaders() });
+          var rows1 = await r1.json();
+          if (rows1 && rows1[0] && rows1[0].data) {
+            var reports1 = typeof rows1[0].data === 'string' ? JSON.parse(rows1[0].data) : rows1[0].data;
+            for (var i1 = 0; i1 < reports1.length; i1++) {
+              if (reports1[i1].id == data.id) { reports1[i1]._whatsappThankYou = true; break; }
+            }
+            await fetch(SB_ENDPOINT, {
+              method: 'POST',
+              headers: Object.assign(sbHeaders(), { 'Prefer': 'resolution=merge-duplicates' }),
+              body: JSON.stringify({ id: 'incident_reports', data: reports1, updated_at: new Date().toISOString(), device_id: 'whatsapp-bot' })
+            });
+          }
+        } catch(e) { console.error('❌ mark thank-you error:', e.message); }
+      }
+    } else if (req.url === '/send-resolution') {
+      // Send thank-you first if not sent yet, then resolution
+      if (!data._whatsappThankYou) await sendThankYou(data);
+      ok = await sendResolution(data);
+      if (ok) {
+        try {
+          var r2 = await fetch(SB_ENDPOINT + '?id=eq.incident_reports&select=data', { method: 'GET', headers: sbHeaders() });
+          var rows2 = await r2.json();
+          if (rows2 && rows2[0] && rows2[0].data) {
+            var reports2 = typeof rows2[0].data === 'string' ? JSON.parse(rows2[0].data) : rows2[0].data;
+            for (var i2 = 0; i2 < reports2.length; i2++) {
+              if (reports2[i2].id == data.id) {
+                reports2[i2]._whatsappThankYou = true;
+                reports2[i2]._whatsappResolved = true;
+                break;
+              }
+            }
+            await fetch(SB_ENDPOINT, {
+              method: 'POST',
+              headers: Object.assign(sbHeaders(), { 'Prefer': 'resolution=merge-duplicates' }),
+              body: JSON.stringify({ id: 'incident_reports', data: reports2, updated_at: new Date().toISOString(), device_id: 'whatsapp-bot' })
+            });
+          }
+        } catch(e) { console.error('❌ mark error:', e.message); }
+      }
+    } else {
+      res.writeHead(404); res.end('Unknown action'); return;
+    }
+    res.writeHead(ok ? 200 : 500, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ ok: ok }));
+  });
+});
+
+httpServer.listen(HTTP_PORT, function() {
+  console.log('🌐 HTTP server on http://localhost:' + HTTP_PORT);
+});
+
+client.on('ready', function() {
   console.log('✅ WhatsApp bot connected!');
   console.log('👂 Listening to groups containing:', GROUP_NAMES.join(', '));
+  setInterval(pollNewComplaints, 60000);
+  console.log('📋 Polling new complaints every 60s');
 });
 
 client.on('message', async (msg) => {
