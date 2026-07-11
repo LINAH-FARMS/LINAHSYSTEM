@@ -14099,10 +14099,16 @@ function toggleEmployeeStatus(empId) {
         await connectSupabase();
         if (!supabaseConnected) { showSyncToast('❌ فشل الاتصال بـ Supabase'); btn.textContent = orig; btn.disabled = false; _forcePull = false; return; }
         await pullFromSupabase();
-        // سحب مباشر لوجبات entity_mealLogs بدون أي فلترة
+        // سحب مباشر لوجبات entity_mealLogs أو alldata بدون أي فلترة
         try {
+          var _fetched = null;
           var _mr = await fetch(_sbEndpoint + '?id=eq.entity_mealLogs&select=data', { method: 'GET', headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } });
-          if (_mr.ok) { var _mr2 = await _mr.json(); if (_mr2 && _mr2[0] && _mr2[0].data) { var _md = typeof _mr2[0].data === 'string' ? JSON.parse(_mr2[0].data) : _mr2[0].data; if (Array.isArray(_md) && _md.length >= (mealLogs||[]).length) { mealLogs = _md; syncStorage(true,true); renderAll(); syncLog('✅ تم جلب ' + _md.length + ' وجبة من الخادم مباشرة'); } } }
+          if (_mr.ok) { var _mr2 = await _mr.json(); if (_mr2 && _mr2[0] && _mr2[0].data) { _fetched = typeof _mr2[0].data === 'string' ? JSON.parse(_mr2[0].data) : _mr2[0].data; } }
+          if (!_fetched || !_fetched.length) {
+            var _ar = await fetch(_sbEndpoint + '?id=eq.alldata&select=data', { method: 'GET', headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } });
+            if (_ar.ok) { var _ar2 = await _ar.json(); if (_ar2 && _ar2[0] && _ar2[0].data) { var _ad2 = typeof _ar2[0].data === 'string' ? JSON.parse(_ar2[0].data) : _ar2[0].data; _fetched = _ad2 && _ad2.mealLogs; } }
+          }
+          if (Array.isArray(_fetched) && _fetched.length >= (mealLogs||[]).length) { mealLogs = _fetched; syncStorage(true,true); renderAll(); syncLog('🍽️ تم جلب ' + _fetched.length + ' وجبة من الخادم'); }
         } catch(_e) { console.log('direct meal fetch error:', _e); }
         showSyncToast('✅ تم سحب أحدث البيانات من السحابة');
       } catch(e) {
