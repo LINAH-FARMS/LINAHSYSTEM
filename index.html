@@ -14099,6 +14099,11 @@ function toggleEmployeeStatus(empId) {
         await connectSupabase();
         if (!supabaseConnected) { showSyncToast('❌ فشل الاتصال بـ Supabase'); btn.textContent = orig; btn.disabled = false; _forcePull = false; return; }
         await pullFromSupabase();
+        // سحب مباشر لوجبات entity_mealLogs بدون أي فلترة
+        try {
+          var _mr = await fetch(_sbEndpoint + '?id=eq.entity_mealLogs&select=data', { method: 'GET', headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } });
+          if (_mr.ok) { var _mr2 = await _mr.json(); if (_mr2 && _mr2[0] && _mr2[0].data) { var _md = typeof _mr2[0].data === 'string' ? JSON.parse(_mr2[0].data) : _mr2[0].data; if (Array.isArray(_md) && _md.length >= (mealLogs||[]).length) { mealLogs = _md; syncStorage(true,true); renderAll(); syncLog('✅ تم جلب ' + _md.length + ' وجبة من الخادم مباشرة'); } } }
+        } catch(_e) { console.log('direct meal fetch error:', _e); }
         showSyncToast('✅ تم سحب أحدث البيانات من السحابة');
       } catch(e) {
         showSyncToast('❌ فشل السحب: ' + e.message);
