@@ -13531,54 +13531,45 @@ function toggleEmployeeStatus(empId) {
         console.log('[pull] rows found:', rows ? rows.length : 0, rows ? rows.map(function(r){return r.id;}) : []);
         if (rows && rows.length > 0) {
           var mergedData = {};
-          var entityCount = 0;
-          var foundOldFormat = false;
-          // Pass 1: bare entity names (mealLogs, employees, etc.) — medium priority
+          var _needsCleanup = false;
+          // 1) bare entities ← entity_* (مرة أخيرة) واحذفهم
           for (var ri = 0; ri < rows.length; ri++) {
             var row = rows[ri];
             if (!row.id || !row.data || row.id === 'alldata' || row.id === 'incident_reports' || row.id === 'bakery_daily_reports' || row.id.startsWith('entity_')) continue;
-            mergedData[row.id] = typeof row.data === 'string' ? JSON.parse(row.data) : row.data;
-            foundOldFormat = true;
+            _needsCleanup = true;
+            var _bd = typeof row.data === 'string' ? JSON.parse(row.data) : row.data;
+            mergedData[row.id] = _bd;
+            await fetch(_sbEndpoint, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/json', 'Prefer': 'resolution=merge-duplicates' }, body: JSON.stringify({ id: 'entity_' + row.id, data: _bd, updated_at: new Date().toISOString(), device_id: _deviceId }) });
+            await fetch(_sbEndpoint + '?id=eq.' + encodeURIComponent(row.id), { method: 'DELETE', headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } });
           }
-          // Pass 2: alldata (overwrites bare entities — skip syncDeletions)
+          // 2) alldata ← entity_* (مرة أخيرة) واحذفه
           for (var ri = 0; ri < rows.length; ri++) {
             var row = rows[ri];
             if (!row.id || !row.data || row.id !== 'alldata') continue;
-            foundOldFormat = true;
+            _needsCleanup = true;
             var _ad = typeof row.data === 'string' ? JSON.parse(row.data) : row.data;
             if (_ad && typeof _ad === 'object') {
-              var _aks = Object.keys(_ad);
-              for (var _ai = 0; _ai < _aks.length; _ai++) {
-                if (_aks[_ai] !== 'syncDeletions') mergedData[_aks[_ai]] = _ad[_aks[_ai]];
+              for (var _aki in _ad) {
+                if (_aki === 'syncDeletions') continue;
+                mergedData[_aki] = _ad[_aki];
+                await fetch(_sbEndpoint, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/json', 'Prefer': 'resolution=merge-duplicates' }, body: JSON.stringify({ id: 'entity_' + _aki, data: _ad[_aki], updated_at: new Date().toISOString(), device_id: _deviceId }) });
               }
             }
+            await fetch(_sbEndpoint + '?id=eq.alldata', { method: 'DELETE', headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } });
           }
-          // Pass 3: new entity_* format (highest priority — always wins)
+          if (_needsCleanup) { syncLog('🧹 تم ترحيل البيانات القديمة وحذفها'); }
+          // 3) entity_* — يضيف بس لو المفتاح مش موجود (عشان القديم مايضربش الترحيل)
           for (var ri = 0; ri < rows.length; ri++) {
             var row = rows[ri];
             if (!row.id || !row.data || !row.id.startsWith('entity_')) continue;
-            mergedData[row.id.substring(7)] = typeof row.data === 'string' ? JSON.parse(row.data) : row.data;
+            var _ek = row.id.substring(7);
+            if (!mergedData.hasOwnProperty(_ek)) mergedData[_ek] = typeof row.data === 'string' ? JSON.parse(row.data) : row.data;
           }
-          entityCount = Object.keys(mergedData).length;
-          // If we found old format, migrate to new format in Supabase
-          if (foundOldFormat) {
-            syncLog('🔄 جاري ترحيل البيانات من الصيغة القديمة...');
-            for (var mi = 0; mi < Object.keys(mergedData).length; mi++) {
-              var mk = Object.keys(mergedData)[mi];
-              var entityId = 'entity_' + mk;
-              await fetch(_sbEndpoint, {
-                method: 'POST',
-                headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/json', 'Prefer': 'resolution=merge-duplicates' },
-                body: JSON.stringify({ id: entityId, data: mergedData[mk], updated_at: new Date().toISOString(), device_id: _deviceId })
-              });
-            }
-            syncLog('✅ تم الترحيل للصيغة الجديدة');
-          }
-          syncLog('📦 تم استلام ' + entityCount + ' entities من Supabase');
-          // تجاهل syncDeletions أثناء السحب (بسبب بيانات قديمة من alldata)
+          // 4) طبق البيانات
           syncDeletions = [];
           localStorage.removeItem('lineh_sync_deletions');
           applyRemoteData(mergedData);
+          syncLog('📦 تم استلام ' + Object.keys(mergedData).length + ' entities من Supabase');
           _pulledAt['_lastPull'] = new Date().toISOString();
           localStorage.setItem('_pulledAt', JSON.stringify(_pulledAt));
           _takeSnapshot();
