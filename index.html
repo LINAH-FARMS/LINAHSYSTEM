@@ -13531,27 +13531,16 @@ function toggleEmployeeStatus(empId) {
         console.log('[pull] rows found:', rows ? rows.length : 0, rows ? rows.map(function(r){return r.id;}) : []);
         if (rows && rows.length > 0) {
           var mergedData = {};
-          // 1) alldata (أساسي)
-          for (var ri = 0; ri < rows.length; ri++) {
-            var row = rows[ri]; if (!row.id || !row.data || row.id !== 'alldata') continue;
-            var _ad = typeof row.data === 'string' ? JSON.parse(row.data) : row.data;
-            if (_ad && typeof _ad === 'object') { for (var _aki in _ad) { mergedData[_aki] = _ad[_aki]; } }
-          }
-          // 2) bare entities (تدوس على alldata)
-          for (var ri = 0; ri < rows.length; ri++) {
-            var row = rows[ri]; if (!row.id || !row.data || row.id === 'alldata' || row.id === 'incident_reports' || row.id === 'bakery_daily_reports' || row.id.startsWith('entity_')) continue;
-            mergedData[row.id] = typeof row.data === 'string' ? JSON.parse(row.data) : row.data;
-          }
-          // 3) entity_* (يدوس على الكل — الأحدث)
+          // entity_* فقط — المصدر الوحيد للبيانات
           for (var ri = 0; ri < rows.length; ri++) {
             var row = rows[ri]; if (!row.id || !row.data || !row.id.startsWith('entity_')) continue;
             mergedData[row.id.substring(7)] = typeof row.data === 'string' ? JSON.parse(row.data) : row.data;
           }
-          // 4) امسح syncDeletions القديمة عشان ما تمنعش ظهور البيانات
-          syncDeletions = [];
-          localStorage.removeItem('lineh_sync_deletions');
-          // 5) طبق البيانات
-          applyRemoteData(mergedData);
+          if (Object.keys(mergedData).length > 0) {
+            syncDeletions = [];
+            localStorage.removeItem('lineh_sync_deletions');
+            applyRemoteData(mergedData);
+          }
           syncLog('📦 تم استلام ' + Object.keys(mergedData).length + ' entities من Supabase');
           _pulledAt['_lastPull'] = new Date().toISOString();
           localStorage.setItem('_pulledAt', JSON.stringify(_pulledAt));
@@ -13647,7 +13636,6 @@ function toggleEmployeeStatus(empId) {
         document.getElementById('cloud-status').textContent = '☁️ متصل';
         // ❌ مزامنة يدوية فقط — المستخدم يضغط سحب/دفع بنفسه
         if (_syncTimer) clearInterval(_syncTimer);
-        setTimeout(function() { if (!_pullInProgress) { _pullInProgress = true; pullFromSupabase().finally(function() { _pullInProgress = false; }); } }, 3000);
         // فحص بلاغات الأعطال كل دقيقة
         setInterval(function() {
           try {
@@ -14084,17 +14072,6 @@ function toggleEmployeeStatus(empId) {
         await connectSupabase();
         if (!supabaseConnected) { showSyncToast('❌ فشل الاتصال بـ Supabase'); btn.textContent = orig; btn.disabled = false; _forcePull = false; return; }
         await pullFromSupabase();
-        // سحب مباشر لوجبات entity_mealLogs أو alldata بدون أي فلترة
-        try {
-          var _fetched = null;
-          var _mr = await fetch(_sbEndpoint + '?id=eq.entity_mealLogs&select=data', { method: 'GET', headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } });
-          if (_mr.ok) { var _mr2 = await _mr.json(); if (_mr2 && _mr2[0] && _mr2[0].data) { _fetched = typeof _mr2[0].data === 'string' ? JSON.parse(_mr2[0].data) : _mr2[0].data; } }
-          if (!_fetched || !_fetched.length) {
-            var _ar = await fetch(_sbEndpoint + '?id=eq.alldata&select=data', { method: 'GET', headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } });
-            if (_ar.ok) { var _ar2 = await _ar.json(); if (_ar2 && _ar2[0] && _ar2[0].data) { var _ad2 = typeof _ar2[0].data === 'string' ? JSON.parse(_ar2[0].data) : _ar2[0].data; _fetched = _ad2 && _ad2.mealLogs; } }
-          }
-          if (Array.isArray(_fetched) && _fetched.length >= (mealLogs||[]).length) { mealLogs = _fetched; syncStorage(true,true); renderAll(); syncLog('🍽️ تم جلب ' + _fetched.length + ' وجبة من الخادم'); }
-        } catch(_e) { console.log('direct meal fetch error:', _e); }
         showSyncToast('✅ تم سحب أحدث البيانات من السحابة');
       } catch(e) {
         showSyncToast('❌ فشل السحب: ' + e.message);
