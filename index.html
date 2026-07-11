@@ -13554,7 +13554,14 @@ function toggleEmployeeStatus(empId) {
           syncDeletions = [];
           localStorage.removeItem('lineh_sync_deletions');
           if (Object.keys(mergedData).length > 0) {
-            applyRemoteData(mergedData);
+            for (var _dk in mergedData) {
+              if (_dk === 'syncDeletions') continue;
+              var _dv = mergedData[_dk];
+              if (typeof _dv !== 'undefined' && _dv !== null) {
+                setEntityVar(_dk, _dv);
+              }
+            }
+            _applyDeletions();
           }
           syncLog('📦 تم استلام ' + Object.keys(mergedData).length + ' entities من Supabase');
           _pulledAt['_lastPull'] = new Date().toISOString();
