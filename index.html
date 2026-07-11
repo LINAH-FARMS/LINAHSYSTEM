@@ -13526,8 +13526,8 @@ function toggleEmployeeStatus(empId) {
         var resp = await fetch(_sbEndpoint + '?select=id,data,updated_at', { method: 'GET', headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Range': '0-*' } });
         if (!resp.ok) { syncLog('⚠️ فشل السحب كود ' + resp.status); return; }
         var rows = await resp.json();
+        console.log('[pull] rows found:', rows ? rows.length : 0, rows ? rows.map(function(r){return r.id;}) : []);
         if (rows && rows.length > 0) {
-          syncLog('📋 وجد ' + rows.length + ' rows: ' + rows.map(function(r){return r.id;}).join(', '));
           var mergedData = {};
           var entityCount = 0;
           var foundOldFormat = false;
@@ -13583,6 +13583,26 @@ function toggleEmployeeStatus(empId) {
           renderAll();
           try { importBakeryFormData(); } catch(e) {}
           try { importMealWasteFormData(); } catch(e) {}
+          // Fallback: fetch mealLogs directly if main query missed it
+          try {
+            var _mr = await fetch(_sbEndpoint + '?id=eq.mealLogs&select=data', { method: 'GET', headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } });
+            if (_mr.ok) {
+              var _mrows = await _mr.json();
+              if (_mrows && _mrows[0] && _mrows[0].data) {
+                var _md = typeof _mrows[0].data === 'string' ? JSON.parse(_mrows[0].data) : _mrows[0].data;
+                if (Array.isArray(_md) && _md.length > 0) {
+                  var _oldLen = (mealLogs || []).length;
+                  var _merged = _smartMerge(mealLogs || [], _md, function(item){return _getItemKey(item, 'mealLogs');}, 'mealLogs');
+                  if (_merged.length > _oldLen) {
+                    mealLogs = _merged;
+                    syncLog('🍽️ تم جلب ' + _md.length + ' وجبة من fallback');
+                    syncStorage(true, true);
+                    renderAll();
+                  }
+                }
+              }
+            }
+          } catch(_e) { console.log('[pull] fallback error:', _e); }
           syncLog('✅ تم تحديث البيانات من السحابة');
           showSyncToast('تم استلام البيانات');
         } else {
