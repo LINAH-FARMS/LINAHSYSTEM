@@ -13529,13 +13529,42 @@ function toggleEmployeeStatus(empId) {
         if (rows && rows.length > 0) {
           var mergedData = {};
           var entityCount = 0;
+          var foundOldFormat = false;
           for (var ri = 0; ri < rows.length; ri++) {
             var row = rows[ri];
-            if (!row.id || !row.id.startsWith('entity_') || !row.data) continue;
-            var entityName = row.id.substring(7); // remove 'entity_'
+            if (!row.id || !row.data) continue;
+            // Old format: id=alldata → convert to entities
+            if (row.id === 'alldata') {
+              foundOldFormat = true;
+              var oldData = typeof row.data === 'string' ? JSON.parse(row.data) : row.data;
+              if (oldData && typeof oldData === 'object') {
+                var oldKeys = Object.keys(oldData);
+                for (var oi = 0; oi < oldKeys.length; oi++) {
+                  mergedData[oldKeys[oi]] = oldData[oldKeys[oi]];
+                  entityCount++;
+                }
+              }
+              continue;
+            }
+            if (!row.id.startsWith('entity_')) continue;
+            var entityName = row.id.substring(7);
             var entityData = typeof row.data === 'string' ? JSON.parse(row.data) : row.data;
             mergedData[entityName] = entityData;
             entityCount++;
+          }
+          // If we found old format, migrate to new format in Supabase
+          if (foundOldFormat) {
+            syncLog('🔄 جاري ترحيل البيانات من الصيغة القديمة...');
+            for (var mi = 0; mi < Object.keys(mergedData).length; mi++) {
+              var mk = Object.keys(mergedData)[mi];
+              var entityId = 'entity_' + mk;
+              await fetch(_sbEndpoint, {
+                method: 'POST',
+                headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/json', 'Prefer': 'resolution=merge-duplicates' },
+                body: JSON.stringify({ id: entityId, data: mergedData[mk], updated_at: new Date().toISOString(), device_id: _deviceId })
+              });
+            }
+            syncLog('✅ تم الترحيل للصيغة الجديدة');
           }
           syncLog('📦 تم استلام ' + entityCount + ' entities من Supabase');
           applyRemoteData(mergedData);
@@ -13549,9 +13578,7 @@ function toggleEmployeeStatus(empId) {
           syncLog('✅ تم تحديث البيانات من السحابة');
           showSyncToast('تم استلام البيانات');
         } else {
-          // No entity rows yet — push initial data
-          syncLog('ℹ️ لا توجد entities في السحابة — جاري رفع البيانات...');
-          await pushToSupabase();
+          syncLog('ℹ️ لا توجد بيانات في السحابة');
         }
       } catch(e) {
         syncLog('⚠️ خطأ في السحب: ' + e.message);
