@@ -13531,10 +13531,27 @@ function toggleEmployeeStatus(empId) {
         console.log('[pull] rows found:', rows ? rows.length : 0, rows ? rows.map(function(r){return r.id;}) : []);
         if (rows && rows.length > 0) {
           var mergedData = {};
-          // entity_* فقط — المصدر الوحيد للبيانات
+          // 1) alldata كأساسي (فيها كل حاجة من كل الأجهزة)
+          for (var ri = 0; ri < rows.length; ri++) {
+            var row = rows[ri]; if (!row.id || !row.data || row.id !== 'alldata') continue;
+            var _ad = typeof row.data === 'string' ? JSON.parse(row.data) : row.data;
+            if (_ad && typeof _ad === 'object') { for (var _aki in _ad) { if (_aki === 'syncDeletions') continue; mergedData[_aki] = _ad[_aki]; } }
+          }
+          // 2) entity_* يدوس على alldata (الأحدث)
           for (var ri = 0; ri < rows.length; ri++) {
             var row = rows[ri]; if (!row.id || !row.data || !row.id.startsWith('entity_')) continue;
             mergedData[row.id.substring(7)] = typeof row.data === 'string' ? JSON.parse(row.data) : row.data;
+          }
+          // 3) للـ mealLogs: استخدم الأكبر (alldata ممكن يكون فيها46 و entity_mealLogs فيه45)
+          var _alldataMeals = null, _entityMeals = null;
+          for (var ri = 0; ri < rows.length; ri++) {
+            var row = rows[ri]; if (!row.data) continue;
+            var d = typeof row.data === 'string' ? JSON.parse(row.data) : row.data;
+            if (row.id === 'alldata' && d && d.mealLogs && Array.isArray(d.mealLogs)) _alldataMeals = d.mealLogs;
+            if (row.id === 'entity_mealLogs' && Array.isArray(d)) _entityMeals = d;
+          }
+          if (_alldataMeals && _entityMeals) {
+            mergedData['mealLogs'] = _alldataMeals.length >= _entityMeals.length ? _alldataMeals : _entityMeals;
           }
           if (Object.keys(mergedData).length > 0) {
             syncDeletions = [];
