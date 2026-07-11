@@ -13530,28 +13530,39 @@ function toggleEmployeeStatus(empId) {
           var mergedData = {};
           var entityCount = 0;
           var foundOldFormat = false;
+          // Pass 1: old formats (alldata + bare entity names)
           for (var ri = 0; ri < rows.length; ri++) {
             var row = rows[ri];
             if (!row.id || !row.data) continue;
-            // Old format: id=alldata → convert to entities
             if (row.id === 'alldata') {
               foundOldFormat = true;
               var oldData = typeof row.data === 'string' ? JSON.parse(row.data) : row.data;
               if (oldData && typeof oldData === 'object') {
                 var oldKeys = Object.keys(oldData);
                 for (var oi = 0; oi < oldKeys.length; oi++) {
-                  mergedData[oldKeys[oi]] = oldData[oldKeys[oi]];
-                  entityCount++;
+                  if (!mergedData.hasOwnProperty(oldKeys[oi])) {
+                    mergedData[oldKeys[oi]] = oldData[oldKeys[oi]];
+                    entityCount++;
+                  }
                 }
               }
-              continue;
+            } else if (row.id !== 'incident_reports' && row.id !== 'bakery_daily_reports' && !row.id.startsWith('entity_')) {
+              // Bare entity from old pushes (mealLogs, etc.)
+              if (!mergedData.hasOwnProperty(row.id)) {
+                mergedData[row.id] = typeof row.data === 'string' ? JSON.parse(row.data) : row.data;
+                entityCount++;
+                foundOldFormat = true;
+              }
             }
-            if (!row.id.startsWith('entity_')) continue;
-            var entityName = row.id.substring(7);
-            var entityData = typeof row.data === 'string' ? JSON.parse(row.data) : row.data;
-            mergedData[entityName] = entityData;
-            entityCount++;
           }
+          // Pass 2: new entity_* format (always wins over old formats)
+          for (var ri = 0; ri < rows.length; ri++) {
+            var row = rows[ri];
+            if (!row.id || !row.data || !row.id.startsWith('entity_')) continue;
+            var eName = row.id.substring(7);
+            mergedData[eName] = typeof row.data === 'string' ? JSON.parse(row.data) : row.data;
+          }
+          entityCount = Object.keys(mergedData).length;
           // If we found old format, migrate to new format in Supabase
           if (foundOldFormat) {
             syncLog('🔄 جاري ترحيل البيانات من الصيغة القديمة...');
