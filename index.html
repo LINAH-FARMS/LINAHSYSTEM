@@ -13542,7 +13542,7 @@ function toggleEmployeeStatus(empId) {
             var row = rows[ri]; if (!row.id || !row.data || !row.id.startsWith('entity_')) continue;
             mergedData[row.id.substring(7)] = typeof row.data === 'string' ? JSON.parse(row.data) : row.data;
           }
-          // 3) للـ mealLogs: استخدم الأكبر (alldata ممكن يكون فيها46 و entity_mealLogs فيه45)
+          // 3) للـ mealLogs: حدد الأكبر واستخدمه مباشرة
           var _alldataMeals = null, _entityMeals = null;
           for (var ri = 0; ri < rows.length; ri++) {
             var row = rows[ri]; if (!row.data) continue;
@@ -13550,14 +13550,13 @@ function toggleEmployeeStatus(empId) {
             if (row.id === 'alldata' && d && d.mealLogs && Array.isArray(d.mealLogs)) _alldataMeals = d.mealLogs;
             if (row.id === 'entity_mealLogs' && Array.isArray(d)) _entityMeals = d;
           }
-          console.log('[pull] _alldataMeals:', _alldataMeals ? _alldataMeals.length : 'null', '_entityMeals:', _entityMeals ? _entityMeals.length : 'null');
-          console.log('[pull] mergedData.mealLogs BEFORE step3:', mergedData.mealLogs ? mergedData.mealLogs.length : 'missing');
-          if (_alldataMeals && _entityMeals) {
-            mergedData['mealLogs'] = _alldataMeals.length >= _entityMeals.length ? _alldataMeals : _entityMeals;
-          } else if (_alldataMeals && !_entityMeals) {
-            mergedData['mealLogs'] = _alldataMeals;
+          if (_alldataMeals || _entityMeals) {
+            var _bestMeals = (_alldataMeals && _entityMeals) ? (_alldataMeals.length >= _entityMeals.length ? _alldataMeals : _entityMeals) : (_alldataMeals || _entityMeals);
+            mealLogs = _bestMeals;
+            syncDeletions = [];
+            localStorage.removeItem('lineh_sync_deletions');
+            delete mergedData.mealLogs;
           }
-          console.log('[pull] mergedData.mealLogs AFTER step3:', mergedData.mealLogs ? mergedData.mealLogs.length : 'missing');
           if (Object.keys(mergedData).length > 0) {
             syncDeletions = [];
             localStorage.removeItem('lineh_sync_deletions');
@@ -13571,22 +13570,6 @@ function toggleEmployeeStatus(empId) {
           renderAll();
           try { importBakeryFormData(); } catch(e) {}
           try { importMealWasteFormData(); } catch(e) {}
-          // Fallback: fetch mealLogs directly if main query missed it
-          try {
-            var _mr = await fetch(_sbEndpoint + '?id=eq.mealLogs&select=data', { method: 'GET', headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } });
-            if (_mr.ok) {
-              var _mrows = await _mr.json();
-              if (_mrows && _mrows[0] && _mrows[0].data) {
-                var _md = typeof _mrows[0].data === 'string' ? JSON.parse(_mrows[0].data) : _mrows[0].data;
-                if (Array.isArray(_md) && _md.length > 0) {
-                  mealLogs = _smartMerge(mealLogs || [], _md, function(item){return _getItemKey(item, 'mealLogs');}, 'mealLogs');
-                  syncLog('🍽️ تم جلب ' + _md.length + ' وجبة من السحابة');
-                  syncStorage(true, true);
-                  renderAll();
-                }
-              }
-            }
-          } catch(_e) { console.log('[pull] fallback error:', _e); }
           syncLog('✅ تم تحديث البيانات من السحابة');
           showSyncToast('تم استلام البيانات');
         } else {
@@ -13979,7 +13962,6 @@ function toggleEmployeeStatus(empId) {
             setEntityVar(keys[i], localVal);
           } else {
             var merged = _smartMerge(localVal, remoteVal, function(item) { return _getItemKey(item, keys[i]); }, keys[i]);
-            if (keys[i] === 'mealLogs') console.log('[applyRemote] mealLogs merge: local=' + localVal.length + ' remote=' + remoteVal.length + ' result=' + merged.length);
             setEntityVar(keys[i], merged);
           }
         } else if (Array.isArray(remoteVal) && remoteVal.length === 0 && localVal && Array.isArray(localVal) && localVal.length > 0) {
