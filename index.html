@@ -13549,6 +13549,7 @@ function toggleEmployeeStatus(empId) {
             if (oldData && typeof oldData === 'object') {
               var oldKeys = Object.keys(oldData);
               for (var oi = 0; oi < oldKeys.length; oi++) {
+                if (oldKeys[oi] === 'syncDeletions') continue; // تجاهل syncDeletions من alldata
                 if (!mergedData.hasOwnProperty(oldKeys[oi])) {
                   mergedData[oldKeys[oi]] = oldData[oldKeys[oi]];
                 }
@@ -13577,6 +13578,9 @@ function toggleEmployeeStatus(empId) {
             syncLog('✅ تم الترحيل للصيغة الجديدة');
           }
           syncLog('📦 تم استلام ' + entityCount + ' entities من Supabase');
+          // تجاهل syncDeletions أثناء السحب (بسبب بيانات قديمة من alldata)
+          syncDeletions = [];
+          localStorage.removeItem('lineh_sync_deletions');
           applyRemoteData(mergedData);
           _pulledAt['_lastPull'] = new Date().toISOString();
           localStorage.setItem('_pulledAt', JSON.stringify(_pulledAt));
