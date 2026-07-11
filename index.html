@@ -983,7 +983,7 @@
       <span id="cloud-status" style="font-size:11px;font-weight:600;">☁️ غير متصل</span>
       <span style="font-size:11px;font-weight:600;color:rgba(255,255,255,0.85);">Supabase </span><span id="supabase-status" style="font-size:11px;font-weight:600;">🔄 قيد الاتصال...</span>
       <button onclick="manualPull()" style="background:rgba(33,150,243,0.25);color:white;border:1px solid rgba(33,150,243,0.5);padding:3px 10px;border-radius:50px;font-size:11px;cursor:pointer;font-family:'Cairo',sans-serif;" title="سحب أحدث البيانات من السحابة">🔄 سحب</button>
-      <button onclick="forceFullSync()" style="background:rgba(255,100,0,0.25);color:white;border:1px solid rgba(255,150,0,0.5);padding:3px 10px;border-radius:50px;font-size:11px;cursor:pointer;font-family:'Cairo',sans-serif;" title="دفع كل البيانات إلى السحابة — استخدمه مرة واحدة فقط">⚡ مزامنة قوية</button>
+      <button onclick="manualPush()" style="background:rgba(76,175,80,0.25);color:white;border:1px solid rgba(76,175,80,0.5);padding:3px 10px;border-radius:50px;font-size:11px;cursor:pointer;font-family:'Cairo',sans-serif;" title="دفع تعديلاتك المحلية إلى السحابة">📤 دفع</button>
       <button onclick="runPythonReport()" style="background:rgba(74,144,226,0.2);color:white;border:1px solid rgba(74,144,226,0.5);padding:3px 10px;border-radius:50px;font-size:11px;cursor:pointer;font-family:'Cairo',sans-serif;" title="تقارير بايثون الأسبوعية">🐍 بايثون</button>
       <span id="presence-users" style="font-size:11px;font-weight:600;display:none;"></span>
       <span id="last-sync-time" style="font-size:10px;color:rgba(255,255,255,0.6);display:none;"></span>
@@ -13623,9 +13623,8 @@ function toggleEmployeeStatus(empId) {
         updateLastSyncTime();
         startPresence();
         document.getElementById('cloud-status').textContent = '☁️ متصل';
-        // سحب دوري كل 30 ثانية — عشان نتجنب تضارب البيانات
+        // ❌ مزامنة يدوية فقط — المستخدم يضغط سحب/دفع بنفسه
         if (_syncTimer) clearInterval(_syncTimer);
-        _syncTimer = setInterval(function() { if (!_pullInProgress && !_pushInProgress) { _pullInProgress = true; pullFromSupabase().finally(function() { _pullInProgress = false; }); } }, 30000);
         setTimeout(function() { if (!_pullInProgress) { _pullInProgress = true; pullFromSupabase().finally(function() { _pullInProgress = false; }); } }, 3000);
         // فحص بلاغات الأعطال كل دقيقة
         setInterval(function() {
@@ -14029,6 +14028,21 @@ function toggleEmployeeStatus(empId) {
         showSyncToast('✅ تمت المزامنة بنجاح');
       } catch(e) {
         showSyncToast('❌ فشلت المزامنة');
+      }
+      btn.textContent = orig;
+      btn.disabled = false;
+    }
+    async function manualPush() {
+      if (!supabaseConnected) return showSyncToast('❌ غير متصل');
+      var btn = document.querySelector('button[onclick="manualPush()"]');
+      var orig = btn.textContent;
+      btn.textContent = '⏳ جاري...';
+      btn.disabled = true;
+      try {
+        await pushToSupabase();
+        showSyncToast('✅ تم دفع التعديلات إلى السحابة');
+      } catch(e) {
+        showSyncToast('❌ فشل الدفع');
       }
       btn.textContent = orig;
       btn.disabled = false;
