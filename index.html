@@ -8154,10 +8154,10 @@ function toggleEmployeeStatus(empId) {
         sectorsList[r.sector].push({ room: r.number, beds: r.beds, current: currentCount, avail: r.beds - currentCount });
       });
       Object.keys(sectorsList).sort().forEach(function(s) {
-        var rooms = sectorsList[s].filter(function(r) { return r.avail >= roomEmps.length; });
+        var rooms = sectorsList[s];
         if (rooms.length === 0) return;
         targetOptions += '<optgroup label="' + s + '">';
-        rooms.forEach(function(r) { targetOptions += '<option value="' + s.replace(/'/g, "\\'") + '|' + r.room.replace(/'/g, "\\'") + '">' + r.room + ' (متاح ' + r.avail + '/' + r.beds + ')</option>'; });
+        rooms.forEach(function(r) { targetOptions += '<option value="' + s.replace(/'/g, "\\'") + '|' + r.room.replace(/'/g, "\\'") + '">' + r.room + ' (' + r.current + '/' + r.beds + ')' + (r.avail < roomEmps.length ? ' ⚠️' : '') + '</option>'; });
         targetOptions += '</optgroup>';
       });
       var html = '<div class="modal open" id="modal-migrate"><div class="modal-content" style="max-width:500px;border-top:5px solid #37474f;">';
@@ -8189,7 +8189,7 @@ function toggleEmployeeStatus(empId) {
       var avail = target.beds - currentCount;
       var toMove = employees.filter(function(e) { return e.sector === fromSector && e.room === fromRoom; });
       if (toMove.length === 0) { alert('⚠️ لا يوجد موظفون في الغرفة المصدر.'); document.getElementById('modal-migrate').remove(); return; }
-      if (avail < toMove.length) { alert('⚠️ لا توجد سعة كافية في الغرفة الهدف. المتاح: ' + avail + '، المطلوب: ' + toMove.length); return; }
+      if (avail < toMove.length && !confirm('⚠️ الغرفة الهدف ( ' + toSector + ' - ' + toRoom + ' ) سعتها ' + target.beds + ' ومشغول فيها ' + currentCount + '.\nهل تريد نقل ' + toMove.length + ' موظف رغم تجاوز السعة؟')) return;
       toMove.forEach(function(e) { e.sector = toSector; e.room = toRoom; });
       syncStorage();
       renderHousingLayout();
