@@ -2680,7 +2680,7 @@
       </div>
       <div class="table-container">
         <table>
-           <thead><tr><th>التاريخ</th><th>الوجبة</th><th>الشيف</th><th>الخامات</th><th>الوزن النهائي (كجم)</th><th>هدر مهندسين (كجم)</th><th>هدر عمال (كجم)</th><th>الإجمالي (كجم)</th><th>%</th><th>التكلفة</th><th style="width:80px;">إجراءات</th></tr></thead>
+            <thead><tr><th>التاريخ</th><th>الوجبة</th><th>الشيف</th><th>الخامات</th><th>الوزن النهائي (كجم)</th><th>هدر مهندسين (كجم)</th><th>هدر عمال (كجم)</th><th>الإجمالي (كجم)</th><th>%</th><th style="width:80px;">إجراءات</th></tr></thead>
           <tbody id="mw-table-body"></tbody>
         </table>
       </div>
@@ -4515,7 +4515,7 @@
       let pCount = employees.filter(e => e.status === 'P').length;
       let vCount = employees.filter(e => e.status === 'V').length;
       let totalBeds = roomsCapacity.reduce((s,r) => s + (parseInt(r.beds)||0), 0);
-      let occupiedBeds = employees.filter(e => e.status === 'P' && e.room).length;
+      let occupiedBeds = employees.filter(e => (e.status === 'P' || e.status === 'V') && e.room).length;
       let vacantBeds = Math.max(0, totalBeds - occupiedBeds);
       let g = id => document.getElementById(id);
 
@@ -6047,7 +6047,7 @@
       var pCount = employees.filter(function(e) { return e.status === 'P'; }).length;
       var vCount = employees.filter(function(e) { return e.status === 'V'; }).length;
       var totalBeds = roomsCapacity.reduce(function(s,r) { return s + (parseInt(r.beds)||0); }, 0);
-      var occupiedBeds = employees.filter(function(e) { return e.status === 'P' && e.room; }).length;
+      var occupiedBeds = employees.filter(function(e) { return (e.status === 'P' || e.status === 'V') && e.room; }).length;
       var vacantBeds = Math.max(0, totalBeds - occupiedBeds);
       var mealStats = getTodayMealStats();
       var todayGuests = hospitalities.filter(function(h) {
@@ -6179,7 +6179,7 @@
       var pCount = employees.filter(function(e) { return e.status === 'P'; }).length;
       var vCount = employees.filter(function(e) { return e.status === 'V'; }).length;
       var totalBeds = roomsCapacity.reduce(function(s,r) { return s + (parseInt(r.beds)||0); }, 0);
-      var occupiedBeds = employees.filter(function(e) { return e.status === 'P' && e.room; }).length;
+      var occupiedBeds = employees.filter(function(e) { return (e.status === 'P' || e.status === 'V') && e.room; }).length;
       var vacantBeds = Math.max(0, totalBeds - occupiedBeds);
       var allGuests = [], allMaint = [], allSeptic = [], allProd = [], allCtr = [], allInv = [], allTea = [], allPM = [], allVac = [];
       days.forEach(function(dateInput) {
@@ -6745,7 +6745,7 @@
     function showLoginAlert(name) { /* removed per user request */ }
     function updateHousingStats() {
       let totalBeds = manualTotalBeds > 0 ? manualTotalBeds : roomsCapacity.reduce((s, rc) => s + (parseInt(rc.beds) || 0), 0);
-      let occupiedBeds = employees.filter(e => e.status === 'P' && e.room).length;
+      let occupiedBeds = employees.filter(e => (e.status === 'P' || e.status === 'V') && e.room).length;
       let inp = document.getElementById('stat-total-beds-input');
       if (inp) { inp.value = totalBeds; inp.style.borderColor = manualTotalBeds > 0 ? '#e65100' : '#e0e0e0'; }
       document.getElementById('stat-occupied-beds').innerText = occupiedBeds;
@@ -10639,13 +10639,16 @@ function toggleEmployeeStatus(empId) {
       var avgEng = totalEngAte > 0 ? (totalWasteFromEng / totalEngAte * 1000) : 0;
       var avgWrk = totalWrkAte > 0 ? (totalWasteFromWrk / totalWrkAte * 1000) : 0;
       var avgGuests = totalGuests > 0 ? (totalWasteFromGuests / totalGuests * 1000) : 0;
+      var totalPeople = totalEngAte + totalWrkAte + totalGuests;
+      var costPerPerson = totalPeople > 0 ? (totalCost / totalPeople) : 0;
+      var wasteCost = totalPrepared > 0 ? ((totalWaste / totalPrepared) * totalCost) : 0;
       el.innerHTML = [
         '<div style="background:#4a148c;color:white;padding:10px;border-radius:8px;text-align:center;"><div style="font-size:20px;font-weight:700;">' + totalCookedQty.toFixed(1) + ' كجم</div><div style="font-size:11px;">إجمالي الكميات المطهوة</div></div>',
-        '<div style="background:#e65100;color:white;padding:10px;border-radius:8px;text-align:center;"><div style="font-size:20px;font-weight:700;">' + totalPrepared.toFixed(1) + ' كجم</div><div style="font-size:11px;">الوزن النهائي بعد الطبخ</div></div>',
         '<div style="background:#d32f2f;color:white;padding:10px;border-radius:8px;text-align:center;"><div style="font-size:20px;font-weight:700;">' + totalWaste.toFixed(1) + ' كجم</div><div style="font-size:11px;">إجمالي الهدر</div></div>',
         '<div style="background:' + (wastePct <= 5 ? '#2e7d32' : '#d32f2f') + ';color:white;padding:10px;border-radius:8px;text-align:center;"><div style="font-size:20px;font-weight:700;">' + wastePct.toFixed(1) + '%</div><div style="font-size:11px;">نسبة الهدر (الهدف ≤5%)</div></div>',
         '<div style="background:#1565c0;color:white;padding:10px;border-radius:8px;text-align:center;font-size:12px;"><div style="font-weight:700;">🧑‍💼 ' + (totalEngAte > 0 ? avgEng.toFixed(1) + ' جم/فرد' : '—') + ' | 👷 ' + (totalWrkAte > 0 ? avgWrk.toFixed(1) + ' جم/فرد' : '—') + ' | 🧑‍🤝‍🧑 ' + (totalGuests > 0 ? avgGuests.toFixed(1) + ' جم/فرد' : '—') + '</div><div style="font-size:11px;">متوسط هدر/فرد (مهندسين / عمال / ضيوف)</div></div>',
-        '<div style="background:#37474f;color:white;padding:10px;border-radius:8px;text-align:center;"><div style="font-size:20px;font-weight:700;">' + totalCost.toFixed(0) + ' ج.م</div><div style="font-size:11px;">تكلفة الهدر</div></div>'
+        '<div style="background:#37474f;color:white;padding:10px;border-radius:8px;text-align:center;"><div style="font-size:20px;font-weight:700;">' + costPerPerson.toFixed(0) + ' ج.م</div><div style="font-size:11px;">تكلفة الفرد (' + totalPeople + ' فرد)</div></div>',
+        '<div style="background:#b71c1c;color:white;padding:10px;border-radius:8px;text-align:center;"><div style="font-size:20px;font-weight:700;">' + wasteCost.toFixed(0) + ' ج.م</div><div style="font-size:11px;">تكلفة الهدر الحقيقية (' + wastePct.toFixed(1) + '%)</div></div>'
       ].join('');
       var chartContainer = document.getElementById('mw-chart-container');
       if (chartContainer && count > 0) {
@@ -10670,11 +10673,14 @@ function toggleEmployeeStatus(empId) {
       tbody.innerHTML = '';
       filtered.forEach(function(w) {
         var realIdx = mealWaste.indexOf(w);
-        var total = (w.wasteEng||0) + (w.wasteWrk||0);
+        var total = (w.wasteEng||0) + (w.wrk||0);
         var pct = (w.totalPrepared||0) > 0 ? ((total / (w.totalPrepared||1)) * 100).toFixed(1) : 0;
         var ingsCount = (w.ingredients||[]).length;
         var avgEng = (w.engAte||0) > 0 ? ((w.wasteEng||0) / (w.engAte||1) * 1000) : 0;
         var avgWrk = (w.wrkAte||0) > 0 ? ((w.wasteWrk||0) / (w.wrkAte||1) * 1000) : 0;
+        var people = (w.engAte||0) + (w.engTakeaway||0) + (w.wrkAte||0) + (w.wrkTakeaway||0) + (w.guests||0);
+        var costPP = people > 0 ? ((w.cost||0) / people) : 0;
+        var wasteCost = (w.totalPrepared||0) > 0 ? (((w.wasteEng||0)+(w.wasteWrk||0)) / (w.totalPrepared||1) * (w.cost||0)) : 0;
         tbody.innerHTML += '<tr>' +
           '<td>' + toArabicNumerals(w.date) + '</td>' +
           '<td>' + (w.meal||'') + '</td>' +
@@ -10685,7 +10691,7 @@ function toggleEmployeeStatus(empId) {
           '<td style="color:#e65100;font-weight:700;">' + (w.wasteWrk||0) + ' كجم' + (avgWrk > 0 ? '<br><span style="font-size:10px;font-weight:400;color:#999;">' + avgWrk.toFixed(0) + ' جم/فرد</span>' : '') + '</td>' +
           '<td><b>' + total + ' كجم</b></td>' +
           '<td style="color:' + (pct > 5 ? '#d32f2f' : '#2e7d32') + ';font-weight:700;">' + pct + '%</td>' +
-          '<td>' + ((w.cost||0).toFixed(0)) + '</td>' +
+          '<td>' + costPP.toFixed(0) + ' ج.م<br><span style="font-size:9px;color:#b71c1c;">هدر: ' + wasteCost.toFixed(0) + ' ج.م</span></td>' +
           '<td class="no-print"><button class="btn btn-warning" style="padding:1px 5px;font-size:10px;" onclick="editMealWaste(' + realIdx + ')">✏️</button> <button class="btn btn-danger" style="padding:1px 5px;font-size:10px;" onclick="deleteMealWaste(' + realIdx + ')">🗑️</button></td>' +
         '</tr>';
       });
@@ -10740,7 +10746,7 @@ function toggleEmployeeStatus(empId) {
           'بالمطعم مهندسين':w.engAte||0, 'تيك أواي مهندسين':w.engTakeaway||0, 'بالمطعم عمال':w.wrkAte||0, 'تيك أواي عمال':w.wrkTakeaway||0, 'ضيوف':w.guests||0,
           'هدر/فرد مهندسين (جم)':avgEng, 'هدر/فرد عمال (جم)':avgWrk,
           'الماء المضاف (كجم)':w.waterAdded||0, 'نسبة الهدر':(w.totalPrepared>0?(((w.wasteEng||0)+(w.wasteWrk||0))/w.totalPrepared*100).toFixed(1):0)+'%',
-          'تكلفة الغاز':w.gasCost||0, 'تكلفة الرواتب':w.salaryCost||0, 'إجمالي التكلفة':w.cost, 'المسؤول':w.responsible };
+          'المسؤول':w.responsible };
       });
       var ws = XLSX.utils.json_to_sheet(xlData); var wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, 'سجل الهدر');
@@ -15231,7 +15237,7 @@ function toggleEmployeeStatus(empId) {
       var vPct = totalEmp > 0 ? Math.round(vCount / totalEmp * 100) : 0;
       var totalBeds = 0;
       roomsCapacity.forEach(function(r) { totalBeds += parseInt(r.beds) || 0; });
-      var occupiedBeds = employees.filter(function(e) { return e.status === 'P' && e.room; }).length;
+      var occupiedBeds = employees.filter(function(e) { return (e.status === 'P' || e.status === 'V') && e.room; }).length;
       var vacantBeds = totalBeds - occupiedBeds;
       var s1Data = [
         ['احصاء القوة اليومية - لينه فارمز', '', '', '', ''],

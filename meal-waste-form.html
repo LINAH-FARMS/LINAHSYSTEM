@@ -167,32 +167,40 @@ var SB = 'https://cwqghiqykohefaggedjl.supabase.co';
 var KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN3cWdoaXF5a29oZWZhZ2dlZGpsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEwMjUyMjEsImV4cCI6MjA5NjYwMTIyMX0.3a3hRcNdmYQCtjYjBroAT6df1T_7oz-XWUeD3wagYw8';
 var HEADERS = { 'apikey': KEY, 'Authorization': 'Bearer ' + KEY, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' };
 
-// Initialize ingredient master with defaults
+// Initialize ingredient master with defaults (with water absorption factor)
 (function() {
   var master = JSON.parse(localStorage.getItem('linah_ingredient_master') || '[]');
   if (!master.length) {
     master = [
-      {name:'مربى فيتراك',price:3.50},{name:'شنط بلاستيك',price:135},{name:'اكياس بلاستيك',price:135},
-      {name:'صلصة هارفست 3 كيلو',price:850},{name:'مياه معدنية',price:110},{name:'اكياس قمامة',price:135},
-      {name:'طبق فوم لانش بوكس',price:2},{name:'رول سلفر 60 متر',price:265},{name:'مناديل ورقية',price:33},
-      {name:'اسبونشة مواعين',price:10},{name:'طبق بلاستيك حلويات بغطاء',price:3},{name:'سلك مواعين',price:330},
-      {name:'صابون سائل',price:25},{name:'صابون وش كامى',price:20},{name:'مخلل درجة اولى',price:240},
-      {name:'فحم',price:680},{name:'معلقه بلاستيك',price:0.50},{name:'كوب بلاستيك شفاف',price:0.45},
-      {name:'كوب شاى ورق',price:0.80},{name:'خل طعام',price:185},{name:'كوب قهوه ورق',price:0.60},
-      {name:'نسكافيه برطمان 200 جرام',price:320},{name:'شاي اخضر ايزيس 50 فتله',price:100},
-      {name:'لبن بودره ميرو 400 جرام',price:220},{name:'ديتول مطهر',price:35},{name:'فينيك',price:30},
-      {name:'صابون يد بدون رائحه',price:580},{name:'مرقة دجاج كنور',price:165},
-      {name:'أرز ابو الذهب',price:34},{name:'عدس بجبة',price:48},{name:'فاصوليا بيضاء',price:72},
-      {name:'عدس اصفر',price:52},{name:'لسان عصفور',price:26},{name:'سمنة روابى 11 كيلو',price:1360},
-      {name:'زيت كويست 20 لتر',price:1780},{name:'ملح طعام بونو',price:40},{name:'نشا',price:40},
-      {name:'شعرية',price:26},{name:'سكر معباء',price:33.50},{name:'شاى العروسة',price:9.50},
-      {name:'لبن جهينة',price:55},{name:'زيت حار',price:1750},{name:'فول مدشوش',price:48},
-      {name:'حلاوة قطع حجم كبير 32 جرام',price:5.75},{name:'طحينة',price:160},{name:'مكرونة',price:26},
-      {name:'جبنة عبور لاند',price:13},{name:'ثوم طازج',price:180},{name:'زبيب',price:330},
-      {name:'حمص',price:80},{name:'مكرونة اسبكتى',price:26},{name:'لوبيا مستوردة',price:72},
-      {name:'سودانى',price:200},{name:'ملوخية ناشفة',price:200},{name:'جوز هند',price:380},
-      {name:'زيت سندباد 1 لتر',price:1050},{name:'بقسماط ناعم',price:42},{name:'شاى 100 فتلة',price:120},
-      {name:'بن ابو عوف سادة',price:865}
+      {name:'مربى فيتراك',price:3.50,factor:1},{name:'شنط بلاستيك',price:135,factor:1},{name:'اكياس بلاستيك',price:135,factor:1},
+      {name:'صلصة هارفست 3 كيلو',price:850,factor:1},{name:'مياه معدنية',price:110,factor:1},{name:'اكياس قمامة',price:135,factor:1},
+      {name:'طبق فوم لانش بوكس',price:2,factor:1},{name:'رول سلفر 60 متر',price:265,factor:1},{name:'مناديل ورقية',price:33,factor:1},
+      {name:'اسبونشة مواعين',price:10,factor:1},{name:'طبق بلاستيك حلويات بغطاء',price:3,factor:1},{name:'سلك مواعين',price:330,factor:1},
+      {name:'صابون سائل',price:25,factor:1},{name:'صابون وش كامى',price:20,factor:1},{name:'مخلل درجة اولى',price:240,factor:1},
+      {name:'فحم',price:680,factor:1},{name:'معلقه بلاستيك',price:0.50,factor:1},{name:'كوب بلاستيك شفاف',price:0.45,factor:1},
+      {name:'كوب شاى ورق',price:0.80,factor:1},{name:'خل طعام',price:185,factor:1},{name:'كوب قهوه ورق',price:0.60,factor:1},
+      {name:'نسكافيه برطمان 200 جرام',price:320,factor:1},{name:'شاي اخضر ايزيس 50 فتله',price:100,factor:1},
+      {name:'لبن بودره ميرو 400 جرام',price:220,factor:1},{name:'ديتول مطهر',price:35,factor:1},{name:'فينيك',price:30,factor:1},
+      {name:'صابون يد بدون رائحه',price:580,factor:1},{name:'مرقة دجاج كنور',price:165,factor:1},
+      {name:'أرز ابو الذهب',price:34,factor:2.5},{name:'عدس بجبة',price:48,factor:2.5},{name:'فاصوليا بيضاء',price:72,factor:2},
+      {name:'عدس اصفر',price:52,factor:2.5},{name:'لسان عصفور',price:26,factor:2.5},{name:'سمنة روابى 11 كيلو',price:1360,factor:1},
+      {name:'زيت كويست 20 لتر',price:1780,factor:1},{name:'ملح طعام بونو',price:40,factor:1},{name:'نشا',price:40,factor:1},
+      {name:'شعرية',price:26,factor:2.5},{name:'سكر معباء',price:33.50,factor:1},{name:'شاى العروسة',price:9.50,factor:1},
+      {name:'لبن جهينة',price:55,factor:1},{name:'زيت حار',price:1750,factor:1},{name:'فول مدشوش',price:48,factor:2},
+      {name:'حلاوة قطع حجم كبير 32 جرام',price:5.75,factor:1},{name:'طحينة',price:160,factor:1},{name:'مكرونة',price:26,factor:2.5},
+      {name:'جبنة عبور لاند',price:13,factor:1},{name:'ثوم طازج',price:180,factor:1},{name:'زبيب',price:330,factor:1},
+      {name:'حمص',price:80,factor:2},{name:'مكرونة اسبكتى',price:26,factor:2.5},{name:'لوبيا مستوردة',price:72,factor:2},
+      {name:'سودانى',price:200,factor:1},{name:'ملوخية ناشفة',price:200,factor:2},{name:'جوز هند',price:380,factor:1},
+      {name:'زيت سندباد 1 لتر',price:1050,factor:1},{name:'بقسماط ناعم',price:42,factor:1},{name:'شاى 100 فتلة',price:120,factor:1},
+      {name:'بن ابو عوف سادة',price:865,factor:1},{name:'فول',price:80,factor:2},{name:'عدس',price:60,factor:2.5},
+      {name:'ارز مصري',price:35,factor:2.5},{name:'بطاطس',price:20,factor:1.3},{name:'جزر',price:15,factor:1.2},
+      {name:'بسلة',price:40,factor:1.5},{name:'طماطم',price:10,factor:1.1},{name:'بصل',price:8,factor:1.1},
+      {name:'فراخ',price:110,factor:0.8},{name:'لحمة بقر',price:250,factor:0.75},{name:'لحمة غنم',price:300,factor:0.75},
+      {name:'خبز بلدي',price:5,factor:1},{name:'جبنة بيضاء',price:60,factor:1},{name:'بيض',price:1.5,factor:0.75},
+      {name:'مربي',price:30,factor:1},{name:'زيت',price:60,factor:1},{name:'سمن',price:100,factor:1},
+      {name:'خس',price:15,factor:1},{name:'خيار',price:12,factor:1},{name:'فلفل حار',price:20,factor:1},
+      {name:'ليمون',price:20,factor:1},{name:'ملفوف',price:10,factor:1},{name:'كاتشب',price:30,factor:1},
+      {name:'مايونيز',price:40,factor:1},{name:'مسقعة',price:40,factor:1.2}
     ];
     localStorage.setItem('linah_ingredient_master', JSON.stringify(master));
   }
@@ -227,7 +235,11 @@ function fillPriceFromMaster(input) {
   var master = JSON.parse(localStorage.getItem('linah_ingredient_master') || '[]');
   var match = master.find(function(ing) { return ing.name === name; });
   var priceInput = row.querySelector('.ing-price');
-  if (match && priceInput) priceInput.value = match.price;
+  var factorInput = row.querySelector('.ing-factor');
+  if (match) {
+    if (priceInput) priceInput.value = match.price;
+    if (factorInput) factorInput.value = match.factor || 1;
+  }
   calcWaterAuto();
 }
 
@@ -237,7 +249,7 @@ function selectMeal(btn) {
   document.getElementById('mw-meal').value = btn.getAttribute('data-meal');
 }
 
-function addIngRow(name, qty, unit, price) {
+function addIngRow(name, qty, unit, price, factor) {
   var c = document.getElementById('ings-container');
   var d = document.createElement('div');
   d.className = 'ing-row';
@@ -252,7 +264,8 @@ function addIngRow(name, qty, unit, price) {
     '<option value="طبق"' + (unit==='طبق'?' selected':'') + '>طبق</option>' +
     '<option value="ربطة"' + (unit==='ربطة'?' selected':'') + '>ربطة</option>' +
     '</select>' +
-    '<input type="number" class="ing-price" placeholder="سعر" min="0" step="0.01" value="' + (price||'') + '" style="width:55px;padding:8px;border:1px solid #ddd;border-radius:6px;font-size:12px;font-family:Cairo;" oninput="calcWaterAuto()">' +
+    '<input type="number" class="ing-price" placeholder="سعر" min="0" step="0.01" value="' + (price||'') + '" style="width:55px;padding:8px;border:1px solid #ddd;border-radius:6px;font-size:12px;font-family:Cairo;display:none;" oninput="calcWaterAuto()">' +
+    '<input type="number" class="ing-factor" value="' + (factor||1) + '" style="display:none;">' +
     '<button type="button" class="remove-ing" onclick="this.parentElement.remove();calcWaterAuto();">✕</button>';
   c.appendChild(d);
 }
@@ -265,7 +278,8 @@ function getIngredients() {
     var q = parseFloat(r.querySelector('.ing-qty').value) || 0;
     var u = r.querySelector('.ing-unit').value;
     var p = parseFloat(r.querySelector('.ing-price').value) || 0;
-    if (n && q > 0) ings.push({ name: n, qty: q, unit: u, price: p });
+    var f = parseFloat(r.querySelector('.ing-factor').value) || 1;
+    if (n && q > 0) ings.push({ name: n, qty: q, unit: u, price: p, factor: f });
   });
   return ings;
 }
@@ -302,15 +316,30 @@ function calcWaterAuto() {
   var tp = document.getElementById('mw-total-prepared');
   if (totalIngredients > 0 && !tp.value) tp.value = totalIngredients.toFixed(1);
   var totalCost = 0;
+  var totalRawWeight = 0;
+  var totalCookedWeight = 0;
   document.querySelectorAll('.ing-row').forEach(function(r) {
     var q = parseFloat(r.querySelector('.ing-qty').value) || 0;
     var p = parseFloat(r.querySelector('.ing-price').value) || 0;
+    var f = parseFloat(r.querySelector('.ing-factor').value) || 1;
     totalCost += q * p;
+    totalRawWeight += q;
+    totalCookedWeight += q * f;
   });
   var gasCost = parseFloat(document.getElementById('mw-gas-cost').value) || 0;
   var salaryCost = parseFloat(document.getElementById('mw-salary-cost').value) || 0;
   totalCost += gasCost + salaryCost;
   document.getElementById('mw-cost').value = totalCost > 0 ? totalCost.toFixed(0) : '';
+  // Real waste cost calculation
+  var totalWaste = wasteEng + wasteWrk + wasteGuests;
+  var wasteCost = totalCookedWeight > 0 ? (totalWaste / totalCookedWeight * totalCost) : 0;
+  var costPerPerson = (engAte + engTakeaway + wrkAte + wrkTakeaway + guests) > 0 ? (totalCost / (engAte + engTakeaway + wrkAte + wrkTakeaway + guests)) : 0;
+  if (totalWaste > 0 && totalCookedWeight > 0) {
+    html += '<div style="margin-top:6px;padding-top:6px;border-top:1px solid #ffe0b2;">💰 تكلفة الهدر: <strong>' + wasteCost.toFixed(0) + '</strong> ج.م</div>';
+  }
+  if (costPerPerson > 0) {
+    html += '<div>👤 تكلفة الفرد: <strong>' + costPerPerson.toFixed(0) + '</strong> ج.م</div>';
+  }
   document.getElementById('mw-calc-summary').innerHTML = html;
 }
 
