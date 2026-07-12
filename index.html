@@ -14932,7 +14932,6 @@ function toggleEmployeeStatus(empId) {
       employees.forEach(function(e, i) {
         if (!e || typeof e !== 'object') { issues.push('⚠️ موظف رقم ' + i + ' مش object'); return; }
         if (!e.name && !e.code) issues.push('⚠️ موظف ' + (e.code || i) + ' مفيش اسم');
-        if (e.room && !roomsCapacity.some(function(r) { return r.number === e.room; })) issues.push('⚠️ ' + (e.name || e.code) + ' مسكن في غرفة غير موجودة: ' + e.room);
       });
       roomsCapacity.forEach(function(r, i) {
         if (!r || typeof r !== 'object') { issues.push('⚠️ غرفة رقم ' + i + ' مش object'); return; }
