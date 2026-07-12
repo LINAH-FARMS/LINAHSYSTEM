@@ -5500,18 +5500,22 @@
     }
 
     function renderDynamicLists() {
+      // المباني = سكن فقط = اللي موجود في تبويب السكن
+      var housingSectors = {};
+      roomsCapacity.forEach(function(r) { housingSectors[r.sector] = true; });
+      var validSectors = Object.keys(housingSectors);
       let res = document.getElementById('dynamic-results');
       res.innerHTML = `
         💼 <b>الإدارات:</b> ${dynamicDepts.join(' | ')}<br><br>
         🛠️ <b>المسميات:</b> ${dynamicTitles.join(' | ')}<br><br>
-        🏢 <b>المباني:</b> ${dynamicSectors.join(' | ')}<br><br>
+        🏢 <b>المباني:</b> ${validSectors.join(' | ')}<br><br>
         🚪 <b>الغرف:</b> ${dynamicRooms.join(' | ')}<br><br>
         🧹 <b>البيارات:</b> ${dynamicSeptics.join(' | ')}<br><br>
         🏗️ <b>سكن المقاولين:</b> ${contractorSectors.join(' | ')}<br><br>
         🛎️ <b>تصنيف الزوار:</b> ${dynamicVisitorTypes.join(' | ')}<br><br>
         🍞 <b>مقاولي الخبز:</b> ${bakeryContractorsNames.join(' | ')}
       `;
-      renderListItems('sector', dynamicSectors, 'sector');
+      renderListItems('sector', validSectors, 'sector');
       var sortedRooms = dynamicRooms.slice().sort(naturalCompare);
       renderListItems('room', sortedRooms, 'room');
       renderListItems('septic', dynamicSeptics, 'septic');
@@ -5611,9 +5615,11 @@
     function addDynamicSector() {
       let val = document.getElementById('new-sector').value.trim();
       if(!val) return alert('⚠️ أدخل اسم المبنى.');
-      if(dynamicSectors.includes(val)) return alert('⚠️ المبنى موجود بالفعل.');
-      dynamicSectors.push(val); document.getElementById('new-sector').value = '';
-      syncStorage(); rebuildAllDropdowns(); renderDynamicLists();
+      if(roomsCapacity.some(function(r) { return r.sector === val; })) return alert('⚠️ المبنى موجود بالفعل.');
+      roomsCapacity.push({ sector: val, number: 'غرفة 1', beds: 1 });
+      if(!dynamicSectors.includes(val)) dynamicSectors.push(val);
+      document.getElementById('new-sector').value = '';
+      syncStorage(); rebuildAllDropdowns(); renderDynamicLists(); renderHousingLayout();
     }
     function addDynamicRoom() {
       let val = document.getElementById('new-room').value.trim();
