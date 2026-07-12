@@ -13562,6 +13562,7 @@ function toggleEmployeeStatus(empId) {
             if (_ad && typeof _ad === 'object') { for (var _aki in _ad) { if (_aki === 'syncDeletions') continue; mergedData[_aki] = _ad[_aki]; _adTimestamps[_aki] = _adTs; } }
           }
           // 2) entity_* يدوس على alldata بس لو أحدث timestamps
+          //    لكن لا يمسح بيانات alldata — alldata هو المرجع الأساسي
           for (var ri = 0; ri < rows.length; ri++) {
             var row = rows[ri]; if (!row.id || !row.data || !row.id.startsWith('entity_')) continue;
             var name = row.id.substring(7);
@@ -13569,13 +13570,7 @@ function toggleEmployeeStatus(empId) {
             var remoteData = typeof row.data === 'string' ? JSON.parse(row.data) : row.data;
             var existing = mergedData[name];
             if (!existing) { mergedData[name] = remoteData; continue; }
-            if (Array.isArray(remoteData) && Array.isArray(existing)) {
-              var entTs = row.updated_at || '';
-              var adTs = _adTimestamps[name] || '';
-              if (entTs > adTs) { mergedData[name] = remoteData; }
-            } else {
-              mergedData[name] = remoteData;
-            }
+            // لا تمسح بيانات alldata — entity_* ممكن تكون قديمة من push قديم
           }
           syncDeletions = [];
           localStorage.removeItem('lineh_sync_deletions');
