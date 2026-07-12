@@ -13553,21 +13553,26 @@ function toggleEmployeeStatus(empId) {
         if (rows && rows.length > 0) {
           var mergedData = {};
           var _entityUpdates = {};
+          var _adTimestamps = {};
           // 1) alldata كأساسي
           for (var ri = 0; ri < rows.length; ri++) {
             var row = rows[ri]; if (!row.id || !row.data || row.id !== 'alldata') continue;
             var _ad = typeof row.data === 'string' ? JSON.parse(row.data) : row.data;
-            if (_ad && typeof _ad === 'object') { for (var _aki in _ad) { if (_aki === 'syncDeletions') continue; mergedData[_aki] = _ad[_aki]; } }
+            var _adTs = row.updated_at || '';
+            if (_ad && typeof _ad === 'object') { for (var _aki in _ad) { if (_aki === 'syncDeletions') continue; mergedData[_aki] = _ad[_aki]; _adTimestamps[_aki] = _adTs; } }
           }
-          // 2) entity_* يدوس على alldata بس لو أحدث
+          // 2) entity_* يدوس على alldata بس لو أحدث timestamps
           for (var ri = 0; ri < rows.length; ri++) {
             var row = rows[ri]; if (!row.id || !row.data || !row.id.startsWith('entity_')) continue;
             var name = row.id.substring(7);
             if (name.indexOf('data_') === 0 || name.indexOf('presence_') === 0) continue;
             var remoteData = typeof row.data === 'string' ? JSON.parse(row.data) : row.data;
             var existing = mergedData[name];
+            if (!existing) { mergedData[name] = remoteData; continue; }
             if (Array.isArray(remoteData) && Array.isArray(existing)) {
-              mergedData[name] = remoteData.length >= existing.length ? remoteData : existing;
+              var entTs = row.updated_at || '';
+              var adTs = _adTimestamps[name] || '';
+              if (entTs > adTs) { mergedData[name] = remoteData; }
             } else {
               mergedData[name] = remoteData;
             }
