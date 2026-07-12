@@ -3728,30 +3728,28 @@
     let ingredientMaster = _safeJsonParse(localStorage.getItem('linah_ingredient_master'), []);
     if (!ingredientMaster.length) {
       ingredientMaster = [
-        {name:'مربى فيتراك',price:3.50},{name:'شنط بلاستيك',price:135},{name:'اكياس بلاستيك',price:135},
-        {name:'صلصة هارفست 3 كيلو',price:850},{name:'مياه معدنية',price:110},{name:'اكياس قمامة',price:135},
-        {name:'طبق فوم لانش بوكس',price:2},{name:'رول سلفر 60 متر',price:265},{name:'مناديل ورقية',price:33},
-        {name:'اسبونشة مواعين',price:10},{name:'طبق بلاستيك حلويات بغطاء',price:3},{name:'سلك مواعين',price:330},
-        {name:'صابون سائل',price:25},{name:'صابون وش كامى',price:20},{name:'مخلل درجة اولى',price:240},
-        {name:'فحم',price:680},{name:'معلقه بلاستيك',price:0.50},{name:'كوب بلاستيك شفاف',price:0.45},
-        {name:'كوب شاى ورق',price:0.80},{name:'خل طعام',price:185},{name:'كوب قهوه ورق',price:0.60},
-        {name:'نسكافيه برطمان 200 جرام',price:320},{name:'شاي اخضر ايزيس 50 فتله',price:100},
-        {name:'لبن بودره ميرو 400 جرام',price:220},{name:'ديتول مطهر',price:35},{name:'فينيك',price:30},
-        {name:'صابون يد بدون رائحه',price:580},{name:'مرقة دجاج كنور',price:165},
-        {name:'أرز ابو الذهب',price:34},{name:'عدس بجبة',price:48},{name:'فاصوليا بيضاء',price:72},
-        {name:'عدس اصفر',price:52},{name:'لسان عصفور',price:26},{name:'سمنة روابى 11 كيلو',price:1360},
-        {name:'زيت كويست 20 لتر',price:1780},{name:'ملح طعام بونو',price:40},{name:'نشا',price:40},
-        {name:'شعرية',price:26},{name:'سكر معباء',price:33.50},{name:'شاى العروسة',price:9.50},
-        {name:'لبن جهينة',price:55},{name:'زيت حار',price:1750},{name:'فول مدشوش',price:48},
-        {name:'حلاوة قطع حجم كبير 32 جرام',price:5.75},{name:'طحينة',price:160},{name:'مكرونة',price:26},
-        {name:'جبنة عبور لاند',price:13},{name:'ثوم طازج',price:180},{name:'زبيب',price:330},
-        {name:'حمص',price:80},{name:'مكرونة اسبكتى',price:26},{name:'لوبيا مستوردة',price:72},
-        {name:'سودانى',price:200},{name:'ملوخية ناشفة',price:200},{name:'جوز هند',price:380},
-        {name:'زيت سندباد 1 لتر',price:1050},{name:'بقسماط ناعم',price:42},{name:'شاى 100 فتلة',price:120},
-        {name:'بن ابو عوف سادة',price:865}
+        {name:'ارز',unit:'كجم',price:34},{name:'عدس بجبه',unit:'كجم',price:48},{name:'فاصوليا',unit:'كجم',price:70},
+        {name:'عدس اصفر',unit:'كجم',price:50},{name:'لسان عصفور',unit:'كجم',price:26},{name:'سمنة',unit:'عدد',price:112},
+        {name:'جركن زيت كويست',unit:'لتر',price:99},{name:'كرتونة ملح',unit:'عدد',price:1.75},{name:'مربى',unit:'عدد',price:3.99},
+        {name:'شعريه',unit:'كجم',price:26},{name:'فول مدشوش',unit:'كجم',price:36},{name:'حلاوة قطع',unit:'عدد',price:5.75},
+        {name:'طحينة',unit:'كجم',price:160},{name:'مكرونة',unit:'كجم',price:26},{name:'جبنة',unit:'عدد',price:13},
+        {name:'صلصلة',unit:'جم',price:0.10},{name:'مكرونة اسباكيتى',unit:'كجم',price:26},{name:'حمص',unit:'كجم',price:80},
+        {name:'نشا',unit:'كجم',price:40},{name:'جوز هند',unit:'كجم',price:380},{name:'زيت سندباد',unit:'عدد',price:100},
+        {name:'شيكارة فحم',unit:'عدد',price:741},{name:'مرقه دجاج',unit:'عدد',price:1.50},{name:'ثوم',unit:'كجم',price:180},
+        {name:'خل',unit:'عدد',price:30},{name:'زبيب',unit:'كجم',price:330},{name:'لوبيا',unit:'كجم',price:70},
+        {name:'زيت حار',unit:'لتر',price:150},{name:'كيس مخلل',unit:'عدد',price:273.60},{name:'سودانى',unit:'كجم',price:180},
+        {name:'ملوخية',unit:'كجم',price:200},{name:'بقسماط مطحون',unit:'كجم',price:42},{name:'شطة حمراء',unit:'كجم',price:180},
+        {name:'بهارات الشوى',unit:'كجم',price:0.48},{name:'13بهارات',unit:'كجم',price:0.48},{name:'فلفل اسود',unit:'كجم',price:0.58},
+        {name:'حبهان',unit:'كجم',price:2.80},{name:'كمون',unit:'كجم',price:0.40},{name:'كركم',unit:'كجم',price:0.36},
+        {name:'ثوم بودرة',unit:'كجم',price:0.36},{name:'بصل بودرة',unit:'كجم',price:0.36},{name:'سمسم',unit:'كجم',price:0.22},
+        {name:'قرنفل',unit:'كجم',price:0.98},{name:'بابريكا',unit:'كجم',price:0.48},{name:'ورق لوري',unit:'كجم',price:0.24},
+        {name:'فيجيتار',unit:'كجم',price:80}
       ];
       localStorage.setItem('linah_ingredient_master', JSON.stringify(ingredientMaster));
     }
+    // تحديث الأسعار من أحدث قائمة (11 يوليو 2026)
+    var _latestPrices = {'ارز':34,'عدس بجبه':48,'فاصوليا':70,'عدس اصفر':50,'لسان عصفور':26,'سمنة':112,'جركن زيت كويست':99,'كرتونة ملح':1.75,'مربى':3.99,'شعريه':26,'فول مدشوش':36,'حلاوة قطع':5.75,'طحينة':160,'مكرونة':26,'جبنة':13,'صلصة':0.10,'مكرونة اسباكيتى':26,'حمص':80,'نشا':40,'جوز هند':380,'زيت سندباد':100,'شيكارة فحم':741,'مرقه دجاج':1.50,'ثوم':180,'خل':30,'زبيب':330,'لوبيا':70,'زيت حار':150,'كيس مخلل':273.60,'سودانى':180,'ملوخية':200,'بقسماط مطحون':42,'شطة حمراء':180};
+    ingredientMaster.forEach(function(ing) { if (_latestPrices[ing.name] !== undefined) ing.price = _latestPrices[ing.name]; });
     let inventoryItems = _safeJsonParse(localStorage.getItem('lineh_inventory_items'), []);
     let contractors = _safeJsonParse(localStorage.getItem('lineh_contractors'), []);
     let bakeryIngredients = _safeJsonParse(localStorage.getItem('linah_bakery_ingredients'), [
