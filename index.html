@@ -8948,7 +8948,7 @@ function toggleEmployeeStatus(empId) {
       let st = sortState['table-vacations'];
       if (!st || !st.key) filtered = sortNewestFirst(filtered, 'start');
       if (st && st.key) filtered = sortData(filtered, st.key, st.dir);
-      filtered.forEach((v, realIdx) => {
+      filtered.forEach((v) => {
           var sd = new Date(v.start + 'T00:00:00');
           var ed = new Date(v.end + 'T00:00:00');
           v.days = Math.round((ed - sd) / 86400000) + 1;
@@ -8969,6 +8969,7 @@ function toggleEmployeeStatus(empId) {
         }
         let emp = employees.find(e => (e.code || e.id) === v.code);
         let empBalance = emp && typeof emp.vacationBalance === 'number' ? emp.vacationBalance : null;
+        let realIdx = vacations.indexOf(v);
         let tr = document.createElement('tr');
         tr.innerHTML = `
           <td class="no-print"><input type="checkbox" class="row-check" data-table="table-vacations"></td>
