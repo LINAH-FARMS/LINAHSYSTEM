@@ -7705,7 +7705,7 @@ function toggleEmployeeStatus(empId) {
         let block = document.createElement('div');
         block.className = 'sector-block';
         let buildingEmps = employees.filter(e => e.sector === sector);
-        block.innerHTML = `<div class="sector-title" style="display:flex;justify-content:space-between;align-items:center;">مبنى سكن: ${sector} <button class="btn" style="padding:2px 10px;font-size:11px;background:#c62828;color:#fff;" onclick="deleteBuilding('${sector}')">🗑️ حذف المبنى</button></div>`;
+        block.innerHTML = `<div class="sector-title" style="display:flex;justify-content:space-between;align-items:center;">مبنى سكن: ${sector} <span><button class="btn" style="padding:2px 10px;font-size:11px;background:#1565c0;color:#fff;" onclick="editSectorName(this,'${sector.replace(/'/g, "\\'")}')">✏️ تعديل الاسم</button> <button class="btn" style="padding:2px 10px;font-size:11px;background:#c62828;color:#fff;" onclick="deleteBuilding('${sector.replace(/'/g, "\\'")}')">🗑️ حذف المبنى</button></span></div>`;
 
         let roomsContainer = document.createElement('div');
         roomsContainer.style = "display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:10px;";
@@ -8117,6 +8117,27 @@ function toggleEmployeeStatus(empId) {
       if (modal) modal.remove();
       renderHousingLayout();
       alert('✅ تم ترحيل ' + buildingEmps.length + ' موظف وحذف المبنى "' + sector + '" بنجاح.');
+    }
+
+    function editSectorName(btn, oldName) {
+      let newName = prompt('✏️ تعديل اسم المبنى:\n' + oldName + '\nأدخل الاسم الجديد:', oldName);
+      if (!newName || newName.trim() === '' || newName === oldName) return;
+      newName = newName.trim();
+      if (dynamicSectors.indexOf(newName) !== -1) {
+        alert('⚠️ هذا الاسم موجود بالفعل.');
+        return;
+      }
+      let idx = dynamicSectors.indexOf(oldName);
+      if (idx === -1) return;
+      // Update dynamicSectors
+      dynamicSectors[idx] = newName;
+      // Update roomsCapacity
+      roomsCapacity.forEach(function(r) { if (r.sector === oldName) r.sector = newName; });
+      // Update employees
+      employees.forEach(function(e) { if (e.sector === oldName) e.sector = newName; });
+      syncStorage();
+      renderHousingLayout();
+      alert('✅ تم تغيير اسم المبنى من "' + oldName + '" إلى "' + newName + '"');
     }
 
     function editRoomBeds(sector, roomNumber, currentBeds) {
