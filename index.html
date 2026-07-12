@@ -13499,41 +13499,26 @@ function toggleEmployeeStatus(empId) {
       try {
         var ts = new Date().toISOString();
         var allData = getAllDataForSync();
-        // 1) ادفع alldata (المرجع الأساسي)
         var currentAlldata = {};
         try {
           var adResp = await fetch(_sbEndpoint + '?id=eq.alldata&select=data', { method: 'GET', headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } });
           if (adResp.ok) { var adRows = await adResp.json(); if (adRows && adRows[0] && adRows[0].data) { currentAlldata = typeof adRows[0].data === 'string' ? JSON.parse(adRows[0].data) : adRows[0].data; } }
         } catch(e) {}
         for (var ak in allData) { currentAlldata[ak] = allData[ak]; }
-        var adPayload = { id: 'alldata', data: currentAlldata, updated_at: ts, device_id: _deviceId };
-        var adResp2 = await fetch(_sbEndpoint, {
+        var resp = await fetch(_sbEndpoint, {
           method: 'POST',
           headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/json', 'Prefer': 'resolution=merge-duplicates' },
-          body: JSON.stringify(adPayload)
+          body: JSON.stringify({ id: 'alldata', data: currentAlldata, updated_at: ts, device_id: _deviceId })
         });
-        var okCount = adResp2.ok ? 1 : 0, failCount = adResp2.ok ? 0 : 1;
-        // 2) ادفع entity_* كمان للتوافق
-        var entityKeys = Object.keys(allData);
-        for (var pi = 0; pi < entityKeys.length; pi++) {
-          var ek = entityKeys[pi];
-          var entityId = 'entity_' + ek;
-          var payload = { id: entityId, data: allData[ek], updated_at: ts, device_id: _deviceId };
-          var resp = await fetch(_sbEndpoint, {
-            method: 'POST',
-            headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/json', 'Prefer': 'resolution=merge-duplicates' },
-            body: JSON.stringify(payload)
-          });
-          if (resp.ok) okCount++; else failCount++;
-        }
+        if (!resp.ok) throw new Error('HTTP ' + resp.status);
         _lastUpdatedAt = ts;
         _pulledAt['_lastPush'] = ts;
         localStorage.setItem('_pulledAt', JSON.stringify(_pulledAt));
         _takeSnapshot();
         syncStorage(true, true);
-        syncLog('✅ تم دفع ' + okCount + ' entity (' + failCount + ' فشل)');
+        syncLog('✅ تم الدفع للسحابة');
         updateLastSyncTime();
-        if (failCount > 0) showSyncToast('⚠️ ' + failCount + ' entity فشل دفعها');
+        showSyncToast('تم الدفع للسحابة');
       } catch(e) {
         syncLog('⚠️ خطأ في الدفع: ' + e.message);
         showSyncToast('❌ خطأ في الاتصال — البيانات محفوظة محلياً فقط');
@@ -13563,28 +13548,12 @@ function toggleEmployeeStatus(empId) {
         var resp = await fetch(_sbEndpoint + '?select=id,data,updated_at', { method: 'GET', headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Range': '0-*' } });
         if (!resp.ok) { syncLog('⚠️ فشل السحب كود ' + resp.status); return; }
         var rows = await resp.json();
-        console.log('[pull] rows found:', rows ? rows.length : 0, rows ? rows.map(function(r){return r.id;}) : []);
         if (rows && rows.length > 0) {
           var mergedData = {};
-          var _entityUpdates = {};
-          var _adTimestamps = {};
-          // 1) alldata كأساسي
           for (var ri = 0; ri < rows.length; ri++) {
             var row = rows[ri]; if (!row.id || !row.data || row.id !== 'alldata') continue;
             var _ad = typeof row.data === 'string' ? JSON.parse(row.data) : row.data;
-            var _adTs = row.updated_at || '';
-            if (_ad && typeof _ad === 'object') { for (var _aki in _ad) { if (_aki === 'syncDeletions') continue; mergedData[_aki] = _ad[_aki]; _adTimestamps[_aki] = _adTs; } }
-          }
-          // 2) entity_* يدوس على alldata بس لو أحدث timestamps
-          //    لكن لا يمسح بيانات alldata — alldata هو المرجع الأساسي
-          for (var ri = 0; ri < rows.length; ri++) {
-            var row = rows[ri]; if (!row.id || !row.data || !row.id.startsWith('entity_')) continue;
-            var name = row.id.substring(7);
-            if (name.indexOf('data_') === 0 || name.indexOf('presence_') === 0) continue;
-            var remoteData = typeof row.data === 'string' ? JSON.parse(row.data) : row.data;
-            var existing = mergedData[name];
-            if (!existing) { mergedData[name] = remoteData; continue; }
-            // لا تمسح بيانات alldata — entity_* ممكن تكون قديمة من push قديم
+            if (_ad && typeof _ad === 'object') { for (var _aki in _ad) { if (_aki === 'syncDeletions') continue; mergedData[_aki] = _ad[_aki]; } }
           }
           syncDeletions = [];
           localStorage.removeItem('lineh_sync_deletions');
