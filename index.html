@@ -5609,7 +5609,11 @@
       let key = (typeof item === 'string') ? item : (item.name || item.label || item.id || JSON.stringify(item));
       _logDeletion(entityMap[listId] || listId, key);
       arr.splice(idx, 1);
-      syncStorage(); rebuildAllDropdowns(); renderDynamicLists();
+      if (listId === 'sector') {
+        roomsCapacity = roomsCapacity.filter(function(r) { return r.sector !== item; });
+        _logDeletion('roomsCapacity', item);
+      }
+      syncStorage(); rebuildAllDropdowns(); renderDynamicLists(); renderHousingLayout();
       if (listId === 'bakery-ctr') populateBctrDatalist();
     }
 
@@ -13647,6 +13651,7 @@ function toggleEmployeeStatus(empId) {
             var _ad = typeof row.data === 'string' ? JSON.parse(row.data) : row.data;
             if (_ad && typeof _ad === 'object') { for (var _aki in _ad) { if (_aki === 'syncDeletions') continue; mergedData[_aki] = _ad[_aki]; } }
           }
+          var _pendingDeletions = syncDeletions.slice();
           syncDeletions = [];
           localStorage.removeItem('lineh_sync_deletions');
           if (Object.keys(mergedData).length > 0) {
@@ -13657,7 +13662,10 @@ function toggleEmployeeStatus(empId) {
                 setEntityVar(_dk, _dv);
               }
             }
+            syncDeletions = _pendingDeletions;
             _applyDeletions();
+            syncDeletions = [];
+            localStorage.removeItem('lineh_sync_deletions');
           }
           syncLog('📦 تم استلام ' + Object.keys(mergedData).length + ' entities من Supabase');
           _pulledAt['_lastPull'] = new Date().toISOString();
