@@ -3612,6 +3612,14 @@
       'finTransactions','finBudgets'
     ];
     // حفظ كل الداتا في IndexedDB دفعة واحدة
+    var _idbBackupTimer = null;
+    function _scheduleIDBBackup() {
+      if (_idbBackupTimer) return;
+      _idbBackupTimer = setTimeout(function() {
+        _idbBackupTimer = null;
+        _idbSaveAll();
+      }, 30000);
+    }
     function _idbSaveAll() {
       if (!window.indexedDB) return Promise.resolve();
       var data = {};
@@ -3789,12 +3797,17 @@
     let archiveData = _safeJsonParse(localStorage.getItem('lineh_archive_data'), []);
     let waterStations = _safeJsonParse(localStorage.getItem('lineh_water_stations'), []);
     let waterDocs = _safeJsonParse(localStorage.getItem('lineh_water_docs'), []);
-    // Load all data from IndexedDB (async) — يعطي مساحة تخزين غير محدودة
+    // Load all data from IndexedDB (async) — استرجاع لو localStorage فاضي
     (function _initIDB() {
       _migrateAllToIDB().then(function() {
-        _idbLoadAll().then(function(loaded) {
-          if (loaded && typeof renderWaterDocs === 'function') renderWaterDocs();
+        var needsRestore = _ALL_KEYS.some(function(k) {
+          try { var v = getEntityVar(k); return !v || (Array.isArray(v) && v.length === 0); } catch(e) { return true; }
         });
+        if (needsRestore) {
+          _idbLoadAll().then(function(loaded) {
+            if (loaded) { syncStorage(); renderAll(); }
+          });
+        }
       }).catch(function() {});
     })();
     let quickActions = _safeJsonParse(localStorage.getItem('lineh_quick_actions'), [
@@ -4454,15 +4467,11 @@
       if (!skipSync) _lsSet('_pendingChanges', 'true');
       try { localStorage.setItem('_storageTx', 'start'); } catch(e) {}
       _lsSet('lineh_employees', JSON.stringify(employees));
-      _lsSet('employees_db', JSON.stringify(employees));
       _lsSet('lineh_rooms_capacity', JSON.stringify(roomsCapacity));
-      _lsSet('rooms_db', JSON.stringify(roomsCapacity));
       _lsSet('lineh_vacations', JSON.stringify(vacations));
       _lsSet('lineh_hospitality', JSON.stringify(hospitalities));
-      _lsSet('lineh_hospitality_bak', JSON.stringify(hospitalities));
       _lsSet('lineh_maintenance', JSON.stringify(maintenanceRecords));
       _lsSet('lineh_septic', JSON.stringify(septicRecords));
-      _lsSet('septic_db', JSON.stringify(septicRecords));
       _lsSet('lineh_inventory', JSON.stringify(inventoryVouchers));
       _lsSet('excludedEmployees', JSON.stringify(excludedEmployees));
       _lsSet('lineh_periodic_maintenance', JSON.stringify(periodicMaintenance));
@@ -4506,8 +4515,7 @@
       _dataChangedSinceBackup = true;
       var bakBtn = document.querySelector('button[onclick*="exportBackupSystem"]');
       if (bakBtn) bakBtn.classList.add('btn-backup-pulse');
-      // Save all data to IndexedDB (async) — quota-free backup
-      _idbSaveAll();
+      _scheduleIDBBackup();
       callUpdateDXStats();
     }
 
