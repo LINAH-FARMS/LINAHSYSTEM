@@ -12047,6 +12047,7 @@ function toggleEmployeeStatus(empId) {
     }
 
     function importBakeryFormData() {
+      var _importedKeys = _safeJsonParse(localStorage.getItem('linah_imported_bakery_keys'), {});
       fetch(SUPABASE_URL+'/rest/v1/sync_data?id=eq.bakery_daily_reports&select=data', { headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY} })
         .then(function(r){return r.json();})
         .then(function(rows){
@@ -12060,6 +12061,7 @@ function toggleEmployeeStatus(empId) {
             var p = r.production || {};
             if (!p.date || !p.breadCount) return;
             var pKey = normalizeDateStr(p.date) + '|' + (p.breadCount || '');
+            if (_importedKeys[pKey]) return;
             if (_isDeleted('bakeryProductions', pKey)) return;
             var pExists = bakeryProductions.some(function(bp) { return bp.date === p.date && bp.breadCount == p.breadCount; });
             if (!pExists) {
@@ -12077,9 +12079,11 @@ function toggleEmployeeStatus(empId) {
               }));
               imported++;
             }
+            _importedKeys[pKey] = true;
             (r.contractors || []).forEach(function(ct) {
               if (!ct.name || !ct.count) return;
               var ctKey = (ct.name||'') + '|' + normalizeDateStr(p.date) + '|' + (ct.count||'');
+              if (_importedKeys['ctr_' + ctKey]) return;
               if (_isDeleted('bakeryContractorSupplies', ctKey)) return;
               var cExists = bakeryContractorSupplies.some(function(bc) { return bc.date === p.date && bc.name === ct.name && bc.count == ct.count; });
               if (!cExists) {
@@ -12097,8 +12101,10 @@ function toggleEmployeeStatus(empId) {
                 }));
                 imported++;
               }
+              _importedKeys['ctr_' + ctKey] = true;
             });
           });
+          localStorage.setItem('linah_imported_bakery_keys', JSON.stringify(_importedKeys));
           if (imported > 0) {
             syncStorage();
             renderBakeryProductions();
