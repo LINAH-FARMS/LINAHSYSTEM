@@ -9298,6 +9298,7 @@ function toggleEmployeeStatus(empId) {
     function deleteDupHospitality(idx) {
       if (!requireAdmin()) return;
       var rec = hospitalities[idx];
+      if (!rec) return;
       _logDeletion('hospitalities', (rec.name || '') + '|' + (rec.arrival || '') + '|' + (rec.type || ''));
       hospitalities.splice(idx, 1);
       if (rec && rec.arrival) updateMealLogFromHospitality(rec.arrival);
@@ -9307,7 +9308,9 @@ function toggleEmployeeStatus(empId) {
 
     function deleteDupProduction(idx) {
       if (!requireAdmin()) return;
-      _logDeletion('bakeryProductions', normalizeDateStr(bakeryProductions[idx].date) + '|' + (bakeryProductions[idx].breadCount || ''));
+      var target = bakeryProductions[idx];
+      if (!target) return;
+      _logDeletion('bakeryProductions', normalizeDateStr(target.date) + '|' + (target.breadCount || ''));
       bakeryProductions.splice(idx, 1);
       syncStorage(); renderBakeryProductions(); updateBakeryProductionIngredientStocks();
       scanAndShowDuplicates();
@@ -9315,7 +9318,9 @@ function toggleEmployeeStatus(empId) {
 
     function deleteDupContractor(idx) {
       if (!requireAdmin()) return;
-      _logDeletion('bakeryContractorSupplies', (bakeryContractorSupplies[idx].name || '') + '|' + normalizeDateStr(bakeryContractorSupplies[idx].date) + '|' + (bakeryContractorSupplies[idx].count || ''));
+      var rec = bakeryContractorSupplies[idx];
+      if (!rec) return;
+      _logDeletion('bakeryContractorSupplies', (rec.name || '') + '|' + normalizeDateStr(rec.date) + '|' + (rec.count || ''));
       bakeryContractorSupplies.splice(idx, 1);
       syncStorage(); renderBakeryContractorSupplies(); updateBakeryStats(); updateBreadSupplyStats();
       scanAndShowDuplicates();
@@ -12622,9 +12627,11 @@ function toggleEmployeeStatus(empId) {
 
     function deleteBakeryProduction(idx) { if (!requireAdmin()) return;
       if (! confirm('حذف الإنتاج؟')) return;
-      _logDeletion('bakeryProductions', normalizeDateStr(bakeryProductions[idx].date) + '|' + (bakeryProductions[idx].breadCount || ''));
+      var rec = bakeryProductions[idx];
+      if (!rec) return;
+      _logDeletion('bakeryProductions', normalizeDateStr(rec.date) + '|' + (rec.breadCount || ''));
       bakeryProductions.splice(idx, 1);
-      syncStorage(); renderBakeryProductions();
+      syncStorage(); renderBakeryProductions(); scanAndShowDuplicates();
     }
     var _editBakeryProdIdx = -1;
     function editBakeryProduction(idx) { if (!requireAdmin()) return;
