@@ -5488,17 +5488,14 @@
           if (typeof x.title === 'string') return x.title;
           if (typeof x.label === 'string') return x.label;
           var vals = Object.values(x);
-          if (vals.length > 0 && typeof vals[0] === 'string' && vals.length > 3) {
-            var joined = vals.join('');
-            if (joined.trim()) return joined;
-          }
-          for (var vi = 0; vi < vals.length; vi++) {
-            if (typeof vals[vi] === 'string' && vals[vi].trim()) return vals[vi];
+          if (vals.length > 0) {
+            var joined = vals.filter(function(v) { return typeof v === 'string'; }).join('');
+            if (joined.trim() && joined.trim().length > 1) return joined.trim();
           }
           return '';
         }
         return '';
-      }).filter(function(s) { return s && s.trim(); });
+      }).filter(function(s) { return s && s.trim() && s.trim().length > 1; });
     }
     function renderDynamicLists() {
       // المباني = سكن فقط = اللي موجود في تبويب السكن
@@ -13955,11 +13952,23 @@ function toggleEmployeeStatus(empId) {
           deduplicateAfterSync();
           // Normalize simple string arrays that may have objects from Supabase
           var _needsCleanPush = false;
+          var _defaults = {
+            dynamicSeptics: ["بيارة مبنى A", "بيارة مبنى B", "بيارة مبنى فاليو"],
+            dynamicRooms: ["A1", "A2", "B1", "B2", "V1", "ادارى", "البوابه", "غرفه", "جزوارين", "فاليو", "فندق", "نخالين", "كرفان"],
+            dynamicDepts: ["الإنتاج الزراعي", "الادارة الزراعيه", "الأمن الإداري", "الشئون الإدارية", "الحركة والنقل", "الصيانة والهندسة", "الاداره الفنية", "ادارة الجودة"],
+            dynamicTitles: ["مهندس زراعي", "مشرف موقع", "مشرف إداري", "مشرف إداري أول", "مشرف إداري ثاني", "مشرف الصيانة الفنية", "رئيس قسم المطبخ", "عامل زراعي", "فرد أمن", "فني صيانة", "سائق تراك", "قائد فريق الزيتون", "قائد فريق الشئون الإدارية", "نخال", "مدخل بيانات", "مدير الرى والتسميد", "مهندس جودة"],
+            dynamicSectors: ["A", "B", "فاليو", "الورشة", "سكن إداري", "سكن البوابه", "سكن العمال 1", "سكن العمال 2", "سكن العمال 3", "سكن العمال 4", "كرفان", "سكن المهندسين"],
+            dynamicVisitorTypes: ["ضيوف", "سيدات", "طلبة مدرسة", "مقدمي خدمة", "سائقين", "مقدم خدمة بدون اجر", "مقدم خدمة باجر", "سائق براد", "اخري"],
+            contractorSectors: ["قطاع 22", "قطاع 3", "فاليو", "خيمة"],
+            contractorRooms: [],
+            bakeryContractorsNames: []
+          };
           ['dynamicSeptics','dynamicRooms','dynamicDepts','dynamicTitles','dynamicSectors','dynamicVisitorTypes','contractorSectors','contractorRooms','bakeryContractorsNames'].forEach(function(k) {
             try {
               var arr = getEntityVar(k);
               if (Array.isArray(arr)) {
                 var cleaned = _strArr(arr);
+                if (cleaned.length === 0 && _defaults[k] && _defaults[k].length > 0) { cleaned = _defaults[k]; _needsCleanPush = true; }
                 if (JSON.stringify(cleaned) !== JSON.stringify(arr)) { _needsCleanPush = true; }
                 setEntityVar(k, cleaned);
               }
