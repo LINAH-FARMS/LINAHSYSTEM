@@ -2686,6 +2686,21 @@
           </div>
         </div>
       </div>
+      <div style="margin-top:10px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+          <h4 style="margin:0;font-size:14px;color:#e65100;">📋 سجل الاستفتاءات</h4>
+          <div style="display:flex;gap:6px;align-items:center;">
+            <input type="date" id="sv-log-from" onchange="renderSurveyLog()" style="padding:3px 6px;font-size:11px;border:1px solid #ccc;border-radius:4px;">
+            <input type="date" id="sv-log-to" onchange="renderSurveyLog()" style="padding:3px 6px;font-size:11px;border:1px solid #ccc;border-radius:4px;">
+          </div>
+        </div>
+        <div style="overflow-x:auto;">
+          <table style="width:100%;border-collapse:collapse;font-size:12px;">
+            <thead><tr style="background:#fff3e0;"><th style="padding:6px;border:1px solid #ffe0b2;">التاريخ</th><th style="padding:6px;border:1px solid #ffe0b2;">الوجبة</th><th style="padding:6px;border:1px solid #ffe0b2;">المقيّم</th><th style="padding:6px;border:1px solid #ffe0b2;">التقييم</th><th style="padding:6px;border:1px solid #ffe0b2;">الملاحظة</th></tr></thead>
+            <tbody id="sv-log-body"></tbody>
+          </table>
+        </div>
+      </div>
     </div>
     <div id="meal-waste-section" style="display:none;margin:10px 0;padding:15px;background:#fff5f5;border:2px solid #ffcdd2;border-radius:8px;">
       <div id="mw-stats" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:15px;"></div>
@@ -10373,6 +10388,7 @@ function toggleEmployeeStatus(empId) {
       });
       container.innerHTML = html;
       renderMealSurveyStats();
+      renderSurveyLog();
       generateMealSurveyQR();
     }
     function submitMealRating(meal, rating) {
@@ -10425,6 +10441,37 @@ function toggleEmployeeStatus(empId) {
           return;
         }
       }
+    }
+    function renderSurveyLog() {
+      var tbody = document.getElementById('sv-log-body');
+      if (!tbody) return;
+      var from = document.getElementById('sv-log-from').value;
+      var to = document.getElementById('sv-log-to').value;
+      var emojis = ['😞','😐','😊','😍'];
+      var labels = ['مش عجباني','مقبولة','كويسة','رائعة'];
+      var filtered = mealSurveys.filter(function(s) {
+        if (from && s.date < from) return false;
+        if (to && s.date > to) return false;
+        return true;
+      });
+      filtered.sort(function(a, b) { return (b.timestamp || '').localeCompare(a.timestamp || ''); });
+      if (!filtered.length) {
+        tbody.innerHTML = '<tr><td colspan="5" style="padding:12px;text-align:center;color:#999;">لا توجد تقييمات</td></tr>';
+        return;
+      }
+      var html = '';
+      filtered.forEach(function(s) {
+        var ratingEmoji = (s.rating >= 0 && s.rating < emojis.length) ? emojis[s.rating] : '—';
+        var ratingLabel = (s.rating >= 0 && s.rating < labels.length) ? labels[s.rating] : '—';
+        html += '<tr style="background:white;">' +
+          '<td style="padding:5px;border:1px solid #eee;">' + (s.date || '') + '</td>' +
+          '<td style="padding:5px;border:1px solid #eee;font-weight:600;">' + (s.meal || '') + '</td>' +
+          '<td style="padding:5px;border:1px solid #eee;">' + (s.employee || '') + '</td>' +
+          '<td style="padding:5px;border:1px solid #eee;font-size:18px;" title="' + ratingLabel + '">' + ratingEmoji + '</td>' +
+          '<td style="padding:5px;border:1px solid #eee;font-size:11px;color:#666;max-width:200px;white-space:normal;">' + (s.comment || '—') + '</td>' +
+          '</tr>';
+      });
+      tbody.innerHTML = html;
     }
     function renderMealSurveyStats() {
       var container = document.getElementById('survey-stats');
