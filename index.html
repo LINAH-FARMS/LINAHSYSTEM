@@ -88,6 +88,7 @@
       background-color: var(--bg);
       color: var(--dark);
       padding: 20px;
+      overflow-x: hidden;
     }
 
     header {
@@ -516,6 +517,8 @@
       .dash-chart-row { grid-template-columns: 1fr; }
     }
     @media (max-width: 768px) {
+      body { padding: 10px !important; overflow-x: hidden !important; }
+      html { overflow-x: hidden !important; }
       .nav-tabs { flex-wrap: nowrap !important; overflow-x: auto !important; gap: 4px !important; padding: 10px !important; -webkit-overflow-scrolling: touch; }
       .nav-tabs::-webkit-scrollbar { height: 3px; background: transparent; }
       .nav-tabs::-webkit-scrollbar-thumb { background: #a5d6a7; border-radius: 2px; }
@@ -556,6 +559,7 @@
       .dash-summary-grid { grid-template-columns: 1fr !important; }
     }
     @media (max-width: 480px) {
+      body { padding: 6px !important; margin: 0 !important; }
       .stat-card { flex: 1 1 100% !important; }
       .quick-actions-grid { grid-template-columns: 1fr 1fr !important; }
       .dash-summary-grid { grid-template-columns: 1fr !important; }
