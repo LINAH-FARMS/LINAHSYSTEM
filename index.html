@@ -2665,7 +2665,7 @@
       <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:15px;">
         <h3 style="margin:0;font-size:18px;">📝 استفتاء الوجبات — <span id="survey-today" style="font-weight:400;"></span></h3>
         <div style="display:flex;gap:8px;align-items:center;">
-          <a class="btn btn-primary" href="https://linah-farms.github.io/LINAHSYSTEM/" target="_blank" style="height:42px;display:inline-flex;align-items:center;gap:4px;text-decoration:none;">🔗 رابط الاستفتاء</a>
+          <span id="survey-qr" style="display:inline-block;"></span>
           <button class="btn btn-secondary" onclick="toggleMealWasteSection()" style="height:42px;">📊 سجل الهدر</button>
           <button class="btn btn-danger" onclick="openMealWasteModal()" style="height:42px;">🗑️ تسجيل هدر</button>
         </div>
@@ -9251,6 +9251,7 @@ function toggleEmployeeStatus(empId) {
       if (rec && rec.arrival) updateMealLogFromHospitality(rec.arrival);
       syncStorage(); renderHospitalityTable(); renderMealLogTable();
       scanAndShowDuplicates();
+      pushToSupabase();
     }
 
     function deleteDupProduction(idx) {
@@ -9261,6 +9262,7 @@ function toggleEmployeeStatus(empId) {
       bakeryProductions.splice(idx, 1);
       syncStorage(); renderBakeryProductions(); updateBakeryProductionIngredientStocks();
       scanAndShowDuplicates();
+      pushToSupabase();
     }
 
     function deleteDupContractor(idx) {
@@ -9271,6 +9273,7 @@ function toggleEmployeeStatus(empId) {
       bakeryContractorSupplies.splice(idx, 1);
       syncStorage(); renderBakeryContractorSupplies(); updateBakeryStats(); updateBreadSupplyStats();
       scanAndShowDuplicates();
+      pushToSupabase();
     }
 
     function deleteAllDuplicates() {
@@ -10361,6 +10364,7 @@ function toggleEmployeeStatus(empId) {
       });
       container.innerHTML = html;
       renderMealSurveyStats();
+      generateMealSurveyQR();
     }
     function submitMealRating(meal, rating) {
       var today = new Date().toISOString().split('T')[0];
@@ -10433,6 +10437,12 @@ function toggleEmployeeStatus(empId) {
         '<div style="font-size:12px;color:#888;">🗳️ مشاركة اليوم</div>' +
         '<div style="font-size:24px;font-weight:700;">' + todayCount + '</div></div>';
       container.innerHTML = html;
+    }
+    function generateMealSurveyQR() {
+      var el = document.getElementById('survey-qr');
+      if (!el) return;
+      var url = 'https://linah-farms.github.io/LINAHSYSTEM/';
+      el.innerHTML = '<img src="https://chart.googleapis.com/chart?chs=100x100&cht=qr&chl=' + encodeURIComponent(url) + '" alt="QR" style="width:100px;height:100px;border-radius:6px;cursor:pointer;" title="امسح للوصول السريع">';
     }
     var _mwChart = null;
     function updateIngredientSuggestions() {
