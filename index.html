@@ -4298,7 +4298,7 @@
     function populateBctrDatalist() {
       var dl = document.getElementById('bctr-list');
       if (!dl) return;
-      dl.innerHTML = bakeryContractorsNames.map(function(n) { return '<option value="' + n.replace(/"/g,'&quot;') + '">'; }).join('');
+      dl.innerHTML = bakeryContractorsNames.filter(function(n) { return typeof n === 'string' && n.trim(); }).map(function(n) { return '<option value="' + n.replace(/"/g,'&quot;') + '">'; }).join('');
     }
 
     function fillSelectWithOptions(selectId, optionsArray, placeholder) {
