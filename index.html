@@ -7390,7 +7390,9 @@
 
       if(!editId) {
         let dupCode = employees.find(e => e.code && e.code.toLowerCase() === code.toLowerCase());
-        if(dupCode) return alert("الكود [" + code + "] موجود مسبقاً للموظف [" + dupCode.name + "]!");
+        if(dupCode) return alert("الكود [" + code + "] موجود مسبقاً للموظف [" + dupCode.name + "]!\nالحالة: " + (dupCode.status === 'P' ? 'متواجد' : 'إجازة') + "\nالإدارة: " + (dupCode.dept || '—') + "\nلو عايز تعدّل بيانات الموظف، ابحث عنه في الجدول واضغط تعديل.");
+        let dupExcl = excludedEmployees.find(e => e.code && e.code.toLowerCase() === code.toLowerCase());
+        if(dupExcl) return alert("الكود [" + code + "] موجود في المستبعدين!\nالاسم: " + dupExcl.name + "\nتاريخ الاستبعاد: " + (dupExcl.date || '—') + "\nالسبب: " + (dupExcl.reason || '—') + "\nلو عايز تسترجعه، ادخل قسم المستبعدين واضغط استرجاع.");
         let similarName = employees.find(e => e.name && e.name.trim().toLowerCase() === name.toLowerCase());
         if(similarName) {
           if(!confirm("يوجد موظف بنفس الاسم بالضبط: [" + similarName.name + "] كود " + (similarName.code || 'بدون') + ".\nهل تريد إضافة الموظف رغم التشابه؟")) return;
