@@ -5478,7 +5478,7 @@
       }
     }
 
-    function _strArr(arr) { return (arr || []).map(function(x) { return typeof x === 'string' ? x : (x && x.name ? x.name : String(x || '')); }).filter(function(s) { return s && s.trim(); }); }
+    function _strArr(arr) { return (arr || []).map(function(x) { if (typeof x === 'string') return x; if (x && typeof x === 'object') return x.name || x.title || x.id || Object.values(x)[0] || ''; return String(x || ''); }).filter(function(s) { return s && String(s).trim(); }); }
     function renderDynamicLists() {
       // المباني = سكن فقط = اللي موجود في تبويب السكن
       var housingSectors = {};
