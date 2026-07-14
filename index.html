@@ -13529,11 +13529,14 @@ function toggleEmployeeStatus(empId) {
       bakeryProductions = _safeJsonParse(localStorage.getItem('linah_bakery_productions'), []);
       bakeryContractorSupplies = _safeJsonParse(localStorage.getItem('linah_bakery_ctr_supplies'), []);
       bakeryInvoices = _safeJsonParse(localStorage.getItem('linah_bakery_invoices'), []);
-      dynamicSectors = _safeJsonParse(localStorage.getItem('dyn_sectors'), dynamicSectors);
-      dynamicRooms = _safeJsonParse(localStorage.getItem('dyn_rooms'), dynamicRooms);
-      dynamicSeptics = _safeJsonParse(localStorage.getItem('dyn_septics'), dynamicSeptics);
-      dynamicDepts = _safeJsonParse(localStorage.getItem('dyn_depts'), dynamicDepts);
-      dynamicTitles = _safeJsonParse(localStorage.getItem('dyn_titles'), dynamicTitles);
+      dynamicSectors = _strArr(_safeJsonParse(localStorage.getItem('dyn_sectors'), dynamicSectors));
+      dynamicRooms = _strArr(_safeJsonParse(localStorage.getItem('dyn_rooms'), dynamicRooms));
+      dynamicSeptics = _strArr(_safeJsonParse(localStorage.getItem('dyn_septics'), dynamicSeptics));
+      dynamicDepts = _strArr(_safeJsonParse(localStorage.getItem('dyn_depts'), dynamicDepts));
+      dynamicTitles = _strArr(_safeJsonParse(localStorage.getItem('dyn_titles'), dynamicTitles));
+      dynamicVisitorTypes = _strArr(_safeJsonParse(localStorage.getItem('dyn_visitor_types'), dynamicVisitorTypes));
+      contractorSectors = _strArr(_safeJsonParse(localStorage.getItem('ctr_sectors'), contractorSectors));
+      bakeryContractorsNames = _strArr(_safeJsonParse(localStorage.getItem('linah_bakery_contractors_names'), bakeryContractorsNames));
       appUsers = filterLatinUsers(_safeJsonParse(localStorage.getItem('lineh_users'), appUsers));
       currentUser = localStorage.getItem('lineh_current_user') || currentUser;
       syncDeletions = _safeJsonParse(localStorage.getItem('lineh_sync_deletions'), []);
@@ -13928,6 +13931,10 @@ function toggleEmployeeStatus(empId) {
           (excludedEmployees || []).forEach(function(e) { _exclMap2[e.code || e.id || e.name] = true; });
           employees = employees.filter(function(e) { return !_exclMap2[e.code || e.id || e.name]; });
           deduplicateAfterSync();
+          // Normalize simple string arrays that may have objects from Supabase
+          ['dynamicSeptics','dynamicRooms','dynamicDepts','dynamicTitles','dynamicSectors','dynamicVisitorTypes','contractorSectors','contractorRooms','bakeryContractorsNames'].forEach(function(k) {
+            try { var arr = getEntityVar(k); if (Array.isArray(arr)) setEntityVar(k, _strArr(arr)); } catch(e) {}
+          });
           syncLog('📦 تم استلام ' + Object.keys(mergedData).length + ' entities من Supabase');
           _pulledAt['_lastPull'] = new Date().toISOString();
           localStorage.setItem('_pulledAt', JSON.stringify(_pulledAt));
@@ -14458,6 +14465,9 @@ function toggleEmployeeStatus(empId) {
           employees = employees.filter(function(e) { return !exclMap[e.code || e.id || e.name]; });
         }
         normalizeBakeryDates(true);
+        ['dynamicSeptics','dynamicRooms','dynamicDepts','dynamicTitles','dynamicSectors','dynamicVisitorTypes','contractorSectors','contractorRooms','bakeryContractorsNames'].forEach(function(k) {
+          try { var v = eval(k); if (Array.isArray(v)) eval(k + ' = _strArr(v)'); } catch(e) {}
+        });
         if (bakeryProductions.length > 0) bakeryProductions = dedupArray(bakeryProductions, function(p) { return p.id || (p.date + '|' + (p.breadCount||0) + '|' + (p.flourUsed||0) + '|' + (p.createdAt||'')); });
         if (bakeryContractorSupplies.length > 0) bakeryContractorSupplies = dedupArray(bakeryContractorSupplies, function(cs) { return cs.date + '|' + (cs.name||'') + '|' + (cs.count||0) + '|' + (cs.price||0); });
         if (contractors.length > 0) contractors = dedupArray(contractors, function(c) { return c.id || JSON.stringify(c); });
