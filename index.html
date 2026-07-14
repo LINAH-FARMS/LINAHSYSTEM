@@ -10373,6 +10373,7 @@ function toggleEmployeeStatus(empId) {
         var existing = mealSurveys.filter(function(s) { return s.date === today && s.meal === meal; });
         var current = existing.length > 0 ? existing[existing.length - 1] : null;
         var curRating = current ? current.rating : -1;
+        if (curRating >= 1 && curRating <= 4) curRating = curRating - 1;
         var curComment = current && current.comment ? current.comment : '';
         var stars = '';
         for (var r = 0; r < 4; r++) {
@@ -10461,8 +10462,10 @@ function toggleEmployeeStatus(empId) {
       }
       var html = '';
       filtered.forEach(function(s) {
-        var ratingEmoji = (s.rating >= 0 && s.rating < emojis.length) ? emojis[s.rating] : '—';
-        var ratingLabel = (s.rating >= 0 && s.rating < labels.length) ? labels[s.rating] : '—';
+        var r = s.rating;
+        if (r >= 1 && r <= 4) r = r - 1;
+        var ratingEmoji = (r >= 0 && r < emojis.length) ? emojis[r] : '—';
+        var ratingLabel = (r >= 0 && r < labels.length) ? labels[r] : '—';
         html += '<tr style="background:white;">' +
           '<td style="padding:5px;border:1px solid #eee;">' + (s.date || '') + '</td>' +
           '<td style="padding:5px;border:1px solid #eee;font-weight:600;">' + (s.meal || '') + '</td>' +
@@ -12380,10 +12383,12 @@ function toggleEmployeeStatus(empId) {
             if (!e.date || !e.meal || !e.rating) return;
             var exists = mealSurveys.some(function(s) { return s.date === e.date && s.meal === e.meal && s.employee === e.employee; });
             if (!exists) {
+              var rating = e.rating;
+              if (rating >= 1 && rating <= 4) rating = rating - 1;
               mealSurveys.push({
                 date: e.date,
                 meal: e.meal,
-                rating: e.rating,
+                rating: rating,
                 employee: e.employee || '',
                 comment: e.comment || '',
                 timestamp: e.timestamp || new Date().toISOString()
