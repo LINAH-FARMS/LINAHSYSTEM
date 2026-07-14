@@ -4250,7 +4250,7 @@
     }
     normalizeBakeryDates();
     // إزالة التكرارات من بيانات المخبز إن وجدت
-    if (bakeryProductions.length > 0) bakeryProductions = dedupArray(bakeryProductions, function(p) { return p.date + '|' + (p.breadCount||0) + '|' + (p.flourUsed||0); });
+    if (bakeryProductions.length > 0) bakeryProductions = dedupArray(bakeryProductions, function(p) { return p.id || (p.date + '|' + (p.breadCount||0) + '|' + (p.flourUsed||0) + '|' + (p.createdAt||'')); });
     if (bakeryContractorSupplies.length > 0) bakeryContractorSupplies = dedupArray(bakeryContractorSupplies, function(cs) { return cs.date + '|' + (cs.name||'') + '|' + (cs.count||0) + '|' + (cs.price||0); });
     if (contractors.length > 0) contractors = dedupArray(contractors, function(c) { return c.id || JSON.stringify(c); });
     normalizeMealLogDates();
@@ -10391,7 +10391,7 @@ function toggleEmployeeStatus(empId) {
           '<div style="font-size:14px;font-weight:700;color:#e65100;margin-bottom:6px;">' + icons[meal] + ' ' + meal + '</div>' +
           '<div style="font-size:24px;margin-bottom:4px;">' + (curRating >= 0 ? curRating + 1 : '—') + ' / 4</div>' +
           '<div>' + stars + '</div>' +
-          '<div style="margin-top:8px;"><input type="text" id="survey-comment-' + meal + '" placeholder="اكتب ملاحظتك أو اقتراحك..." value="' + curComment.replace(/"/g, '&quot;') + '" onchange="saveSurveyComment(\'' + meal + '\',this.value)" style="width:100%;padding:6px 10px;border:1px solid #e0e0e0;border-radius:6px;font-size:12px;font-family:Cairo;text-align:right;"></div>' +
+          '<div style="margin-top:8px;"><input type="text" id="survey-comment-' + meal + '" placeholder="اكتب ملاحظتك أو اقتراحك..." value="' + curComment.replace(/"/g, '&quot;') + '" oninput="saveSurveyComment(\'' + meal + '\',this.value)" style="width:100%;padding:6px 10px;border:1px solid #e0e0e0;border-radius:6px;font-size:12px;font-family:Cairo;text-align:right;"></div>' +
           '</div>';
       });
       container.innerHTML = html;
@@ -12192,7 +12192,7 @@ function toggleEmployeeStatus(empId) {
         // توحيد تنسيق التواريخ والحقول القديمة
         normalizeBakeryDates(true);
         // إزالة التكرارات من بيانات المخبز
-        if (bakeryProductions.length > 0) bakeryProductions = dedupArray(bakeryProductions, function(p) { return p.date + '|' + (p.breadCount||0) + '|' + (p.flourUsed||0); });
+        if (bakeryProductions.length > 0) bakeryProductions = dedupArray(bakeryProductions, function(p) { return p.id || (p.date + '|' + (p.breadCount||0) + '|' + (p.flourUsed||0) + '|' + (p.createdAt||'')); });
         if (bakeryContractorSupplies.length > 0) bakeryContractorSupplies = dedupArray(bakeryContractorSupplies, function(cs) { return cs.date + '|' + (cs.name||'') + '|' + (cs.count||0) + '|' + (cs.price||0); });
         if (contractors.length > 0) contractors = dedupArray(contractors, function(c) { return c.id || JSON.stringify(c); });
 
@@ -12792,15 +12792,6 @@ function toggleEmployeeStatus(empId) {
           _editBakeryProdIdx = -1;
         } else {
           var prodIdx = bakeryProductions.findIndex(function(r) { return normalizeDateStr(r.date) === prodDate; });
-          if (prodIdx >= 0) {
-            var oldProd = bakeryProductions[prodIdx];
-            [{id:'ING001',qty:oldProd.flourUsed},{id:'ING002',qty:oldProd.yeastUsed},{id:'ING003',qty:oldProd.saltUsed},{id:'ING004',qty:oldProd.branUsed},{id:'ING007',qty:oldProd.dieselUsed}].forEach(function(item) {
-              if (item.qty <= 0) return;
-              var ing = bakeryIngredients.find(function(i) { return i.id === item.id; });
-              if (ing) ing.currentQty = (ing.currentQty || 0) + item.qty;
-            });
-            bakeryProductions.splice(prodIdx, 1);
-          }
         }
         ingIds.forEach(function(id) {
           var qty = ingQtys[id];
@@ -14243,7 +14234,7 @@ function toggleEmployeeStatus(empId) {
         }
       }
       dedupBy(hospitalities, function(h) { return (h.name || '') + '|' + (h.arrival || '') + '|' + (h.type || ''); });
-      dedupBy(bakeryProductions, function(p) { return normalizeDateStr(p.date) + '|' + (p.breadCount || ''); });
+      dedupBy(bakeryProductions, function(p) { return p.id || (normalizeDateStr(p.date) + '|' + (p.breadCount || '') + '|' + (p.flourUsed || '') + '|' + (p.createdAt || '')); });
       dedupBy(bakeryContractorSupplies, function(s) { return (s.name || '') + '|' + normalizeDateStr(s.date) + '|' + (s.count || ''); });
       dedupBy(vacations, function(v) { return (v.code || v.employeeCode || v.employeeName || v.name || '') + '|' + (v.start || v.startDate || v.dateFrom || '') + '|' + (v.end || v.endDate || v.dateTo || ''); });
       dedupBy(maintenanceRecords, function(m) { return (m.category || '') + '|' + (m.task || '') + '|' + (m.date || m.createdAt || ''); });
@@ -14422,7 +14413,7 @@ function toggleEmployeeStatus(empId) {
           employees = employees.filter(function(e) { return !exclMap[e.code || e.id || e.name]; });
         }
         normalizeBakeryDates(true);
-        if (bakeryProductions.length > 0) bakeryProductions = dedupArray(bakeryProductions, function(p) { return p.date + '|' + (p.breadCount||0) + '|' + (p.flourUsed||0); });
+        if (bakeryProductions.length > 0) bakeryProductions = dedupArray(bakeryProductions, function(p) { return p.id || (p.date + '|' + (p.breadCount||0) + '|' + (p.flourUsed||0) + '|' + (p.createdAt||'')); });
         if (bakeryContractorSupplies.length > 0) bakeryContractorSupplies = dedupArray(bakeryContractorSupplies, function(cs) { return cs.date + '|' + (cs.name||'') + '|' + (cs.count||0) + '|' + (cs.price||0); });
         if (contractors.length > 0) contractors = dedupArray(contractors, function(c) { return c.id || JSON.stringify(c); });
         syncStorage(true);
@@ -14647,7 +14638,7 @@ function toggleEmployeeStatus(empId) {
         }
         // توحيد تنسيق الحقول القديمة وإزالة التكرارات
         normalizeBakeryDates(true);
-        if (bakeryProductions.length > 0) bakeryProductions = dedupArray(bakeryProductions, function(p) { return p.date + '|' + (p.breadCount||0) + '|' + (p.flourUsed||0); });
+        if (bakeryProductions.length > 0) bakeryProductions = dedupArray(bakeryProductions, function(p) { return p.id || (p.date + '|' + (p.breadCount||0) + '|' + (p.flourUsed||0) + '|' + (p.createdAt||'')); });
         if (bakeryContractorSupplies.length > 0) bakeryContractorSupplies = dedupArray(bakeryContractorSupplies, function(cs) { return cs.date + '|' + (cs.name||'') + '|' + (cs.count||0) + '|' + (cs.price||0); });
         if (contractors.length > 0) contractors = dedupArray(contractors, function(c) { return c.id || JSON.stringify(c); });
 
