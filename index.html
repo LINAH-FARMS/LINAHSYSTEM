@@ -13873,7 +13873,12 @@ function toggleEmployeeStatus(empId) {
             for (var _dk in mergedData) {
               var _dv = mergedData[_dk];
               if (typeof _dv !== 'undefined' && _dv !== null) {
-                setEntityVar(_dk, _dv);
+                var _localVal = getEntityVar(_dk);
+                if (Array.isArray(_dv) && Array.isArray(_localVal)) {
+                  setEntityVar(_dk, mergeArrays(_localVal, _dv, function(item) { return _getItemKey(item, _dk); }));
+                } else {
+                  setEntityVar(_dk, _dv);
+                }
               }
             }
             _pendingDeletions = _pendingDeletions.concat(_remoteDels);
