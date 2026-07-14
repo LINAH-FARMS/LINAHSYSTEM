@@ -2687,16 +2687,17 @@
         </div>
       </div>
       <div style="margin-top:10px;">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <div onclick="toggleSurveyLog()" style="display:flex;align-items:center;gap:8px;margin-bottom:8px;cursor:pointer;user-select:none;">
+          <span id="sv-log-toggle" style="transition:transform 0.3s;font-size:12px;">▲</span>
           <h4 style="margin:0;font-size:14px;color:#e65100;">📋 سجل الاستفتاءات</h4>
-          <div style="display:flex;gap:6px;align-items:center;">
+          <div style="display:flex;gap:6px;align-items:center;margin-right:auto;" onclick="event.stopPropagation()">
             <input type="date" id="sv-log-from" onchange="renderSurveyLog()" style="padding:3px 6px;font-size:11px;border:1px solid #ccc;border-radius:4px;">
             <input type="date" id="sv-log-to" onchange="renderSurveyLog()" style="padding:3px 6px;font-size:11px;border:1px solid #ccc;border-radius:4px;">
           </div>
         </div>
-        <div style="overflow-x:auto;">
+        <div id="sv-log-body-wrap" style="overflow-x:auto;transition:max-height 0.3s ease,opacity 0.3s ease;max-height:2000px;opacity:1;">
           <table style="width:100%;border-collapse:collapse;font-size:12px;">
-            <thead><tr style="background:#fff3e0;"><th style="padding:6px;border:1px solid #ffe0b2;">التاريخ</th><th style="padding:6px;border:1px solid #ffe0b2;">الوجبة</th><th style="padding:6px;border:1px solid #ffe0b2;">المقيّم</th><th style="padding:6px;border:1px solid #ffe0b2;">التقييم</th><th style="padding:6px;border:1px solid #ffe0b2;">الملاحظة</th></tr></thead>
+            <thead><tr style="background:#fff3e0;"><th style="padding:6px;border:1px solid #ffe0b2;">التاريخ</th><th style="padding:6px;border:1px solid #ffe0b2;">الوجبة</th><th style="padding:6px;border:1px solid #ffe0b2;">المقيّم</th><th style="padding:6px;border:1px solid #ffe0b2;">التقييم</th><th style="padding:6px;border:1px solid #ffe0b2;">الملاحظة</th><th style="padding:6px;border:1px solid #ffe0b2;">إجراءات</th></tr></thead>
             <tbody id="sv-log-body"></tbody>
           </table>
         </div>
@@ -10450,6 +10451,40 @@ function toggleEmployeeStatus(empId) {
         }
       }
     }
+    var _surveyLogOpen = true;
+    function toggleSurveyLog() {
+      var body = document.getElementById('sv-log-body-wrap');
+      var icon = document.getElementById('sv-log-toggle');
+      if (!body) return;
+      if (_surveyLogOpen) {
+        body.style.maxHeight = '0';
+        body.style.opacity = '0';
+        icon.style.transform = 'rotate(180deg)';
+      } else {
+        body.style.maxHeight = '2000px';
+        body.style.opacity = '1';
+        icon.style.transform = 'rotate(0deg)';
+      }
+      _surveyLogOpen = !_surveyLogOpen;
+    }
+    function deleteSurveyLog(idx) {
+      if (!confirm('هل تريد حذف هذا التقييم؟')) return;
+      mealSurveys.splice(idx, 1);
+      _lsSet('linah_meal_surveys', JSON.stringify(mealSurveys));
+      renderSurveyLog();
+      renderMealSurveyStats();
+    }
+    function editSurveyLog(idx) {
+      var s = mealSurveys[idx];
+      if (!s) return;
+      var newComment = prompt('تعديل الملاحظة:', s.comment || '');
+      if (newComment !== null) {
+        s.comment = newComment;
+        s.timestamp = new Date().toISOString();
+        _lsSet('linah_meal_surveys', JSON.stringify(mealSurveys));
+        renderSurveyLog();
+      }
+    }
     function renderSurveyLog() {
       var tbody = document.getElementById('sv-log-body');
       if (!tbody) return;
@@ -10464,11 +10499,12 @@ function toggleEmployeeStatus(empId) {
       });
       filtered.sort(function(a, b) { return (b.timestamp || '').localeCompare(a.timestamp || ''); });
       if (!filtered.length) {
-        tbody.innerHTML = '<tr><td colspan="5" style="padding:12px;text-align:center;color:#999;">لا توجد تقييمات</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="6" style="padding:12px;text-align:center;color:#999;">لا توجد تقييمات</td></tr>';
         return;
       }
       var html = '';
       filtered.forEach(function(s) {
+        var realIdx = mealSurveys.indexOf(s);
         var r = s.rating;
         if (r >= 1 && r <= 4) r = r - 1;
         var ratingEmoji = (r >= 0 && r < emojis.length) ? emojis[r] : '—';
@@ -10479,6 +10515,10 @@ function toggleEmployeeStatus(empId) {
           '<td style="padding:5px;border:1px solid #eee;">' + (s.employee || '') + '</td>' +
           '<td style="padding:5px;border:1px solid #eee;font-size:18px;" title="' + ratingLabel + '">' + ratingEmoji + '</td>' +
           '<td style="padding:5px;border:1px solid #eee;font-size:11px;color:#666;max-width:200px;white-space:normal;">' + (s.comment || '—') + '</td>' +
+          '<td style="padding:5px;border:1px solid #eee;white-space:nowrap;">' +
+            '<button onclick="editSurveyLog(' + realIdx + ')" style="background:#1565c0;color:white;border:none;border-radius:4px;padding:2px 8px;font-size:11px;cursor:pointer;margin-left:4px;">✏️</button>' +
+            '<button onclick="deleteSurveyLog(' + realIdx + ')" style="background:#c62828;color:white;border:none;border-radius:4px;padding:2px 8px;font-size:11px;cursor:pointer;">🗑️</button>' +
+          '</td>' +
           '</tr>';
       });
       tbody.innerHTML = html;
