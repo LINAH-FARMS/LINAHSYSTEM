@@ -5478,7 +5478,25 @@
       }
     }
 
-    function _strArr(arr) { return (arr || []).map(function(x) { if (typeof x === 'string') return x; if (x && typeof x === 'object') return x.name || x.title || x.id || Object.values(x)[0] || ''; return String(x || ''); }).filter(function(s) { return s && String(s).trim(); }); }
+    function _strArr(arr) {
+      if (!Array.isArray(arr)) return [];
+      return arr.map(function(x) {
+        if (typeof x === 'string') return x;
+        if (typeof x === 'number') return String(x);
+        if (x && typeof x === 'object') {
+          if (x.name) return String(x.name);
+          if (x.title) return String(x.title);
+          if (x.id) return String(x.id);
+          if (x.label) return String(x.label);
+          var vals = Object.values(x);
+          for (var vi = 0; vi < vals.length; vi++) {
+            if (typeof vals[vi] === 'string' && vals[vi].trim()) return vals[vi];
+          }
+          return '';
+        }
+        return '';
+      }).filter(function(s) { return s && s.trim(); });
+    }
     function renderDynamicLists() {
       // المباني = سكن فقط = اللي موجود في تبويب السكن
       var housingSectors = {};
