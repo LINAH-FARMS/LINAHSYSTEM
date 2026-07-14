@@ -2661,10 +2661,24 @@
       </table>
     </div>
 
-    <div style="margin:12px 0;display:flex;gap:8px;flex-wrap:wrap;">
-      <button class="btn btn-danger" onclick="openMealWasteModal()" style="height:42px;">🗑️ تسجيل هدر</button>
-      <button class="btn btn-secondary" onclick="toggleMealWasteSection()" style="height:42px;">📊 سجل الهدر</button>
-      <button class="btn btn-primary" onclick="window.open('https://linah-farms.github.io/LINAHSYSTEM/qr-meal-waste.html','_blank')" style="height:42px;">📱 رابط الطباخ</button>
+    <div id="meal-survey-section" style="margin:15px 0;padding:20px;background:linear-gradient(135deg,#fff8e1,#fff3e0);border:2px solid #ffe0b2;border-radius:12px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:15px;">
+        <h3 style="margin:0;font-size:18px;">📝 استفتاء الوجبات — <span id="survey-today" style="font-weight:400;"></span></h3>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <a class="btn btn-primary" href="https://linah-farms.github.io/LINAHSYSTEM/" target="_blank" style="height:42px;display:inline-flex;align-items:center;gap:4px;text-decoration:none;">🔗 رابط الاستفتاء</a>
+          <button class="btn btn-secondary" onclick="toggleMealWasteSection()" style="height:42px;">📊 سجل الهدر</button>
+          <button class="btn btn-danger" onclick="openMealWasteModal()" style="height:42px;">🗑️ تسجيل هدر</button>
+        </div>
+      </div>
+      <div id="survey-meals" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:15px;"></div>
+      <div id="survey-stats" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;"></div>
+      <div id="survey-comment-area" style="display:none;margin-top:12px;">
+        <label style="font-weight:700;font-size:13px;color:#c62828;">💬 ممكن تكتب ملاحظة:</label>
+        <div style="display:flex;gap:8px;margin-top:4px;">
+          <input type="text" id="survey-comment-input" placeholder="اكتب ملاحظتك..." style="flex:1;padding:8px 12px;border:2px solid #ffcc80;border-radius:8px;font-size:14px;">
+          <button class="btn btn-primary" onclick="submitSurveyComment()" style="height:42px;">💾 حفظ</button>
+        </div>
+      </div>
     </div>
     <div id="meal-waste-section" style="display:none;margin:10px 0;padding:15px;background:#fff5f5;border:2px solid #ffcdd2;border-radius:8px;">
       <div id="mw-stats" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:15px;"></div>
@@ -2680,7 +2694,7 @@
       </div>
       <div class="table-container">
         <table>
-            <thead><tr><th>التاريخ</th><th>الوجبة</th><th>الشيف</th><th>الخامات</th><th>الوزن النهائي (كجم)</th><th>هدر مهندسين (كجم)</th><th>هدر عمال (كجم)</th><th>الإجمالي (كجم)</th><th>%</th><th style="width:80px;">إجراءات</th></tr></thead>
+            <thead><tr><th>التاريخ</th><th>الوجبة</th><th>الشيف</th><th>الخامات</th><th>الوزن النهائي (كجم)</th><th>هدر مهندسين (كجم)</th><th>هدر عمال (كجم)</th><th>هالك تحضير (كجم)</th><th>الإجمالي (كجم)</th><th>%</th><th style="width:80px;">إجراءات</th></tr></thead>
           <tbody id="mw-table-body"></tbody>
         </table>
       </div>
@@ -2712,15 +2726,15 @@
           <button type="button" class="btn btn-secondary" onclick="addIngredientRow()" style="padding:3px 10px;font-size:11px;margin-top:6px;">➕ إضافة صنف</button>
           <button type="button" class="btn btn-info" onclick="openIngredientMasterModal()" style="padding:3px 10px;font-size:11px;margin-top:6px;margin-right:4px;">📦 إدارة الخامات</button>
           <div class="form-group" style="margin-top:8px;"><label style="font-size:12px;color:#c62828;">🌊 الماء المضاف للطبيخ (كجم)</label><input type="number" id="mw-water" min="0" step="0.1" style="border-color:#ffcdd2;" oninput="updateWasteCalc()"></div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:6px;">
-            <div class="form-group"><label style="font-size:11px;color:#555;">🔥 تكلفة الغاز (ج.م)</label><input type="number" id="mw-gas-cost" min="0" step="1" value="1650" style="font-size:12px;" oninput="updateWasteCalc()"></div>
-            <div class="form-group"><label style="font-size:11px;color:#555;">👨‍💼 تكلفة الرواتب (ج.م)</label><input type="number" id="mw-salary-cost" min="0" step="1" value="8333" style="font-size:12px;" oninput="updateWasteCalc()"></div>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:6px;">
+            <div class="form-group"><label style="font-size:11px;color:#555;">🔥 تكلفة الغاز إجمالي اليوم (ج.م)</label><input type="number" id="mw-gas-cost" min="0" step="1" value="1650" style="font-size:12px;" oninput="updateWasteCalc()"></div>
+            <div class="form-group"><label style="font-size:11px;color:#555;">👨‍💼 تكلفة الرواتب إجمالي اليوم (ج.م)</label><input type="number" id="mw-salary-cost" min="0" step="1" value="8333" style="font-size:12px;" oninput="updateWasteCalc()"></div>
+            <div class="form-group"><label style="font-size:11px;color:#795548;">🥔 هالك تحضير (تقشير، خضار) كجم</label><input type="number" id="mw-prep-waste" min="0" step="0.1" value="0" style="font-size:12px;border-color:#bcaaa4;" oninput="updateWasteCalc()"></div>
           </div>
         </div>
 
         <div style="grid-column:1/-1;border:1px solid #ffcdd2;border-radius:8px;padding:10px;background:#fff8f8;">
           <label style="font-weight:700;color:#c62828;font-size:13px;">📊 الهدر</label>
-          <div class="form-group" style="margin-top:6px;"><label>الوزن النهائي بعد الطبخ (كجم)</label><input type="number" id="mw-total-prepared" min="0" step="0.1" required style="font-size:14px;font-weight:700;border-color:#c62828;" oninput="updateWasteCalc()"></div>
           <div style="background:#e3f2fd;border-radius:6px;padding:6px;margin-top:6px;">
             <div style="font-size:12px;font-weight:700;color:#1565c0;margin-bottom:4px;">🧑‍💼 المهندسين — إجمالي: <strong id="mw-eng-total-display">0</strong></div>
             <div style="display:flex;gap:6px;flex-wrap:wrap;">
@@ -3471,80 +3485,14 @@
   </div>
 
   <script>
-    // ====== API Layer (SQLite server) with localStorage fallback ======
-    const API_BASE = 'http://localhost:3001/api';
-    let isServerOnline = false;
-
-    async function checkServer() {
-      return false;
-    }
-
-    async function apiGet(endpoint) {
-      if (!isServerOnline) return null;
-      try {
-        const res = await fetch(`${API_BASE}/${endpoint}`);
-        if (res.ok) return await res.json();
-      } catch(e) {}
-      return null;
-    }
-
-    async function apiPost(endpoint, data) {
-      if (!isServerOnline) return null;
-      try {
-        const res = await fetch(`${API_BASE}/${endpoint}`, {
-          method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data)
-        });
-        return res.ok ? await res.json() : null;
-      } catch(e) { return null; }
-    }
-
-    async function apiPut(endpoint, data) {
-      if (!isServerOnline) return null;
-      try {
-        const res = await fetch(`${API_BASE}/${endpoint}`, {
-          method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data)
-        });
-        return res.ok ? await res.json() : null;
-      } catch(e) { return null; }
-    }
-
-    async function apiDelete(endpoint) {
-      if (!isServerOnline) return null;
-      try {
-        const res = await fetch(`${API_BASE}/${endpoint}`, { method: 'DELETE' });
-        return res.ok ? await res.json() : null;
-      } catch(e) { return null; }
-    }
-
-    async function syncToServer() {
-      if (!isServerOnline) return;
-      const backup = {
-        employees, roomsCapacity, vacations, hospitalities, maintenanceRecords,
-        septicRecords, inventoryVouchers, inventoryItems, excludedEmployees,
-        periodicMaintenance, teaSugarDisbursements, teaSugarBatches, mealLogs, contractors,
-        dynamicSectors, dynamicRooms, dynamicSeptics, dynamicDepts, dynamicTitles,
-        appUsers, currentUser, bakeryIngredients, bakeryProductions,
-        bakeryContractorSupplies, bakeryInvoices
-      };
-      await apiPost('migrate', backup);
-    }
-
     // Check server on load and migrate data
-    let serverInitPromise = checkServer().then(online => {
-      const el = document.getElementById('server-status');
+    (function() {
+      var el = document.getElementById('server-status');
       if (el) {
-        el.innerHTML = online ? '🟢 السيرفر متصل - SQLite' : '🔴 السيرفر غير متصل - تخزين محلي';
-        el.style.color = online ? '#4caf50' : '#f44336';
+        el.innerHTML = '🔴 السيرفر غير متصل - تخزين محلي';
+        el.style.color = '#f44336';
       }
-      if (online) {
-        syncToServer();
-        // Show migration button if on file:// with data
-        if (!window.location.href.startsWith('http') && employees.length > 0) {
-          let btn = document.getElementById('btn-migrate-server');
-          if (btn) { btn.style.display = 'inline-flex'; }
-        }
-      }
-    });
+    })();
 
     // Seed data removed — الموقع يعتمد على السحابة ☁️
 
@@ -3609,7 +3557,7 @@
       'adminOvertime','roomAssets','archiveData','waterStations','waterDocs','quickActions','dailyStats',
       'dynamicSectors','contractorSectors','contractorRooms','dynamicRooms','dynamicSeptics',
       'dynamicDepts','dynamicTitles','deptTitles','manualTotalBeds','syncDeletions','appUsers',
-      'finTransactions','finBudgets'
+      'finTransactions','finBudgets','ingredientMaster','mealSurveys'
     ];
     // حفظ كل الداتا في IndexedDB دفعة واحدة
     var _idbBackupTimer = null;
@@ -3653,12 +3601,9 @@
               _ALL_KEYS.forEach(function(k) {
                 if (data[k] !== undefined) {
                   var v = null; try { v = typeof getEntityVar === 'function' ? getEntityVar(k) : null; } catch(e) {}
-                  if (Array.isArray(data[k]) && Array.isArray(v) && v.length > 0 && data[k].length > 0) {
-                    if (data[k].length > v.length) { if (typeof setEntityVar === 'function') setEntityVar(k, data[k]); }
-                    else if (data[k].length < v.length) data[k] = v;
-                  } else {
-                    if (typeof setEntityVar === 'function') setEntityVar(k, data[k]);
-                  }
+                  if (v && Array.isArray(v) && v.length > 0) return;
+                  if (v !== null && v !== undefined && !(Array.isArray(v) && v.length === 0)) return;
+                  if (typeof setEntityVar === 'function') setEntityVar(k, data[k]);
                 }
               });
               resolve(true);
@@ -3733,11 +3678,12 @@
     let teaSugarBatches = _safeJsonParse(localStorage.getItem('lineh_tea_sugar_batches'), []);
     let mealLogs = (typeof SEED_MEALS !== 'undefined' && SEED_MEALS.length > 0) ? SEED_MEALS : (_safeJsonParse(localStorage.getItem('lineh_meal_logs'), []));
     let mealWaste = _safeJsonParse(localStorage.getItem('linah_meal_waste'), []);
+    let mealSurveys = _safeJsonParse(localStorage.getItem('linah_meal_surveys'), []);
     let ingredientMaster = _safeJsonParse(localStorage.getItem('linah_ingredient_master'), []);
     if (!ingredientMaster.length) {
       ingredientMaster = [
         {name:'ارز',unit:'كجم',price:34},{name:'عدس بجبه',unit:'كجم',price:48},{name:'فاصوليا',unit:'كجم',price:70},
-        {name:'عدس اصفر',unit:'كجم',price:50},{name:'لسان عصفور',unit:'كجم',price:26},{name:'سمنة',unit:'عدد',price:112},
+        {name:'عدس اصفر',unit:'كجم',price:50},{name:'لسان عصفور',unit:'كجم',price:26},{name:'سمنة',unit:'كجم',price:125},
         {name:'جركن زيت كويست',unit:'لتر',price:99},{name:'كرتونة ملح',unit:'عدد',price:1.75},{name:'مربى',unit:'عدد',price:3.99},
         {name:'شعريه',unit:'كجم',price:26},{name:'فول مدشوش',unit:'كجم',price:36},{name:'حلاوة قطع',unit:'عدد',price:5.75},
         {name:'طحينة',unit:'كجم',price:160},{name:'مكرونة',unit:'كجم',price:26},{name:'جبنة',unit:'عدد',price:13},
@@ -3751,12 +3697,12 @@
         {name:'حبهان',unit:'كجم',price:2.80},{name:'كمون',unit:'كجم',price:0.40},{name:'كركم',unit:'كجم',price:0.36},
         {name:'ثوم بودرة',unit:'كجم',price:0.36},{name:'بصل بودرة',unit:'كجم',price:0.36},{name:'سمسم',unit:'كجم',price:0.22},
         {name:'قرنفل',unit:'كجم',price:0.98},{name:'بابريكا',unit:'كجم',price:0.48},{name:'ورق لوري',unit:'كجم',price:0.24},
-        {name:'فيجيتار',unit:'كجم',price:80}
+        {name:'فيجيتار',unit:'كجم',price:80},{name:'بهارات 7',unit:'جم',price:0.0005},{name:'كسبرة نص دشة',unit:'كجم',price:0.14},{name:'كسبره ناعمه',unit:'كجم',price:0.14}
       ];
       localStorage.setItem('linah_ingredient_master', JSON.stringify(ingredientMaster));
     }
     // تحديث الأسعار من أحدث قائمة (11 يوليو 2026)
-    var _latestPrices = {'ارز':34,'عدس بجبه':48,'فاصوليا':70,'عدس اصفر':50,'لسان عصفور':26,'سمنة':112,'جركن زيت كويست':99,'كرتونة ملح':1.75,'مربى':3.99,'شعريه':26,'فول مدشوش':36,'حلاوة قطع':5.75,'طحينة':160,'مكرونة':26,'جبنة':13,'صلصة':0.10,'مكرونة اسباكيتى':26,'حمص':80,'نشا':40,'جوز هند':380,'زيت سندباد':100,'شيكارة فحم':741,'مرقه دجاج':1.50,'ثوم':180,'خل':30,'زبيب':330,'لوبيا':70,'زيت حار':150,'كيس مخلل':273.60,'سودانى':180,'ملوخية':200,'بقسماط مطحون':42,'شطة حمراء':180};
+    var _latestPrices = {'ارز':34,'عدس بجبه':48,'فاصوليا':70,'عدس اصفر':50,'لسان عصفور':26,'سمنة':125,'جركن زيت كويست':99,'كرتونة ملح':1.75,'مربى':3.99,'شعريه':26,'فول مدشوش':36,'حلاوة قطع':5.75,'طحينة':160,'مكرونة':26,'جبنة':13,'صلصة':0.10,'مكرونة اسباكيتى':26,'حمص':80,'نشا':40,'جوز هند':380,'زيت سندباد':100,'شيكارة فحم':741,'مرقه دجاج':1.50,'ثوم':180,'خل':30,'زبيب':330,'لوبيا':70,'زيت حار':150,'كيس مخلل':273.60,'سودانى':180,'ملوخية':200,'بقسماط مطحون':42,'شطة حمراء':180,'بهارات 7':0.0005,'كسبرة نص دشة':0.14,'كسبره ناعمه':0.14};
     ingredientMaster.forEach(function(ing) { if (_latestPrices[ing.name] !== undefined) ing.price = _latestPrices[ing.name]; });
     let inventoryItems = _safeJsonParse(localStorage.getItem('lineh_inventory_items'), []);
     let contractors = _safeJsonParse(localStorage.getItem('lineh_contractors'), []);
@@ -4251,7 +4197,7 @@
     if (u && u.role) currentUserRole = u.role;
     // لو المستخدم الحالي مش موجود (مثلاً اسمه لاتيني واتمسح) → أول واحد في القائمة
     if (!u && appUsers.length > 0) { currentUser = appUsers[0].name; u = appUsers[0]; currentUserRole = u.role || 'user'; localStorage.setItem('lineh_current_user', currentUser); }
-    function isAdmin() { return true; }
+    function isAdmin() { return currentUserRole === 'admin'; }
     function requireAdmin() { if (!isAdmin()) { alert('⛔ هذه الميزة متاحة للمدير فقط'); return false; } return true; }
     const defaultGovs = ["القاهرة", "الجيزة", "الإسكندرية", "الدقهلية", "الشرقية", "القليوبية", "الغربية", "المنوفية", "البحيرة", "كفر الشيخ", "دمياط", "بورسعيد", "السويس", "الإسماعيلية", "الفيوم", "بني سويف", "المنيا", "أسيوط", "سوهاج", "قنا", "الأقصر", "أسوان", "البحر الأحمر", "الوادي الجديد", "مطروح", "شمال سيناء", "جنوب سيناء"];
     let manualTotalBeds = parseInt(localStorage.getItem('lineh_manual_total_beds')) || 0;
@@ -4507,6 +4453,7 @@
       _lsSet('lineh_quick_actions', JSON.stringify(quickActions));
       _lsSet('lineh_daily_stats', JSON.stringify(dailyStats));
       _lsSet('lineh_sync_deletions', JSON.stringify(syncDeletions));
+      _lsSet('linah_meal_surveys', JSON.stringify(mealSurveys));
       _lsSet('_pulledAt', JSON.stringify(_pulledAt));
       try { localStorage.removeItem('_storageTx'); } catch(e) {}
       calculateSystemStats();
@@ -5322,7 +5269,7 @@
       try { if(tabId === 'tab-inventory') { renderInventoryItems(); renderArchiveTable(); } } catch(e) { console.error('tab-inventory error:', e); }
       try { if(tabId === 'tab-periodic-maint') { renderPeriodicMaintenance(); } } catch(e) { console.error('tab-periodic-maint error:', e); }
       try { if(tabId === 'tab-tea-sugar') { renderTeaSugarTable(); } } catch(e) { console.error('tab-tea-sugar error:', e); }
-      try { if(tabId === 'tab-meal-log') { renderMealLogTable(); if(!document.getElementById('meal-date').value) document.getElementById('meal-date').value = new Date().toISOString().split('T')[0]; } } catch(e) { console.error('tab-meal-log error:', e); }
+      try { if(tabId === 'tab-meal-log') { renderMealLogTable(); renderMealSurvey(); if(!document.getElementById('meal-date').value) document.getElementById('meal-date').value = new Date().toISOString().split('T')[0]; } } catch(e) { console.error('tab-meal-log error:', e); }
       try { if(tabId === 'tab-contractors') { populateContractorSectorDropdown(); renderContractorsTable(); } } catch(e) { console.error('tab-contractors error:', e); }
       try { if(tabId === 'tab-bakery') { renderBakeryProductions(); renderBakeryIngredients(); updateBakeryStats(); populateBakeryDropdowns(); updateBakeryProductionIngredientStocks(); generateBakeryQR(); importBakeryFormData(); } } catch(e) { console.error('tab-bakery error:', e); }
       try { if(tabId === 'tab-bread-supply') { renderBakeryContractorSupplies(); renderBakeryInvoices(); updateBreadSupplyStats(); populateBakeryDropdowns(); } } catch(e) { console.error('tab-bread-supply error:', e); }
@@ -10383,7 +10330,110 @@ function toggleEmployeeStatus(empId) {
       document.getElementById('meal-p-bf').focus();
     }
 
-    /* ===== Meal Waste Module ===== */
+    /* ===== Meal Survey Module ===== */
+    var _lastSurveyedMeal = null;
+    function renderMealSurvey() {
+      var today = new Date().toISOString().split('T')[0];
+      var tdEl = document.getElementById('survey-today');
+      if (tdEl) tdEl.textContent = today;
+      var meals = ['فطار','غداء','عشاء'];
+      var icons = { 'فطار':'🍳','غداء':'🧀','عشاء':'🍗' };
+      var emojis = ['😞','😐','😊','😍'];
+      var labels = ['مش عجباني','مقبولة','كويسة','رائعة'];
+      var container = document.getElementById('survey-meals');
+      if (!container) return;
+      var html = '';
+      meals.forEach(function(meal) {
+        var existing = mealSurveys.filter(function(s) { return s.date === today && s.meal === meal; });
+        var current = existing.length > 0 ? existing[existing.length - 1] : null;
+        var curRating = current ? current.rating : -1;
+        var stars = '';
+        for (var r = 0; r < 4; r++) {
+          var active = (r === curRating) ? ' style="transform:scale(1.3);border-color:#ff8f00;"' : '';
+          stars += '<span class="survey-emoji" data-meal="' + meal + '" data-rating="' + r + '" onclick="submitMealRating(\'' + meal + '\',' + r + ')"' + active + ' style="cursor:pointer;font-size:32px;padding:4px;transition:all 0.2s;border-radius:8px;border:2px solid transparent;display:inline-block;' + (r === curRating ? 'transform:scale(1.3);border-color:#ff8f00;background:#fff8e1;' : '') + '">' + emojis[r] + '</span>';
+        }
+        html += '<div style="background:white;border-radius:10px;padding:12px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,0.06);border:1px solid #ffe0b2;">' +
+          '<div style="font-size:14px;font-weight:700;color:#e65100;margin-bottom:6px;">' + icons[meal] + ' ' + meal + '</div>' +
+          '<div style="font-size:24px;margin-bottom:4px;">' + (curRating >= 0 ? curRating + 1 : '—') + ' / 4</div>' +
+          '<div>' + stars + '</div>' +
+          (current && current.comment ? '<div style="margin-top:6px;font-size:11px;color:#666;background:#fff3e0;padding:4px 8px;border-radius:6px;">💬 ' + current.comment + '</div>' : '') +
+          '</div>';
+      });
+      container.innerHTML = html;
+      renderMealSurveyStats();
+    }
+    function submitMealRating(meal, rating) {
+      var today = new Date().toISOString().split('T')[0];
+      _lastSurveyedMeal = meal;
+      for (var i = 0; i < mealSurveys.length; i++) {
+        if (mealSurveys[i].date === today && mealSurveys[i].meal === meal && mealSurveys[i].employee === currentUser) {
+          mealSurveys[i].rating = rating;
+          mealSurveys[i].timestamp = new Date().toISOString();
+          syncStorage();
+          renderMealSurvey();
+          // Show comment area if rating is 0 or 1 (negative)
+          var ca = document.getElementById('survey-comment-area');
+          if (ca) { ca.style.display = (rating < 2) ? 'block' : 'none'; }
+          if (rating < 2) document.getElementById('survey-comment-input').focus();
+          return;
+        }
+      }
+      mealSurveys.push({ date: today, meal: meal, rating: rating, employee: currentUser, comment: '', timestamp: new Date().toISOString() });
+      syncStorage();
+      renderMealSurvey();
+      var ca = document.getElementById('survey-comment-area');
+      if (ca) { ca.style.display = (rating < 2) ? 'block' : 'none'; }
+      if (rating < 2) document.getElementById('survey-comment-input').focus();
+    }
+    function submitSurveyComment() {
+      var today = new Date().toISOString().split('T')[0];
+      var comment = document.getElementById('survey-comment-input').value.trim();
+      if (!_lastSurveyedMeal) return;
+      for (var i = mealSurveys.length - 1; i >= 0; i--) {
+        if (mealSurveys[i].date === today && mealSurveys[i].meal === _lastSurveyedMeal && mealSurveys[i].employee === currentUser) {
+          mealSurveys[i].comment = comment;
+          mealSurveys[i].timestamp = new Date().toISOString();
+          syncStorage();
+          renderMealSurvey();
+          document.getElementById('survey-comment-area').style.display = 'none';
+          document.getElementById('survey-comment-input').value = '';
+          _lastSurveyedMeal = null;
+          return;
+        }
+      }
+    }
+    function renderMealSurveyStats() {
+      var container = document.getElementById('survey-stats');
+      if (!container) return;
+      var today = new Date().toISOString().split('T')[0];
+      // Stats for last 7 days
+      var since7 = new Date(Date.now() - 7 * 86400000).toISOString().split('T')[0];
+      var recent = mealSurveys.filter(function(s) { return s.date >= since7; });
+      var total = recent.length;
+      var counts = [0,0,0,0];
+      recent.forEach(function(s) { counts[s.rating]++; });
+      var emojis = ['😞','😐','😊','😍'];
+      var labels = ['غير راضين','مقبول','كويس','رائعة'];
+      // Today's response count
+      var todayCount = mealSurveys.filter(function(s) { return s.date === today; }).length;
+      var html = '<div class="stat-card" style="background:#fff8e1;padding:10px;border:1px solid #ffe0b2;border-radius:8px;text-align:center;">' +
+        '<div style="font-size:12px;color:#e65100;">⭐ التقييم العام (آخر 7 أيام)</div>' +
+        '<div style="font-size:28px;font-weight:700;margin:4px 0;">' + (total > 0 ? Math.round((counts[2]+counts[3])/total*100) : 0) + '%</div>' +
+        '<div style="font-size:12px;color:#888;">رضا (' + total + ' صوت)</div></div>';
+      for (var r = 0; r < 4; r++) {
+        var pct = total > 0 ? Math.round(counts[r]/total*100) : 0;
+        var color = ['#e53935','#ff8f00','#fdd835','#43a047'][r];
+        html += '<div class="stat-card" style="padding:8px;border:1px solid #ffe0b2;border-radius:8px;text-align:center;background:white;">' +
+          '<div style="font-size:22px;">' + emojis[r] + '</div>' +
+          '<div style="font-size:12px;color:' + color + ';font-weight:700;">' + labels[r] + '</div>' +
+          '<div style="font-size:18px;font-weight:700;">' + pct + '%</div></div>';
+      }
+      // Today's participation
+      html += '<div class="stat-card" style="padding:8px;border:1px solid #ffe0b2;border-radius:8px;text-align:center;background:white;">' +
+        '<div style="font-size:12px;color:#888;">🗳️ مشاركة اليوم</div>' +
+        '<div style="font-size:24px;font-weight:700;">' + todayCount + '</div></div>';
+      container.innerHTML = html;
+    }
     var _mwChart = null;
     function updateIngredientSuggestions() {
       var datalist = document.getElementById('mw-ing-suggestions');
@@ -10417,7 +10467,7 @@ function toggleEmployeeStatus(empId) {
       d.style.cssText = 'display:flex;gap:6px;margin-top:6px;align-items:center;';
       d.innerHTML =
         '<input type="text" class="mw-ing-name" placeholder="الصنف" value="' + (name||'') + '" list="mw-ing-suggestions" style="flex:2;padding:4px 6px;border:1px solid #ddd;border-radius:4px;font-size:12px;" oninput="updateIngredientSuggestions()" onchange="fillPriceFromMaster(this)">' +
-        '<input type="number" class="mw-ing-qty" placeholder="الكمية" min="0" step="0.01" value="' + (qty||'') + '" style="width:60px;padding:4px 6px;border:1px solid #ddd;border-radius:4px;font-size:12px;" oninput="calcAutoWater()">' +
+        '<input type="number" class="mw-ing-qty" placeholder="الكمية" min="0" step="0.01" value="' + (qty||'') + '" style="width:60px;padding:4px 6px;border:1px solid #ddd;border-radius:4px;font-size:12px;" oninput="updateWasteCalc()">' +
         '<select class="mw-ing-unit" style="width:60px;padding:4px;border:1px solid #ddd;border-radius:4px;font-size:12px;">' +
           '<option value="كجم"' + (unit==='كجم'?' selected':'') + '>كجم</option>' +
           '<option value="لتر"' + (unit==='لتر'?' selected':'') + '>لتر</option>' +
@@ -10442,20 +10492,11 @@ function toggleEmployeeStatus(empId) {
       });
       return ings;
     }
-    function calcAutoWater() {
-      var total = 0;
-      document.querySelectorAll('.mw-ing-row').forEach(function(r) {
-        total += parseFloat(r.querySelector('.mw-ing-qty').value) || 0;
-      });
-      total += parseFloat(document.getElementById('mw-water').value) || 0;
-      var tp = document.getElementById('mw-total-prepared');
-      if (total > 0 && !tp.value) tp.value = total.toFixed(1);
-      updateWasteCalc();
-    }
     function updateWasteCalc() {
       var wasteEng = parseFloat(document.getElementById('mw-waste-eng').value) || 0;
       var wasteWrk = parseFloat(document.getElementById('mw-waste-wrk').value) || 0;
       var wasteGuests = parseFloat(document.getElementById('mw-waste-guests').value) || 0;
+      var prepWaste = parseFloat(document.getElementById('mw-prep-waste').value) || 0;
       var engAte = parseFloat(document.getElementById('mw-eng-ate').value) || 0;
       var engTakeaway = parseFloat(document.getElementById('mw-eng-takeaway').value) || 0;
       var wrkAte = parseFloat(document.getElementById('mw-wrk-ate').value) || 0;
@@ -10477,7 +10518,12 @@ function toggleEmployeeStatus(empId) {
       });
       var gasCost = parseFloat(document.getElementById('mw-gas-cost').value) || 0;
       var salaryCost = parseFloat(document.getElementById('mw-salary-cost').value) || 0;
-      var operatingCost = totalCost + gasCost + salaryCost;
+      var mwDate = normalizeDateStr(document.getElementById('mw-date').value);
+      var editIdx = parseInt(document.getElementById('mw-edit-idx').value);
+      var mealsToday = mealWaste.filter(function(w) { return normalizeDateStr(w.date) === mwDate; }).length;
+      if (editIdx < 0) mealsToday++;
+      if (mealsToday < 1) mealsToday = 1;
+      var operatingCost = totalCost + (gasCost / mealsToday) + (salaryCost / mealsToday);
       document.getElementById('mw-cost').value = operatingCost > 0 ? operatingCost.toFixed(0) : '';
     }
     function openMealWasteModal(editIdx) {
@@ -10491,7 +10537,6 @@ function toggleEmployeeStatus(empId) {
         var c = document.getElementById('mw-ingredients-container');
         if (c) { c.innerHTML = ''; }
         if (w.ingredients) w.ingredients.forEach(function(ing) { addIngredientRow(ing.name, ing.qty, ing.unit, ing.price); });
-        document.getElementById('mw-total-prepared').value = w.totalPrepared || 0;
         document.getElementById('mw-waste-eng').value = w.wasteEng || 0;
         document.getElementById('mw-waste-wrk').value = w.wasteWrk || 0;
         document.getElementById('mw-cost').value = w.cost || 0;
@@ -10505,6 +10550,7 @@ function toggleEmployeeStatus(empId) {
         document.getElementById('mw-water').value = w.waterAdded || 0;
         document.getElementById('mw-gas-cost').value = w.gasCost || 1650;
         document.getElementById('mw-salary-cost').value = w.salaryCost || 8333;
+        document.getElementById('mw-prep-waste').value = w.prepWaste || 0;
         setTimeout(updateWasteCalc, 50);
       } else {
         cancelMealWasteEdit();
@@ -10520,7 +10566,6 @@ function toggleEmployeeStatus(empId) {
       var c = document.getElementById('mw-ingredients-container');
       if (c) { c.innerHTML = ''; }
       addIngredientRow();
-        document.getElementById('mw-total-prepared').value = '';
       document.getElementById('mw-waste-eng').value = '';
       document.getElementById('mw-waste-wrk').value = '';
       document.getElementById('mw-cost').value = '';
@@ -10533,6 +10578,7 @@ function toggleEmployeeStatus(empId) {
       document.getElementById('mw-water').value = '';
       document.getElementById('mw-gas-cost').value = '1650';
       document.getElementById('mw-salary-cost').value = '8333';
+      document.getElementById('mw-prep-waste').value = '0';
       document.getElementById('mw-eng-total-display').textContent = '0';
       document.getElementById('mw-wrk-total-display').textContent = '0';
       document.getElementById('mw-avg-eng').textContent = '—';
@@ -10547,11 +10593,10 @@ function toggleEmployeeStatus(empId) {
       if (!chef) return alert('⚠️ أدخل اسم الشيف.');
       var ingredients = getIngredientsFromForm();
       if (!ingredients.length) return alert('⚠️ أضف على الأقل صنف واحد من الخامات.');
-      var totalPrepared = parseFloat(document.getElementById('mw-total-prepared').value) || 0;
-      if (totalPrepared <= 0) return alert('⚠️ أدخل الوزن المُعد.');
+      var totalPrepared = 0;
       var wasteEng = parseFloat(document.getElementById('mw-waste-eng').value) || 0;
       var wasteWrk = parseFloat(document.getElementById('mw-waste-wrk').value) || 0;
-      if (wasteEng === 0 && wasteWrk === 0) return alert('⚠️ أدخل كمية الهدر في أحد المطعمين على الأقل.');
+      if (wasteEng === 0 && wasteWrk === 0 && prepWaste === 0) return alert('⚠️ أدخل كمية الهدر في أحد المطعمين على الأقل أو هالك التحضير.');
       var cost = parseFloat(document.getElementById('mw-cost').value) || 0;
       var responsible = document.getElementById('mw-responsible').value.trim();
       var engAte = parseFloat(document.getElementById('mw-eng-ate').value) || 0;
@@ -10563,17 +10608,32 @@ function toggleEmployeeStatus(empId) {
       var waterAdded = parseFloat(document.getElementById('mw-water').value) || 0;
       var gasCost = parseFloat(document.getElementById('mw-gas-cost').value) || 0;
       var salaryCost = parseFloat(document.getElementById('mw-salary-cost').value) || 0;
+      var prepWaste = parseFloat(document.getElementById('mw-prep-waste').value) || 0;
       var editIdx = parseInt(document.getElementById('mw-edit-idx').value);
       var normDate = normalizeDateStr(date);
+      // Auto-calculate total prepared weight from ingredients + water
+      totalPrepared = ingredients.reduce(function(s,i){return s+(i.qty||0);},0) + waterAdded;
+      // Recalculate ingredient cost from form
+      var totalCostFromForm = 0;
+      document.querySelectorAll('.mw-ing-row').forEach(function(r) {
+        var q = parseFloat(r.querySelector('.mw-ing-qty').value) || 0;
+        var p = parseFloat(r.querySelector('.mw-ing-price').value) || 0;
+        totalCostFromForm += q * p;
+      });
+      // Divide daily gas/salary by number of meals this day
+      var mealsToday = mealWaste.filter(function(w) { return normalizeDateStr(w.date) === normDate; }).length;
+      if (editIdx < 0) mealsToday++;
+      if (mealsToday < 1) mealsToday = 1;
+      cost = totalCostFromForm + (gasCost / mealsToday) + (salaryCost / mealsToday);
       if (editIdx >= 0 && editIdx < mealWaste.length) {
         var w = mealWaste[editIdx];
         w.date = normDate; w.meal = meal; w.chef = chef; w.ingredients = ingredients;
         w.totalPrepared = totalPrepared; w.wasteEng = wasteEng; w.wasteWrk = wasteWrk;
         w.cost = cost; w.responsible = responsible;
-        w.engAte = engAte; w.engTakeaway = engTakeaway; w.wrkAte = wrkAte; w.wrkTakeaway = wrkTakeaway; w.guests = guests; w.wasteGuests = wasteGuests; w.waterAdded = waterAdded; w.gasCost = gasCost; w.salaryCost = salaryCost;
+        w.engAte = engAte; w.engTakeaway = engTakeaway; w.wrkAte = wrkAte; w.wrkTakeaway = wrkTakeaway; w.guests = guests; w.wasteGuests = wasteGuests; w.waterAdded = waterAdded; w.gasCost = gasCost; w.salaryCost = salaryCost; w.prepWaste = prepWaste;
         w.modifiedAt = new Date().toISOString();
       } else {
-        mealWaste.push({ date: normDate, meal: meal, chef: chef, ingredients: ingredients, totalPrepared: totalPrepared, wasteEng: wasteEng, wasteWrk: wasteWrk, cost: cost, responsible: responsible, engAte: engAte, engTakeaway: engTakeaway, wrkAte: wrkAte, wrkTakeaway: wrkTakeaway, guests: guests, wasteGuests: wasteGuests, waterAdded: waterAdded, gasCost: gasCost, salaryCost: salaryCost, createdAt: new Date().toISOString() });
+        mealWaste.push({ date: normDate, meal: meal, chef: chef, ingredients: ingredients, totalPrepared: totalPrepared, wasteEng: wasteEng, wasteWrk: wasteWrk, cost: cost, responsible: responsible, engAte: engAte, engTakeaway: engTakeaway, wrkAte: wrkAte, wrkTakeaway: wrkTakeaway, guests: guests, wasteGuests: wasteGuests, waterAdded: waterAdded, gasCost: gasCost, salaryCost: salaryCost, prepWaste: prepWaste, createdAt: new Date().toISOString() });
         _removeDeletion('mealWaste', normDate + '|' + meal);
       }
       closeModal('modal-meal-waste');
@@ -10622,8 +10682,17 @@ function toggleEmployeeStatus(empId) {
     function deleteMealWaste(idx) { if (!requireAdmin()) return;
       if (!confirm('حذف سجل الهدر؟')) return;
       var w = mealWaste[idx];
+      var delDate = normalizeDateStr(w.date);
       _logDeletion('mealWaste', (w.date||'') + '|' + (w.meal||''));
       mealWaste.splice(idx, 1);
+      // Recalculate gas/salary split for remaining records on same date
+      var remaining = mealWaste.filter(function(r) { return normalizeDateStr(r.date) === delDate; });
+      if (remaining.length > 0) {
+        remaining.forEach(function(r) {
+          var ingSum = (r.ingredients||[]).reduce(function(s,i){return s+(i.qty||0)*(i.price||0);},0);
+          r.cost = ingSum + ((r.gasCost||0) / remaining.length) + ((r.salaryCost||0) / remaining.length);
+        });
+      }
       syncStorage(); renderMealWasteTable(); renderMealWasteStats();
     }
     function editMealWaste(idx) { openMealWasteModal(idx); }
@@ -10637,10 +10706,11 @@ function toggleEmployeeStatus(empId) {
       var el = document.getElementById('mw-stats');
       if (!el) return;
       var filtered = getFilteredMealWaste();
-      var totalWaste = 0, totalCost = 0, count = filtered.length, totalPrepared = 0, totalCookedQty = 0;
+      var totalWaste = 0, totalCost = 0, count = filtered.length, totalPrepared = 0, totalCookedQty = 0, totalPrepWaste = 0;
       filtered.forEach(function(w) {
         totalPrepared += w.totalPrepared || 0;
-        totalWaste += (w.wasteEng||0) + (w.wasteWrk||0);
+        totalWaste += (w.wasteEng||0) + (w.wasteWrk||0) + (w.prepWaste||0);
+        totalPrepWaste += w.prepWaste || 0;
         totalCost += w.cost || 0;
         var ingSum = (w.ingredients||[]).reduce(function(s,i){return s+(i.qty||0);},0);
         totalCookedQty += ingSum + (w.waterAdded||0);
@@ -10663,7 +10733,8 @@ function toggleEmployeeStatus(empId) {
       var wasteCost = totalPrepared > 0 ? ((totalWaste / totalPrepared) * totalCost) : 0;
       el.innerHTML = [
         '<div style="background:#4a148c;color:white;padding:10px;border-radius:8px;text-align:center;"><div style="font-size:20px;font-weight:700;">' + totalCookedQty.toFixed(1) + ' كجم</div><div style="font-size:11px;">إجمالي الكميات المطهوة</div></div>',
-        '<div style="background:#d32f2f;color:white;padding:10px;border-radius:8px;text-align:center;"><div style="font-size:20px;font-weight:700;">' + totalWaste.toFixed(1) + ' كجم</div><div style="font-size:11px;">إجمالي الهدر</div></div>',
+        '<div style="background:#795548;color:white;padding:10px;border-radius:8px;text-align:center;"><div style="font-size:20px;font-weight:700;">' + totalPrepWaste.toFixed(1) + ' كجم</div><div style="font-size:11px;">هالك تحضير (تقشير)</div></div>',
+        '<div style="background:#d32f2f;color:white;padding:10px;border-radius:8px;text-align:center;"><div style="font-size:20px;font-weight:700;">' + totalWaste.toFixed(1) + ' كجم</div><div style="font-size:11px;">إجمالي الهدر (بما في ذلك هالك التحضير)</div></div>',
         '<div style="background:' + (wastePct <= 5 ? '#2e7d32' : '#d32f2f') + ';color:white;padding:10px;border-radius:8px;text-align:center;"><div style="font-size:20px;font-weight:700;">' + wastePct.toFixed(1) + '%</div><div style="font-size:11px;">نسبة الهدر (الهدف ≤5%)</div></div>',
         '<div style="background:#1565c0;color:white;padding:10px;border-radius:8px;text-align:center;font-size:12px;"><div style="font-weight:700;">🧑‍💼 ' + (totalEngAte > 0 ? avgEng.toFixed(1) + ' جم/فرد' : '—') + ' | 👷 ' + (totalWrkAte > 0 ? avgWrk.toFixed(1) + ' جم/فرد' : '—') + ' | 🧑‍🤝‍🧑 ' + (totalGuests > 0 ? avgGuests.toFixed(1) + ' جم/فرد' : '—') + '</div><div style="font-size:11px;">متوسط هدر/فرد (مهندسين / عمال / ضيوف)</div></div>',
         '<div style="background:#37474f;color:white;padding:10px;border-radius:8px;text-align:center;"><div style="font-size:20px;font-weight:700;">' + costPerPerson.toFixed(0) + ' ج.م</div><div style="font-size:11px;">تكلفة الفرد (' + totalPeople + ' فرد)</div></div>',
@@ -10688,11 +10759,11 @@ function toggleEmployeeStatus(empId) {
       var tbody = document.getElementById('mw-table-body');
       if (!tbody) return;
       var filtered = getFilteredMealWaste();
-      if (!filtered.length) { tbody.innerHTML = '<tr><td colspan="12" style="text-align:center;color:#999;padding:20px;">لا توجد سجلات هدر</td></tr>'; return; }
+      if (!filtered.length) { tbody.innerHTML = '<tr><td colspan="14" style="text-align:center;color:#999;padding:20px;">لا توجد سجلات هدر</td></tr>'; return; }
       tbody.innerHTML = '';
       filtered.forEach(function(w) {
         var realIdx = mealWaste.indexOf(w);
-        var total = (w.wasteEng||0) + (w.wrk||0);
+        var total = (w.wasteEng||0) + (w.wasteWrk||0) + (w.prepWaste||0);
         var pct = (w.totalPrepared||0) > 0 ? ((total / (w.totalPrepared||1)) * 100).toFixed(1) : 0;
         var ingsCount = (w.ingredients||[]).length;
         var avgEng = (w.engAte||0) > 0 ? ((w.wasteEng||0) / (w.engAte||1) * 1000) : 0;
@@ -10708,6 +10779,7 @@ function toggleEmployeeStatus(empId) {
           '<td><b>' + (w.totalPrepared||'') + ' كجم</b></td>' +
           '<td style="color:#d32f2f;font-weight:700;">' + (w.wasteEng||0) + ' كجم' + (avgEng > 0 ? '<br><span style="font-size:10px;font-weight:400;color:#999;">' + avgEng.toFixed(0) + ' جم/فرد</span>' : '') + '</td>' +
           '<td style="color:#e65100;font-weight:700;">' + (w.wasteWrk||0) + ' كجم' + (avgWrk > 0 ? '<br><span style="font-size:10px;font-weight:400;color:#999;">' + avgWrk.toFixed(0) + ' جم/فرد</span>' : '') + '</td>' +
+          '<td style="color:#795548;font-weight:700;">' + (w.prepWaste||0) + ' كجم</td>' +
           '<td><b>' + total + ' كجم</b></td>' +
           '<td style="color:' + (pct > 5 ? '#d32f2f' : '#2e7d32') + ';font-weight:700;">' + pct + '%</td>' +
           '<td>' + costPP.toFixed(0) + ' ج.م<br><span style="font-size:9px;color:#b71c1c;">هدر: ' + wasteCost.toFixed(0) + ' ج.م</span></td>' +
@@ -10720,21 +10792,22 @@ function toggleEmployeeStatus(empId) {
       if (!canvas) return;
       if (_mwChart) { _mwChart.destroy(); _mwChart = null; }
       var ctx = canvas.getContext('2d');
-      var totals = { totalPrepared: 0, wasteEng: 0, wasteWrk: 0 };
+      var totals = { totalPrepared: 0, wasteEng: 0, wasteWrk: 0, prepWaste: 0 };
       data.forEach(function(w) {
         totals.totalPrepared += w.totalPrepared || 0;
         totals.wasteEng += w.wasteEng || 0;
         totals.wasteWrk += w.wasteWrk || 0;
+        totals.prepWaste += w.prepWaste || 0;
       });
       var target = Math.round(totals.totalPrepared * 0.05);
       _mwChart = new Chart(ctx, {
         type: 'bar',
         data: {
-          labels: ['المُعد (كجم)', 'هدر المهندسين (كجم)', 'هدر العمال (كجم)', 'الهدف (5%)'],
+          labels: ['المُعد (كجم)', 'هدر المهندسين (كجم)', 'هدر العمال (كجم)', 'هالك تحضير (كجم)', 'الهدف (5%)'],
           datasets: [{
             label: 'الكمية',
-            data: [totals.totalPrepared, totals.wasteEng, totals.wasteWrk, target],
-            backgroundColor: ['#1565c0', '#d32f2f', '#e65100', '#388e3c'],
+            data: [totals.totalPrepared, totals.wasteEng, totals.wasteWrk, totals.prepWaste, target],
+            backgroundColor: ['#1565c0', '#d32f2f', '#e65100', '#795548', '#388e3c'],
             borderRadius: 4
           }]
         },
@@ -10761,10 +10834,10 @@ function toggleEmployeeStatus(empId) {
         var avgEng = (w.engAte||0) > 0 ? ((w.wasteEng||0) / (w.engAte||1) * 1000).toFixed(1) + ' جم' : '';
         var avgWrk = (w.wrkAte||0) > 0 ? ((w.wasteWrk||0) / (w.wrkAte||1) * 1000).toFixed(1) + ' جم' : '';
         return { 'التاريخ':w.date, 'الوجبة':w.meal, 'الشيف':w.chef, 'الخامات':ings,
-          'الوزن النهائي (كجم)':w.totalPrepared, 'هدر مهندسين (كجم)':w.wasteEng, 'هدر عمال (كجم)':w.wasteWrk,
+          'الوزن النهائي (كجم)':w.totalPrepared, 'هدر مهندسين (كجم)':w.wasteEng, 'هدر عمال (كجم)':w.wasteWrk, 'هالك تحضير (كجم)':w.prepWaste||0,
           'بالمطعم مهندسين':w.engAte||0, 'تيك أواي مهندسين':w.engTakeaway||0, 'بالمطعم عمال':w.wrkAte||0, 'تيك أواي عمال':w.wrkTakeaway||0, 'ضيوف':w.guests||0,
           'هدر/فرد مهندسين (جم)':avgEng, 'هدر/فرد عمال (جم)':avgWrk,
-          'الماء المضاف (كجم)':w.waterAdded||0, 'نسبة الهدر':(w.totalPrepared>0?(((w.wasteEng||0)+(w.wasteWrk||0))/w.totalPrepared*100).toFixed(1):0)+'%',
+          'الماء المضاف (كجم)':w.waterAdded||0, 'نسبة الهدر':(w.totalPrepared>0?(((w.wasteEng||0)+(w.wasteWrk||0)+(w.prepWaste||0))/w.totalPrepared*100).toFixed(1):0)+'%',
           'المسؤول':w.responsible };
       });
       var ws = XLSX.utils.json_to_sheet(xlData); var wb = XLSX.utils.book_new();
@@ -13460,7 +13533,6 @@ function toggleEmployeeStatus(empId) {
     var _deviceId = localStorage.getItem('lineh_device_id');
     if (!_deviceId) { _deviceId = 'd' + Date.now() + Math.random().toString(36).slice(2,9); localStorage.setItem('lineh_device_id', _deviceId); }
     var _sbEndpoint = SUPABASE_URL + '/rest/v1/sync_data';
-    var _syncTimer = null;
     var _pulledAt = {};
     var _forcePull = false;
     var     _CODE_VERSION = '3.1';
@@ -13479,7 +13551,7 @@ function toggleEmployeeStatus(empId) {
 
     function getAllDataForSync() {
       var o = getAllDataObject();
-      var keys = ['employees','roomsCapacity','vacations','inventoryVouchers','excludedEmployees','contractors','mealLogs','mealWaste','inventoryItems','hospitalities','adminOvertime','maintenanceRecords','septicRecords','periodicMaintenance','teaSugarDisbursements','teaSugarBatches','dynamicSectors','contractorSectors','contractorRooms','dynamicRooms','dynamicSeptics','dynamicDepts','dynamicTitles','dynamicVisitorTypes','bakeryContractorsNames','evaluations','evalTemplates','appUsers','auditLog','bakeryIngredients','bakeryProductions','bakeryContractorSupplies','bakeryInvoices','bakeryStockLog','roomAssets','archiveData','quickActions','deptTitles','manualTotalBeds','dailyStats','finTransactions','finBudgets','syncDeletions','waterStations','waterDocs'];
+      var keys = ['employees','roomsCapacity','vacations','inventoryVouchers','excludedEmployees','contractors','mealLogs','mealWaste','inventoryItems','hospitalities','adminOvertime','maintenanceRecords','septicRecords','periodicMaintenance','teaSugarDisbursements','teaSugarBatches','dynamicSectors','contractorSectors','contractorRooms','dynamicRooms','dynamicSeptics','dynamicDepts','dynamicTitles','dynamicVisitorTypes','bakeryContractorsNames','evaluations','evalTemplates','appUsers','auditLog','bakeryIngredients','bakeryProductions','bakeryContractorSupplies','bakeryInvoices','bakeryStockLog','roomAssets','archiveData','quickActions','deptTitles','manualTotalBeds','dailyStats','finTransactions','finBudgets','syncDeletions','waterStations','waterDocs','ingredientMaster','mealSurveys'];
       var result = {};
       for (var ki = 0; ki < keys.length; ki++) { result[keys[ki]] = o[keys[ki]]; }
       return result;
@@ -13494,74 +13566,27 @@ function toggleEmployeeStatus(empId) {
       if (el.children.length > 20) el.removeChild(el.lastChild);
     }
 
-    var _lastUpdatedAt = '';
-    var _dataHashes;
-    // load from _pushedHashes (new), otherwise leave empty
-    try { _dataHashes = _safeJsonParse(localStorage.getItem('_pushedHashes'), {}); } catch(e) {}
-    if (!_dataHashes || typeof _dataHashes !== 'object') _dataHashes = {};
-    // If old format (values are long JSON strings), reset to compact format
-    var _dhKeys = Object.keys(_dataHashes);
-    for (var _dhk = 0; _dhk < _dhKeys.length; _dhk++) {
-      if (_dataHashes[_dhKeys[_dhk]] && _dataHashes[_dhKeys[_dhk]].length > 100) { _dataHashes = {}; localStorage.removeItem('_pushedHashes'); break; }
-    }
     var _pushInProgress = false;
     var _pullInProgress = false;
 
     // Deletion + Update sync: tracks what was deleted/modified across devices
     var syncDeletions = _safeJsonParse(localStorage.getItem('lineh_sync_deletions'), []);
-    var _syncAfterDeleteTimer = null;
-    function _schedulePushAfterDelete() {
-      // ❌ مزامنة يدوية — المستخدم يضغط دفع بنفسه
-    }
     function _logDeletion(entity, key) {
       syncDeletions.push({ entity: entity, key: key, deletedAt: new Date().toISOString() });
       // keep last 90 days only
       var cutoff = new Date(Date.now() - 90 * 86400000).toISOString();
       syncDeletions = syncDeletions.filter(function(d) { return d.deletedAt > cutoff; });
       localStorage.setItem('lineh_sync_deletions', JSON.stringify(syncDeletions));
-      _schedulePushAfterDelete();
     }
     function _removeDeletion(entity, key) {
       if (!syncDeletions || !Array.isArray(syncDeletions)) return;
       syncDeletions = syncDeletions.filter(function(d) { return !(d.entity === entity && d.key === key); });
       localStorage.setItem('lineh_sync_deletions', JSON.stringify(syncDeletions));
-      _schedulePushAfterDelete();
     }
     function _ts(item) { if (item && typeof item === 'object') item.modifiedAt = new Date().toISOString(); return item; }
     function _isDeleted(entity, key, modifiedAt) {
       if (!syncDeletions || !Array.isArray(syncDeletions)) return false;
       return syncDeletions.some(function(d) { return d.entity === entity && d.key === key; });
-    }
-    function _isCorrupted(item) {
-      if (!item || typeof item !== 'object') return false;
-      var json = JSON.stringify(item);
-      return /\?{2,}/.test(json);
-    }
-    function _smartMerge(localArr, remoteArr, keyFn, entityName) {
-      if (!remoteArr || !remoteArr.length) return (localArr || []).filter(function(item) { return !_isDeleted(entityName, keyFn(item), item.modifiedAt) && !_isCorrupted(item); });
-      if (!localArr || !localArr.length) return (remoteArr || []).filter(function(item) { return !_isDeleted(entityName, keyFn(item), item.modifiedAt) && !_isCorrupted(item); });
-      var remoteKeyed = {};
-      remoteArr.forEach(function(item) { remoteKeyed[keyFn(item)] = item; });
-      var localKeyed = {};
-      localArr.forEach(function(item) { localKeyed[keyFn(item)] = item; });
-      // Start with local items, update from remote if remote is newer
-      var result = localArr.filter(function(item) { return !_isCorrupted(item); }).map(function(item) {
-        var k = keyFn(item);
-        var remoteItem = remoteKeyed[k];
-        if (!remoteItem) return item;
-        var lt = item.modifiedAt || '';
-        var rt = remoteItem.modifiedAt || '';
-        return (rt >= lt) ? remoteItem : item;
-      });
-      // Add remote items not in local (skip deleted AND corrupted)
-      var resultKeys = {};
-      result.forEach(function(item) { resultKeys[keyFn(item)] = true; });
-      remoteArr.forEach(function(item) {
-        var k = keyFn(item);
-        if (!resultKeys[k] && !_isDeleted(entityName, k, item.modifiedAt) && !_isCorrupted(item)) { result.push(item); resultKeys[k] = true; }
-      });
-      // Filter out ALL deleted items (including ones that came from remote and were deleted locally)
-      return result.filter(function(item) { return !_isDeleted(entityName, keyFn(item), item.modifiedAt); });
     }
     function _getItemKey(item, entity) {
       var keyFns = {
@@ -13606,7 +13631,8 @@ function toggleEmployeeStatus(empId) {
         dynamicVisitorTypes: function(t) { return (typeof t === 'string') ? t : (t.name || t); },
         bakeryContractorsNames: function(b) { return (typeof b === 'string') ? b : (b.name || b); },
         waterStations: function(w) { return w.id || w.date + '|' + w.station + '|' + w.type; },
-        waterDocs: function(d) { return d.id || d.station + '|' + d.fileName; }
+        waterDocs: function(d) { return d.id || d.station + '|' + d.fileName; },
+        mealSurveys: function(s) { return s.date + '|' + s.meal + '|' + s.employee; }
       };
       return keyFns[entity] ? keyFns[entity](item) : JSON.stringify(item);
     }
@@ -13626,16 +13652,34 @@ function toggleEmployeeStatus(empId) {
           var adResp = await fetch(_sbEndpoint + '?id=eq.alldata&select=data', { method: 'GET', headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } });
           if (adResp.ok) { var adRows = await adResp.json(); if (adRows && adRows[0] && adRows[0].data) { currentAlldata = typeof adRows[0].data === 'string' ? JSON.parse(adRows[0].data) : adRows[0].data; } }
         } catch(e) {}
-        for (var ak in allData) { currentAlldata[ak] = allData[ak]; }
+        var _delByEntity = {};
+        syncDeletions.forEach(function(_d) {
+          if (!_delByEntity[_d.entity]) _delByEntity[_d.entity] = {};
+          _delByEntity[_d.entity][_d.key] = true;
+        });
+        Object.keys(allData).forEach(function(ak) {
+          if (Array.isArray(currentAlldata[ak]) && Array.isArray(allData[ak])) {
+            currentAlldata[ak] = mergeArraysPush(allData[ak], currentAlldata[ak], function(item) { return _getItemKey(item, ak); }, _delByEntity[ak] || {});
+          } else {
+            currentAlldata[ak] = allData[ak];
+          }
+        });
+        // Apply pending deletions to the merged data (handles case where local array is empty but deletions exist)
+        syncDeletions.forEach(function(_del) {
+          var _arr = currentAlldata[_del.entity];
+          if (Array.isArray(_arr)) {
+            currentAlldata[_del.entity] = _arr.filter(function(_item) { return _getItemKey(_item, _del.entity) !== _del.key; });
+          }
+        });
         var resp = await fetch(_sbEndpoint, {
           method: 'POST',
           headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/json', 'Prefer': 'resolution=merge-duplicates' },
           body: JSON.stringify({ id: 'alldata', data: currentAlldata, updated_at: ts, device_id: _deviceId })
         });
         if (!resp.ok) throw new Error('HTTP ' + resp.status);
-        _lastUpdatedAt = ts;
         _pulledAt['_lastPush'] = ts;
         localStorage.setItem('_pulledAt', JSON.stringify(_pulledAt));
+        deduplicateAfterSync();
         _takeSnapshot();
         syncStorage(true, true);
         syncLog('✅ تم الدفع للسحابة');
@@ -13644,8 +13688,9 @@ function toggleEmployeeStatus(empId) {
       } catch(e) {
         syncLog('⚠️ خطأ في الدفع: ' + e.message);
         showSyncToast('❌ خطأ في الاتصال — البيانات محفوظة محلياً فقط');
+      } finally {
+        _pushInProgress = false;
       }
-      _pushInProgress = false;
       return true;
     }
     async function forceFullSync() {
@@ -13663,36 +13708,48 @@ function toggleEmployeeStatus(empId) {
       alert('✅ تمت المزامنة الشاملة بنجاح!');
     }
     async function pullFromSupabase() {
-      console.log('[pull] entered, supabaseConnected=' + supabaseConnected + ', _pullInProgress=' + _pullInProgress + ', _pushInProgress=' + _pushInProgress);
       if (!supabaseConnected) return;
-      console.log('[pull] fetching data...');
+      while (_pullInProgress) { await new Promise(function(r) { setTimeout(r, 300); }); }
+      _pullInProgress = true;
       try {
         var resp = await fetch(_sbEndpoint + '?select=id,data,updated_at', { method: 'GET', headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Range': '0-*' } });
         if (!resp.ok) { syncLog('⚠️ فشل السحب كود ' + resp.status); return; }
         var rows = await resp.json();
         if (rows && rows.length > 0) {
           var mergedData = {};
+          var _remoteDels = [];
           for (var ri = 0; ri < rows.length; ri++) {
             var row = rows[ri]; if (!row.id || !row.data || row.id !== 'alldata') continue;
             var _ad = typeof row.data === 'string' ? JSON.parse(row.data) : row.data;
-            if (_ad && typeof _ad === 'object') { for (var _aki in _ad) { if (_aki === 'syncDeletions') continue; mergedData[_aki] = _ad[_aki]; } }
+            if (_ad && typeof _ad === 'object') {
+              if (Array.isArray(_ad.syncDeletions)) _remoteDels = _remoteDels.concat(_ad.syncDeletions);
+              for (var _aki in _ad) {
+                if (_aki === 'syncDeletions') continue;
+                mergedData[_aki] = _ad[_aki];
+              }
+            }
           }
           var _pendingDeletions = syncDeletions.slice();
           syncDeletions = [];
           localStorage.removeItem('lineh_sync_deletions');
           if (Object.keys(mergedData).length > 0) {
             for (var _dk in mergedData) {
-              if (_dk === 'syncDeletions') continue;
               var _dv = mergedData[_dk];
               if (typeof _dv !== 'undefined' && _dv !== null) {
                 setEntityVar(_dk, _dv);
               }
             }
+            _pendingDeletions = _pendingDeletions.concat(_remoteDels);
             syncDeletions = _pendingDeletions;
             _applyDeletions();
             syncDeletions = [];
             localStorage.removeItem('lineh_sync_deletions');
           }
+          // Filter excluded employees from the loaded data
+          var _exclMap2 = {};
+          (excludedEmployees || []).forEach(function(e) { _exclMap2[e.code || e.id || e.name] = true; });
+          employees = employees.filter(function(e) { return !_exclMap2[e.code || e.id || e.name]; });
+          deduplicateAfterSync();
           syncLog('📦 تم استلام ' + Object.keys(mergedData).length + ' entities من Supabase');
           _pulledAt['_lastPull'] = new Date().toISOString();
           localStorage.setItem('_pulledAt', JSON.stringify(_pulledAt));
@@ -13708,49 +13765,15 @@ function toggleEmployeeStatus(empId) {
         }
       } catch(e) {
         syncLog('⚠️ خطأ في السحب: ' + e.message);
+      } finally {
+        _pullInProgress = false;
       }
     }
 
-    async function _migrateToAlldata() {
-      try {
-        var entityKeys = ['employees','roomsCapacity','vacations','inventoryVouchers','excludedEmployees','contractors','mealLogs','mealWaste','inventoryItems','hospitalities','adminOvertime','maintenanceRecords','septicRecords','periodicMaintenance','teaSugarDisbursements','teaSugarBatches','dynamicSectors','contractorSectors','contractorRooms','dynamicRooms','dynamicSeptics','dynamicDepts','dynamicTitles','evaluations','evalTemplates','appUsers','auditLog','bakeryIngredients','bakeryProductions','bakeryContractorSupplies','bakeryInvoices','bakeryStockLog','roomAssets','archiveData','quickActions','deptTitles','manualTotalBeds','dailyStats','finTransactions','finBudgets','syncDeletions'];
-        var resp = await fetch(_sbEndpoint + '?select=id,data,updated_at', { method: 'GET', headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Range': '0-*' } });
-        if (!resp.ok) return;
-        var rows = await resp.json();
-        var merged = {};
-        var latestTs = '';
-        for (var i = 0; i < rows.length; i++) {
-          var row = rows[i];
-          if (row.id === 'alldata' || row.id === 'incident_reports' || row.id === 'bakery_daily_reports') continue;
-          if (entityKeys.indexOf(row.id) !== -1 && row.data) {
-            merged[row.id] = row.data;
-            if (row.updated_at > latestTs) latestTs = row.updated_at;
-          }
-        }
-        if (Object.keys(merged).length > 0) {
-          var ts = new Date().toISOString();
-          await fetch(_sbEndpoint, {
-            method: 'POST',
-            headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/json', 'Prefer': 'resolution=merge-duplicates' },
-            body: JSON.stringify({ id: 'alldata', data: merged, updated_at: ts, device_id: _deviceId })
-          });
-          applyRemoteData(merged);
-          _pulledAt['alldata'] = ts;
-          localStorage.setItem('_pulledAt', JSON.stringify(_pulledAt));
-          _takeSnapshot();
-          syncStorage(true, true);
-          renderAll();
-          try { importBakeryFormData(); } catch(e) {}
-          try { importMealWasteFormData(); } catch(e) {}
-          syncLog('✅ تم تحويل البيانات القديمة إلى نظام جديد');
-        }
-      } catch(e) { syncLog('⚠️ خطأ في التحويل: ' + e.message); }
-    }
-    
     // ═══════════════════════════════════════════════
     
     function renderAll() {
-      try { renderTable(); renderHousingLayout(); renderInventoryTable(); renderInventoryItems(); renderVacationsTable(); renderOvertimeCalendar(); renderHospitalityTable(); renderMaintenanceTable(); renderSepticTable(); renderPeriodicMaintenance(); renderTeaSugarTable(); renderMealLogTable(); renderDashboard(); renderQuickActions(); renderContractorsTable(); renderBakeryIngredients(); renderBakeryProductions(); renderBakeryContractorSupplies(); renderBakeryInvoices(); updateBakeryStats(); updateBreadSupplyStats(); rebuildAllDropdowns(); populateBctrDatalist(); renderExcludedTable(); renderDailyStatsTable(); renderEvaluations(); try { renderFinanceTab(); } catch(e) {} try { fetchReports(); } catch(e) {} try { importMealWasteFormData(); } catch(e) {} } catch(e) { console.error('renderAll error:', e); }
+      try { renderTable(); renderHousingLayout(); renderInventoryTable(); renderInventoryItems(); renderVacationsTable(); renderOvertimeCalendar(); renderHospitalityTable(); renderMaintenanceTable(); renderSepticTable(); renderPeriodicMaintenance(); renderTeaSugarTable(); renderMealLogTable(); renderMealSurvey(); renderDashboard(); renderQuickActions(); renderContractorsTable(); renderBakeryIngredients(); renderBakeryProductions(); renderBakeryContractorSupplies(); renderBakeryInvoices(); updateBakeryStats(); updateBreadSupplyStats(); rebuildAllDropdowns(); populateBctrDatalist(); renderExcludedTable(); renderDailyStatsTable(); renderEvaluations(); try { renderFinanceTab(); } catch(e) {} try { fetchReports(); } catch(e) {} try { importMealWasteFormData(); } catch(e) {} } catch(e) { console.error('renderAll error:', e); }
     }
 
     function updateLastSyncTime() {
@@ -13771,7 +13794,6 @@ function toggleEmployeeStatus(empId) {
         startPresence();
         document.getElementById('cloud-status').textContent = '☁️ متصل';
         // ❌ مزامنة يدوية فقط — المستخدم يضغط سحب/دفع بنفسه
-        if (_syncTimer) clearInterval(_syncTimer);
         // فحص بلاغات الأعطال كل دقيقة
         setInterval(function() {
           try {
@@ -13813,7 +13835,7 @@ function toggleEmployeeStatus(empId) {
     var debouncedSyncToSupabase = function() { setTimeout(pushToSupabase, 500); };
 
     // backward compat for old function refs
-    var DATA_KEYS = ['employees','roomsCapacity','vacations','hospitalities','maintenanceRecords','septicRecords','inventoryVouchers','inventoryItems','excludedEmployees','periodicMaintenance','teaSugarDisbursements','teaSugarBatches','mealLogs','mealWaste','contractors','dynamicSectors','dynamicRooms','dynamicSeptics','dynamicDepts','dynamicTitles','deptTitles','appUsers','auditLog','bakeryIngredients','bakeryProductions','bakeryContractorSupplies','bakeryInvoices','currentUser','manualTotalBeds','roomAssets','archiveData','quickActions','waterStations','waterDocs'];
+    var DATA_KEYS = ['employees','roomsCapacity','vacations','hospitalities','maintenanceRecords','septicRecords','inventoryVouchers','inventoryItems','excludedEmployees','periodicMaintenance','teaSugarDisbursements','teaSugarBatches','mealLogs','mealWaste','contractors','dynamicSectors','dynamicRooms','dynamicSeptics','dynamicDepts','dynamicTitles','deptTitles','appUsers','auditLog','bakeryIngredients','bakeryProductions','bakeryContractorSupplies','bakeryInvoices','currentUser','manualTotalBeds','roomAssets','archiveData','quickActions','waterStations','waterDocs','finTransactions','finBudgets','ingredientMaster','mealSurveys'];
 
     // Snapshot after pull — نعرف إيه اللي اتشال عشان push ما يضيفوش تاني
     var _snapshotKeys = {};
@@ -13836,6 +13858,9 @@ function toggleEmployeeStatus(empId) {
       if (key==='waterStations') return waterStations; if (key==='waterDocs') return waterDocs;
       if (key==='adminOvertime') return adminOvertime; if (key==='contractorSectors') return contractorSectors; if (key==='contractorRooms') return contractorRooms;
       if (key==='evaluations') return evaluations; if (key==='evalTemplates') return evalTemplates; if (key==='bakeryStockLog') return bakeryStockLog;
+      if (key==='finTransactions') return finTransactions; if (key==='finBudgets') return finBudgets;
+      if (key==='ingredientMaster') return ingredientMaster;
+      if (key==='mealSurveys') return mealSurveys;
       return null;
     }
     function _getDeletedSinceSnapshot(key, items, keyFn) {
@@ -13899,6 +13924,8 @@ function toggleEmployeeStatus(empId) {
       else if (key === 'manualTotalBeds') manualTotalBeds = val;
       else if (key === 'deptTitles') deptTitles = val;
       else if (key === 'syncDeletions') syncDeletions = val;
+      else if (key === 'ingredientMaster') ingredientMaster = val;
+      else if (key === 'mealSurveys') mealSurveys = val;
     }
     function getEntityVar(key) {
       if (key === 'employees') return employees;
@@ -13944,6 +13971,8 @@ function toggleEmployeeStatus(empId) {
       else if (key === 'manualTotalBeds') return manualTotalBeds;
       else if (key === 'deptTitles') return deptTitles;
       else if (key === 'syncDeletions') return syncDeletions;
+      else if (key === 'ingredientMaster') return ingredientMaster;
+      else if (key === 'mealSurveys') return mealSurveys;
     }
     function mergeArrays(localArr, remoteArr, keyFn) {
       if (!remoteArr || !remoteArr.length) return localArr || [];
@@ -13964,7 +13993,7 @@ function toggleEmployeeStatus(empId) {
       // For push: local items first (respects deletes), apply remote field updates,
       // and add remote items not in local UNLESS explicitly deleted.
       if (!remoteArr || !remoteArr.length) return localArr || [];
-      if (!localArr || !localArr.length) return [];
+      if (!localArr || !localArr.length) return remoteArr;
       var remoteKeyed = {};
       remoteArr.forEach(function(item) { remoteKeyed[_getKey(item, keyFn)] = item; });
       var merged = localArr.map(function(item) {
@@ -14049,7 +14078,8 @@ function toggleEmployeeStatus(empId) {
         evaluations: function(e) { return (e.empCode||e.employeeCode||'') + '|' + (e.date||'') + '|' + (e.month||e.type||'') + '|' + (e.year||''); },
         evalTemplates: function(e) { return (e.title||'') + '|' + (e.name||e.templateName||''); },
         waterStations: function(w) { return w.id || w.date + '|' + w.station + '|' + w.type; },
-        waterDocs: function(d) { return d.id || d.station + '|' + d.fileName; }
+        waterDocs: function(d) { return d.id || d.station + '|' + d.fileName; },
+        mealSurveys: function(s) { return s.date + '|' + s.meal + '|' + s.employee; }
       };
       syncDeletions.forEach(function(del) {
         var fn = _keyFns[del.entity];
@@ -14060,70 +14090,6 @@ function toggleEmployeeStatus(empId) {
         if (filtered.length !== arr.length) setEntityVar(del.entity, filtered);
       });
     }
-    function _simpleUnion(remote, local, keyFn) {
-      if (!remote || !remote.length) return local || [];
-      if (!local || !local.length) return remote;
-      var result = remote.slice();
-      var remoteKeys = {};
-      remote.forEach(function(item) { remoteKeys[keyFn(item)] = true; });
-      local.forEach(function(item) {
-        var k = keyFn(item);
-        if (!remoteKeys[k]) { result.push(item); remoteKeys[k] = true; }
-      });
-      return result;
-    }
-    function applyRemoteData(d) {
-      if (!d) return;
-      if (typeof d === 'string') { try { d = JSON.parse(d); } catch(e) { return; } }
-      if (typeof d !== 'object') return;
-      var keys = Object.keys(d);
-      // دمج syncDeletions المحلية مع البعيدة — لا تستبدل، عشان الحذف المحلي اللي مدفعش يفضل
-      if (d.syncDeletions) {
-        var localDel = _safeJsonParse(localStorage.getItem('lineh_sync_deletions'), []);
-        var mergedDel = [].concat(d.syncDeletions);
-        localDel.forEach(function(ld) {
-          var exists = mergedDel.some(function(md) { return md.entity === ld.entity && md.key === ld.key; });
-          if (!exists) mergedDel.push(ld);
-        });
-        setEntityVar('syncDeletions', mergedDel);
-        localStorage.setItem('lineh_sync_deletions', JSON.stringify(mergedDel));
-      }
-      for (var i = 0; i < keys.length; i++) {
-        if (keys[i] === 'syncDeletions') continue;
-        var localVal = getEntityVar(keys[i]);
-        var remoteVal = d[keys[i]];
-        if (!remoteVal) continue;
-        if (localVal && Array.isArray(localVal) && localVal.length > 0 && Array.isArray(remoteVal) && remoteVal.length > 0) {
-          if (keys[i] === 'teaSugarDisbursements' || keys[i] === 'teaSugarBatches') {
-            var teaKey = function(item) { return _getItemKey(item, keys[i]); };
-            var localKeyed = {};
-            localVal.forEach(function(item) { localKeyed[teaKey(item)] = item; });
-            remoteVal.forEach(function(item) {
-              var k = teaKey(item);
-              if (!localKeyed[k]) { localVal.push(item); localKeyed[k] = item; }
-            });
-            setEntityVar(keys[i], localVal);
-          } else {
-            var merged = _simpleUnion(remoteVal, localVal, function(item) { return _getItemKey(item, keys[i]); });
-            setEntityVar(keys[i], merged);
-          }
-        } else if (Array.isArray(remoteVal) && remoteVal.length === 0 && localVal && Array.isArray(localVal) && localVal.length > 0) {
-          // لا تستبدل array محلية مليانة بـ array فاضية من السحابة
-        } else {
-          setEntityVar(keys[i], remoteVal);
-        }
-      }
-      _applyDeletions();
-      if (d.finTransactions || d.finBudgets) { try { if (typeof finSave === 'function') finSave(); } catch(e) {} }
-      if (d.excludedEmployees && d.employees) {
-        var _exclMap = {};
-        excludedEmployees.forEach(function(e) { _exclMap[e.code || e.id || e.name] = true; });
-        employees = employees.filter(function(e) { return !_exclMap[e.code || e.id || e.name]; });
-      }
-      normalizeBakeryDates(true);
-      deduplicateAfterSync();
-    }
-
     function deduplicateAfterSync() {
       function dedupBy(arr, keyFn) {
         var seen = {};
@@ -14154,6 +14120,7 @@ function toggleEmployeeStatus(empId) {
       dedupBy(finBudgets, function(b) { return (b.code || '') + '|' + (b.month || '') + '|' + (b.year || ''); });
       dedupBy(waterStations, function(w) { return w.id || w.date + '|' + w.station + '|' + w.type; });
       dedupBy(waterDocs, function(d) { return d.id || d.station + '|' + d.fileName; });
+      dedupBy(mealSurveys, function(s) { return s.date + '|' + s.meal + '|' + s.employee; });
     }
 
     function showSyncToast(msg) {
@@ -14377,7 +14344,9 @@ function toggleEmployeeStatus(empId) {
         syncDeletions,
         waterStations, waterDocs,
         dynamicVisitorTypes,
-        bakeryContractorsNames
+        bakeryContractorsNames,
+        ingredientMaster,
+        mealSurveys
       };
     }
 
