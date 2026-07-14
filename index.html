@@ -3742,8 +3742,8 @@
     let bakeryStockLog = _safeJsonParse(localStorage.getItem('linah_bakery_stock_log'), []);
     let adminOvertime = _safeJsonParse(localStorage.getItem('lineh_admin_overtime'), []);
 
-    let dynamicSectors = _safeJsonParse(localStorage.getItem('dyn_sectors'), ["A", "B", "فاليو", "الورشة", "سكن إداري", "سكن البوابه", "سكن العمال 1", "سكن العمال 2", "سكن العمال 3", "سكن العمال 4", "كرفان", "سكن المهندسين"]);
-    let contractorSectors = _safeJsonParse(localStorage.getItem('ctr_sectors'), ["قطاع 22", "قطاع 3", "فاليو", "خيمة"]);
+    let dynamicSectors = _strArr(_safeJsonParse(localStorage.getItem('dyn_sectors'), ["A", "B", "فاليو", "الورشة", "سكن إداري", "سكن البوابه", "سكن العمال 1", "سكن العمال 2", "سكن العمال 3", "سكن العمال 4", "كرفان", "سكن المهندسين"]));
+    let contractorSectors = _strArr(_safeJsonParse(localStorage.getItem('ctr_sectors'), ["قطاع 22", "قطاع 3", "فاليو", "خيمة"]));
     var contractorRooms = _safeJsonParse(localStorage.getItem('ctr_rooms'), []);
     if (contractorRooms.length === 0) {
       for (var i = 1; i <= 17; i++) contractorRooms.push({ sector: 'قطاع 22', number: 'غرفة ' + i, beds: 4 });
@@ -3752,13 +3752,13 @@
       contractorRooms.push({ sector: 'خيمة', number: 'خيمة 1', beds: 45 });
       contractorRooms.push({ sector: 'خيمة', number: 'خيمة 2', beds: 45 });
     }
-    let dynamicRooms = _safeJsonParse(localStorage.getItem('dyn_rooms'), ["A1", "A2", "B1", "B2", "V1", "ادارى", "البوابه", "غرفه", "جزوارين", "فاليو", "فندق", "نخالين", "كرفان"]);
-    let dynamicSeptics = _safeJsonParse(localStorage.getItem('dyn_septics'), ["بيارة مبنى A", "بيارة مبنى B", "بيارة مبنى فاليو"]);
+    let dynamicRooms = _strArr(_safeJsonParse(localStorage.getItem('dyn_rooms'), ["A1", "A2", "B1", "B2", "V1", "ادارى", "البوابه", "غرفه", "جزوارين", "فاليو", "فندق", "نخالين", "كرفان"]));
+    let dynamicSeptics = _strArr(_safeJsonParse(localStorage.getItem('dyn_septics'), ["بيارة مبنى A", "بيارة مبنى B", "بيارة مبنى فاليو"]));
     
     let dynamicDepts = _safeJsonParse(localStorage.getItem('dyn_depts'), ["الإنتاج الزراعي", "الادارة الزراعيه", "الأمن الإداري", "الشئون الإدارية", "الحركة والنقل", "الصيانة والهندسة", "الاداره الفنية", "ادارة الجودة"]);
     let dynamicTitles = _safeJsonParse(localStorage.getItem('dyn_titles'), ["مهندس زراعي", "مشرف موقع", "مشرف إداري", "مشرف إداري أول", "مشرف إداري ثاني", "مشرف الصيانة الفنية", "رئيس قسم المطبخ", "عامل زراعي", "فرد أمن", "فني صيانة", "سائق تراك", "قائد فريق الزيتون", "قائد فريق الشئون الإدارية", "نخال", "مدخل بيانات", "مدير الرى والتسميد", "مهندس جودة"]);
-    let dynamicVisitorTypes = _safeJsonParse(localStorage.getItem('dyn_visitor_types'), ["ضيوف", "سيدات", "طلبة مدرسة", "مقدمي خدمة", "سائقين", "مقدم خدمة بدون اجر", "مقدم خدمة باجر", "سائق براد", "اخري"]);
-    let bakeryContractorsNames = _safeJsonParse(localStorage.getItem('linah_bakery_contractors_names'), ["عبد الرازق جبر", "ابراهيم شحاته", "البدري", "مصطفى عبد الكريم", "كرم الزيات", "اسامه سمير", "محمود قاسم", "ممدوح", "كامل احمد", "محمد شعبان", "ابوعمار", "محمد حسنى", "اسامه عبد الرازق", "ناجح", "فارس", "اسعد اسماعيل", "ام جبريل"]);
+    let dynamicVisitorTypes = _strArr(_safeJsonParse(localStorage.getItem('dyn_visitor_types'), ["ضيوف", "سيدات", "طلبة مدرسة", "مقدمي خدمة", "سائقين", "مقدم خدمة بدون اجر", "مقدم خدمة باجر", "سائق براد", "اخري"]));
+    let bakeryContractorsNames = _strArr(_safeJsonParse(localStorage.getItem('linah_bakery_contractors_names'), ["عبد الرازق جبر", "ابراهيم شحاته", "البدري", "مصطفى عبد الكريم", "كرم الزيات", "اسامه سمير", "محمود قاسم", "ممدوح", "كامل احمد", "محمد شعبان", "ابوعمار", "محمد حسنى", "اسامه عبد الرازق", "ناجح", "فارس", "اسعد اسماعيل", "ام جبريل"]));
     // add any names from existing records not already in the list
     (function() { var ctrs = _safeJsonParse(localStorage.getItem('linah_bakery_ctr_supplies'), []); ctrs.forEach(function(c) { if (c.name && bakeryContractorsNames.indexOf(c.name) === -1) bakeryContractorsNames.push(c.name); }); })();
     let evaluations = _safeJsonParse(localStorage.getItem('lineh_evaluations'), []);
@@ -4450,15 +4450,15 @@
       _lsSet('linah_meal_waste', JSON.stringify(mealWaste));
       _lsSet('lineh_inventory_items', JSON.stringify(inventoryItems));
       _lsSet('lineh_contractors', JSON.stringify(contractors));
-      _lsSet('dyn_sectors', JSON.stringify(dynamicSectors));
-      _lsSet('ctr_sectors', JSON.stringify(contractorSectors));
+      _lsSet('dyn_sectors', JSON.stringify(_strArr(dynamicSectors)));
+      _lsSet('ctr_sectors', JSON.stringify(_strArr(contractorSectors)));
       _lsSet('ctr_rooms', JSON.stringify(contractorRooms));
-      _lsSet('dyn_rooms', JSON.stringify(dynamicRooms));
-      _lsSet('dyn_septics', JSON.stringify(dynamicSeptics));
-      _lsSet('dyn_depts', JSON.stringify(dynamicDepts));
-      _lsSet('dyn_titles', JSON.stringify(dynamicTitles));
-      _lsSet('dyn_visitor_types', JSON.stringify(dynamicVisitorTypes));
-      _lsSet('linah_bakery_contractors_names', JSON.stringify(bakeryContractorsNames));
+      _lsSet('dyn_rooms', JSON.stringify(_strArr(dynamicRooms)));
+      _lsSet('dyn_septics', JSON.stringify(_strArr(dynamicSeptics)));
+      _lsSet('dyn_depts', JSON.stringify(_strArr(dynamicDepts)));
+      _lsSet('dyn_titles', JSON.stringify(_strArr(dynamicTitles)));
+      _lsSet('dyn_visitor_types', JSON.stringify(_strArr(dynamicVisitorTypes)));
+      _lsSet('linah_bakery_contractors_names', JSON.stringify(_strArr(bakeryContractorsNames)));
       _lsSet('lineh_evaluations', JSON.stringify(evaluations));
       _lsSet('lineh_eval_templates', JSON.stringify(evalTemplates));
       _lsSet('lineh_users', JSON.stringify(appUsers));
@@ -5484,11 +5484,14 @@
         if (typeof x === 'string') return x;
         if (typeof x === 'number') return String(x);
         if (x && typeof x === 'object') {
-          if (x.name) return String(x.name);
-          if (x.title) return String(x.title);
-          if (x.id) return String(x.id);
-          if (x.label) return String(x.label);
+          if (typeof x.name === 'string') return x.name;
+          if (typeof x.title === 'string') return x.title;
+          if (typeof x.label === 'string') return x.label;
           var vals = Object.values(x);
+          if (vals.length > 0 && typeof vals[0] === 'string' && vals.length > 3) {
+            var joined = vals.join('');
+            if (joined.trim()) return joined;
+          }
           for (var vi = 0; vi < vals.length; vi++) {
             if (typeof vals[vi] === 'string' && vals[vi].trim()) return vals[vi];
           }
@@ -13745,6 +13748,7 @@ function toggleEmployeeStatus(empId) {
 
     function getAllDataForSync() {
       var o = getAllDataObject();
+      ['dynamicSectors','contractorSectors','dynamicRooms','dynamicSeptics','dynamicDepts','dynamicTitles','dynamicVisitorTypes','bakeryContractorsNames'].forEach(function(k) { try { if (Array.isArray(o[k])) o[k] = _strArr(o[k]); } catch(e) {} });
       var keys = ['employees','roomsCapacity','vacations','inventoryVouchers','excludedEmployees','contractors','mealLogs','mealWaste','inventoryItems','hospitalities','adminOvertime','maintenanceRecords','septicRecords','periodicMaintenance','teaSugarDisbursements','teaSugarBatches','dynamicSectors','contractorSectors','contractorRooms','dynamicRooms','dynamicSeptics','dynamicDepts','dynamicTitles','dynamicVisitorTypes','bakeryContractorsNames','evaluations','evalTemplates','appUsers','auditLog','bakeryIngredients','bakeryProductions','bakeryContractorSupplies','bakeryInvoices','bakeryStockLog','roomAssets','archiveData','quickActions','deptTitles','manualTotalBeds','dailyStats','finTransactions','finBudgets','syncDeletions','waterStations','waterDocs','ingredientMaster','mealSurveys'];
       var result = {};
       for (var ki = 0; ki < keys.length; ki++) { result[keys[ki]] = o[keys[ki]]; }
