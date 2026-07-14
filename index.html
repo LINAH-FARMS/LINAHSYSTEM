@@ -9257,7 +9257,8 @@ function toggleEmployeeStatus(empId) {
     function deleteDupProduction(idx) {
       if (!requireAdmin()) return;
       var target = bakeryProductions[idx];
-      if (!target) return;
+      if (!target) { alert('⚠️ السجل غير موجود (الرقم: ' + idx + ')'); return; }
+      if (!confirm('حذف إنتاج ' + target.date + ' | ' + (target.breadCount||0) + ' رغيف؟')) return;
       _logDeletion('bakeryProductions', normalizeDateStr(target.date) + '|' + (target.breadCount || ''));
       bakeryProductions.splice(idx, 1);
       syncStorage(); renderBakeryProductions(); updateBakeryProductionIngredientStocks();
