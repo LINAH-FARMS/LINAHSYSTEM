@@ -13954,8 +13954,16 @@ function toggleEmployeeStatus(empId) {
           employees = employees.filter(function(e) { return !_exclMap2[e.code || e.id || e.name]; });
           deduplicateAfterSync();
           // Normalize simple string arrays that may have objects from Supabase
+          var _needsCleanPush = false;
           ['dynamicSeptics','dynamicRooms','dynamicDepts','dynamicTitles','dynamicSectors','dynamicVisitorTypes','contractorSectors','contractorRooms','bakeryContractorsNames'].forEach(function(k) {
-            try { var arr = getEntityVar(k); if (Array.isArray(arr)) setEntityVar(k, _strArr(arr)); } catch(e) {}
+            try {
+              var arr = getEntityVar(k);
+              if (Array.isArray(arr)) {
+                var cleaned = _strArr(arr);
+                if (JSON.stringify(cleaned) !== JSON.stringify(arr)) { _needsCleanPush = true; }
+                setEntityVar(k, cleaned);
+              }
+            } catch(e) {}
           });
           syncLog('📦 تم استلام ' + Object.keys(mergedData).length + ' entities من Supabase');
           _pulledAt['_lastPull'] = new Date().toISOString();
@@ -13967,6 +13975,7 @@ function toggleEmployeeStatus(empId) {
           try { importMealWasteFormData(); } catch(e) {}
           try { importMealSurveyFormData(); } catch(e) {}
           syncLog('✅ تم تحديث البيانات من السحابة');
+          if (_needsCleanPush) { syncLog('🔄 تنظيف البيانات في السحابة...'); setTimeout(function() { pushToSupabase().then(function() { syncLog('✅ تم تنظيف البيانات في السحابة'); }); }, 2000); }
           showSyncToast('تم استلام البيانات');
         } else {
           syncLog('ℹ️ لا توجد بيانات في السحابة');
