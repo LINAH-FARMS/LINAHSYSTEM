@@ -11522,7 +11522,9 @@ function toggleEmployeeStatus(empId) {
             let r = rows[i];
             if (!r) continue;
             let txt = (r.join(' ') || '');
-            if (/????? ???????|??? ??????|?????|??? ??????|?????/.test(txt) && /???|???/.test(txt)) {
+            var _importKeywords = ['????? ???????','??? ??????','?????','??? ??????','?????'];
+            var _importHasKeyword = _importKeywords.some(function(w){return txt.indexOf(w)!==-1;});
+            if (_importHasKeyword && (txt.indexOf('???')!==-1 || txt.indexOf('???')!==-1)) {
               hRow = i;
               break;
             }
@@ -16598,6 +16600,7 @@ function updateDashClock() {
 })();
 
 // ====== AI Assistant (Gemini 2.0 Flash) with Function Calling ======
+function _safeJsonParse(val, fallback) { try { var r = JSON.parse(val); return (r !== null && r !== undefined) ? r : fallback; } catch(e) { return fallback; } }
 var _aiKey = _lsGet('_gemini_key') || '';
 var _aiMessages = _safeJsonParse(_lsGet('_ai_messages'), []);
 var _aiImageData = null;
