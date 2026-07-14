@@ -2665,23 +2665,25 @@
       </table>
     </div>
 
-    <div id="meal-survey-section" style="margin:15px 0;padding:20px;background:linear-gradient(135deg,#fff8e1,#fff3e0);border:2px solid #ffe0b2;border-radius:12px;">
-      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:15px;">
-        <h3 style="margin:0;font-size:18px;">📝 استفتاء الوجبات — <span id="survey-today" style="font-weight:400;"></span></h3>
-        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+    <div id="meal-survey-section" style="margin:15px 0;border:2px solid #ffe0b2;border-radius:12px;overflow:hidden;">
+      <div id="meal-survey-header" onclick="toggleMealSurvey()" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;padding:15px 20px;background:linear-gradient(135deg,#fff8e1,#fff3e0);cursor:pointer;user-select:none;">
+        <h3 style="margin:0;font-size:18px;">📝 استفتاء الوجبات — <span id="survey-today" style="font-weight:400;"></span> <span id="survey-toggle-icon" style="display:inline-block;transition:transform 0.3s;font-size:14px;">▲</span></h3>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;" onclick="event.stopPropagation()">
           <a href="qr-survey.html" target="_blank" style="height:42px;font-size:13px;padding:6px 14px;background:#f57c00;color:white;border:none;border-radius:8px;text-decoration:none;display:inline-flex;align-items:center;gap:6px;cursor:pointer;font-weight:700;">📱 كيو آر الاستفتاء</a>
           <a href="qr-meal-waste.html" target="_blank" style="height:42px;font-size:13px;padding:6px 14px;background:#c62828;color:white;border:none;border-radius:8px;text-decoration:none;display:inline-flex;align-items:center;gap:6px;cursor:pointer;font-weight:700;">📱 كيو آر الهدر</a>
           <button class="btn btn-secondary" onclick="toggleMealWasteSection()" style="height:42px;">📊 سجل الهدر</button>
           <button class="btn btn-danger" onclick="openMealWasteModal()" style="height:42px;">🗑️ تسجيل هدر</button>
         </div>
       </div>
-      <div id="survey-meals" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:15px;"></div>
-      <div id="survey-stats" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;"></div>
-      <div id="survey-comment-area" style="display:none;margin-top:12px;">
-        <label style="font-weight:700;font-size:13px;color:#c62828;">💬 ممكن تكتب ملاحظة:</label>
-        <div style="display:flex;gap:8px;margin-top:4px;">
-          <input type="text" id="survey-comment-input" placeholder="اكتب ملاحظتك..." style="flex:1;padding:8px 12px;border:2px solid #ffcc80;border-radius:8px;font-size:14px;">
-          <button class="btn btn-primary" onclick="submitSurveyComment()" style="height:42px;">💾 حفظ</button>
+      <div id="meal-survey-body" style="padding:0 20px 20px;max-height:2000px;transition:max-height 0.4s ease,padding 0.3s ease,opacity 0.3s ease;opacity:1;overflow:hidden;">
+        <div id="survey-meals" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:15px;margin-top:15px;"></div>
+        <div id="survey-stats" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;"></div>
+        <div id="survey-comment-area" style="display:none;margin-top:12px;">
+          <label style="font-weight:700;font-size:13px;color:#c62828;">💬 ممكن تكتب ملاحظة:</label>
+          <div style="display:flex;gap:8px;margin-top:4px;">
+            <input type="text" id="survey-comment-input" placeholder="اكتب ملاحظتك..." style="flex:1;padding:8px 12px;border:2px solid #ffcc80;border-radius:8px;font-size:14px;">
+            <button class="btn btn-primary" onclick="submitSurveyComment()" style="height:42px;">💾 حفظ</button>
+          </div>
         </div>
       </div>
     </div>
@@ -10705,6 +10707,26 @@ function toggleEmployeeStatus(empId) {
         });
       }
       syncStorage(); renderMealWasteTable(); renderMealWasteStats();
+    }
+    var _surveyOpen = true;
+    function toggleMealSurvey() {
+      var body = document.getElementById('meal-survey-body');
+      var icon = document.getElementById('survey-toggle-icon');
+      if (!body) return;
+      if (_surveyOpen) {
+        body.style.maxHeight = '0';
+        body.style.paddingTop = '0';
+        body.style.paddingBottom = '0';
+        body.style.opacity = '0';
+        icon.style.transform = 'rotate(180deg)';
+      } else {
+        body.style.maxHeight = '2000px';
+        body.style.paddingTop = '15px';
+        body.style.paddingBottom = '20px';
+        body.style.opacity = '1';
+        icon.style.transform = 'rotate(0deg)';
+      }
+      _surveyOpen = !_surveyOpen;
     }
     function editMealWaste(idx) { openMealWasteModal(idx); }
     function toggleMealWasteSection() {
