@@ -2664,8 +2664,9 @@
     <div id="meal-survey-section" style="margin:15px 0;padding:20px;background:linear-gradient(135deg,#fff8e1,#fff3e0);border:2px solid #ffe0b2;border-radius:12px;">
       <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:15px;">
         <h3 style="margin:0;font-size:18px;">📝 استفتاء الوجبات — <span id="survey-today" style="font-weight:400;"></span></h3>
-        <div style="display:flex;gap:8px;align-items:center;">
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
           <span id="survey-qr" style="display:inline-block;"></span>
+          <a href="qr-survey.html" target="_blank" style="height:32px;font-size:12px;padding:4px 10px;background:#f57c00;color:white;border:none;border-radius:4px;text-decoration:none;display:inline-flex;align-items:center;gap:4px;cursor:pointer;font-weight:700;">📱 كيو آر</a>
           <button class="btn btn-secondary" onclick="toggleMealWasteSection()" style="height:42px;">📊 سجل الهدر</button>
           <button class="btn btn-danger" onclick="openMealWasteModal()" style="height:42px;">🗑️ تسجيل هدر</button>
         </div>
@@ -10443,8 +10444,8 @@ function toggleEmployeeStatus(empId) {
     function generateMealSurveyQR() {
       var el = document.getElementById('survey-qr');
       if (!el) return;
-      var url = 'https://linah-farms.github.io/LINAHSYSTEM/';
-      el.innerHTML = '<img src="https://chart.googleapis.com/chart?chs=100x100&cht=qr&chl=' + encodeURIComponent(url) + '" alt="QR" style="width:100px;height:100px;border-radius:6px;cursor:pointer;" title="امسح للوصول السريع">';
+      var url = 'https://linah-farms.github.io/LINAHSYSTEM/meal-survey-form.html';
+      el.innerHTML = '<a href="' + url + '" target="_blank" title="امسح للوصول السريع" style="display:inline-block;"><img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=' + encodeURIComponent(url) + '&color=c62828&bgcolor=ffffff" alt="QR" style="width:100px;height:100px;border-radius:6px;cursor:pointer;"></a>';
     }
     var _mwChart = null;
     function updateIngredientSuggestions() {

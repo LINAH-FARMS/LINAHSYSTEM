@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+<meta charset="UTF-8">
+<title>QR Code - استفتاء الوجبات</title>
+<style>
+body{display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;background:linear-gradient(135deg,#f57c00,#ffb74d);font-family:'Cairo',sans-serif;}
+.qr-container{background:white;border-radius:20px;padding:40px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.3);}
+h1{color:#f57c00;font-size:28px;margin-bottom:10px;}
+p{color:#666;font-size:16px;margin-bottom:20px;}
+img{width:400px;height:400px;border-radius:12px;}
+.footer{margin-top:20px;font-size:14px;color:#999;}
+@media print{body{background:white;}.qr-container{box-shadow:none;padding:20px;}}
+</style>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+<div class="qr-container">
+  <h1>📝 استفتاء الوجبات</h1>
+  <p>امسح الكود بالموبايل لتقييم وجبتك</p>
+  <img src="https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=https://linah-farms.github.io/LINAHSYSTEM/meal-survey-form.html&color=f57c00&bgcolor=ffffff" alt="QR Code">
+  <div class="footer">LINAH FARMS - الواحات البحريه</div>
+</div>
+</body>
+</html>
