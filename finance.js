@@ -93,6 +93,7 @@ function finClearAll() {
 }
 
 function finImportReport(evt) {
+  if (typeof XLSX === 'undefined') { alert('⚠️ مكتبة XLSX غير متاحة. تأكد من تحميل الصفحة كاملة.'); return; }
   var files = evt.target.files;
   if (!files || !files.length) return;
   var fileArr = Array.from(files);
@@ -432,79 +433,87 @@ function finRenderCharts(data, month, year) {
   var ctxMonthly = document.getElementById('fin-chart-monthly');
   var ctxPie = document.getElementById('fin-chart-pie');
   var ctxVar = document.getElementById('fin-chart-variance');
-  if (finCharts.monthly) finCharts.monthly.destroy();
-  if (finCharts.pie) finCharts.pie.destroy();
-  if (finCharts.variance) finCharts.variance.destroy();
+  if (finCharts.monthly) { finCharts.monthly.destroy(); finCharts.monthly = null; }
+  if (finCharts.pie) { finCharts.pie.destroy(); finCharts.pie = null; }
+  if (finCharts.variance) { finCharts.variance.destroy(); finCharts.variance = null; }
+  if (typeof Chart === 'undefined') return;
   var budgetMap = {};
   data.budgets.forEach(function(b) { budgetMap[b.code] = (budgetMap[b.code] || 0) + b.budget; });
-  if (month == 0) {
-    var monthLabels = ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
-    var budgetByMonth = new Array(12).fill(0);
-    var actualByMonth = new Array(12).fill(0);
-    data.budgets.forEach(function(b) {
-      if (b.month >= 1 && b.month <= 12) {
-        budgetByMonth[b.month - 1] += b.budget;
-        actualByMonth[b.month - 1] += b.actual;
-      }
-    });
-    finCharts.monthly = new Chart(ctxMonthly, {
-      type: 'bar',
+  if (ctxMonthly) {
+    if (month == 0) {
+      var monthLabels = ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
+      var budgetByMonth = new Array(12).fill(0);
+      var actualByMonth = new Array(12).fill(0);
+      data.budgets.forEach(function(b) {
+        if (b.month >= 1 && b.month <= 12) {
+          budgetByMonth[b.month - 1] += b.budget;
+          actualByMonth[b.month - 1] += b.actual;
+        }
+      });
+      finCharts.monthly = new Chart(ctxMonthly, {
+        type: 'bar',
+        data: {
+          labels: monthLabels,
+          datasets: [
+            { label: 'الميزانية', data: budgetByMonth, backgroundColor: 'rgba(46,125,50,0.3)', borderColor: '#2e7d32', borderWidth: 2 },
+            { label: 'الفعلي', data: actualByMonth, backgroundColor: 'rgba(21,101,192,0.5)', borderColor: '#1565c0', borderWidth: 2 }
+          ]
+        },
+        options: { responsive: true, plugins: { legend: { position: 'top' } }, scales: { y: { beginAtZero: true } } }
+      });
+    } else {
+      var txGroups = finGroupByTask(data.transactions);
+      var codes = Object.keys(txGroups).sort();
+      finCharts.monthly = new Chart(ctxMonthly, {
+        type: 'bar',
+        data: {
+          labels: codes.map(function(c) { return txGroups[c].name || c; }),
+          datasets: [
+            { label: 'الميزانية', data: codes.map(function(c) { return budgetMap[c] || 0; }), backgroundColor: 'rgba(46,125,50,0.3)', borderColor: '#2e7d32', borderWidth: 2 },
+            { label: 'الفعلي', data: codes.map(function(c) { return txGroups[c].total; }), backgroundColor: 'rgba(21,101,192,0.5)', borderColor: '#1565c0', borderWidth: 2 }
+          ]
+        },
+        options: { responsive: true, indexAxis: 'y', plugins: { legend: { position: 'top' } }, scales: { x: { beginAtZero: true } } }
+      });
+    }
+  }
+  if (ctxPie) {
+    var pieData = finGroupByTask(data.transactions);
+    var pieCodes = Object.keys(pieData).sort(function(a, b) { return pieData[b].total - pieData[a].total; });
+    var pieColors = ['#1b5e20','#1565c0','#e65100','#6a1b9a','#c62828','#00695c','#f57f17','#283593','#ad1457','#4e342e'];
+    finCharts.pie = new Chart(ctxPie, {
+      type: 'doughnut',
       data: {
-        labels: monthLabels,
-        datasets: [
-          { label: 'الميزانية', data: budgetByMonth, backgroundColor: 'rgba(46,125,50,0.3)', borderColor: '#2e7d32', borderWidth: 2 },
-          { label: 'الفعلي', data: actualByMonth, backgroundColor: 'rgba(21,101,192,0.5)', borderColor: '#1565c0', borderWidth: 2 }
-        ]
+        labels: pieCodes.map(function(c) { return pieData[c].name || c; }),
+        datasets: [{ data: pieCodes.map(function(c) { return pieData[c].total; }), backgroundColor: pieColors }]
       },
-      options: { responsive: true, plugins: { legend: { position: 'top' } }, scales: { y: { beginAtZero: true } } }
-    });
-  } else {
-    var txGroups = finGroupByTask(data.transactions);
-    var codes = Object.keys(txGroups).sort();
-    finCharts.monthly = new Chart(ctxMonthly, {
-      type: 'bar',
-      data: {
-        labels: codes.map(function(c) { return txGroups[c].name || c; }),
-        datasets: [
-          { label: 'الميزانية', data: codes.map(function(c) { return budgetMap[c] || 0; }), backgroundColor: 'rgba(46,125,50,0.3)', borderColor: '#2e7d32', borderWidth: 2 },
-          { label: 'الفعلي', data: codes.map(function(c) { return txGroups[c].total; }), backgroundColor: 'rgba(21,101,192,0.5)', borderColor: '#1565c0', borderWidth: 2 }
-        ]
-      },
-      options: { responsive: true, indexAxis: 'y', plugins: { legend: { position: 'top' } }, scales: { x: { beginAtZero: true } } }
+      options: { responsive: true, plugins: { legend: { position: 'right', labels: { font: { size: 10 } } } } }
     });
   }
-  var pieData = finGroupByTask(data.transactions);
-  var pieCodes = Object.keys(pieData).sort(function(a, b) { return pieData[b].total - pieData[a].total; });
-  var pieColors = ['#1b5e20','#1565c0','#e65100','#6a1b9a','#c62828','#00695c','#f57f17','#283593','#ad1457','#4e342e'];
-  finCharts.pie = new Chart(ctxPie, {
-    type: 'doughnut',
-    data: {
-      labels: pieCodes.map(function(c) { return pieData[c].name || c; }),
-      datasets: [{ data: pieCodes.map(function(c) { return pieData[c].total; }), backgroundColor: pieColors }]
-    },
-    options: { responsive: true, plugins: { legend: { position: 'right', labels: { font: { size: 10 } } } } }
-  });
-  var varCodes = Object.keys(pieData).sort(function(a, b) { return (budgetMap[b] ? pieData[b].total / budgetMap[b] : 0) - (budgetMap[a] ? pieData[a].total / budgetMap[a] : 0); });
-  finCharts.variance = new Chart(ctxVar, {
-    type: 'bar',
-    data: {
-      labels: varCodes.map(function(c) { return pieData[c].name || c; }),
-      datasets: [{
-        label: 'نسبة التنفيذ %',
-        data: varCodes.map(function(c) { return budgetMap[c] ? Math.round((pieData[c].total / budgetMap[c]) * 100) : 0; }),
-        backgroundColor: varCodes.map(function(c) {
-          var p = budgetMap[c] ? (pieData[c].total / budgetMap[c]) * 100 : 0;
-          return p <= 80 ? 'rgba(46,125,50,0.5)' : p <= 100 ? 'rgba(245,124,0,0.5)' : 'rgba(211,47,47,0.5)';
-        }),
-        borderColor: varCodes.map(function(c) {
-          var p = budgetMap[c] ? (pieData[c].total / budgetMap[c]) * 100 : 0;
-          return p <= 80 ? '#2e7d32' : p <= 100 ? '#f57c00' : '#d32f2f';
-        }),
-        borderWidth: 2
-      }]
-    },
-    options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
-  });
+  if (ctxVar) {
+    var pieData2 = finGroupByTask(data.transactions);
+    var varCodes = Object.keys(pieData2).sort(function(a, b) { return (budgetMap[b] ? pieData2[b].total / budgetMap[b] : 0) - (budgetMap[a] ? pieData2[a].total / budgetMap[a] : 0); });
+    finCharts.variance = new Chart(ctxVar, {
+      type: 'bar',
+      data: {
+        labels: varCodes.map(function(c) { return pieData2[c].name || c; }),
+        datasets: [{
+          label: 'نسبة التنفيذ %',
+          data: varCodes.map(function(c) { return budgetMap[c] ? Math.round((pieData2[c].total / budgetMap[c]) * 100) : 0; }),
+          backgroundColor: varCodes.map(function(c) {
+            var p = budgetMap[c] ? (pieData2[c].total / budgetMap[c]) * 100 : 0;
+            return p <= 80 ? 'rgba(46,125,50,0.5)' : p <= 100 ? 'rgba(245,124,0,0.5)' : 'rgba(211,47,47,0.5)';
+          }),
+          borderColor: varCodes.map(function(c) {
+            var p = budgetMap[c] ? (pieData2[c].total / budgetMap[c]) * 100 : 0;
+            return p <= 80 ? '#2e7d32' : p <= 100 ? '#f57c00' : '#d32f2f';
+          }),
+          borderWidth: 2
+        }]
+      },
+      options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+    });
+  }
 }
 
 function finShowDetail(code) {
@@ -512,8 +521,10 @@ function finShowDetail(code) {
   var month = parseInt(document.getElementById('fin-month-select')?.value || 0);
   var filtered = finTransactions.filter(function(t) { return t.task === code && t.year == year && (month == 0 || t.month == month); });
   var section = document.getElementById('fin-detail-section');
+  if (!section) return;
   section.style.display = 'block';
-  document.getElementById('fin-detail-title').textContent = 'تفاصيل البند: ' + (filtered[0]?.taskDesc || code);
+  var titleEl = document.getElementById('fin-detail-title');
+  if (titleEl) titleEl.textContent = 'تفاصيل البند: ' + (filtered[0]?.taskDesc || code);
   var monthNames = ['','يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
   var byMonth = {};
   filtered.forEach(function(t) {
@@ -524,14 +535,16 @@ function finShowDetail(code) {
   var months = Object.keys(byMonth).sort(function(a, b) { return a - b; });
   var ctx = document.getElementById('fin-detail-chart');
   if (finCharts.detail) finCharts.detail.destroy();
-  finCharts.detail = new Chart(ctx, {
-    type: 'line',
-    data: {
-      labels: months.map(function(m) { return monthNames[m]; }),
-      datasets: [{ label: 'الصرف', data: months.map(function(m) { return byMonth[m]; }), borderColor: '#1565c0', backgroundColor: 'rgba(21,101,192,0.1)', fill: true, tension: 0.3 }]
-    },
-    options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
-  });
+  if (ctx && typeof Chart !== 'undefined') {
+    finCharts.detail = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: months.map(function(m) { return monthNames[m]; }),
+        datasets: [{ label: 'الصرف', data: months.map(function(m) { return byMonth[m]; }), borderColor: '#1565c0', backgroundColor: 'rgba(21,101,192,0.1)', fill: true, tension: 0.3 }]
+      },
+      options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+    });
+  }
   var itemGroups = {};
   filtered.forEach(function(t) {
     var name = t.itemName || 'غير محدد';
@@ -546,26 +559,33 @@ function finShowDetail(code) {
     var pct = (item.total / maxVal * 100).toFixed(0);
     topHtml += '<div style="margin-bottom:6px;"><div style="display:flex;justify-content:space-between;font-size:11px;"><span>' + (i + 1) + '. ' + item.name + '</span><span style="font-weight:700;">' + item.total.toLocaleString(undefined, { maximumFractionDigits: 0 }) + '</span></div><div style="height:6px;background:#e0e0e0;border-radius:3px;overflow:hidden;"><div style="width:' + pct + '%;height:100%;background:#1565c0;border-radius:3px;"></div></div></div>';
   });
-  document.getElementById('fin-detail-top-items').innerHTML = topHtml;
+  var topItemsEl = document.getElementById('fin-detail-top-items');
+  if (topItemsEl) topItemsEl.innerHTML = topHtml;
   var tableHtml = '<table style="width:100%;font-size:12px;border-collapse:collapse;"><thead><tr style="background:#1b5e20;color:white;"><th>الصنف</th><th>الكمية</th><th>عدد مرات الصرف</th><th>إجمالي القيمة</th><th>مركز التكلفة</th></tr></thead><tbody>';
   filtered.sort(function(a, b) { return (b.value || 0) - (a.value || 0); }).forEach(function(t) {
     tableHtml += '<tr><td>' + t.itemName + '</td><td style="text-align:center;">' + (t.qty || 0) + '</td><td style="text-align:center;">' + (t.count || 0) + '</td><td style="text-align:center;font-weight:700;color:#1565c0;">' + (t.value || 0).toLocaleString(undefined, { maximumFractionDigits: 2 }) + '</td><td>' + (t.costCenterDesc || '') + '</td></tr>';
   });
   tableHtml += '</tbody></table>';
-  document.getElementById('fin-detail-table-wrap').innerHTML = tableHtml;
+  var tableWrapEl = document.getElementById('fin-detail-table-wrap');
+  if (tableWrapEl) tableWrapEl.innerHTML = tableHtml;
   section.scrollIntoView({ behavior: 'smooth' });
 }
 
 function finShowCompare() {
   var el = document.getElementById('fin-compare-section');
-  el.style.display = el.style.display === 'none' ? 'block' : 'none';
+  if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
 }
 
 function finRunCompare() {
-  var fm = parseInt(document.getElementById('fin-cmp-from-m').value);
-  var fy = parseInt(document.getElementById('fin-cmp-from-y').value);
-  var tm = parseInt(document.getElementById('fin-cmp-to-m').value);
-  var ty = parseInt(document.getElementById('fin-cmp-to-y').value);
+  var fmEl = document.getElementById('fin-cmp-from-m');
+  var fyEl = document.getElementById('fin-cmp-from-y');
+  var tmEl = document.getElementById('fin-cmp-to-m');
+  var tyEl = document.getElementById('fin-cmp-to-y');
+  if (!fmEl || !fyEl || !tmEl || !tyEl) return;
+  var fm = parseInt(fmEl.value);
+  var fy = parseInt(fyEl.value);
+  var tm = parseInt(tmEl.value);
+  var ty = parseInt(tyEl.value);
   var monthNames = ['','يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
   var fromData = finFiltered(fm, fy);
   var toData = finFiltered(tm, ty);
@@ -590,17 +610,21 @@ function finRunCompare() {
   });
   html += '<tr style="background:#f5f5f5;font-weight:700;"><td>الإجمالي</td><td style="text-align:center;">' + totalFrom.toLocaleString() + '</td><td style="text-align:center;color:#1565c0;">' + totalTo.toLocaleString() + '</td><td style="text-align:center;color:' + (totalTo - totalFrom <= 0 ? '#2e7d32' : '#d32f2f') + ';">' + (totalTo - totalFrom >= 0 ? '+' : '') + (totalTo - totalFrom).toLocaleString() + '</td><td style="text-align:center;">' + (totalFrom ? Math.round(((totalTo - totalFrom) / totalFrom) * 100) + '%' : '-') + '</td></tr>';
   html += '</table>';
-  document.getElementById('fin-compare-result').innerHTML = html;
+  var cmpRes = document.getElementById('fin-compare-result');
+  if (cmpRes) cmpRes.innerHTML = html;
 }
 
 function finShowPredict() {
   var el = document.getElementById('fin-predict-section');
-  el.style.display = el.style.display === 'none' ? 'block' : 'none';
+  if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
 }
 
 function finRunPredict() {
-  var targetMonth = parseInt(document.getElementById('fin-pred-target-m').value);
-  var targetYear = parseInt(document.getElementById('fin-pred-target-y').value);
+  var predMEl = document.getElementById('fin-pred-target-m');
+  var predYEl = document.getElementById('fin-pred-target-y');
+  if (!predMEl || !predYEl) return;
+  var targetMonth = parseInt(predMEl.value);
+  var targetYear = parseInt(predYEl.value);
   var results = [];
   var allCodes = new Set();
   finTransactions.forEach(function(t) { if (t.task) allCodes.add(t.task); });
@@ -663,7 +687,8 @@ function finRunPredict() {
   });
   html += '<tr style="background:#fff3e0;font-weight:700;"><td>الإجمالي المتوقع</td><td></td><td></td><td></td><td style="text-align:center;color:#e65100;font-size:16px;">' + Math.round(totalPred).toLocaleString() + '</td><td></td></tr>';
   html += '</table>';
-  document.getElementById('fin-predict-result').innerHTML = html;
+  var predRes = document.getElementById('fin-predict-result');
+  if (predRes) predRes.innerHTML = html;
 }
 
 function finExportChoice() {
@@ -674,13 +699,17 @@ function finExportChoice() {
 
 function finShowYearlyBudget() {
   var el = document.getElementById('fin-yearly-section');
-  el.style.display = el.style.display === 'none' ? 'block' : 'none';
+  if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
 }
 
 function finRunYearlyBudget() {
-  var fromYear = parseInt(document.getElementById('fin-yr-from').value) || new Date().getFullYear();
-  var toYear = parseInt(document.getElementById('fin-yr-to').value) || (fromYear + 1);
-  var pctIncrease = parseFloat(document.getElementById('fin-yr-pct').value) || 0;
+  var yrFromEl = document.getElementById('fin-yr-from');
+  var yrToEl = document.getElementById('fin-yr-to');
+  var yrPctEl = document.getElementById('fin-yr-pct');
+  if (!yrFromEl || !yrToEl || !yrPctEl) return;
+  var fromYear = parseInt(yrFromEl.value) || new Date().getFullYear();
+  var toYear = parseInt(yrToEl.value) || (fromYear + 1);
+  var pctIncrease = parseFloat(yrPctEl.value) || 0;
   var multiplier = 1 + (pctIncrease / 100);
   var fromData = finFiltered(0, fromYear);
   var fromGroups = finGroupByTask(fromData.transactions);
@@ -708,7 +737,8 @@ function finRunYearlyBudget() {
   var html = '<div style="background:#fff;padding:12px;border-radius:8px;margin-bottom:10px;"><b style="font-size:16px;color:#0d47a1;">📐 ميزانية ' + toYear + '</b><br><span style="font-size:12px;color:#888;">بناءً على بيانات ' + fromYear + ' + نسبة زيادة ' + pctIncrease + '% — عدد البنود: ' + results.length + '</span></div>';
   if (results.length === 0) {
     html += '<div style="text-align:center;padding:20px;color:#888;">لا توجد بيانات للسنة ' + fromYear + '. قم باستيراد تقارير أولاً.</div>';
-    document.getElementById('fin-yearly-result').innerHTML = html;
+    var yrRes = document.getElementById('fin-yearly-result');
+    if (yrRes) yrRes.innerHTML = html;
     return;
   }
   html += '<table style="width:100%;font-size:12px;border-collapse:collapse;">';
@@ -726,13 +756,16 @@ function finRunYearlyBudget() {
   });
   html += '<tr style="background:#e3f2fd;font-weight:700;"><td>الإجمالي</td><td></td><td style="text-align:center;">' + totalCurrent.toLocaleString() + '</td><td style="text-align:center;">' + totalCurrentBudget.toLocaleString() + '</td><td style="text-align:center;">' + totalCurrent.toLocaleString() + '</td><td></td><td style="text-align:center;color:#0d47a1;font-size:16px;">' + totalNew.toLocaleString() + '</td></tr>';
   html += '</table>';
-  document.getElementById('fin-yearly-result').innerHTML = html;
+  var yrRes2 = document.getElementById('fin-yearly-result');
+  if (yrRes2) yrRes2.innerHTML = html;
 }
 
 function finShowOverview() {
   var el = document.getElementById('fin-overview-section');
+  if (!el) return;
   el.style.display = el.style.display === 'none' ? 'block' : 'none';
   var sel = document.getElementById('fin-ov-year');
+  if (!sel) return;
   var years = new Set();
   finTransactions.forEach(function(t) { if (t.year) years.add(t.year); });
   finBudgets.forEach(function(b) { if (b.year) years.add(b.year); });
@@ -746,7 +779,9 @@ function finShowOverview() {
 }
 
 function finRunOverview() {
-  var year = parseInt(document.getElementById('fin-ov-year').value) || new Date().getFullYear();
+  var ovYearEl = document.getElementById('fin-ov-year');
+  if (!ovYearEl) return;
+  var year = parseInt(ovYearEl.value) || new Date().getFullYear();
   var monthNames = ['','يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
   var monthsData = [];
   var totalBudget = 0, totalActual = 0;
@@ -786,10 +821,12 @@ function finRunOverview() {
   });
   html += '<tr style="background:#e8f5e9;font-weight:700;"><td>الإجمالي</td><td style="text-align:center;">' + Math.round(totalBudget).toLocaleString() + '</td><td style="text-align:center;color:#1565c0;">' + Math.round(totalActual).toLocaleString() + '</td><td style="text-align:center;color:' + (totalBudget - totalActual >= 0 ? '#2e7d32' : '#d32f2f') + ';">' + (totalBudget - totalActual >= 0 ? '+' : '') + Math.round(totalBudget - totalActual).toLocaleString() + '</td><td style="text-align:center;">' + (totalBudget ? Math.round((totalActual / totalBudget) * 100) + '%' : '-') + '</td><td style="text-align:center;">' + importedMonths.reduce(function(s, m) { return s + m.txCount; }, 0) + '</td></tr>';
   html += '</table>';
-  document.getElementById('fin-overview-result').innerHTML = html;
+  var ovRes = document.getElementById('fin-overview-result');
+  if (ovRes) ovRes.innerHTML = html;
 }
 
 function finExportExcel() {
+  if (typeof XLSX === 'undefined') { alert('⚠️ مكتبة XLSX غير متاحة. تأكد من تحميل الصفحة كاملة.'); return; }
   var year = document.getElementById('fin-year-select')?.value || new Date().getFullYear();
   var month = parseInt(document.getElementById('fin-month-select')?.value || 0);
   var data = finFiltered(month, year);
@@ -832,7 +869,11 @@ function finExportPDF() {
   }
   html += '</tbody></table></div>';
   if (typeof html2pdf !== 'undefined') {
-    html2pdf().set({ margin: 1, filename: 'تقرير_الميزانية_' + year + '.pdf', html2canvas: { scale: 2 }, jsPDF: { unit: 'cm', format: 'a4', orientation: 'landscape' } }).from(html).save();
+    try {
+      html2pdf().set({ margin: 1, filename: 'تقرير_الميزانية_' + year + '.pdf', html2canvas: { scale: 2 }, jsPDF: { unit: 'cm', format: 'a4', orientation: 'landscape' } }).from(html).save();
+    } catch(e) { console.error('PDF export error:', e); }
+  } else {
+    console.warn('html2pdf library not loaded');
   }
 }
 
@@ -857,8 +898,10 @@ function finShowDeptConsumption() {
   var years = finTransactions.map(function(t) { return t.year || 0; }).filter(Boolean);
   if (years.length) {
     var minY = Math.min.apply(null, years), maxY = Math.max.apply(null, years);
-    document.getElementById('fin-dept-from').value = minY;
-    document.getElementById('fin-dept-to').value = maxY;
+    var deptFrom = document.getElementById('fin-dept-from');
+    var deptTo = document.getElementById('fin-dept-to');
+    if (deptFrom) deptFrom.value = minY;
+    if (deptTo) deptTo.value = maxY;
   }
   finRenderDeptConsumption();
 }
@@ -868,9 +911,13 @@ var _monthNames = ['','يناير','فبراير','مارس','أبريل','ما�
 function finRenderDeptConsumption() {
   var el = document.getElementById('fin-dept-result');
   if (!el) return;
-  var taskCode = document.getElementById('fin-dept-select').value;
-  var fromYear = parseInt(document.getElementById('fin-dept-from').value) || 0;
-  var toYear = parseInt(document.getElementById('fin-dept-to').value) || 0;
+  var deptSel = document.getElementById('fin-dept-select');
+  var deptFrom = document.getElementById('fin-dept-from');
+  var deptTo = document.getElementById('fin-dept-to');
+  if (!deptSel || !deptFrom || !deptTo) return;
+  var taskCode = deptSel.value;
+  var fromYear = parseInt(deptFrom.value) || 0;
+  var toYear = parseInt(deptTo.value) || 0;
   var filtered = finTransactions.filter(function(t) {
     if (taskCode && t.task !== taskCode) return false;
     if (fromYear && t.year && t.year < fromYear) return false;
