@@ -7933,7 +7933,7 @@ function toggleEmployeeStatus(empId) {
 
       var sortedSectors = Object.keys(sectorsMap).sort(function(a, b) { return a.localeCompare(b, 'ar'); });
       sortedSectors.forEach(function(sector) {
-        if(sectorsMap[sector].length === 0) continue;
+        if(sectorsMap[sector].length === 0) return;
         let block = document.createElement('div');
         block.className = 'sector-block';
         let buildingEmps = employees.filter(e => e.sector === sector);
