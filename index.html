@@ -14021,9 +14021,9 @@ function toggleEmployeeStatus(empId) {
     function updateSupabaseStatus(status) {
       var el = document.getElementById('supabase-status');
       if (!el) return;
-      if (status === 'connected') { el.textContent = '? توجد'; el.style.color = '#2e7d32'; }
-      else if (status === 'connecting') { el.textContent = 'بيانات توريدات للتصدير...'; el.style.color = '#fdd835'; }
-      else { el.textContent = 'بيانات التاريخ المقاول'; el.style.color = '#f44336'; }
+      if (status === 'connected') { el.textContent = '✅ متصل'; el.style.color = '#2e7d32'; }
+      else if (status === 'connecting') { el.textContent = '🔄 جاري الاتصال...'; el.style.color = '#fdd835'; }
+      else { el.textContent = '❌ غير متصل'; el.style.color = '#f44336'; }
     }
 
     function getAllDataForSync() {
@@ -14324,15 +14324,14 @@ function toggleEmployeeStatus(empId) {
     async function connectSupabase() {
       try {
         var r = await fetch(_sbEndpoint + '?select=id&limit=1', { method: 'GET', headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } });
-        if (!r.ok) { syncLog('بيانات المزامنة Supabase القوية ' + r.status + ' — تمت المزامنة'); setTimeout(connectSupabase, 3000); return; }
+        if (!r.ok) { syncLog('❌ فشل الاتصال بـ Supabase ' + r.status + ' — سيتم إعادة المحاولة'); setTimeout(connectSupabase, 3000); return; }
         supabaseConnected = true;
-        syncLog('? القوية بيانات Supabase');
+        syncLog('✅ تم الاتصال بـ Supabase');
         updateSupabaseStatus('connected');
-// دالة تبديل الحالة الذكية مع تسجيل وقت المغادرة تلقائي
         setTimeout(function() { pullFromSupabase(); }, 1000);
         updateLastSyncTime();
         startPresence();
-        document.getElementById('cloud-status').textContent = 'بيانات القوية';
+        document.getElementById('cloud-status').textContent = '☁️ متصل';
         // ? فشلت المزامنة تحقق — من الاتصال فشل/السحب كود
         // فاضي أو مش بيانات تم (استلام من توريد)
         var reportsPollInterval = setInterval(function() {
