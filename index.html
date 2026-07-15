@@ -7930,7 +7930,8 @@ function toggleEmployeeStatus(empId) {
         sectorsMap[rc.sector].push(rc);
       });
 
-      for(let sector in sectorsMap) {
+      var sortedSectors = Object.keys(sectorsMap).sort(function(a, b) { return a.localeCompare(b, 'ar'); });
+      sortedSectors.forEach(function(sector) {
         if(sectorsMap[sector].length === 0) continue;
         let block = document.createElement('div');
         block.className = 'sector-block';
@@ -7940,7 +7941,7 @@ function toggleEmployeeStatus(empId) {
         let roomsContainer = document.createElement('div');
         roomsContainer.style = "display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:10px;";
 
-        sectorsMap[sector].forEach(room => {
+        sectorsMap[sector].sort(function(a, b) { return (a.number || '').localeCompare(b.number || '', 'ar', { numeric: true }); }).forEach(room => {
           let roomUsers = employees.filter(e => e.sector === sector && e.room === room.number);
           let presentCount = roomUsers.filter(e => e.status === 'P').length;
           let vacationUsers = roomUsers.filter(e => e.status === 'V');
