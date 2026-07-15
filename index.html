@@ -9372,7 +9372,7 @@ function toggleEmployeeStatus(empId) {
       let guests = parseInt(document.getElementById('hosp-guests').value) || 1;
       let editId = document.getElementById('hosp-edit-id').value;
 
-      if(!name || !arrival) return alert("السنوي المتبقي يوم فقط، والإجازة المطلوبة!");
+      if(!name || !arrival) return alert("الرجاء إدخال اسم الزائر وتاريخ الوصول.");
 
       let meals = [];
       if(document.getElementById('hosp-meal-bf').checked) meals.push("إفطار");
@@ -9385,7 +9385,7 @@ function toggleEmployeeStatus(empId) {
           hospitalities[idx] = { _id: editId, name, type, title, arrival, departure, guests, meals: meals.slice() };
         }
         document.getElementById('hosp-edit-id').value = '';
-        document.getElementById('hosp-save-btn').innerHTML = 'في تجاوز الرصيد؟ تم';
+        document.getElementById('hosp-save-btn').innerHTML = '💾 حفظ التعديلات';
         document.getElementById('hosp-save-btn').onclick = function() { addHospitalityRecord(); };
       } else {
         var dupHosp = hospitalities.find(function(h) { return h.name === name && h.arrival === arrival; });
@@ -9409,10 +9409,10 @@ function toggleEmployeeStatus(empId) {
       document.getElementById('hosp-arrival').value = h.arrival;
       document.getElementById('hosp-departure').value = h.departure || '';
       document.getElementById('hosp-guests').value = h.guests || 1;
-      document.getElementById('hosp-meal-bf').checked = (h.meals || []).includes('إفطار') || (h.meals || []).includes('مأمورية');
-      document.getElementById('hosp-meal-lh').checked = (h.meals || []).includes('غداء') || (h.meals || []).includes('امتداد');
-      document.getElementById('hosp-meal-dn').checked = (h.meals || []).includes('عشاء') || (h.meals || []).includes('اعتيادية');
-      document.getElementById('hosp-save-btn').innerHTML = 'بيانات يوم حذف';
+      document.getElementById('hosp-meal-bf').checked = (h.meals || []).includes('إفطار');
+      document.getElementById('hosp-meal-lh').checked = (h.meals || []).includes('غداء');
+      document.getElementById('hosp-meal-dn').checked = (h.meals || []).includes('عشاء');
+      document.getElementById('hosp-save-btn').innerHTML = '💾 حفظ التعديلات';
       document.getElementById('hosp-save-btn').onclick = function() { addHospitalityRecord(); };
       document.getElementById('hosp-name').focus();
     }
@@ -10578,9 +10578,9 @@ function toggleEmployeeStatus(empId) {
         var a = new Date(h.arrival + 'T00:00:00');
         var dep = h.departure ? new Date(h.departure + 'T00:00:00') : new Date(a);
         if (target >= a && target <= dep) {
-          if (h.meals && h.meals.includes('تم')) gBf += (h.guests || 1);
-          if (h.meals && h.meals.includes('التعديل')) gLh += (h.guests || 1);
-          if (h.meals && h.meals.includes('اختر')) gDn += (h.guests || 1);
+          if (h.meals && h.meals.includes('إفطار')) gBf += (h.guests || 1);
+          if (h.meals && h.meals.includes('غداء')) gLh += (h.guests || 1);
+          if (h.meals && h.meals.includes('عشاء')) gDn += (h.guests || 1);
         }
       });
       return { gBf: gBf, gLh: gLh, gDn: gDn };
@@ -10628,7 +10628,7 @@ function toggleEmployeeStatus(empId) {
     }
 
     function deleteMealLog(idx) { if (!requireAdmin()) return;
-      if(confirm("لهذه الدورة سجل")) {
+      if(confirm("هل تريد حذف هذا السجل؟")) {
         _logDeletion('mealLogs', mealLogs[idx].date);
         mealLogs.splice(idx, 1);
         syncStorage(); renderMealLogTable();
