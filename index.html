@@ -14216,7 +14216,7 @@ function toggleEmployeeStatus(empId) {
               if (typeof _dv !== 'undefined' && _dv !== null) {
                 var _localVal = getEntityVar(_dk);
                 if (Array.isArray(_dv) && Array.isArray(_localVal)) {
-                  setEntityVar(_dk, mergeArrays(_localVal, _dv, function(item) { return _getItemKey(item, _dk); }));
+                  setEntityVar(_dk, _dv);
                 } else {
                   setEntityVar(_dk, _dv);
                 }
