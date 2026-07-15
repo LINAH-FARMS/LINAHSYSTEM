@@ -7937,7 +7937,7 @@ function toggleEmployeeStatus(empId) {
         let block = document.createElement('div');
         block.className = 'sector-block';
         let buildingEmps = employees.filter(e => e.sector === sector);
-        block.innerHTML = `<div class="sector-title" style="display:flex;justify-content:space-between;align-items:center;">أنواع التعاقد: ${sector}</div>`;
+        block.innerHTML = `<div class="sector-title" style="display:flex;justify-content:space-between;align-items:center;">المبنى: ${sector}</div>`;
 
         let roomsContainer = document.createElement('div');
         roomsContainer.style = "display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:10px;";
