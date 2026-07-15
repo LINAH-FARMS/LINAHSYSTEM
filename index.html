@@ -16461,13 +16461,13 @@ function updateDashClock() {
       var admin = employees.filter(function(e) {
         if (!e.dept) return false;
         var d = e.dept.replace(/\s+/g, '').replace(/[يى]/g, 'ي').replace(/[ةه]/g, 'ة').replace(/[إأآ]/g, 'ا').toLowerCase();
-        return d.indexOf('المتبقي') > -1 || d.indexOf('الحالة') > -1;
+        return d.indexOf('الشئون') > -1 || d.indexOf('اداري') > -1;
       });
       if (!admin.length) {
         var depts = {};
         employees.forEach(function(e) { if (e.dept) depts[e.dept] = (depts[e.dept] || 0) + 1; });
-        var list = Object.keys(depts).map(function(k) { return k + ' (' + depts[k] + ' المسؤول)'; }).join(' | ');
-        grid.innerHTML = '<div style="color:#d32f2f;font-size:14px;padding:20px;text-align:center;">لا يوجد موظفون مسؤولون عن توريد الخبز<br><span style="font-size:12px;color:#555;">الأقسام: ' + list + '</span></div>';
+        var list = Object.keys(depts).map(function(k) { return k + ': ' + depts[k] + ' موظف'; }).join(' | ');
+        grid.innerHTML = '<div style="color:#d32f2f;font-size:14px;padding:20px;text-align:center;">لا يوجد موظفون في الشئون الإدارية<br><span style="font-size:12px;color:#555;">جميع الأقسام: ' + list + '</span></div>';
         return;
       }
       admin.sort(function(a,b) { return (a.name || '').localeCompare(b.name || 'ar'); });
@@ -16492,10 +16492,10 @@ function updateDashClock() {
         "مهندس": [{name:"الإشراف على الأعمال الفنية",max:20},{name:"متابعة تنفيذ المخططات",max:20},{name:"إعداد التقارير الفنية",max:20},{name:"التنسيق مع فرق العمل",max:20},{name:"التأكد من الجودة",max:20}],
         "مشرف": [{name:"الإشراف على العمال",max:20},{name:"توزيع المهام اليومية",max:20},{name:"متابعة الحضور والانصراف",max:20},{name:"الإبلاغ عن المخالفات",max:20},{name:"التأكد من تنفيذ التعليمات",max:20}],
         "عامل": [{name:"تنفيذ المهام المكلف بها",max:20},{name:"الالتزام بمواعيد العمل",max:20},{name:"الحفاظ على أدوات العمل",max:20},{name:"نظافة موقع العمل",max:20},{name:"التعاون مع الزملاء",max:20}],
-        "لم": [{name:"يتم تحديد",max:20},{name:"أي صفوف",max:20},{name:"الملخص إجمالي",max:20},{name:"عدد الأرغفة",max:20},{name:"الحساب الإجمالي ج",max:20}],
+        "فني": [{name:"متابعة أعمال الصيانة",max:20},{name:"إعداد تقارير فنية",max:20},{name:"التنسيق مع الفرق",max:20},{name:"جودة العمل",max:20},{name:"الالتزام بالمعايير",max:20}],
         "سائق": [{name:"نقل المهمات في الوقت المحدد",max:20},{name:"صيانة المركبة ونظافتها",max:20},{name:"الالتزام بقواعد المرور",max:20},{name:"الحفاظ على الوقود",max:20},{name:"التسليم الآمن",max:20}],
         "فرد": [{name:"تأمين الموقع",max:20},{name:"الالتزام بالورديات",max:20},{name:"الإبلاغ عن المخالفات",max:20},{name:"النظافة العامة",max:20},{name:"التعامل الجيد مع الزوار",max:20}],
-        "أمين": [{name:"استلام وصرف الأصناف",max:20},{name:"تنظيم المخزن",max:20},{name:"الجرد الدوري",max:20},{name:"تحديث السجلات",max:20},{name:"الإبلاغ عن نقص الأصناف",max:20}],
+        "أمين مخزن": [{name:"استلام وصرف الأصناف",max:20},{name:"تنظيم المخزن",max:20},{name:"الجرد الدوري",max:20},{name:"تحديث السجلات",max:20},{name:"الإبلاغ عن نقص الأصناف",max:20}],
         "الاجازة": [{name:"مدة الاجازة نوع",max:20},{name:"الاجازة تسجيل",max:20},{name:"اودوو مدير الإدارة",max:20},{name:"القسم شئون",max:20},{name:"العاملين إعتماد",max:20}],
         "قائد فريق": [{name:"توجيه فريق العمل",max:20},{name:"متابعة تنفيذ المهام",max:20},{name:"التنسيق بين أعضاء الفريق",max:20},{name:"رفع تقارير الإنجاز",max:20},{name:"حل مشكلات الفريق",max:20}]
       };
