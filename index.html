@@ -2724,18 +2724,31 @@
         </table>
       </div>
     </div>
-    <!-- ===== حاسبة الطباخ ===== -->
+    <!-- ===== حاسبة الطباخ المتقدمة ===== -->
     <div class="card no-print" style="margin:15px 0;padding:16px;border:2px solid #bbdefb;border-radius:12px;background:#f5faff;">
       <h3 style="margin:0 0 10px;font-size:18px;">🍳 حاسبة الطباخ</h3>
       <div class="control-panel" style="flex-wrap:wrap;align-items:flex-end;">
-        <div class="form-group" style="min-width:220px;"><label>الصنف المقدم</label>
-          <select id="chef-recipe" onchange="renderChefCalc()" style="padding:10px;font-size:15px;font-family:Cairo;"></select>
+        <div class="form-group" style="min-width:150px;"><label>الوجبة</label>
+          <select id="chef-meal-type" style="padding:10px;font-size:15px;font-family:Cairo;">
+            <option value="فطار">🌅 إفطار</option>
+            <option value="غداء">☀️ غداء</option>
+            <option value="عشاء">🌙 عشاء</option>
+          </select>
         </div>
         <div class="form-group" style="min-width:150px;"><label>عدد الأفراد</label>
           <input type="number" id="chef-employees" min="1" step="1" value="380" style="padding:10px;font-size:15px;font-family:Cairo;">
         </div>
-        <button class="btn btn-primary" onclick="calcChef()" style="height:46px;">🔢 احسب الخامات المطلوبة</button>
-        <button class="btn btn-secondary" onclick="printChefCalc()" style="height:46px;">🖨️ طباعة</button>
+      </div>
+      <div id="chef-dishes-container" style="margin-top:10px;border:1px solid #e0e0e0;border-radius:8px;padding:10px;background:white;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+          <label style="font-weight:700;font-size:14px;color:#1565c0;">🍽️ الأصناف المقدمة</label>
+          <button class="btn btn-secondary" onclick="addChefDish()" style="padding:4px 12px;font-size:12px;">+ إضافة صنف</button>
+        </div>
+        <div id="chef-dishes-list"></div>
+      </div>
+      <div style="margin-top:10px;display:flex;gap:8px;">
+        <button class="btn btn-primary" onclick="calcChefMulti()" style="height:42px;flex:1;">🔢 احسب الخامات المطلوبة</button>
+        <button class="btn btn-secondary" onclick="printChefCalcMulti()" style="height:42px;">🖨️ طباعة</button>
       </div>
       <div class="table-container" id="chef-result-wrap" style="display:none;margin-top:10px;max-height:420px;overflow:auto;">
         <table id="chef-result-table">
@@ -17229,47 +17242,61 @@ var RECIPES = [
   { name:"بسلة بالخضار", base:380, items:[{ q:45, u:"كيس", n:"بسلة" }, { q:15, u:"كجم", n:"طماطم" }, { q:10, u:"كجم", n:"بصل" }, { q:15, u:"كجم", n:"بطاطس" }, { q:40, u:"جم", n:"فلفل اسمر" }, { q:30, u:"جم", n:"13 بهار" }, { q:10, u:"جم", n:"كبابة صيني" }, { q:40, u:"جم", n:"كسبرة ناعمة" }, { q:1, u:"كيس", n:"ملح" }, { q:200, u:"جم", n:"ثوم" }, { q:15, u:"جم", n:"ثوم بودرة" }, { q:15, u:"جم", n:"بصل بودرة" }, { q:1, u:"لتر", n:"زيت طبخ" }, { q:1, u:"كجم", n:"سمن" }, { q:15, u:"وحدة", n:"مرقة دجاج" }] }
 ];
 
-function populateChefRecipes(){
-  var sel=document.getElementById('chef-recipe'); if(!sel) return;
-  sel.innerHTML='<option value="">— اختر الصنف —</option>'+RECIPES.map(function(r,i){return '<option value="'+i+'">'+r.name+'</option>';}).join('');
+function addChefDish(){
+  var list=document.getElementById('chef-dishes-list');
+  var idx=list.children.length;
+  var div=document.createElement('div');
+  div.style.cssText='display:flex;gap:6px;align-items:center;margin-bottom:6px;';
+  div.innerHTML='<select class="chef-dish-select" style="flex:1;padding:6px 8px;border:1px solid #ccc;border-radius:6px;font-size:13px;font-family:Cairo;"><option value="">— اختر الصنف —</option>'+RECIPES.map(function(r,i){return '<option value="'+i+'">'+r.name+'</option>';}).join('')+'</select><input type="number" class="chef-dish-hissa" value="1" min="1" step="1" style="width:60px;padding:6px;border:1px solid #ccc;border-radius:6px;font-size:13px;text-align:center;" title="عدد الحصص"><button class="btn btn-danger" onclick="this.parentElement.remove()" style="padding:4px 8px;font-size:11px;">✕</button>';
+  list.appendChild(div);
 }
-function renderChefCalc(){
-  var sel=document.getElementById('chef-recipe');
-  if(!sel||!sel.value) return;
+function calcChefMulti(){
+  var empInp=document.getElementById('chef-employees');
+  var emp=parseInt(empInp.value);
+  if(isNaN(emp)||emp<=0){ alert('ادخل عدد الأفراد بشكل صحيح.'); return; }
+  var dishes=document.querySelectorAll('#chef-dishes-list .chef-dish-select');
+  var activeDishes=[];
+  dishes.forEach(function(sel){
+    if(sel.value){
+      var hissaInput=sel.parentElement.querySelector('.chef-dish-hissa');
+      var hissa=parseInt(hissaInput?hissaInput.value:1);
+      activeDishes.push({ recipe:RECIPES[parseInt(sel.value)], hissa:isNaN(hissa)||hissa<1?1:hissa });
+    }
+  });
+  if(activeDishes.length===0){ alert('أضف صنفاً واحداً على الأقل.'); return; }
+  var totals={};
+  activeDishes.forEach(function(d){
+    d.recipe.items.forEach(function(it){
+      var key=it.n+'|'+it.u;
+      if(!totals[key]) totals[key]={ name:it.n, unit:it.u, qty:0 };
+      totals[key].qty+=it.q*d.hissa;
+    });
+  });
+  var factor=emp/380;
+  var mealType=document.getElementById('chef-meal-type').value;
+  var names=activeDishes.map(function(d){ return d.recipe.name+' (x'+d.hissa+')'; }).join('، ');
+  var body=document.getElementById('chef-result-body');
+  var sorted=Object.keys(totals).sort().map(function(k){
+    var t=totals[k];
+    var q=t.qty*factor;
+    return '<tr><td>'+t.name+'</td><td style="text-align:center;">'+t.unit+'</td><td style="text-align:center;font-weight:700;color:#1565c0;">'+formatQty(q)+'</td></tr>';
+  }).join('');
+  body.innerHTML='<tr style="background:#e3f2fd;font-weight:700;"><td colspan="3" style="text-align:center;">🍳 '+mealType+' | '+names+' | عدد الأفراد: '+emp+'</td></tr>'+sorted;
+  document.getElementById('chef-result-wrap').style.display='block';
+}
+function printChefCalcMulti(){
+  var wrap=document.getElementById('chef-result-wrap');
+  if(wrap.style.display==='none'||!wrap.innerHTML.trim()){ alert('احسب الخامات أولاً.'); return; }
+  var body=document.getElementById('chef-result-body').innerHTML;
+  var w=window.open('','_blank');
+  w.document.write('<html dir="rtl"><head><title>حاسبة الطباخ</title><style>body{font-family:Cairo,sans-serif;padding:20px;}h2{color:#1565c0;}table{width:100%;border-collapse:collapse;font-size:14px;}th,td{border:1px solid #ccc;padding:8px;text-align:right;}th{background:#e3f2fd;}</style></head><body><h2>🍳 حاسبة الطباخ</h2><table><thead><tr><th>الخامة</th><th>الوحدة</th><th>الكمية المطلوبة</th></tr></thead><tbody>'+body+'</tbody></table></body></html>');
+  w.document.close(); w.print();
 }
 function formatQty(q){
   if(!isFinite(q)) return '0';
   var r=Math.round(q*1000)/1000;
   return (Math.abs(r-Math.round(r))<0.001)? String(Math.round(r)) : (Math.round(q*100)/100).toFixed(2);
 }
-function calcChef(){
-  var sel=document.getElementById('chef-recipe');
-  var empInp=document.getElementById('chef-employees');
-  var wrap=document.getElementById('chef-result-wrap');
-  var body=document.getElementById('chef-result-body');
-  if(!sel.value){ alert('اختر الصنف المقدم أولاً.'); return; }
-  var emp=parseInt(empInp.value);
-  var r=RECIPES[parseInt(sel.value)];
-  if(isNaN(emp)||emp<=0){ alert('ادخل عدد الأفراد بشكل صحيح.'); return; }
-  var factor=emp/r.base;
-  var rows=r.items.map(function(it){
-    var q=it.q*factor;
-    return '<tr><td>'+it.n+'</td><td style="text-align:center;">'+it.u+'</td><td style="text-align:center;font-weight:700;color:#1565c0;">'+formatQty(q)+'</td></tr>';
-  }).join('');
-  body.innerHTML=rows;
-  wrap.style.display='block';
-}
-function printChefCalc(){
-  var sel=document.getElementById('chef-recipe');
-  if(!sel.value){ alert('احسب الخامات أولاً.'); return; }
-  var r=RECIPES[parseInt(sel.value)];
-  var emp=document.getElementById('chef-employees').value;
-  var body=document.getElementById('chef-result-body').innerHTML;
-  var w=window.open('','_blank');
-  w.document.write('<html dir="rtl"><head><title>حاسبة الطباخ - '+r.name+'</title><style>body{font-family:Cairo,sans-serif;padding:20px;}h2{color:#1565c0;}table{width:100%;border-collapse:collapse;font-size:14px;}th,td{border:1px solid #ccc;padding:8px;text-align:right;}th{background:#e3f2fd;}</style></head><body><h2>حاسبة الطباخ</h2><p>الصنف: <b>'+r.name+'</b> | عدد الأفراد: <b>'+emp+'</b></p><table><thead><tr><th>الخامة</th><th>الوحدة</th><th>الكمية المطلوبة</th></tr></thead><tbody>'+body+'</tbody></table></body></html>');
-  w.document.close(); w.print();
-}
-if(document.readyState!=='loading'){ populateChefRecipes(); } else { document.addEventListener('DOMContentLoaded', populateChefRecipes); }
 </script>
 
 </body>
