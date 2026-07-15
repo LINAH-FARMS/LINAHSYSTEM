@@ -5789,6 +5789,9 @@
         roomsCapacity = roomsCapacity.filter(function(r) { return r.sector !== item; });
         _logDeletion('roomsCapacity', item);
       }
+      if (listId === 'room') { roomsCapacity = roomsCapacity.filter(function(r) { return r.number !== item; }); _logDeletion('roomsCapacity (from room delete)', item); }
+      if (listId === 'septic') { septicRecords = septicRecords.filter(function(s) { return (s.name||s.sector||'') !== item; }); _logDeletion('septicRecords (from septic delete)', item); }
+      if (listId === 'bakery-ctr' && typeof bakeryContractorSupplies !== 'undefined') { bakeryContractorSupplies = bakeryContractorSupplies.filter(function(s) { return s.name !== item; }); _lsSet('linah_bakery_ctr_supplies', JSON.stringify(bakeryContractorSupplies)); if (typeof reRenderBakeryTabs === 'function') reRenderBakeryTabs(); _logDeletion('bakeryContractorSupplies (from bakery-ctr delete)', item); }
       syncStorage(); rebuildAllDropdowns(); renderDynamicLists(); renderHousingLayout();
       if (listId === 'bakery-ctr') populateBctrDatalist();
     }
