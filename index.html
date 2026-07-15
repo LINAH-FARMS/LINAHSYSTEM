@@ -6008,11 +6008,12 @@
       if (!name) { alert('الرجاء إدخال اسم المستخدم.'); return; }
       if (!/^[\u0621-\u064A\s]+$/.test(name)) { alert('الاسم يجب أن يكون بالأحرف العربية فقط.'); return; }
       if (appUsers.find(function(u) { return u.name === name; })) { alert('اسم المستخدم موجود بالفعل.'); return; }
-      var role = isAdmin() ? (confirm('هل تريد جعله مديراً (OK) أم مستخدماً (Cancel)؟') ? 'admin' : 'user') : 'user';
       var pass = prompt('أدخل كلمة المرور للمستخدم "' + name + '" (اتركها فارغة لبدون كلمة مرور):');
       if (pass === null) return;
-      if (pass === '') { }
-      else if (pass !== null && pass.length > 0 && pass.length < 3) { alert('كلمة المرور يجب ألا تقل عن 3 أحرف.'); }
+      var userObj = { name: name, role: role };
+      if (pass && pass.length >= 3) { userObj.passHash = hashPass(pass); }
+      else if (pass && pass.length > 0 && pass.length < 3) { alert('كلمة المرور يجب ألا تقل عن 3 أحرف.'); return; }
+      else { userObj.noPass = true; }
       appUsers.push(userObj);
       saveUsers();
       document.getElementById('new-user-name').value = '';
