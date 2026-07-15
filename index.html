@@ -3826,7 +3826,7 @@
     let dynamicDepts = _safeJsonParse(_lsGet('dyn_depts'), ["الإدارة","الزراعة","الإنتاج","الصيانة","الأمن","النظافة","المخازن","الخدمات"]);
     let dynamicTitles = _safeJsonParse(_lsGet('dyn_titles'), ["مشرف","عامل","سائق","فني","مهندس زراعي","محاسب","أمين مخزن","طباخ","عامل نظافة"]);
     let dynamicVisitorTypes = _strArr(_safeJsonParse(_lsGet('dyn_visitor_types'), ["مورد","مفتش","ضيف","مقاول","موظف حكومي","ممثل جهة خارجية"]));
-    let bakeryContractorsNames = _strArr(_safeJsonParse(_lsGet('linah_bakery_contractors_names'), ["مخبز النور","مخبز الصفا","مخبز الرحمة","مخبز الفتح","مخبز الهدى","مخبز البركة","مخبز التوحيد","مخبز الخير","مخبز الأمل","مخبز النصر","مخبز السلام","مخبز الإيمان","مخبز الحياة","مخبز الواحة","مخبز الزهور","مخبز المدينة","مخبز القمة","مخبز المستقبل"]));
+    let bakeryContractorsNames = _strArr(_safeJsonParse(_lsGet('linah_bakery_contractors_names'), ["محمد شعبان","ممدوح بكر","عاطف عبد المغيث","مصطفى على","اسامه سمير","فارس محمد"]));
     // add any names from existing records not already in the list
     (function() { var ctrs = _safeJsonParse(_lsGet('linah_bakery_ctr_supplies'), []); ctrs.forEach(function(c) { if (c.name && bakeryContractorsNames.indexOf(c.name) === -1) bakeryContractorsNames.push(c.name); }); })();
     let evaluations = _safeJsonParse(_lsGet('lineh_evaluations'), []);
