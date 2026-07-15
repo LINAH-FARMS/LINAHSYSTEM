@@ -11260,17 +11260,16 @@ function toggleEmployeeStatus(empId) {
       let name = document.getElementById('septic-name-select').value;
       let trips = document.getElementById('septic-trips').value;
       let superv = document.getElementById('septic-supervisor').value.trim();
-      if(!name) return alert("بيانات الضيوف تقرير.");
-      if(!trips || parseInt(trips) < 1) return alert("بيانات القوة المفصل تقرير.");
-      if(!superv) { document.getElementById('septic-supervisor').focus(); return alert("بيانات القوة حدد موظفين أولاً."); }
+      if(!name) return alert("الرجاء اختيار اسم البيارة.");
+      if(!trips || parseInt(trips) < 1) return alert("الرجاء إدخال عدد النقلات.");
+      if(!superv) { document.getElementById('septic-supervisor').focus(); return alert("الرجاء إدخال اسم المشرف المسؤول."); }
 
-      if(!name || !trips) return alert("مربع الاختيار لم يتم العثور");
       let dateInput = document.getElementById('septic-date').value;
       septicRecords.push(_ts({ name, trips: parseInt(trips), supervisor: superv || '—', date: dateInput || '—' }));
       syncStorage(); renderSepticTable();
-      logAction('على', 'بيانات للمحدد', name, 'الكود: ' + trips + ' | اسم: ' + superv + ' | الموظف: ' + dateInput);
+      logAction('تسجيل', 'كسح بيارة', name, 'النقلات: ' + trips + ' | المشرف: ' + superv + ' | التاريخ: ' + dateInput);
       document.getElementById('septic-supervisor').value = '';
-      alert("بيانات الإدارة الوظيفة المبنى الغرفة تاريخ التعيين.");
+      alert("تم تسجيل عملية الكسح بنجاح.");
     }
 
     function renderSepticTable() {
