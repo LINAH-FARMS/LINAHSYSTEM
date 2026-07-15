@@ -207,7 +207,7 @@ function addContractor() {
     (bakeryContractorsNames.length > 0
       ? '<select id="ctr-name-' + n + '" style="width:100%;padding:11px 12px;border:2px solid #e0e0e0;border-radius:10px;font-size:14px;font-family:Cairo;background:white;-webkit-appearance:none;">' +
         '<option value="">-- اختر المقاول --</option>' +
-        bakeryContractorsNames.map(function(nm) { return '<option value="' + nm.replace(/"/g,'&quot;') + '">' + nm + '</option>'; }).join('') +
+        bakeryContractorsNames.map(function(nm) { var _nm = String(nm); return '<option value="' + _nm.replace(/"/g,'&quot;') + '">' + _nm + '</option>'; }).join('') +
         '</select>'
       : '<input type="text" id="ctr-name-' + n + '" placeholder="أدخل اسم المقاول" style="width:100%;padding:11px 12px;border:2px solid #e0e0e0;border-radius:10px;font-size:14px;font-family:Cairo;">'
     ) +
