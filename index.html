@@ -17287,8 +17287,49 @@ function printChefCalcMulti(){
   var wrap=document.getElementById('chef-result-wrap');
   if(wrap.style.display==='none'||!wrap.innerHTML.trim()){ alert('احسب الخامات أولاً.'); return; }
   var body=document.getElementById('chef-result-body').innerHTML;
+  var emp=document.getElementById('chef-employees').value;
+  var mealType=document.getElementById('chef-meal-type').value;
+  var mealIcon={'فطار':'🌅','غداء':'☀️','عشاء':'🌙'}[mealType]||'🍳';
+  var today=new Date().toLocaleDateString('ar-EG',{year:'numeric',month:'long',day:'numeric',weekday:'long'});
   var w=window.open('','_blank');
-  w.document.write('<html dir="rtl"><head><title>حاسبة الطباخ</title><style>body{font-family:Cairo,sans-serif;padding:20px;}h2{color:#1565c0;}table{width:100%;border-collapse:collapse;font-size:14px;}th,td{border:1px solid #ccc;padding:8px;text-align:right;}th{background:#e3f2fd;}</style></head><body><h2>🍳 حاسبة الطباخ</h2><table><thead><tr><th>الخامة</th><th>الوحدة</th><th>الكمية المطلوبة</th></tr></thead><tbody>'+body+'</tbody></table></body></html>');
+  w.document.write('<html dir="rtl"><head><title>تقرير حاسبة الوجبات</title>'+
+  '<style>'+
+    '@page{size:A4 portrait;margin:1.5cm 2cm;}'+
+    'body{font-family:"Cairo",sans-serif;padding:0;margin:0;color:#333;}'+
+    '.header{text-align:center;padding-bottom:15px;border-bottom:3px solid #1b5e20;margin-bottom:15px;}'+
+    '.header h1{color:#1b5e20;font-size:22px;margin:0 0 4px;}'+
+    '.header .sub{color:#666;font-size:13px;}'+
+    '.header .date{color:#999;font-size:11px;margin-top:6px;}'+
+    '.info-bar{display:flex;justify-content:space-between;background:#f5faf5;padding:10px 14px;border-radius:8px;margin-bottom:15px;font-size:13px;}'+
+    '.info-bar div{text-align:center;}'+
+    '.info-bar .label{color:#888;font-size:11px;}'+
+    '.info-bar .value{font-weight:700;color:#1b5e20;font-size:15px;}'+
+    'table{width:100%;border-collapse:collapse;font-size:13px;margin-top:10px;}'+
+    'thead th{background:#1b5e20;color:#fff;padding:10px 12px;text-align:center;font-weight:600;font-size:14px;}'+
+    'thead th:first-child{text-align:right;}'+
+    'tbody td{padding:8px 12px;border-bottom:1px solid #e8f5e9;text-align:center;}'+
+    'tbody td:first-child{text-align:right;font-weight:600;}'+
+    'tbody tr:nth-child(even){background:#f8fdf8;}'+
+    'tbody tr:hover{background:#e8f5e9;}'+
+    '.summary-row td{background:#e8f5e9;color:#1b5e20;font-weight:700;font-size:14px;text-align:center!important;}'+
+    '.footer{text-align:center;margin-top:20px;padding-top:12px;border-top:1px solid #e0e0e0;font-size:11px;color:#999;}'+
+    '.watermark{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%)rotate(-20deg);font-size:80px;opacity:0.04;color:#1b5e20;pointer-events:none;z-index:-1;}'+
+    '@media print{body{padding:0;}}'+
+  '</style></head><body>'+
+  '<div class="watermark">🍳</div>'+
+  '<div class="header">'+
+    '<h1>🌿 لينه فارمز — حاسبة الوجبات</h1>'+
+    '<div class="sub">نظام الشئون الإدارية المتكامل</div>'+
+    '<div class="date">' + today + '</div>'+
+  '</div>'+
+  '<div class="info-bar">'+
+    '<div><div class="label">الوجبة</div><div class="value">' + mealIcon + ' ' + mealType + '</div></div>'+
+    '<div><div class="label">عدد الأفراد</div><div class="value">' + emp + '</div></div>'+
+    '<div><div class="label">تاريخ الطباعة</div><div class="value">' + new Date().toLocaleDateString('ar-EG') + '</div></div>'+
+  '</div>'+
+  '<table><thead><tr><th style="width:50%;">الخامة</th><th style="width:20%;">الوحدة</th><th style="width:30%;">الكمية المطلوبة</th></tr></thead><tbody>' + body + '</tbody></table>'+
+  '<div class="footer">تم إنشاء هذا التقرير بواسطة منظومة الشئون الإدارية المتكاملة — لينه فارمز © ' + new Date().getFullYear() + '</div>'+
+  '</body></html>');
   w.document.close(); w.print();
 }
 function formatQty(q){
