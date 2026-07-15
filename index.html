@@ -11402,7 +11402,7 @@ function toggleEmployeeStatus(empId) {
         merges.push({ s: { r: rows.length - 1, c: 0 }, e: { r: rows.length - 1, c: 5 } });
         rows.push(['الاسم', 'النوع', 'اللقب', 'عدد الضيوف', 'تاريخ الوصول', 'تاريخ المغادرة', 'الوجبات']);
         activeHosp.forEach(function(h) {
-          rows.push([stripEmoji(h.name), h.type || '', stripEmoji(h.title || ''), h.guests || 1, h.arrival || '', h.departure || '', (h.meals || []).join(', ')]);
+          rows.push([stripEmoji(h.name), h.type || '', stripEmoji(h.title || ''), h.guests || 1, h.arrival || '', h.departure || '', Array.isArray(h.meals) ? h.meals.join(', ') : (typeof h.meals === 'string' ? h.meals : '')]);
         });
         rows.push([]);
       }
@@ -11834,11 +11834,11 @@ function toggleEmployeeStatus(empId) {
         checked.forEach(function(cb) { selectedIndexes.push(parseInt(cb.getAttribute('data-index'))); });
         data = selectedIndexes.map(function(i) {
           var h = hospitalities[i];
-          return { "خطأ": h.arrival || '', "التاريخ": h.departure || '', "اسم البيارة": stripEmoji(h.name), "عدد": stripEmoji(h.type), "النقلات": stripEmoji(h.title), "الصرف المشرف": h.guests || 1, "البيارات": (h.meals || []).join(', ') };
+          return { "خطأ": h.arrival || '', "التاريخ": h.departure || '', "اسم البيارة": stripEmoji(h.name), "عدد": stripEmoji(h.type), "النقلات": stripEmoji(h.title), "الصرف المشرف": h.guests || 1, "البيارات": Array.isArray(h.meals) ? h.meals.join(', ') : (typeof h.meals === 'string' ? h.meals : '') };
         });
       } else {
         data = sortNewestFirst(hospitalities, 'arrival').map(function(h) {
-          return { "تقرير": h.arrival || '', "البيارات": h.departure || '', "المهمة الدورية": stripEmoji(h.name), "تاريخ": stripEmoji(h.type), "البداية": stripEmoji(h.title), "آخر تنفيذ": h.guests || 1, "التالي": (h.meals || []).join(', ') };
+          return { "تقرير": h.arrival || '', "البيارات": h.departure || '', "المهمة الدورية": stripEmoji(h.name), "تاريخ": stripEmoji(h.type), "البداية": stripEmoji(h.title), "آخر تنفيذ": h.guests || 1, "التالي": Array.isArray(h.meals) ? h.meals.join(', ') : (typeof h.meals === 'string' ? h.meals : '') };
         });
       }
       if (!data.length) return alert('لا توجد بيانات صيانة دورية للتصدير.');
