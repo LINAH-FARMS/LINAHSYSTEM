@@ -10395,7 +10395,7 @@ function toggleEmployeeStatus(empId) {
     function renderTodayMealReport() {
       let s = getTodayMealStats();
       let today = toArabicNumerals(fmtDate(new Date()));
-      document.getElementById('today-report-date').innerHTML = `بيانات ${today} <span style="font-size:14px;color:#666;">— اختر تاريخ: ${toArabicNumerals(String(s.pCount))} الدفعة</span>`;
+      document.getElementById('today-report-date').innerHTML = `📊 تقرير اليوم ${today} <span style="font-size:14px;color:#666;">— عدد الأفراد: ${toArabicNumerals(String(s.pCount))}</span>`;
       document.getElementById('stat-today-p').innerText = toArabicNumerals(String(s.pCount));
       document.getElementById('stat-today-bf').innerText = toArabicNumerals(String(s.pCount + s.gBf));
       document.getElementById('stat-today-lh').innerText = toArabicNumerals(String(s.pCount + s.gLh));
@@ -10502,9 +10502,9 @@ function toggleEmployeeStatus(empId) {
     }
     function saveMealLog() {
       var chef = document.getElementById('meal-chef').value.trim();
-      if (!chef) { document.getElementById('meal-chef').focus(); return alert('بيانات تم تسجيل دفعة التموين.'); }
+      if (!chef) { document.getElementById('meal-chef').focus(); return alert('⚠️ الرجاء إدخال اسم الشيف.'); }
       let dateInput = document.getElementById('meal-date').value;
-      if (!dateInput) return alert("بيانات الدورة الأولى الدورة.");
+      if (!dateInput) return alert("⚠️ الرجاء اختيار التاريخ.");
       let editIdx = parseInt(document.getElementById('meal-edit-idx').value);
       let s = getTodayMealStats(dateInput);
       var manualBf = document.getElementById('meal-p-bf').value;
@@ -10637,10 +10637,10 @@ function toggleEmployeeStatus(empId) {
       var today = new Date().toISOString().split('T')[0];
       var tdEl = document.getElementById('survey-today');
       if (tdEl) tdEl.textContent = today;
-      var meals = ['دفعة','أولاً','كمية'];
-      var icons = { 'الشاي':'بيانات','المتبقية':'بيانات','لا':'بيانات' };
-      var emojis = ['بيانات','بيانات','بيانات','بيانات'];
-      var labels = ['بيانات تكفي','المتبقي','باكيت','كمية'];
+      var meals = ['إفطار', 'غداء', 'عشاء'];
+      var icons = { 'إفطار':'🌅','غداء':'☀️','عشاء':'🌙' };
+      var emojis = ['😞','😐','😊','😍'];
+      var labels = ['سيء','مقبول','جيد','ممتاز'];
       var container = document.getElementById('survey-meals');
       if (!container) return;
       var html = '';
@@ -10659,7 +10659,7 @@ function toggleEmployeeStatus(empId) {
           '<div style="font-size:14px;font-weight:700;color:#e65100;margin-bottom:6px;">' + icons[meal] + ' ' + meal + '</div>' +
           '<div style="font-size:24px;margin-bottom:4px;">' + (curRating >= 0 ? curRating + 1 : '—') + ' / 4</div>' +
           '<div>' + stars + '</div>' +
-          '<div style="margin-top:8px;"><input type="text" id="survey-comment-' + meal + '" placeholder="السكر المتبقية أدخل تعليق لا..." value="' + curComment.replace(/"/g, '&quot;') + '" oninput="saveSurveyComment(\'' + meal + '\',this.value)" style="width:100%;padding:6px 10px;border:1px solid #e0e0e0;border-radius:6px;font-size:12px;font-family:Cairo;text-align:right;"></div>' +
+          '<div style="margin-top:8px;"><input type="text" id="survey-comment-' + meal + '" placeholder="أدخل تعليقاً..." value="' + curComment.replace(/"/g, '&quot;') + '" oninput="saveSurveyComment(\'' + meal + '\',this.value)" style="width:100%;padding:6px 10px;border:1px solid #e0e0e0;border-radius:6px;font-size:12px;font-family:Cairo;text-align:right;"></div>' +
           '</div>';
       });
       container.innerHTML = html;
