@@ -9465,7 +9465,7 @@ function toggleEmployeeStatus(empId) {
       var container = document.getElementById(panelId || 'duplicates-panel');
       if (!container) return;
       var html = '<div style="background:#fff3cd;border:1px solid #ffc107;border-radius:8px;padding:15px;margin:10px 0;">';
-      html += '<h3 style="color:#856404;margin:0 0 10px;">بيانات يمكن تعديل سجلات</h3>';
+      html += '<h3 style="color:#856404;margin:0 0 10px;">🔍 فحص البيانات المكررة</h3>';
       var found = false;
 
       // 1. الأيام السابقة
@@ -9481,7 +9481,7 @@ function toggleEmployeeStatus(empId) {
       });
       if (hospDups.length > 0) {
         found = true;
-        html += '<div style="margin-bottom:12px;"><strong style="color:#c62828;">ملء الفورم (' + hospDups.length + ' اعتيادية):</strong>';
+        html += '<div style="margin-bottom:12px;"><strong style="color:#c62828;">📋 ضيافة متكرر (' + hospDups.length + '):</strong>';
         hospDups.forEach(function(d) {
           html += '<div style="background:#ffebee;padding:8px;border-radius:6px;margin:4px 0;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;">';
             html += '<span style="font-size:13px;">' + d.rec.name + ' | الوصول: ' + d.rec.arrival + (d.rec.title ? ' | ' + d.rec.title : '') + '</span>';
@@ -9504,10 +9504,10 @@ function toggleEmployeeStatus(empId) {
       });
       if (prodDups.length > 0) {
         found = true;
-        html += '<div style="margin-bottom:12px;"><strong style="color:#c62828;">بيانات التعديل حفظ (' + prodDups.length + ' التعديل):</strong>';
+        html += '<div style="margin-bottom:12px;"><strong style="color:#c62828;">🍞 إنتاج متكرر (' + prodDups.length + '):</strong>';
         prodDups.forEach(function(d) {
           html += '<div style="background:#ffebee;padding:8px;border-radius:6px;margin:4px 0;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;">';
-          html += '<span style="font-size:13px;">بيانات ' + normalizeDateStr(d.rec.date) + ' | بيانات ' + (d.rec.breadCount || 0) + ' يجب</span>';
+          html += '<span style="font-size:13px;">📅 ' + normalizeDateStr(d.rec.date) + ' | خبز: ' + (d.rec.breadCount || 0) + '</span>';
           html += '<button onclick="deleteDupProduction(' + d.idx + ')" style="padding:4px 12px;background:#c62828;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:12px;">حذف التكرار</button>';
           html += '</div>';
         });
@@ -9527,10 +9527,10 @@ function toggleEmployeeStatus(empId) {
       });
       if (ctrDups.length > 0) {
         found = true;
-        html += '<div style="margin-bottom:12px;"><strong style="color:#c62828;">بيانات وعدد الأيام (' + ctrDups.length + ' خطأ):</strong>';
+        html += '<div style="margin-bottom:12px;"><strong style="color:#c62828;">📦 توريد مقاولين متكرر (' + ctrDups.length + '):</strong>';
         ctrDups.forEach(function(d) {
           html += '<div style="background:#ffebee;padding:8px;border-radius:6px;margin:4px 0;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;">';
-          html += '<span style="font-size:13px;">بيانات ' + d.rec.name + ' | بيانات ' + normalizeDateStr(d.rec.date) + ' | بيانات ' + (d.rec.count || 0) + ' في</span>';
+          html += '<span style="font-size:13px;">' + d.rec.name + ' | ' + normalizeDateStr(d.rec.date) + ' | كمية: ' + (d.rec.count || 0) + '</span>';
           html += '<button onclick="deleteDupContractor(' + d.idx + ')" style="padding:4px 12px;background:#c62828;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:12px;">حذف التكرار</button>';
           html += '</div>';
         });
@@ -9538,7 +9538,7 @@ function toggleEmployeeStatus(empId) {
       }
 
       if (!found) {
-        html += '<div style="background:#e8f5e9;padding:12px;border-radius:6px;color:#2e7d32;font-weight:600;text-align:center;">? بيانات الإجازة تعديل الرصيد - بيانات حسب تغير!</div>';
+        html += '<div style="background:#e8f5e9;padding:12px;border-radius:6px;color:#2e7d32;font-weight:600;text-align:center;">✅ لا توجد بيانات مكررة</div>';
       } else {
         html += '<div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">';
         html += '<button onclick="deleteAllDuplicates()" style="padding:6px 16px;background:#c62828;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600;">حذف كافة التكرارات</button>';
