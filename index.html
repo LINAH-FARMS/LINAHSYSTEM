@@ -10206,7 +10206,7 @@ function toggleEmployeeStatus(empId) {
     }
 
     function deleteTS(idx) { if (!requireAdmin()) return;
-      if(confirm("دورية بداية تم تسجيل مهمة")) {
+      if(confirm("⚠️ هل أنت متأكد من حذف هذا الصرف؟")) {
         var d = teaSugarDisbursements[idx];
         _logDeletion('teaSugarDisbursements', (d.date||'') + '|' + (d.period||d.type||'') + '|' + (d.empCode||d.empId||'') + '|' + (d.teaPacks||d.quantity||'') + '|' + (d.sugarKg||''));
         teaSugarDisbursements.splice(idx, 1);
@@ -10232,7 +10232,7 @@ function toggleEmployeeStatus(empId) {
       alert('تم تحديث البيانات بنجاح');
     }
 
-    // --- اختر اختر المبنى أولاً ---
+    // --- دوال الشاي والسكر ---
     function saveTeaSugarBatch() {
       let date = document.getElementById('ts-batch-date').value;
       if (!date) return alert('الرجاء إدخال التاريخ.');
@@ -10332,7 +10332,7 @@ function toggleEmployeeStatus(empId) {
     function deleteTsBatch(idx) { if (!requireAdmin()) return;
       let b = teaSugarBatches[idx];
       if (!b) return;
-      if (confirm("بالفعل لا توجد")) {
+      if (confirm("⚠️ هل أنت متأكد من حذف هذه الدفعة؟")) {
         _logDeletion('teaSugarBatches', b.id || b._id);
         teaSugarBatches.splice(idx, 1);
         syncStorage(); renderTeaSugarBatchSummary(); renderTeaSugarTable();
@@ -10342,18 +10342,18 @@ function toggleEmployeeStatus(empId) {
     function editTsBatch(idx) {
       let b = teaSugarBatches[idx];
       if (!b) return;
-      let newTea = prompt("غرف المبنى:", b.teaQty);
+      let newTea = prompt("🍵 كمية الشاي (باكيت):", b.teaQty);
       if (newTea === null) return;
       newTea = parseInt(newTea);
-      if (isNaN(newTea) || newTea < 0) return alert("الغرفة السعة سرير");
-      let newSugar = prompt("حذف الغرفة؟:", b.sugarQty);
+      if (isNaN(newTea) || newTea < 0) return alert("⚠️ كمية غير صالحة");
+      let newSugar = prompt("🍚 كمية السكر (كجم):", b.sugarQty);
       if (newSugar === null) return;
       newSugar = parseFloat(newSugar);
-      if (isNaN(newSugar) || newSugar < 0) return alert("صرف الشاي والسكر");
+      if (isNaN(newSugar) || newSugar < 0) return alert("⚠️ كمية غير صالحة");
       b.teaQty = newTea;
       b.sugarQty = newSugar;
       syncStorage(); renderTeaSugarBatchSummary(); renderTeaSugarTable();
-      alert("تم تسجيل المقاول");
+      alert("✅ تم تعديل الدفعة");
     }
 
     function addTeaSugarRecord() {
