@@ -10155,8 +10155,8 @@ function toggleEmployeeStatus(empId) {
       // Strip invisible Unicode chars (LRM, RLM, ZWNJ, ZWJ, ZWSP, BOM, etc.)
       var n = dateStr.replace(/[\u200B-\u200F\u2028-\u202F\u2060-\u2063\uFEFF]/g, '');
       // Normalize Arabic/Asian digits
-      n = n.replace(/[?-?]/g, function(c) { return 'اسم'.indexOf(c); });
-      n = n.replace(/[?-?]/g, function(c) { return 'المهمة،'.indexOf(c); });
+      n = n.replace(/[\u0660-\u0669]/g, function(c) { return String.fromCharCode(c.charCodeAt(0) - 0x0660); });
+      n = n.replace(/[\u06F0-\u06F9]/g, function(c) { return String.fromCharCode(c.charCodeAt(0) - 0x06F0); });
       // Handle D/M/YYYY or D/M/YYYY HH:mm (Arabic locale format)
       var dm = n.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
       if (dm) return dm[3] + '-' + ('0' + dm[2]).slice(-2);
@@ -10168,7 +10168,7 @@ function toggleEmployeeStatus(empId) {
     }
     function _tsMonthName(monthKey) {
       if (!monthKey) return '';
-      var names = ['', 'الدورية،', 'تاريخ', 'البداية', 'شهري', 'أسبوعي', 'سنوي', 'ربع', 'سنوي', 'نصف', 'سنوي', 'إضافة', 'مهمة'];
+      var names = ['', 'يناير', 'فبراير', 'مارس', 'إبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
       var parts = monthKey.split('-');
       var m = parseInt(parts[1]) || 0;
       return names[m] + ' ' + parts[0];
@@ -10363,7 +10363,7 @@ function toggleEmployeeStatus(empId) {
       let teaPacks = 2;
       let sugarKg = 1;
 
-      if(!empId || !period) return alert("سجل صرف الشاي والسكر؟");
+      if(!empId || !period) return alert("⚠️ اختر الموظف والدورة أولاً");
 
       var today = new Date().toISOString().split('T')[0];
       var monthKey = today.slice(0, 7);
@@ -10399,9 +10399,9 @@ function toggleEmployeeStatus(empId) {
         let d = h.departure ? new Date(h.departure + 'T00:00:00') : a;
         return targetDate >= a && targetDate <= d;
       });
-      let gBf = todayGuests.reduce((s, h) => s + (h.meals && (h.meals.includes('إفطار') || h.meals.includes('يوم') || h.meals.includes('تموين')) ? (h.guests || 1) : 0), 0);
-      let gLh = todayGuests.reduce((s, h) => s + (h.meals && (h.meals.includes('غداء') || h.meals.includes('هل') || h.meals.includes('الشاي')) ? (h.guests || 1) : 0), 0);
-      let gDn = todayGuests.reduce((s, h) => s + (h.meals && (h.meals.includes('عشاء') || h.meals.includes('ترغب') || h.meals.includes('والسكر')) ? (h.guests || 1) : 0), 0);
+      let gBf = todayGuests.reduce((s, h) => s + (h.meals && h.meals.includes('إفطار') ? (h.guests || 1) : 0), 0);
+      let gLh = todayGuests.reduce((s, h) => s + (h.meals && h.meals.includes('غداء') ? (h.guests || 1) : 0), 0);
+      let gDn = todayGuests.reduce((s, h) => s + (h.meals && h.meals.includes('عشاء') ? (h.guests || 1) : 0), 0);
       return { pCount, gBf, gLh, gDn };
     }
 
