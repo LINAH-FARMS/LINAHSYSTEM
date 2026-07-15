@@ -17266,20 +17266,19 @@ function calcChefMulti(){
   if(activeDishes.length===0){ alert('أضف صنفاً واحداً على الأقل.'); return; }
   var totals={};
   activeDishes.forEach(function(d){
+    var factor=emp/d.recipe.base;
     d.recipe.items.forEach(function(it){
       var key=it.n+'|'+it.u;
       if(!totals[key]) totals[key]={ name:it.n, unit:it.u, qty:0 };
-      totals[key].qty+=it.q*d.hissa;
+      totals[key].qty+=it.q*factor*d.hissa;
     });
   });
-  var factor=emp/380;
   var mealType=document.getElementById('chef-meal-type').value;
   var names=activeDishes.map(function(d){ return d.recipe.name+' (x'+d.hissa+')'; }).join('، ');
   var body=document.getElementById('chef-result-body');
   var sorted=Object.keys(totals).sort().map(function(k){
     var t=totals[k];
-    var q=t.qty*factor;
-    return '<tr><td>'+t.name+'</td><td style="text-align:center;">'+t.unit+'</td><td style="text-align:center;font-weight:700;color:#1565c0;">'+formatQty(q)+'</td></tr>';
+    return '<tr><td>'+t.name+'</td><td style="text-align:center;">'+t.unit+'</td><td style="text-align:center;font-weight:700;color:#1565c0;">'+formatQty(t.qty)+'</td></tr>';
   }).join('');
   body.innerHTML='<tr style="background:#e3f2fd;font-weight:700;"><td colspan="3" style="text-align:center;">🍳 '+mealType+' | '+names+' | عدد الأفراد: '+emp+'</td></tr>'+sorted;
   document.getElementById('chef-result-wrap').style.display='block';
