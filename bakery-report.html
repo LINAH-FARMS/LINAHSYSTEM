@@ -124,7 +124,7 @@ textarea{resize:vertical;min-height:60px}
       </div>
 
       <div id="contractors-list"></div>
-      <div class="add-btn" onclick="addContractor()">+ إضافة مقاول جديد</div>
+      <button type="button" class="add-btn" onclick="addContractor()">+ إضافة مقاول جديد</button>
     </div>
 
     <button class="btn-submit" id="submit-btn" onclick="submitBakeryData()">✅ حفظ بيانات اليوم</button>
@@ -189,18 +189,21 @@ function calcDiesel() {
 function addContractor() {
   ctrCount++;
   var n = ctrCount;
-  var html = '<div class="contractor-card" id="ctr-' + n + '">' +
+  var html = '      <div class="contractor-card" id="ctr-' + n + '">' +
     '<div class="ctr-header">' +
     '<div class="ctr-num">' + n + '</div>' +
-    '<button class="remove-btn" onclick="removeContractor(' + n + ')">✕</button>' +
+    '<button type="button" class="remove-btn" onclick="removeContractor(' + n + ')">✕</button>' +
     '</div>' +
 
     '<div class="form-group">' +
     '<label>اسم المقاول</label>' +
-    '<select id="ctr-name-' + n + '" style="width:100%;padding:11px 12px;border:2px solid #e0e0e0;border-radius:10px;font-size:14px;font-family:Cairo;background:white;-webkit-appearance:none;">' +
-    '<option value="">-- اختر المقاول --</option>' +
-    bakeryContractorsNames.map(function(nm) { return '<option value="' + nm.replace(/"/g,'&quot;') + '">' + nm + '</option>'; }).join('') +
-    '</select>' +
+    (bakeryContractorsNames.length > 0
+      ? '<select id="ctr-name-' + n + '" style="width:100%;padding:11px 12px;border:2px solid #e0e0e0;border-radius:10px;font-size:14px;font-family:Cairo;background:white;-webkit-appearance:none;">' +
+        '<option value="">-- اختر المقاول --</option>' +
+        bakeryContractorsNames.map(function(nm) { return '<option value="' + nm.replace(/"/g,'&quot;') + '">' + nm + '</option>'; }).join('') +
+        '</select>'
+      : '<input type="text" id="ctr-name-' + n + '" placeholder="أدخل اسم المقاول" style="width:100%;padding:11px 12px;border:2px solid #e0e0e0;border-radius:10px;font-size:14px;font-family:Cairo;">'
+    ) +
     '</div>' +
 
     '<div class="form-row">' +
