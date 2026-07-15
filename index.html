@@ -4658,7 +4658,7 @@
           let occ = employees.filter(e=>e.status==='P'&&e.sector===s).length;
           let pct = Math.round(d.beds/maxBeds*100);
           return `<div class="dash-hbar-wrap">
-            <div class="dash-hbar-label"><span>${(s || 'بدون قطاع')} (${d.rooms} لا)</span><span>${occ}/${d.beds}</span></div>
+            <div class="dash-hbar-label"><span>${(s || 'بدون قطاع')} (${d.rooms} غرفة)</span><span>${occ}/${d.beds}</span></div>
             <div class="dash-hbar-track">
               <div class="dash-hbar-fill" style="width:${pct}%;background:${hColors[i%hColors.length]};"></div>
             </div>
