@@ -2674,7 +2674,7 @@
 
     <div id="meal-survey-section" style="margin:15px 0;border:2px solid #ffe0b2;border-radius:12px;overflow:hidden;">
       <div id="meal-survey-header" onclick="toggleMealSurvey()" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;padding:15px 20px;background:linear-gradient(135deg,#fff8e1,#fff3e0);cursor:pointer;user-select:none;">
-        <h3 style="margin:0;font-size:18px;">استبيان رضا الوجبات - <span id="survey-today" style="font-weight:400;"></span> <span id="survey-toggle-icon" style="display:inline-block;transition:transform 0.3s;font-size:14px;">▼</span></h3>
+        <h3 style="margin:0;font-size:18px;">استبيان رضا الوجبات - <span id="survey-today" style="font-weight:400;"></span> <span id="survey-toggle-icon" style="display:inline-block;transition:transform 0.3s;font-size:14px;transform:rotate(180deg);">▼</span></h3>
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;" onclick="event.stopPropagation()">
           <a href="qr-survey.html" target="_blank" style="height:42px;font-size:13px;padding:6px 14px;background:#f57c00;color:white;border:none;border-radius:8px;text-decoration:none;display:inline-flex;align-items:center;gap:6px;cursor:pointer;font-weight:700;">فتح استبيان الوجبات</a>
           <a href="qr-meal-waste.html" target="_blank" style="height:42px;font-size:13px;padding:6px 14px;background:#c62828;color:white;border:none;border-radius:8px;text-decoration:none;display:inline-flex;align-items:center;gap:6px;cursor:pointer;font-weight:700;">فتح سجل الهدر</a>
@@ -2682,7 +2682,7 @@
           <button class="btn btn-danger" onclick="openMealWasteModal()" style="height:42px;">إضافة سجل هدر</button>
         </div>
       </div>
-      <div id="meal-survey-body" style="padding:0 20px 20px;max-height:2000px;transition:max-height 0.4s ease,padding 0.3s ease,opacity 0.3s ease;opacity:1;overflow:hidden;">
+      <div id="meal-survey-body" style="padding:0 20px;max-height:0;transition:max-height 0.4s ease,padding 0.3s ease,opacity 0.3s ease;opacity:0;overflow:hidden;">
         <div id="survey-meals" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:15px;margin-top:15px;"></div>
         <div id="survey-stats" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;"></div>
         <div id="survey-comment-area" style="display:none;margin-top:12px;">
@@ -2695,14 +2695,14 @@
       </div>
       <div style="margin-top:10px;">
         <div onclick="toggleSurveyLog()" style="display:flex;align-items:center;gap:8px;margin-bottom:8px;cursor:pointer;user-select:none;">
-          <span id="sv-log-toggle" style="transition:transform 0.3s;font-size:12px;">▼</span>
+          <span id="sv-log-toggle" style="transition:transform 0.3s;font-size:12px;display:inline-block;transform:rotate(180deg);">▼</span>
           <h4 style="margin:0;font-size:14px;color:#e65100;">ملخص استبيان الرضا</h4>
           <div style="display:flex;gap:6px;align-items:center;margin-right:auto;" onclick="event.stopPropagation()">
             <input type="date" id="sv-log-from" onchange="renderSurveyLog()" style="padding:3px 6px;font-size:11px;border:1px solid #ccc;border-radius:4px;">
             <input type="date" id="sv-log-to" onchange="renderSurveyLog()" style="padding:3px 6px;font-size:11px;border:1px solid #ccc;border-radius:4px;">
           </div>
         </div>
-        <div id="sv-log-body-wrap" style="overflow-x:auto;transition:max-height 0.3s ease,opacity 0.3s ease;max-height:2000px;opacity:1;">
+        <div id="sv-log-body-wrap" style="overflow-x:auto;transition:max-height 0.3s ease,opacity 0.3s ease;max-height:0;opacity:0;">
           <table style="width:100%;border-collapse:collapse;font-size:12px;">
             <thead><tr style="background:#fff3e0;"><th style="padding:6px;border:1px solid #ffe0b2;">التاريخ</th><th style="padding:6px;border:1px solid #ffe0b2;">الوجبة</th><th style="padding:6px;border:1px solid #ffe0b2;">الموظف</th><th style="padding:6px;border:1px solid #ffe0b2;">التقييم</th><th style="padding:6px;border:1px solid #ffe0b2;">التعليق</th><th style="padding:6px;border:1px solid #ffe0b2;">إجراءات</th></tr></thead>
             <tbody id="sv-log-body"></tbody>
@@ -10846,7 +10846,7 @@ function toggleEmployeeStatus(empId) {
         }
       }
     }
-    var _surveyLogOpen = true;
+    var _surveyLogOpen = false;
     function toggleSurveyLog() {
       var body = document.getElementById('sv-log-body-wrap');
       var icon = document.getElementById('sv-log-toggle');
@@ -11235,7 +11235,7 @@ function toggleEmployeeStatus(empId) {
       }
       syncStorage(); renderMealWasteTable(); renderMealWasteStats();
     }
-    var _surveyOpen = true;
+    var _surveyOpen = false;
     function toggleMealSurvey() {
       var body = document.getElementById('meal-survey-body');
       var icon = document.getElementById('survey-toggle-icon');
