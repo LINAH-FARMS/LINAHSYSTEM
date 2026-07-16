@@ -14416,6 +14416,7 @@ var reportsTab = document.getElementById('tab-reports');
       // لو موظف رجع في القوة، شيله من المستبعدين
           window._mealFormsPollInterval = setInterval(function() {
             if (!supabaseConnected) return;
+            try { importBakeryFormData(); } catch(e) {}
             try { importMealWasteFormData(); } catch(e) {}
             try { importMealSurveyFormData(); } catch(e) {}
           }, 60000);
