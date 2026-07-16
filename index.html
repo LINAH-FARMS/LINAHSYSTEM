@@ -3827,8 +3827,6 @@
     let dynamicTitles = _safeJsonParse(_lsGet('dyn_titles'), ["مشرف","عامل","سائق","فني","مهندس زراعي","محاسب","أمين مخزن","طباخ","عامل نظافة"]);
     let dynamicVisitorTypes = _strArr(_safeJsonParse(_lsGet('dyn_visitor_types'), ["مورد","مفتش","ضيف","مقاول","موظف حكومي","ممثل جهة خارجية"]));
     let bakeryContractorsNames = _strArr(_safeJsonParse(_lsGet('linah_bakery_contractors_names'), ["محمد شعبان","ممدوح بكر","عاطف عبد المغيث","مصطفى على","اسامه سمير","فارس محمد"]));
-    // add any names from existing records not already in the list
-    (function() { var ctrs = _safeJsonParse(_lsGet('linah_bakery_ctr_supplies'), []); ctrs.forEach(function(c) { if (c.name && bakeryContractorsNames.indexOf(c.name) === -1) bakeryContractorsNames.push(c.name); }); })();
     let evaluations = _safeJsonParse(_lsGet('lineh_evaluations'), []);
     let roomAssets = _safeJsonParse(_lsGet('lineh_room_assets'), []);
     let archiveData = _safeJsonParse(_lsGet('lineh_archive_data'), []);
@@ -5621,18 +5619,8 @@
           changed = true;
         }
       });
-      // Discover bakery contractor names from supplies
-      if (typeof bakeryContractorSupplies !== 'undefined' && bakeryContractorSupplies.length) {
-        var ctrSet = {};
-        bakeryContractorsNames.forEach(function(n) { ctrSet[n] = true; });
-        bakeryContractorSupplies.forEach(function(s) {
-          if (s.name && !ctrSet[s.name]) {
-            bakeryContractorsNames.push(s.name);
-            ctrSet[s.name] = true;
-            changed = true;
-          }
-        });
-      }
+      // Discover bakery contractor names from supplies — disabled per user request, only 6 fixed names
+
       if (changed) {
         _lsSet('dyn_rooms', JSON.stringify(_strArr(dynamicRooms)));
         _lsSet('dyn_septics', JSON.stringify(_strArr(dynamicSeptics)));
@@ -13894,8 +13882,6 @@ function toggleEmployeeStatus(empId) {
       syncDeletions = _safeJsonParse(_lsGet('lineh_sync_deletions'), []);
       _applyDeletions();
       updateIngredientSuggestions();
-      // Auto-populate bakery contractors list from existing supplies
-      bakeryContractorSupplies.forEach(function(c) { if (c.name && bakeryContractorsNames.indexOf(c.name) === -1) { bakeryContractorsNames.push(c.name); } });
 
       // Reset all form fields
       document.querySelectorAll('input[type="text"], input[type="number"], input[type="date"], input[type="search"], textarea').forEach(el => {
