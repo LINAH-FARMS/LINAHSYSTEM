@@ -17603,16 +17603,18 @@ function calcChefMulti(){
   var mealType=document.getElementById('chef-meal-type').value;
   var names=activeDishes.map(function(d){ return d.recipe.name+' (x'+d.hissa+')'; }).join('، ');
   var body=document.getElementById('chef-result-body');
+  var missingCount=0;
   var sorted=Object.keys(totals).sort().map(function(k){
     var t=totals[k];
     var cost=getIngCost(t.name, t.unit);
     var lineCost=(cost!==undefined)? (cost*t.qty) : 0;
-    if (cost!==undefined) totalCost+=lineCost;
-    var costCell = (cost!==undefined) ? ('<td style="text-align:center;font-weight:700;color:#2e7d32;">'+formatQty(lineCost)+' ج.م</td>') : ('<td style="text-align:center;color:#b71c1c;font-size:11px;">؟</td>');
+    if (cost!==undefined) totalCost+=lineCost; else missingCount++;
+    var costCell = (cost!==undefined) ? ('<td style="text-align:center;font-weight:700;color:#2e7d32;">'+formatQty(lineCost)+' ج.م</td>') : ('<td style="text-align:center;color:#b71c1c;font-size:11px;cursor:pointer;" title="اضغط لإضافة سعر" onclick="openRecipeManager()">⚠️ بدون سعر</td>');
     return '<tr><td>'+t.name+'</td><td style="text-align:center;">'+t.unit+'</td><td style="text-align:center;font-weight:700;color:#1565c0;">'+formatQty(t.qty)+'</td>'+costCell+'</tr>';
   }).join('');
   var costRow = (totalCost>0) ? ('<tr class="summary-row"><td colspan="3" style="text-align:right;">إجمالي تكلفة الخامات التقديرية</td><td style="text-align:center;font-weight:700;color:#2e7d32;">'+formatQty(totalCost)+' ج.م</td></tr>') : '';
-  body.innerHTML='<tr style="background:#e3f2fd;font-weight:700;"><td colspan="4" style="text-align:center;">🍳 '+mealType+' | '+names+' | عدد الأفراد: '+emp+'</td></tr>'+sorted+costRow;
+  var missingRow = missingCount ? ('<tr><td colspan="4" style="text-align:center;color:#b71c1c;padding:8px;font-size:13px;background:#ffebee;"><b>⚠️ '+missingCount+' خامة بدون سعر</b> — اضغط على ⚠️ لإضافة السعر أو افتح ⚙️ إدارة الوصفات > تحديث أسعار</td></tr>') : '';
+  body.innerHTML='<tr style="background:#e3f2fd;font-weight:700;"><td colspan="4" style="text-align:center;">🍳 '+mealType+' | '+names+' | عدد الأفراد: '+emp+'</td></tr>'+sorted+costRow+missingRow;
   document.getElementById('chef-result-wrap').style.display='block';
 }
 function printChefCalcMulti(){
