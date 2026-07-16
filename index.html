@@ -4402,21 +4402,21 @@
       _lsSet('dyn_titles', JSON.stringify(dynamicTitles));
       rebuildDeptTitles();
 
-      fillSelectWithOptions('form-emp-dept', dynamicDepts, '-- لـ درجة --');
-      fillSelectWithOptions('form-emp-gov', allGovs, '-- أقصى الوزن --');
-      fillSelectWithOptions('form-emp-sector', dynamicSectors, '-- تعديل المجموع --');
+      fillSelectWithOptions('form-emp-dept', dynamicDepts, '-- اختر الإدارة --');
+      fillSelectWithOptions('form-emp-gov', allGovs, '-- اختر المحافظة --');
+      fillSelectWithOptions('form-emp-sector', dynamicSectors, '-- اختر المبنى --');
       var secSel = document.getElementById('form-emp-sector');
       if (secSel) { secSel.onchange = updateEmpRoomBySector; }
       updateEmpRoomBySector();
       filterTitlesByDept();
 
-      fillSelectWithOptions('inv-dept-select', dynamicDepts, '-- المسمى لهذا --');
-      fillSelectWithOptions('septic-name-select', dynamicSeptics, '-- محددة مؤشرات --');
+      fillSelectWithOptions('inv-dept-select', dynamicDepts, '-- اختر القسم --');
+      fillSelectWithOptions('septic-name-select', dynamicSeptics, '-- اختر --');
       var sd = document.getElementById('septic-date');
       if (sd && !sd.value) sd.value = new Date().toISOString().split('T')[0];
       populateContractorSectorDropdown();
-      fillSelectWithOptions('transfer-dept-select', dynamicDepts, '-- يوم المتبقي --');
-      fillSelectWithOptions('transfer-title-select', dynamicTitles, '-- السنوي الرصيد --');
+      fillSelectWithOptions('transfer-dept-select', dynamicDepts, '-- اختر القسم --');
+      fillSelectWithOptions('transfer-title-select', dynamicTitles, '-- اختر الوظيفة --');
       fillSelectWithOptions('hosp-type', dynamicVisitorTypes, '');
       populateBctrDatalist();
     }
@@ -4452,7 +4452,7 @@
       roomSel.innerHTML = '';
       if (!sector) {
         let opt = document.createElement('option');
-        opt.value = ''; opt.textContent = '-- توجد لا إدارة --';
+        opt.value = ''; opt.textContent = '-- اختر المبنى أولاً --';
         roomSel.appendChild(opt);
         return;
       }
@@ -7389,7 +7389,7 @@
       let dept = document.getElementById('form-emp-dept').value;
       let titleSelect = document.getElementById('form-emp-title-select');
       titleSelect.innerHTML = '';
-      let opt0 = document.createElement('option'); opt0.value = ''; opt0.textContent = '-- كجم خميرة --';
+      let opt0 = document.createElement('option'); opt0.value = '';       opt0.textContent = '-- اختر الوظيفة --';
       titleSelect.appendChild(opt0);
       if (!dept) return;
       rebuildDeptTitles();
@@ -7660,7 +7660,7 @@
 
       sortEmployeesAlphabetically(); syncStorage(); renderTable(); renderHousingLayout(); rebuildAllDropdowns(); closeModal('modal-add-emp');
       document.getElementById('edit-emp-id').value = '';
-      document.getElementById('modal-emp-title').innerText = "الكود الاسم الصنف الكمية";
+      document.getElementById('modal-emp-title').innerText = 'إضافة موظف جديد للقوة';
     }
 
     function resetAddEmpForm() {
