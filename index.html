@@ -17522,20 +17522,23 @@ function importRecipes(inp) {
         var ws1 = wb.Sheets['الوصفات'];
         if (ws1) {
           var data = XLSX.utils.sheet_to_json(ws1, {header:1});
-          var cur = null;
+          var recipesByName = {};
           data.forEach(function(row, i){
             if (i === 0) return;
             if (!row || !row.length) return;
             var name = row[0], base = row[1], ing = row[2], unit = row[3], qty = row[4];
             if (name && typeof name === 'string' && name.trim()) {
-              if (cur) newRecipes.push(cur);
-              cur = { name:name.trim(), base:parseInt(base)||380, items:[] };
-            }
-            if (ing && typeof ing === 'string' && ing.trim() && cur) {
-              cur.items.push({ n:ing.trim(), u:(unit||'').toString().trim(), q:parseFloat(qty)||0 });
+              if (!recipesByName[name.trim()]) recipesByName[name.trim()] = { name:name.trim(), base:parseInt(base)||380, items:[] };
+              if (ing && typeof ing === 'string' && ing.trim()) {
+                recipesByName[name.trim()].items.push({ n:ing.trim(), u:(unit||'').toString().trim(), q:parseFloat(qty)||0 });
+              }
+            } else if (ing && typeof ing === 'string' && ing.trim()) {
+              // لو مفيش اسم جديد، ضيف آخر وصفة (للتنسيق القديم)
+              var keys = Object.keys(recipesByName);
+              if (keys.length) recipesByName[keys[keys.length-1]].items.push({ n:ing.trim(), u:(unit||'').toString().trim(), q:parseFloat(qty)||0 });
             }
           });
-          if (cur) newRecipes.push(cur);
+          Object.keys(recipesByName).forEach(function(k){ newRecipes.push(recipesByName[k]); });
         }
       }
 
