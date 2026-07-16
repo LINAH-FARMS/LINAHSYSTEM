@@ -2862,7 +2862,7 @@
         <div style="display:flex;gap:6px;">
           <button class="btn" onclick="document.getElementById('rm-import-file').click()" style="padding:3px 10px;font-size:11px;background:#1565c0;color:#fff;border:none;border-radius:5px;">📥 استيراد</button>
           <button class="btn" onclick="exportRecipes()" style="padding:3px 10px;font-size:11px;background:#e65100;color:#fff;border:none;border-radius:5px;">📤 تصدير</button>
-          <input type="file" id="rm-import-file" accept=".json" style="display:none;" onchange="importRecipes(this)">
+          <input type="file" id="rm-import-file" accept=".xlsx,.json" style="display:none;" onchange="importRecipes(this)">
         </div>
         <span class="close-btn" onclick="closeModal('modal-recipe-manager')">&times;</span>
       </div>
@@ -17449,11 +17449,27 @@ function refreshChefDishOptions() {
   }
 }
 function exportRecipes() {
-  var data = JSON.stringify({ recipes: RECIPES, prices: CHEF_ING_COSTS }, null, 2);
-  var blob = new Blob([data], { type: 'application/json' });
-  var a = document.createElement('a'); a.href = URL.createObjectURL(blob);
-  a.download = 'recipes_' + new Date().toISOString().slice(0,10) + '.json';
-  a.click(); URL.revokeObjectURL(a.href);
+  var rows = [['اسم الوصفة','أساس (فرد)','الخامة','الوحدة','الكمية']];
+  RECIPES.forEach(function(r){
+    (r.items||[]).forEach(function(it){
+      rows.push([r.name, r.base, it.n, it.u, it.q]);
+    });
+  });
+  var ws1 = XLSX.utils.aoa_to_sheet(rows);
+  // ضبط عرض الأعمدة
+  ws1['!cols'] = [{wch:25},{wch:10},{wch:20},{wch:8},{wch:10}];
+  var wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws1, 'الوصفات');
+  // الأسعار
+  var priceRows = [['الخامة','الوحدة','السعر']];
+  Object.keys(CHEF_ING_COSTS).sort().forEach(function(k){
+    var parts = k.split('|');
+    priceRows.push([parts[0], parts[1]||'', CHEF_ING_COSTS[k]]);
+  });
+  var ws2 = XLSX.utils.aoa_to_sheet(priceRows);
+  ws2['!cols'] = [{wch:25},{wch:8},{wch:10}];
+  XLSX.utils.book_append_sheet(wb, ws2, 'الأسعار');
+  XLSX.writeFile(wb, 'وصفات_الطباخ_' + new Date().toISOString().slice(0,10) + '.xlsx');
 }
 function importRecipes(inp) {
   if (!inp.files || !inp.files[0]) return;
@@ -17461,21 +17477,76 @@ function importRecipes(inp) {
   var reader = new FileReader();
   reader.onload = function(e) {
     try {
-      var data = JSON.parse(e.target.result);
-      if (data.recipes && Array.isArray(data.recipes) && data.recipes.length) {
-        RECIPES.length = 0; data.recipes.forEach(function(r){ RECIPES.push(r); });
+      var wb = XLSX.read(e.target.result, {type:'array'});
+      var newRecipes = [];
+
+      // محاولة قراءة من الصيغة القديمة (كل وصفة sheet + اسعار)
+      var priceSheet = wb.Sheets['اسعار'] || wb.Sheets['الأسعار'];
+      wb.SheetNames.forEach(function(sn){
+        if (sn === 'اسعار' || sn === 'الأسعار' || sn === 'الوصفات') return;
+        var ws = wb.Sheets[sn];
+        var rows = XLSX.utils.sheet_to_json(ws, {header:1});
+        if (!rows || rows.length < 2) return;
+        var name = rows[0][0] ? String(rows[0][0]).trim() : sn.trim();
+        var base = 380;
+        if (rows[0][1]) { var m = String(rows[0][1]).match(/\d+/); if (m) base = parseInt(m[0]); }
+        var items = [];
+        for (var i = 1; i < rows.length; i++) {
+          var r = rows[i];
+          if (r[2]) { items.push({ n:String(r[2]).trim(), u:(r[1]||'').toString().trim(), q:parseFloat(r[0])||0 }); }
+        }
+        if (items.length) newRecipes.push({ name:name, base:base, items:items });
+      });
+
+      // لو مفيش حاجة، جرب صيغة التصدير (الوصفات sheet واحد)
+      if (newRecipes.length === 0) {
+        var ws1 = wb.Sheets['الوصفات'];
+        if (ws1) {
+          var data = XLSX.utils.sheet_to_json(ws1, {header:1});
+          var cur = null;
+          data.forEach(function(row, i){
+            if (i === 0) return;
+            if (!row || !row.length) return;
+            var name = row[0], base = row[1], ing = row[2], unit = row[3], qty = row[4];
+            if (name && typeof name === 'string' && name.trim()) {
+              if (cur) newRecipes.push(cur);
+              cur = { name:name.trim(), base:parseInt(base)||380, items:[] };
+            }
+            if (ing && typeof ing === 'string' && ing.trim() && cur) {
+              cur.items.push({ n:ing.trim(), u:(unit||'').toString().trim(), q:parseFloat(qty)||0 });
+            }
+          });
+          if (cur) newRecipes.push(cur);
+        }
+      }
+
+      if (newRecipes.length) {
+        RECIPES.length = 0; newRecipes.forEach(function(r){ RECIPES.push(r); });
         saveChefRecipes();
         renderRecipeManager(); refreshChefDishOptions();
-        alert('تم استيراد ' + data.recipes.length + ' وصفة بنجاح.');
-      } else { alert('الملف لا يحتوي على وصفات صالحة.'); }
-      if (data.prices && typeof data.prices === 'object') {
-        Object.keys(data.prices).forEach(function(k){ CHEF_ING_COSTS[k] = data.prices[k]; });
-        saveChefIngCosts();
+        alert('تم استيراد ' + newRecipes.length + ' وصفة من Excel.');
+      } else { alert('لم يتم العثور على وصفات في الملف.'); }
+
+      // الأسعار
+      if (priceSheet) {
+        var priceData = XLSX.utils.sheet_to_json(priceSheet, {header:1});
+        var imported = 0;
+        priceData.forEach(function(row, i){
+          if (i === 0) return;
+          if (row[1] && row[3] !== undefined && row[3] !== null) {
+            CHEF_ING_COSTS[String(row[1]).trim()+'|'+(row[2]||'').toString().trim()] = parseFloat(row[3]);
+            imported++;
+          } else if (row[0] && row[2] !== undefined && row[2] !== null) {
+            CHEF_ING_COSTS[String(row[0]).trim()+'|'+(row[1]||'').toString().trim()] = parseFloat(row[2]);
+            imported++;
+          }
+        });
+        if (imported) { saveChefIngCosts(); renderChefCostEditor(); }
       }
     } catch(err) { alert('فشل قراءة الملف: ' + err.message); }
     inp.value = '';
   };
-  reader.readAsText(inp.files[0]);
+  reader.readAsArrayBuffer(inp.files[0]);
 }
 function resetRecipeForm() {
   document.getElementById('rm-name').value = '';
