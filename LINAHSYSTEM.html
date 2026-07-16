@@ -9085,7 +9085,7 @@ function toggleEmployeeStatus(empId) {
         
         if(data.dynamicSectors) dynamicSectors = data.dynamicSectors;
         if(data.contractorSectors) contractorSectors = data.contractorSectors;
-        if(data.contractorRooms) contractorRooms = data.contractorRooms;
+        if(data.contractorRooms) { if (Array.isArray(data.contractorRooms)) contractorRooms = data.contractorRooms.filter(function(r) { return r && typeof r === 'object' && r.sector && r.number; }); else contractorRooms = []; }
         if(data.dynamicRooms) dynamicRooms = data.dynamicRooms;
         if(data.dynamicSeptics) dynamicSeptics = data.dynamicSeptics;
         if(data.dynamicDepts) dynamicDepts = data.dynamicDepts;
@@ -10607,7 +10607,7 @@ function toggleEmployeeStatus(empId) {
       else if (key === 'teaSugarBatches') teaSugarBatches = val;
       else if (key === 'dynamicSectors') dynamicSectors = val;
       else if (key === 'contractorSectors') contractorSectors = val;
-      else if (key === 'contractorRooms') contractorRooms = val;
+      else if (key === 'contractorRooms') { if (Array.isArray(val)) contractorRooms = val.filter(function(r) { return r && typeof r === 'object' && r.sector && r.number; }); else contractorRooms = []; }
       else if (key === 'dynamicRooms') dynamicRooms = val;
       else if (key === 'dynamicSeptics') dynamicSeptics = val;
       else if (key === 'dynamicDepts') dynamicDepts = val;
@@ -10859,7 +10859,7 @@ function toggleEmployeeStatus(empId) {
         if (data.mealLogs) mealLogs = data.mealLogs;
         if (data.contractors) contractors = data.contractors;
         if (data.contractorSectors) contractorSectors = data.contractorSectors;
-        if (data.contractorRooms) contractorRooms = data.contractorRooms;
+        if (data.contractorRooms) { if (Array.isArray(data.contractorRooms)) contractorRooms = data.contractorRooms.filter(function(r) { return r && typeof r === 'object' && r.sector && r.number; }); else contractorRooms = []; }
         if (data.dynamicSectors) dynamicSectors = data.dynamicSectors;
         if (data.dynamicRooms) dynamicRooms = data.dynamicRooms;
         if (data.dynamicSeptics) dynamicSeptics = data.dynamicSeptics;

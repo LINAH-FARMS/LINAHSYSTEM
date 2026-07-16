@@ -10101,6 +10101,7 @@ function toggleEmployeeStatus(empId) {
       syncStorage(); renderContractorRoomsList(); document.getElementById('ctr-room-number').value = '';
     }
     function renderContractorRoomsList() {
+      contractorRooms = contractorRooms.filter(function(r) { return r && typeof r === 'object' && r.sector && r.number; });
       var container = document.getElementById('ctr-rooms-list');
       if (!container) return;
       if (!contractorRooms.length) { container.innerHTML = '<div style="color:#999;padding:4px;">— لا توجد غرف —</div>'; return; }
@@ -14489,7 +14490,7 @@ var reportsTab = document.getElementById('tab-reports');
       else if (key === 'teaSugarBatches') teaSugarBatches = val;
       else if (key === 'dynamicSectors') dynamicSectors = val;
       else if (key === 'contractorSectors') contractorSectors = val;
-      else if (key === 'contractorRooms') contractorRooms = val;
+      else if (key === 'contractorRooms') { contractorRooms = Array.isArray(val) ? val.filter(function(r) { return r && typeof r === 'object' && r.sector && r.number; }) : []; }
       else if (key === 'dynamicRooms') dynamicRooms = val;
       else if (key === 'dynamicSeptics') dynamicSeptics = val;
       else if (key === 'dynamicDepts') dynamicDepts = val;
