@@ -474,8 +474,8 @@
       color: white;
     }
     .user-badge-vacation {
-      background-color: #fff3e0;
-      border: 1px solid #ffcc80;
+      background-color: #ffe6e6;
+      border: 1px solid #ef5350;
     }
 
     .asset-row {
@@ -7957,8 +7957,9 @@ function toggleEmployeeStatus(empId) {
           for (var _i = 0; _i < roomUsers.length; _i++) {
             var _u = roomUsers[_i];
             var _cls = 'user-badge';
-            if (_u.status === 'V') _cls += ' user-badge-vacation';
-            userBadges += '<span class="' + _cls + '" onclick="editEmployee(\'' + _u.id + '\')">' + _u.name.split(' ')[0] + ' ' + (_u.name.split(' ')[1] || '') + (_u.status === 'V' ? ' (\u0625\u062C\u0627\u0632\u0629)' : '') + '</span>';
+            if (_u.status === 'V') { _cls += ' user-badge-vacation'; userBadges += '<span style="display:inline-flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;border-radius:50%;background:#d32f2f;display:inline-block;"></span>'; }
+            userBadges += '<span class="' + _cls + '" onclick="editEmployee(\'' + _u.id + '\')">' + _u.name.split(' ')[0] + ' ' + (_u.name.split(' ')[1] || '') + '</span>';
+            if (_u.status === 'V') userBadges += '</span>';
           }
           card.innerHTML = '<div class="room-header"><span>\u0627\u0644\u063A\u0631\u0641\u0629: ' + room.number + '</span><span class="room-beds">\u0627\u0644\u0625\u0634\u063A\u0627\u0644: ' + roomUsers.length + ' / \u0627\u0644\u0633\u0639\u0629: ' + room.beds + '</span></div><div class="room-users">' + (userBadges || '<span style=\"color:#b0bec5;font-size:12px;font-style:italic;\">\u0644\u0627 \u064A\u0648\u062C\u062F \u0639\u0645\u0627\u0644</span>') + '</div><div style="display:flex;gap:4px;margin-top:6px;"></div>';
           roomsContainer.appendChild(card);
