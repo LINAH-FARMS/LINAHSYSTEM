@@ -1035,7 +1035,6 @@
     <button class="tab-btn" onclick="switchTab('tab-contractors')">👷 تسكين المقاولين <span class="tab-badge" id="badge-ctr">0</span></button>
     <button class="tab-btn" onclick="switchTab('tab-bakery')" style="background:#fff3e0; color:#e65100; font-weight:700;">🍞 فرن المزرعة <span class="tab-badge orange" id="badge-bakery">0</span></button>
     <button class="tab-btn" onclick="switchTab('tab-bread-supply')" style="background:#e3f2fd; color:#1565c0; font-weight:700;">🚚 توريد الخبز للمقاولين <span class="tab-badge blue" id="badge-bread-supply">0</span></button>
-    <button class="tab-btn" onclick="switchTab('tab-bakery-contractors')" style="background:#fff3e0; color:#e65100; font-weight:700;">🍞 مقاولي الخبز</button>
     <button class="tab-btn" onclick="switchTab('tab-finance')" style="background:#e8eaf6; color:#283593; font-weight:700;">💰 المركز المالي والميزانية</button>
     <button class="tab-btn" onclick="switchTab('tab-dynamic')">➕ الإدارة المرنة</button>
     <button class="tab-btn" onclick="switchTab('tab-data-exchange')" style="background:#e8f5e9; color:#1b5e20; font-weight:700;">🔄 تبادل البيانات</button>
@@ -3136,13 +3135,6 @@
       </div>
     </div>
 
-  </div>
-
-  <div id="tab-bakery-contractors" class="tab-content">
-    <div class="stats-container">
-      <div class="stat-card"><h3>إجمالي مقاولي الخبز</h3><div class="value" id="bctr-total">0</div></div>
-    </div>
-    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px;padding:10px;" id="bctr-grid"></div>
   </div>
 
   <!-- ====== Evaluations Tab ====== -->
@@ -5381,7 +5373,7 @@
       if (!tabEl) { console.error('Tab not found:', tabId); return; }
       tabEl.classList.add('active');
       if (el) el.classList.add('active');
-      var tabNames = { 'tab-dashboard':'الرئيسية','tab-employees':'القوة','tab-housing':'السكن','tab-inventory':'المخزن','tab-vacations':'إجازات وإضافي الشئون الإدارية','tab-hospitality':'الضيافة','tab-maintenance':'الصيانة','tab-septic':'البيارات','tab-dynamic':'الإدارة المرنة','tab-excluded':'المستبعدين','tab-periodic-maint':'الصيانة الدورية','tab-tea-sugar':'شاي وسكر','tab-meal-log':'الوجبات','tab-contractors':'المقاولين','tab-bakery':'المخبز','tab-bread-supply':'توريد الخبز','tab-bakery-contractors':'مقاولي الخبز','tab-evaluations':'التقييمات','tab-audit':'سجل التعديلات','tab-finance':'المركز المالي والميزانية','tab-reports':'بلاغات الأعطال','tab-data-exchange':'تبادل البيانات','tab-water-stations':'محطات المياه','tab-ai-assistant':'المساعد الذكي' };
+      var tabNames = { 'tab-dashboard':'الرئيسية','tab-employees':'القوة','tab-housing':'السكن','tab-inventory':'المخزن','tab-vacations':'إجازات وإضافي الشئون الإدارية','tab-hospitality':'الضيافة','tab-maintenance':'الصيانة','tab-septic':'البيارات','tab-dynamic':'الإدارة المرنة','tab-excluded':'المستبعدين','tab-periodic-maint':'الصيانة الدورية','tab-tea-sugar':'شاي وسكر','tab-meal-log':'الوجبات','tab-contractors':'المقاولين','tab-bakery':'المخبز','tab-bread-supply':'توريد الخبز','tab-evaluations':'التقييمات','tab-audit':'سجل التعديلات','tab-finance':'المركز المالي والميزانية','tab-reports':'بلاغات الأعطال','tab-data-exchange':'تبادل البيانات','tab-water-stations':'محطات المياه','tab-ai-assistant':'المساعد الذكي' };
       setAction('أنت في تبويب: ' + (tabNames[tabId] || tabId));
       try { if(tabId === 'tab-dashboard') { renderDashboard(); renderQuickActions(); } } catch(e) { console.error('tab-dashboard error:', e); }
       try { if(tabId === 'tab-housing') { if(!roomsCapacity.length) rebuildRoomsFromEmployees(); renderHousingLayout(); updateHousingStats(); } } catch(e) { console.error('tab-housing error:', e); }
@@ -5394,7 +5386,6 @@
       try { if(tabId === 'tab-contractors') { populateContractorSectorDropdown(); renderContractorsTable(); } } catch(e) { console.error('tab-contractors error:', e); }
       try { if(tabId === 'tab-bakery') { renderBakeryProductions(); renderBakeryIngredients(); updateBakeryStats(); populateBakeryDropdowns(); updateBakeryProductionIngredientStocks(); generateBakeryQR(); importBakeryFormData(); } } catch(e) { console.error('tab-bakery error:', e); }
       try { if(tabId === 'tab-bread-supply') { renderBakeryContractorSupplies(); renderBakeryInvoices(); updateBreadSupplyStats(); populateBakeryDropdowns(); } } catch(e) { console.error('tab-bread-supply error:', e); }
-      try { if(tabId === 'tab-bakery-contractors') { renderBakeryContractorsTab(); } } catch(e) { console.error('tab-bakery-contractors error:', e); }
       try { if(tabId === 'tab-maintenance') { searchMaintMaterial(); renderMaintMaterialsList(); } } catch(e) { console.error('tab-maintenance error:', e); }
       try { if(tabId === 'tab-septic') { renderSepticTable(); var sd = document.getElementById('septic-date'); if (sd && !sd.value) sd.value = new Date().toISOString().split('T')[0]; } } catch(e) { console.error('tab-septic error:', e); }
       try { if(tabId === 'tab-vacations') { renderOvertimeCalendar(); } } catch(e) { console.error('tab-vacations error:', e); }
@@ -7851,19 +7842,6 @@ function toggleEmployeeStatus(empId) {
         calculateSystemStats();
     }
 }
-    function renderBakeryContractorsTab() {
-      var names = _strArr(bakeryContractorsNames);
-      document.getElementById('bctr-total').textContent = names.length;
-      var grid = document.getElementById('bctr-grid');
-      if (!grid) return;
-      grid.innerHTML = '';
-      names.forEach(function(n, i) {
-        var card = document.createElement('div');
-        card.style.cssText = 'background:white;border:2px solid #e65100;border-radius:12px;padding:16px;text-align:center;';
-        card.innerHTML = '<div style="font-size:32px;font-weight:800;color:#e65100;">' + (i+1) + '</div><div style="font-size:18px;font-weight:700;margin-top:8px;">' + n + '</div>';
-        grid.appendChild(card);
-      });
-    }
     function renderTable() {
       let q = document.getElementById('search-emp').value.toLowerCase();
       let statusFil = document.getElementById('filter-status').value;
