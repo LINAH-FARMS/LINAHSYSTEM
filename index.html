@@ -2857,7 +2857,15 @@
 
   <div id="modal-recipe-manager" class="modal">
     <div class="modal-content" style="max-width:680px;border-top:5px solid #6a1b9a;">
-      <div class="modal-header"><h2 id="rm-title">⚙️ إدارة الوصفات</h2><span class="close-btn" onclick="closeModal('modal-recipe-manager')">&times;</span></div>
+      <div class="modal-header">
+        <h2 id="rm-title">⚙️ إدارة الوصفات</h2>
+        <div style="display:flex;gap:6px;">
+          <button class="btn" onclick="document.getElementById('rm-import-file').click()" style="padding:3px 10px;font-size:11px;background:#1565c0;color:#fff;border:none;border-radius:5px;">📥 استيراد</button>
+          <button class="btn" onclick="exportRecipes()" style="padding:3px 10px;font-size:11px;background:#e65100;color:#fff;border:none;border-radius:5px;">📤 تصدير</button>
+          <input type="file" id="rm-import-file" accept=".json" style="display:none;" onchange="importRecipes(this)">
+        </div>
+        <span class="close-btn" onclick="closeModal('modal-recipe-manager')">&times;</span>
+      </div>
       <div style="padding:15px;">
         <div id="recipe-manager-list" style="max-height:240px;overflow-y:auto;margin-bottom:12px;"></div>
         <div style="border:1px dashed #b39ddb;border-radius:10px;padding:12px;background:#faf5ff;">
@@ -17439,6 +17447,35 @@ function refreshChefDishOptions() {
     Object.keys(CHEF_ING_COSTS).forEach(function(k){ names[k.split('|')[0]]=1; });
     dl.innerHTML = Object.keys(names).map(function(n){ return '<option value="'+n+'">'; }).join('');
   }
+}
+function exportRecipes() {
+  var data = JSON.stringify({ recipes: RECIPES, prices: CHEF_ING_COSTS }, null, 2);
+  var blob = new Blob([data], { type: 'application/json' });
+  var a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = 'recipes_' + new Date().toISOString().slice(0,10) + '.json';
+  a.click(); URL.revokeObjectURL(a.href);
+}
+function importRecipes(inp) {
+  if (!inp.files || !inp.files[0]) return;
+  if (!confirm('استيراد الوصفات سيحل محل الوصفات الحالية. هل أنت متأكد؟')) { inp.value = ''; return; }
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      var data = JSON.parse(e.target.result);
+      if (data.recipes && Array.isArray(data.recipes) && data.recipes.length) {
+        RECIPES.length = 0; data.recipes.forEach(function(r){ RECIPES.push(r); });
+        saveChefRecipes();
+        renderRecipeManager(); refreshChefDishOptions();
+        alert('تم استيراد ' + data.recipes.length + ' وصفة بنجاح.');
+      } else { alert('الملف لا يحتوي على وصفات صالحة.'); }
+      if (data.prices && typeof data.prices === 'object') {
+        Object.keys(data.prices).forEach(function(k){ CHEF_ING_COSTS[k] = data.prices[k]; });
+        saveChefIngCosts();
+      }
+    } catch(err) { alert('فشل قراءة الملف: ' + err.message); }
+    inp.value = '';
+  };
+  reader.readAsText(inp.files[0]);
 }
 function resetRecipeForm() {
   document.getElementById('rm-name').value = '';
