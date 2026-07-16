@@ -2963,6 +2963,7 @@
     let dynamicDepts = JSON.parse(localStorage.getItem('dyn_depts')) || ["الإنتاج الزراعي", "الادارة الزراعيه", "الأمن الإداري", "الشئون الإدارية", "الحركة والنقل", "الصيانة والهندسة", "الاداره الفنية", "ادارة الجودة"];
     let dynamicTitles = JSON.parse(localStorage.getItem('dyn_titles')) || ["مهندس زراعي", "مشرف موقع", "مشرف إداري", "مشرف إداري أول", "مشرف إداري ثاني", "مشرف الصيانة الفنية", "رئيس قسم المطبخ", "عامل زراعي", "فرد أمن", "فني صيانة", "سائق تراك", "قائد فريق الزيتون", "قائد فريق الشئون الإدارية", "نخال", "مدخل بيانات", "مدير الرى والتسميد", "مهندس جودة"];
     let bakeryContractorsNames = JSON.parse(localStorage.getItem('linah_bakery_contractors_names')) || ["محمد شعبان","ممدوح بكر","عاطف عبد المغيث","مصطفى على","اسامه سمير","فارس محمد"];
+    var _o=["محمد شعبان","ممدوح بكر","عاطف عبد المغيث","مصطفى على","اسامه سمير","فارس محمد"],_s={};_o.forEach(function(n){_s[n]=true;});bakeryContractorsNames=bakeryContractorsNames.filter(function(n){return _s[n];});if(!bakeryContractorsNames.length)bakeryContractorsNames=_o.slice();
     let evaluations = JSON.parse(localStorage.getItem('lineh_evaluations')) || [];
     let roomAssets = JSON.parse(localStorage.getItem('lineh_room_assets')) || [];
     let archiveData = JSON.parse(localStorage.getItem('lineh_archive_data')) || [];
@@ -10611,7 +10612,7 @@ function toggleEmployeeStatus(empId) {
       else if (key === 'dynamicSeptics') dynamicSeptics = val;
       else if (key === 'dynamicDepts') dynamicDepts = val;
       else if (key === 'dynamicTitles') dynamicTitles = val;
-      else if (key === 'bakeryContractorsNames') bakeryContractorsNames = val;
+      else if (key === 'bakeryContractorsNames') { var _o=["محمد شعبان","ممدوح بكر","عاطف عبد المغيث","مصطفى على","اسامه سمير","فارس محمد"],_s={};_o.forEach(function(n){_s[n]=true;});val=val.filter(function(n){return _s[n];});if(!val.length)val=_o.slice();bakeryContractorsNames=val; }
       else if (key === 'evaluations') evaluations = val;
       else if (key === 'evalTemplates') evalTemplates = val;
       else if (key === 'appUsers') appUsers = filterLatinUsers(val);
@@ -11550,7 +11551,7 @@ function toggleEmployeeStatus(empId) {
               if (data.dynamicSeptics) dynamicSeptics = data.dynamicSeptics;
               if (data.dynamicDepts) dynamicDepts = data.dynamicDepts;
         if (data.dynamicTitles) dynamicTitles = data.dynamicTitles;
-        if (data.bakeryContractorsNames) bakeryContractorsNames = data.bakeryContractorsNames;
+        if (data.bakeryContractorsNames) { var _o=["محمد شعبان","ممدوح بكر","عاطف عبد المغيث","مصطفى على","اسامه سمير","فارس محمد"],_s={};_o.forEach(function(n){_s[n]=true;});bakeryContractorsNames=data.bakeryContractorsNames.filter(function(n){return _s[n];});if(!bakeryContractorsNames.length)bakeryContractorsNames=_o.slice(); }
         if (data.deptTitles) deptTitles = data.deptTitles;
               employees.forEach(function(e) { if (typeof e.vacationBalance !== 'number') e.vacationBalance = 30; });
               syncStorage();
