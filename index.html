@@ -1277,7 +1277,7 @@
       </div>
       
       <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
-        <button class="btn btn-primary" onclick="openModal('modal-add-emp')">➕ إضافة موظف</button>
+        <button class="btn btn-primary" onclick="resetAddEmpForm();openModal('modal-add-emp')">➕ إضافة موظف</button>
         <button class="btn btn-secondary" onclick="generateAndPrintMealReport()">🍽️ بلاغ الوجبات المشترك</button>
         <button class="btn btn-secondary" onclick="downloadTemplate_Employees()">📥 نموذج القوة</button>
         <button class="btn btn-excel" onclick="document.getElementById('excel-file').click()">📥 استيراد القوة (Excel)</button>
@@ -2057,7 +2057,7 @@
     <div class="modal-content">
       <div class="modal-header">
         <h2 id="modal-emp-title">إضافة موظف جديد للقوة</h2>
-        <span class="close-btn" onclick="closeModal('modal-add-emp')">&times;</span>
+        <span class="close-btn" onclick="closeModal('modal-add-emp');resetAddEmpForm()">&times;</span>
       </div>
       <input type="hidden" id="edit-emp-id">
       <div class="form-grid">
@@ -3899,7 +3899,7 @@
       { icon: '👥', label: 'الموظفين', action: "switchTab('tab-employees')" },
       { icon: '🏠', label: 'السكن', action: "switchTab('tab-housing')" },
       { icon: '📦', label: 'المخزون', action: "switchTab('tab-inventory')" },
-      { icon: '➕', label: 'إضافة موظف', action: "openModal('modal-add-emp')" },
+      { icon: '➕', label: 'إضافة موظف', action: "resetAddEmpForm();openModal('modal-add-emp')" },
       { icon: '💾', label: 'نسخة احتياطية', action: 'exportBackupSystem()' },
       { icon: '📊', label: 'تصدير Excel', action: 'exportDashboardToExcel()' },
       { icon: '✅', label: 'فحص سلامة البيانات', action: 'showValidationResult()' },
@@ -7663,6 +7663,20 @@
       document.getElementById('modal-emp-title').innerText = "الكود الاسم الصنف الكمية";
     }
 
+    function resetAddEmpForm() {
+      document.getElementById('edit-emp-id').value = '';
+      document.getElementById('modal-emp-title').innerText = 'إضافة موظف جديد للقوة';
+      document.getElementById('form-emp-code').value = ''; document.getElementById('form-emp-code').readOnly = false; document.getElementById('form-emp-code').style.background = '#fff';
+      document.getElementById('form-emp-name').value = ''; document.getElementById('form-emp-contract').value = 'دائم';
+      document.getElementById('form-emp-national-id').value = ''; document.getElementById('form-emp-hire-date').value = '';
+      document.getElementById('form-emp-status').value = 'P'; document.getElementById('form-emp-vacation-balance').value = 30;
+      document.getElementById('form-emp-dept').value = ''; document.getElementById('form-emp-title-select').value = '';
+      document.getElementById('form-emp-gov').value = ''; document.getElementById('form-emp-sector').value = '';
+      document.getElementById('form-emp-room').innerHTML = '<option value="">اختر المبنى أولاً</option>';
+      document.querySelectorAll('.default-asset').forEach(function(inp){ inp.value = 0; });
+      document.getElementById('assets-form-container').innerHTML = '';
+      document.getElementById('form-emp-name').focus();
+    }
     function editEmployee(id) {
       let emp = employees.find(e => e.id == id);
       if(!emp) return;
