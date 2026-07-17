@@ -11395,8 +11395,9 @@ function renderTeaSugarTable() {
         w.engAte = engAte; w.engTakeaway = engTakeaway; w.wrkAte = wrkAte; w.wrkTakeaway = wrkTakeaway; w.guests = guests; w.wasteGuests = wasteGuests; w.waterAdded = waterAdded; w.gasCost = gasCost; w.salaryCost = salaryCost; w.prepWaste = prepWaste;
         w.modifiedAt = new Date().toISOString();
       } else {
-        mealWaste.push({ date: normDate, meal: meal, chef: chef, ingredients: ingredients, totalPrepared: totalPrepared, wasteEng: wasteEng, wasteWrk: wasteWrk, cost: cost, responsible: responsible, engAte: engAte, engTakeaway: engTakeaway, wrkAte: wrkAte, wrkTakeaway: wrkTakeaway, guests: guests, wasteGuests: wasteGuests, waterAdded: waterAdded, gasCost: gasCost, salaryCost: salaryCost, prepWaste: prepWaste, createdAt: new Date().toISOString() });
-        _removeDeletion('mealWaste', normDate + '|' + meal);
+        var newEntry = { date: normDate, meal: meal, chef: chef, ingredients: ingredients, totalPrepared: totalPrepared, wasteEng: wasteEng, wasteWrk: wasteWrk, cost: cost, responsible: responsible, engAte: engAte, engTakeaway: engTakeaway, wrkAte: wrkAte, wrkTakeaway: wrkTakeaway, guests: guests, wasteGuests: wasteGuests, waterAdded: waterAdded, gasCost: gasCost, salaryCost: salaryCost, prepWaste: prepWaste, createdAt: new Date().toISOString() };
+        mealWaste.push(newEntry);
+        _removeDeletion('mealWaste', normDate + '|' + meal + '|' + newEntry.createdAt);
       }
       closeModal('modal-meal-waste');
       cancelMealWasteEdit();
@@ -11447,7 +11448,7 @@ function renderTeaSugarTable() {
       if (!confirm('الحالية نقلة م')) return;
       var w = mealWaste[idx];
       var delDate = normalizeDateStr(w.date);
-      _logDeletion('mealWaste', (w.date||'') + '|' + (w.meal||''));
+      _logDeletion('mealWaste', (w.date||'') + '|' + (w.meal||'') + '|' + (w.createdAt||''));
       mealWaste.splice(idx, 1);
       // Recalculate gas/salary split for remaining records on same date
       var remaining = mealWaste.filter(function(r) { return normalizeDateStr(r.date) === delDate; });
@@ -11458,6 +11459,26 @@ function renderTeaSugarTable() {
         });
       }
       syncStorage(); renderMealWasteTable(); renderMealWasteStats();
+      // Remove from Supabase
+      if (supabaseConnected) {
+        fetch(SUPABASE_URL + '/rest/v1/sync_data?id=eq.meal_waste_entries', {
+          method: 'GET',
+          headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(rows) {
+          if (rows && rows.length > 0 && rows[0].data) {
+            var entries = typeof rows[0].data === 'string' ? JSON.parse(rows[0].data) : rows[0].data;
+            entries = entries.filter(function(e) { return e.createdAt !== w.createdAt; });
+            return fetch(SUPABASE_URL + '/rest/v1/sync_data?id=eq.meal_waste_entries', {
+              method: 'PATCH',
+              headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/json' },
+              body: JSON.stringify({ data: entries, updated_at: new Date().toISOString() })
+            });
+          }
+        })
+        .catch(function(e) { console.error('Delete meal waste sync error:', e); });
+      }
     }
     var _surveyOpen = false;
     function toggleMealSurvey() {
@@ -13110,9 +13131,9 @@ function renderTeaSugarTable() {
           var imported = 0;
           entries.forEach(function(e) {
             if (!e.date || !e.meal) return;
-            var key = (e.date||'') + '|' + (e.meal||'');
+            var key = (e.date||'') + '|' + (e.meal||'') + '|' + (e.createdAt||'');
             if (_isDeleted('mealWaste', key)) return;
-            var exists = mealWaste.some(function(mw) { return mw.date === e.date && mw.meal === e.meal; });
+            var exists = mealWaste.some(function(mw) { return mw.date === e.date && mw.meal === e.meal && (mw.createdAt||'') === (e.createdAt||''); });
             if (!exists) {
               mealWaste.push(_ts({
                 date: e.date,
@@ -14571,7 +14592,7 @@ function renderTeaSugarTable() {
         excludedEmployees: function(e) { return e.id || e.code || e.name; },
         contractors: function(c) { return c.name || c.id; },
         mealLogs: function(m) { return m.date; },
-        mealWaste: function(w) { return (w.date||'') + '|' + (w.meal||''); },
+        mealWaste: function(w) { return (w.date||'') + '|' + (w.meal||'') + '|' + (w.createdAt||''); },
         inventoryItems: function(i) { return i.id || i.name; },
         hospitalities: function(h) { return (h.name || '') + '|' + (h.arrival || '') + '|' + (h.type || ''); },
         adminOvertime: function(o) { return (o.date || '') + '|' + (o.empCode || o.name || ''); },
@@ -15097,7 +15118,7 @@ var reportsTab = document.getElementById('tab-reports');
         excludedEmployees: function(e) { return e.id || e.code || e.name; },
         contractors: function(c) { return c.name || c.id; },
         mealLogs: function(m) { return m.date; },
-        mealWaste: function(w) { return (w.date||'') + '|' + (w.meal||''); },
+        mealWaste: function(w) { return (w.date||'') + '|' + (w.meal||'') + '|' + (w.createdAt||''); },
         inventoryItems: function(i) { return i.id || i.name; },
         hospitalities: function(h) { return (h.name||'') + '|' + (h.arrival||'') + '|' + (h.type||''); },
         adminOvertime: function(o) { return (o.date||'') + '|' + (o.empCode||o.name||''); },
