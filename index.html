@@ -17206,7 +17206,6 @@ function updateDashClock() {
               <div class="form-group"><label>بند الصيانة</label><input type="text" id="dd-maint-task" placeholder="وصف العطل" style="padding:6px;border:1px solid #ccc;border-radius:6px;"></div>
               <div class="form-group"><label>الفني</label><input type="text" id="dd-maint-tech" placeholder="اسم الفني" style="padding:6px;border:1px solid #ccc;border-radius:6px;"></div>
               <div class="form-group"><label>الحالة</label><select id="dd-maint-status" style="padding:6px;border:1px solid #ccc;border-radius:6px;"><option>مفتوحة</option><option>تحت التنفيذ</option><option>تمت</option><option>ملغاة</option></select></div>
-              <div class="form-group"><label>التكلفة (ج.م)</label><input type="number" id="dd-maint-cost" min="0" step="0.01" value="0" style="padding:6px;border:1px solid #ccc;border-radius:6px;"></div>
               <div class="form-group" style="grid-column:span 2;"><label>ملاحظات</label><textarea id="dd-maint-notes" rows="2" style="width:100%;padding:6px;border:1px solid #ccc;border-radius:6px;font-family:Cairo,sans-serif;"></textarea></div>
             </div>
           </div>
@@ -17216,7 +17215,6 @@ function updateDashClock() {
               <div class="form-group"><label>البيارة</label><input type="text" id="dd-septic-name" list="septic-list" placeholder="اسم البيارة" style="padding:6px;border:1px solid #ccc;border-radius:6px;"><datalist id="septic-list"></datalist></div>
               <div class="form-group"><label>عدد النقلات</label><input type="number" id="dd-septic-trips" min="0" value="0" style="padding:6px;border:1px solid #ccc;border-radius:6px;"></div>
               <div class="form-group"><label>المشرف</label><input type="text" id="dd-septic-supervisor" placeholder="اسم المشرف" style="padding:6px;border:1px solid #ccc;border-radius:6px;"></div>
-              <div class="form-group"><label>التكلفة (ج.م)</label><input type="number" id="dd-septic-cost" min="0" step="0.01" value="0" style="padding:6px;border:1px solid #ccc;border-radius:6px;"></div>
             </div>
           </div>
         </div>
@@ -18236,7 +18234,6 @@ function openDailyDataForm() {
   document.getElementById('dd-maint-task').value = '';
   document.getElementById('dd-maint-tech').value = '';
   document.getElementById('dd-maint-status').value = 'مفتوحة';
-  document.getElementById('dd-maint-cost').value = 0;
   document.getElementById('dd-maint-notes').value = '';
   document.getElementById('dd-septic-name').value = '';
   document.getElementById('dd-septic-trips').value = 0;
@@ -18258,14 +18255,12 @@ function saveDailyData() {
   var maintTask = document.getElementById('dd-maint-task').value.trim();
   var maintTech = document.getElementById('dd-maint-tech').value.trim();
   var maintStatus = document.getElementById('dd-maint-status').value;
-  var maintCost = parseFloat(document.getElementById('dd-maint-cost').value) || 0;
   var maintNotes = document.getElementById('dd-maint-notes').value.trim();
   var septicName = document.getElementById('dd-septic-name').value.trim();
   var septicTrips = parseInt(document.getElementById('dd-septic-trips').value) || 0;
   var septicSupervisor = document.getElementById('dd-septic-supervisor').value.trim();
-  var septicCost = parseFloat(document.getElementById('dd-septic-cost').value) || 0;
   if (!teaPacks && !sugar && !maintTask && !septicName) { alert('ادخل بيانات على الأقل في قسم واحد.'); return; }
-  dailyData.push({ date: date, teaPacks: teaPacks, sugar: sugar, maintCat: maintCat, maintTask: maintTask, maintTech: maintTech, maintStatus: maintStatus, maintCost: maintCost, maintNotes: maintNotes, septicName: septicName, septicTrips: septicTrips, septicSupervisor: septicSupervisor, septicCost: septicCost, createdAt: new Date().toISOString() });
+  dailyData.push({ date: date, teaPacks: teaPacks, sugar: sugar, maintCat: maintCat, maintTask: maintTask, maintTech: maintTech, maintStatus: maintStatus, maintNotes: maintNotes, septicName: septicName, septicTrips: septicTrips, septicSupervisor: septicSupervisor, createdAt: new Date().toISOString() });
   _lsSet('linah_daily_data', JSON.stringify(dailyData));
   alert('✅ تم حفظ بيانات اليوم ' + date);
   renderDailyDataTable();
@@ -18274,22 +18269,20 @@ function saveDailyData() {
   document.getElementById('dd-sugar').value = 0;
   document.getElementById('dd-maint-task').value = '';
   document.getElementById('dd-maint-tech').value = '';
-  document.getElementById('dd-maint-cost').value = 0;
   document.getElementById('dd-maint-notes').value = '';
   document.getElementById('dd-septic-name').value = '';
   document.getElementById('dd-septic-trips').value = 0;
   document.getElementById('dd-septic-supervisor').value = '';
-  document.getElementById('dd-septic-cost').value = 0;
 }
 function renderDailyDataTable() {
   var wrap = document.getElementById('daily-data-table-wrap');
   if (!wrap) return;
   if (!dailyData.length) { wrap.innerHTML = '<p style="color:#888;text-align:center;padding:20px;">لا توجد بيانات يومية بعد.</p>'; return; }
-  var html = '<table style="width:100%;border-collapse:collapse;font-size:12px;"><thead><tr style="background:#5d4037;color:white;"><th style="padding:6px;border:1px solid #5d4037;">التاريخ</th><th style="padding:6px;border:1px solid #5d4037;">🍵 شاي</th><th style="padding:6px;border:1px solid #5d4037;">🍚 سكر</th><th style="padding:6px;border:1px solid #5d4037;">🛠️ صيانة</th><th style="padding:6px;border:1px solid #5d4037;">💰 التكلفة</th><th style="padding:6px;border:1px solid #5d4037;">🚽 بيارة</th><th style="padding:6px;border:1px solid #5d4037;">نقلات</th><th style="padding:6px;border:1px solid #5d4037;" class="no-print"></th></tr></thead><tbody>';
+  var html = '<table style="width:100%;border-collapse:collapse;font-size:12px;"><thead><tr style="background:#5d4037;color:white;"><th style="padding:6px;border:1px solid #5d4037;">التاريخ</th><th style="padding:6px;border:1px solid #5d4037;">🍵 الشاي (باكيت)</th><th style="padding:6px;border:1px solid #5d4037;">🍚 السكر (كجم)</th><th style="padding:6px;border:1px solid #5d4037;">🛠️ الصيانة</th><th style="padding:6px;border:1px solid #5d4037;">🚽 البيارة</th><th style="padding:6px;border:1px solid #5d4037;">عدد النقلات</th><th style="padding:6px;border:1px solid #5d4037;" class="no-print"></th></tr></thead><tbody>';
   var sorted = dailyData.slice().sort(function(a,b){ return b.date.localeCompare(a.date); });
   sorted.forEach(function(d, i){
     var realIdx = dailyData.indexOf(d);
-    html += '<tr style="border-bottom:1px solid #e0e0e0;"><td style="padding:6px;border:1px solid #e0e0e0;">' + d.date + '</td><td style="padding:6px;border:1px solid #e0e0e0;text-align:center;">' + (d.teaPacks||'—') + '</td><td style="padding:6px;border:1px solid #e0e0e0;text-align:center;">' + (d.sugar||'—') + '</td><td style="padding:6px;border:1px solid #e0e0e0;">' + (d.maintTask || '—') + '</td><td style="padding:6px;border:1px solid #e0e0e0;text-align:center;">' + (d.maintCost ? d.maintCost + ' ج.م' : '—') + '</td><td style="padding:6px;border:1px solid #e0e0e0;">' + (d.septicName || '—') + '</td><td style="padding:6px;border:1px solid #e0e0e0;text-align:center;">' + (d.septicTrips || '—') + '</td><td class="no-print" style="padding:6px;border:1px solid #e0e0e0;text-align:center;"><button onclick="deleteDailyData(' + realIdx + ')" style="background:none;border:none;color:#d32f2f;cursor:pointer;font-size:14px;">✕</button></td></tr>';
+    html += '<tr style="border-bottom:1px solid #e0e0e0;"><td style="padding:6px;border:1px solid #e0e0e0;">' + d.date + '</td><td style="padding:6px;border:1px solid #e0e0e0;text-align:center;">' + (d.teaPacks||'—') + '</td><td style="padding:6px;border:1px solid #e0e0e0;text-align:center;">' + (d.sugar||'—') + '</td><td style="padding:6px;border:1px solid #e0e0e0;">' + (d.maintTask || '—') + '</td><td style="padding:6px;border:1px solid #e0e0e0;">' + (d.septicName || '—') + '</td><td style="padding:6px;border:1px solid #e0e0e0;text-align:center;">' + (d.septicTrips || '—') + '</td><td class="no-print" style="padding:6px;border:1px solid #e0e0e0;text-align:center;"><button onclick="deleteDailyData(' + realIdx + ')" style="background:none;border:none;color:#d32f2f;cursor:pointer;font-size:14px;">✕</button></td></tr>';
   });
   html += '</tbody></table>';
   wrap.innerHTML = html;
@@ -18302,9 +18295,9 @@ function deleteDailyData(idx) {
 }
 function exportDailyDataReport() {
   if (!dailyData.length) { alert('لا توجد بيانات للتصدير.'); return; }
-  var rows = [['التاريخ','الشاي (باكيت)','السكر (كجم)','نوع الصيانة','بند الصيانة','الفني','الحالة','تكلفة الصيانة','ملاحظات الصيانة','البيارة','عدد النقلات','المشرف','تكلفة البيارة']];
+  var rows = [['التاريخ','الشاي (باكيت)','السكر (كجم)','نوع الصيانة','بند الصيانة','الفني','الحالة','ملاحظات','البيارة','عدد النقلات','المشرف']];
   dailyData.sort(function(a,b){ return a.date.localeCompare(b.date); }).forEach(function(d){
-    rows.push([d.date, d.teaPacks||0, d.sugar||0, d.maintCat||'', d.maintTask||'', d.maintTech||'', d.maintStatus||'', d.maintCost||0, d.maintNotes||'', d.septicName||'', d.septicTrips||0, d.septicSupervisor||'', d.septicCost||0]);
+    rows.push([d.date, d.teaPacks||0, d.sugar||0, d.maintCat||'', d.maintTask||'', d.maintTech||'', d.maintStatus||'', d.maintNotes||'', d.septicName||'', d.septicTrips||0, d.septicSupervisor||'']);
   });
   var ws = XLSX.utils.aoa_to_sheet(rows);
   var wb = XLSX.utils.book_new();
