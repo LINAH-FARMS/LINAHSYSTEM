@@ -7810,7 +7810,7 @@
       } else {
         rows = '<tr><td colspan="2" style="padding:12px;text-align:center;color:#888;">لا توجد عهدة مسجلة</td></tr>';
       }
-      var html = '<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8"><title>ملاية سرير - ' + emp.name + '</title><style>body{font-family:Arial,sans-serif;padding:20px;}table{width:100%;border-collapse:collapse;margin-top:10px;}th,td{padding:8px 12px;border:1px solid #333;text-align:right;}th{background:#e65100;color:#fff;}.header{text-align:center;margin-bottom:20px;}.header h2{margin:0;color:#e65100;}.info{display:flex;gap:20px;flex-wrap:wrap;margin-bottom:15px;font-size:13px;}.info div{flex:1;min-width:120px;}.watermark{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);opacity:0.06;font-size:80px;pointer-events:none;z-index:-1;}</style></head><body><div class="watermark">LINAHSYSTEM</div><div class="header"><h2>كشف عهدة ملاية السرير</h2><p style="font-size:14px;color:#888;">سرير ملايه - LINAHSYSTEM</p></div><div class="info"><div><b>العامل:</b> ' + emp.name + '</div><div><b>الشركة:</b> ' + (emp.code || '—') + '</div><div><b>القسم:</b> ' + (emp.dept || '—') + '</div><div><b>المسمى الوظيفي:</b> ' + (emp.title || '—') + '</div></div><table><thead><tr><th>الصنف</th><th style="text-align:center;">العدد</th></tr></thead><tbody>' + rows + '</tbody></table><div style="margin-top:15px;font-size:11px;color:#888;text-align:center;">تاريخ الطباعة: ' + new Date().toLocaleDateString('ar-EG') + '</div></body></html>';
+      var html = '<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8"><title>كشف عهدة - ' + emp.name + '</title><style>body{font-family:Arial,sans-serif;padding:20px;}table{width:100%;border-collapse:collapse;margin-top:10px;}th,td{padding:8px 12px;border:1px solid #333;text-align:right;}th{background:#e65100;color:#fff;}.header{text-align:center;margin-bottom:20px;}.header h2{margin:0;color:#e65100;}.info{display:flex;gap:20px;flex-wrap:wrap;margin-bottom:15px;font-size:13px;}.info div{flex:1;min-width:120px;}.watermark{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);opacity:0.06;font-size:80px;pointer-events:none;z-index:-1;}</style></head><body><div class="watermark">LINAHSYSTEM</div><div class="header"><h2>كشف عهدة</h2><p style="font-size:14px;color:#888;">نظام الشئون الإدارية المتكامل</p></div><div class="info"><div><b>العامل:</b> ' + emp.name + '</div><div><b>الكود:</b> ' + (emp.code || '—') + '</div><div><b>القسم:</b> ' + (emp.dept || '—') + '</div><div><b>المسمى الوظيفي:</b> ' + (emp.title || '—') + '</div></div><table><thead><tr><th>الصنف</th><th style="text-align:center;">العدد</th></tr></thead><tbody>' + rows + '</tbody></table><div style="margin-top:15px;font-size:11px;color:#888;text-align:center;">تاريخ الطباعة: ' + new Date().toLocaleDateString('ar-EG') + '</div></body></html>';
       var w = window.open('', '_blank', 'width=800,height=600');
       w.document.write(html);
       w.document.close();
@@ -8783,7 +8783,7 @@ function toggleEmployeeStatus(empId) {
         buildingRows += roomRows;
       }
       let mainPercent = totalBeds > 0 ? Math.round(totalOccupied / totalBeds * 100) : 0;
-      let printContent = '<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8"><title>هل أنت متأكد؟</title>';
+      let printContent = '<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8"><title>تقرير السكن</title>';
       printContent += '<style>';
       printContent += '*{margin:0;padding:0;box-sizing:border-box;}';
       printContent += 'body{font-family:"Cairo","Segoe UI",Tahoma,Arial,sans-serif;padding:15px;color:#333;background:#fff;}';
@@ -8800,20 +8800,19 @@ function toggleEmployeeStatus(empId) {
       printContent += 'th{background:#1b5e20;color:white;padding:7px 8px;font-size:12px;font-weight:700;text-align:center;}';
       printContent += 'td{padding:6px 8px;border-bottom:1px solid #e0e0e0;}';
       printContent += 'tr:nth-child(even):not(:has(td[colspan])){background:#f9fafb;}';
-      printContent += 'tr:hover:not(:has(td[colspan])){background:#e8f5e9;}';
       printContent += '.footer{text-align:center;font-size:10px;color:#999;margin-top:12px;border-top:1px solid #eee;padding-top:6px;}';
       printContent += '@media print{body{padding:0;}@page{size:A4 landscape;margin:0.8cm;}.no-print{display:none!important;}}';
       printContent += '</style></head><body>';
-      printContent += '<div class="header"><h1>بيانات تم ترحيل موظف — وحذف المبنى</h1><p>بنجاح تعديل: ' + new Date().toLocaleDateString('ar-EG', {weekday:'long',year:'numeric',month:'long',day:'numeric'}) + ' | سعة: ' + new Date().toLocaleTimeString('ar-EG') + '</p></div>';
+      printContent += '<div class="header"><h1>تقرير السكن</h1><p>تاريخ التقرير: ' + new Date().toLocaleDateString('ar-EG', {weekday:'long',year:'numeric',month:'long',day:'numeric'}) + ' | ' + new Date().toLocaleTimeString('ar-EG') + '</p></div>';
       printContent += '<div class="summary">';
-      printContent += '<div class="summary-box"><div class="label">غرفة في</div><div class="value">' + totalBeds + '</div></div>';
-      printContent += '<div class="summary-box blue"><div class="label">مبنى (P)</div><div class="value">' + totalOccupied + '</div><div class="label">' + mainPercent + '%</div></div>';
-      printContent += '<div class="summary-box orange"><div class="label">السعة</div><div class="value">' + totalVacant + '</div></div>';
+      printContent += '<div class="summary-box"><div class="label">إجمالي الأسرة</div><div class="value">' + totalBeds + '</div></div>';
+      printContent += '<div class="summary-box blue"><div class="label">مشغول</div><div class="value">' + totalOccupied + '</div><div class="label">' + mainPercent + '%</div></div>';
+      printContent += '<div class="summary-box orange"><div class="label">شاغر</div><div class="value">' + totalVacant + '</div></div>';
       printContent += '</div>';
-      printContent += '<table><thead><tr><th style="width:80px;">الحالية</th><th style="width:70px;">أدخل</th><th style="width:70px;">السعة</th><th style="width:70px;">الجديدة</th><th>السعة</th></tr></thead><tbody>';
+      printContent += '<table><thead><tr><th style="width:80px;">الغرفة</th><th style="width:70px;">أسرة</th><th style="width:70px;">مشغول</th><th style="width:70px;">شاغر</th><th>أسماء المقيمين</th></tr></thead><tbody>';
       printContent += buildingRows;
       printContent += '</tbody></table>';
-      printContent += '<div class="footer">يجب أن تكون رقم — أكبر من | صفر تم</div>';
+      printContent += '<div class="footer">نظام الشئون الإدارية المتكامل — لينه فارمز</div>';
       printContent += '<script>setTimeout(function(){window.print();},500);<\/script>';
       printContent += '</body></html>';
       let w = window.open('', '_blank', 'width=1100,height=800');
@@ -14123,7 +14122,7 @@ function renderTeaSugarTable() {
       let logoImg = document.querySelector('.print-watermark img');
       let logoSrc = logoImg ? logoImg.src : '';
       let w = window.open('', '_blank', 'width=400,height=600');
-      w.document.write(`<html dir="rtl"><head><meta charset="UTF-8"><title>كجم ${inv.number}</title>
+      w.document.write(`<html dir="rtl"><head><meta charset="UTF-8"><title>فاتورة ${inv.number}</title>
         <style>body{font-family: 'Cairo',sans-serif;padding:20px;max-width:350px;margin:auto;}
         h2{text-align:center;color:#1b5e20;border-bottom:2px solid #1b5e20;padding-bottom:10px;}
         table{width:100%;border-collapse:collapse;margin:15px 0;}
@@ -14134,17 +14133,17 @@ function renderTeaSugarTable() {
         .wm{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-15deg);z-index:-1;pointer-events:none;}
         .wm img{width:400px;height:auto;opacity:0.07;}</style></head><body>
         ${logoSrc ? '<div class="wm"><img src="' + logoSrc + '"></div>' : ''}
-        <h2>بيانات أرغفة متوسط جرام رغيف</h2>
-        <p><b>اختر التاريخ:</b> ${inv.number}</p>
-        <p><b>أدخل:</b> ${inv.date}</p>
-        <p><b>عدد:</b> ${inv.customer}</p>
-        <table><tr><th>الأرغفة</th><th>حذف</th><th>الإنتاج القديم</th><th>إن</th></tr>
-        <tr><td>وجد</td><td>${inv.count}</td><td>${inv.unitPrice}</td><td>${(inv.count*inv.unitPrice).toFixed(2)}</td></tr></table>
-        <div class="total">لنفس: ${(inv.count*inv.unitPrice).toFixed(2)} جنيه</div>
-        <div class="total" style="font-size:16px;color:#1b5e20;">التاريخ: ${parseFloat(inv.paid).toFixed(2)} جنيه</div>
-        <div class="total" style="font-size:16px;">استعادة: ${((inv.count*inv.unitPrice) - parseFloat(inv.paid)).toFixed(2)} جنيه</div>
-        ${inv.notes ? `<p style="margin-top:15px;"><b>الخامات:</b> ${inv.notes}</p>` : ''}
-        <div class="footer">أولاً الكمية المسحوبة<br>من أكبر - من الرصيد</div>
+        <h2>فاتورة توريد مخبز</h2>
+        <p><b>رقم الفاتورة:</b> ${inv.number}</p>
+        <p><b>التاريخ:</b> ${inv.date}</p>
+        <p><b>العميل:</b> ${inv.customer}</p>
+        <table><tr><th>الصنف</th><th>العدد</th><th>سعر الوحدة</th><th>الإجمالي</th></tr>
+        <tr><td>خبز</td><td>${inv.count}</td><td>${inv.unitPrice}</td><td>${(inv.count*inv.unitPrice).toFixed(2)}</td></tr></table>
+        <div class="total">الإجمالي: ${(inv.count*inv.unitPrice).toFixed(2)} جنيه</div>
+        <div class="total" style="font-size:16px;color:#1b5e20;">المدفوع: ${parseFloat(inv.paid).toFixed(2)} جنيه</div>
+        <div class="total" style="font-size:16px;">المتبقي: ${((inv.count*inv.unitPrice) - parseFloat(inv.paid)).toFixed(2)} جنيه</div>
+        ${inv.notes ? `<p style="margin-top:15px;"><b>ملاحظات:</b> ${inv.notes}</p>` : ''}
+        <div class="footer">نظام الشئون الإدارية المتكامل — لينه فارمز</div>
         <script>window.print();setTimeout(()=>window.close(),1500);</${''}script></body></html>`);
       w.document.close();
     }
@@ -16833,17 +16832,18 @@ function updateDashClock() {
       let summaryHtml = '';
       if (isContractorTable && checked.length > 0) {
         summaryHtml = '<div style="margin-top:20px;border:2px solid #1b5e20;border-radius:8px;padding:12px;background:transparent;">' +
-          '<h3 style="text-align:center;color:#1b5e20;margin:0 0 10px;">بيانات الرغيف</h3>' +
+          '<h3 style="text-align:center;color:#1b5e20;margin:0 0 10px;">ملخص توريد الخبز</h3>' +
           '<table style="width:auto;margin:0 auto;border:none;">' +
-          '<tr><td style="border:none;font-weight:700;text-align:left;padding:4px 12px;">تكلفة الإنتاج تم:</td><td style="border:none;font-weight:700;color:#1b5e20;padding:4px 12px;">' + totalCount + '</td></tr>' +
-          '<tr><td style="border:none;font-weight:700;text-align:left;padding:4px 12px;">تصدير تكلفة:</td><td style="border:none;font-weight:700;color:#1b5e20;padding:4px 12px;">' + totalRevenue.toFixed(2) + ' جنيه</td></tr>' +
-          '<tr><td style="border:none;font-weight:700;text-align:left;padding:4px 12px;">الخبز يوم:</td><td style="border:none;font-weight:700;color:#1565c0;padding:4px 12px;">' + totalPaid.toFixed(2) + ' جنيه</td></tr>' +
-          '<tr><td style="border:none;font-weight:700;text-align:left;padding:4px 12px;">لا توجد:</td><td style="border:none;font-weight:700;color:#d32f2f;padding:4px 12px;">' + totalRemaining.toFixed(2) + ' جنيه</td></tr>' +
+          '<tr><td style="border:none;font-weight:700;text-align:left;padding:4px 12px;">إجمالي الكمية:</td><td style="border:none;font-weight:700;color:#1b5e20;padding:4px 12px;">' + totalCount + ' رغيف</td></tr>' +
+          '<tr><td style="border:none;font-weight:700;text-align:left;padding:4px 12px;">إجمالي الإيراد:</td><td style="border:none;font-weight:700;color:#1b5e20;padding:4px 12px;">' + totalRevenue.toFixed(2) + ' جنيه</td></tr>' +
+          '<tr><td style="border:none;font-weight:700;text-align:left;padding:4px 12px;">إجمالي المدفوع:</td><td style="border:none;font-weight:700;color:#1565c0;padding:4px 12px;">' + totalPaid.toFixed(2) + ' جنيه</td></tr>' +
+          '<tr><td style="border:none;font-weight:700;text-align:left;padding:4px 12px;">المتبقي:</td><td style="border:none;font-weight:700;color:#d32f2f;padding:4px 12px;">' + totalRemaining.toFixed(2) + ' جنيه</td></tr>' +
           '</table></div>';
       }
 
+      let title = tableId ? tableId.replace(/table-/g, '').replace(/-/g, ' ') : 'تقرير';
       let w = window.open('', '_blank', 'width=900,height=700');
-      w.document.write('<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8"><title>بيانات توريد</title>' +
+      w.document.write('<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8"><title>' + title + '</title>' +
         '<style>body{font-family:"Segoe UI",Tahoma,Arial,sans-serif;padding:20px;}' +
         'table{width:100%;border-collapse:collapse;margin:10px 0;font-size:12px;}' +
         'th,td{border:1px solid #ddd;padding:5px 6px;text-align:center;}' +
@@ -16853,10 +16853,10 @@ function updateDashClock() {
         '.print-watermark img{width:500px;height:auto;opacity:0.07;}' +
         '@media print{body{padding:0;}}</style></head><body>' +
         (logoSrc ? '<div class="print-watermark"><img src="' + logoSrc + '"></div>' : '') +
-        '<h2>خبز في</h2>' +
+        '<h2>' + title + '</h2>' +
         '<table>' + headerRow + rows + '</table>' +
         summaryHtml +
-        '<div style="text-align:center;color:#888;margin-top:15px;font-size:11px;">النطاق المحدد: ' + new Date().toLocaleString('ar-EG') + '</div>' +
+        '<div style="text-align:center;color:#888;margin-top:15px;font-size:11px;">طباعة: ' + new Date().toLocaleString('ar-EG') + '</div>' +
         '<script>window.print();setTimeout(function(){window.close()},1500);</' + 'script>' +
         '</body></html>');
       w.document.close();
