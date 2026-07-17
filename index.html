@@ -17857,14 +17857,14 @@ function saveRecipe() {
   var name = document.getElementById('rm-name').value.trim();
   var base = parseInt(document.getElementById('rm-base').value) || 1;
   if (!name) { alert('ادخل اسم الوصفة.'); return; }
-  var rows = document.querySelectorAll('#rm-ingredients .rm-ing-name');
   var items = [];
-  rows.forEach(function(inp){
+  document.querySelectorAll('#rm-ingredients > div').forEach(function(row){
+    var inp = row.querySelector('.rm-ing-name');
+    if (!inp) return;
     var n = inp.value.trim();
     if (!n) return;
-    var row = inp.closest('.ac-wrap').parentElement;
-    var u = row.querySelector('.rm-ing-unit').value;
-    var q = parseFloat(row.querySelector('.rm-ing-qty').value);
+    var u = (row.querySelector('.rm-ing-unit') || {}).value || '';
+    var q = parseFloat((row.querySelector('.rm-ing-qty') || {}).value);
     if (isNaN(q)) q = 0;
     items.push({ n:n, u:u, q:q });
   });
