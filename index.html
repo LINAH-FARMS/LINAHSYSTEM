@@ -1008,6 +1008,7 @@
     <button class="btn btn-sm admin-only" style="padding:5px 12px;font-size:12px;background:#6a1b9a;color:white;border:none;border-radius:6px;cursor:pointer;" onclick="openManageUsers()">👥 إدارة المستخدمين</button>
     <button class="btn btn-sm" style="padding:5px 12px;font-size:12px;background:#c62828;color:white;border:none;border-radius:6px;cursor:pointer;" onclick="exportPdfActiveTab()">📄 تصدير PDF</button>
     <button class="btn btn-sm" style="padding:5px 12px;font-size:12px;background:#e65100;color:white;border:none;border-radius:6px;cursor:pointer;" onclick="exportSelectedToExcel()">📤 تصدير المحدد Excel</button>
+    <button class="btn btn-sm" style="padding:5px 12px;font-size:12px;background:#2e7d32;color:white;border:none;border-radius:6px;cursor:pointer;" onclick="printActiveTab()">🖨️ طباعة</button>
     <button class="btn btn-sm" style="padding:5px 12px;font-size:12px;background:#1b5e20;color:white;border:none;border-radius:6px;cursor:pointer;" onclick="openDailyReport()">📋 التقرير</button>
     <button class="btn btn-sm" style="padding:5px 12px;font-size:12px;background:#e65100;color:white;border:none;border-radius:6px;cursor:pointer;" onclick="openBreadPlanReport()">🥖 اعداد الخبز للغد</button>
 
@@ -6763,8 +6764,8 @@
       var womenCount = 0, studentCount = 0, otherGuestsCount = 0;
       todayGuests.forEach(function(h) {
         var g = h.guests || 1;
-        if (h.type === 'كجم') womenCount += g;
-        else if (h.type === 'تمت المهام') studentCount += g;
+        if (h.type === 'نساء') womenCount += g;
+        else if (h.type === 'أجانب') studentCount += g;
         else otherGuestsCount += g;
       });
       var workerLoaves = pCount * 6;
@@ -6823,8 +6824,8 @@
       var womenCount = 0, studentCount = 0, otherGuestsCount = 0;
       planGuests.forEach(function(h) {
         var g = h.guests || 1;
-        if (h.type === 'طلبة') womenCount += g;
-        else if (h.type === 'مدرسة اسم') studentCount += g;
+        if (h.type === 'نساء') womenCount += g;
+        else if (h.type === 'أجانب') studentCount += g;
         else otherGuestsCount += g;
       });
       document.getElementById('bsug-workers').value = pCount * 6;
@@ -6923,8 +6924,8 @@
       var womenCount = 0, studentCount = 0, otherGuestsCount = 0;
       planGuests.forEach(function(h) {
         var g = h.guests || 1;
-        if (h.type === 'الحضور') womenCount += g;
-        else if (h.type === 'السيدات افتراضي') studentCount += g;
+        if (h.type === 'نساء') womenCount += g;
+        else if (h.type === 'أجانب') studentCount += g;
         else otherGuestsCount += g;
       });
       var workerLoaves = pCount * 6;
@@ -7074,8 +7075,8 @@
       var womenCount = 0, studentCount = 0, otherGuestsCount = 0;
       planGuests.forEach(function(h) {
         var g = h.guests || 1;
-        if (h.type === 'يطلع') womenCount += g;
-        else if (h.type === 'باللي تكتبه') studentCount += g;
+        if (h.type === 'نساء') womenCount += g;
+        else if (h.type === 'أجانب') studentCount += g;
         else otherGuestsCount += g;
       });
       var bpWorkers = parseInt(document.getElementById('bp-workers').value) || pCount;
