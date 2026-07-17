@@ -4630,7 +4630,17 @@
       });
       setupEmployeeSearch('transfer-emp-search', 'transfer-emp-id', 'transfer-emp-suggestions');
       setupEmployeeSearch('ts-emp-search', 'ts-emp-id', 'ts-emp-suggestions');
+      setupEmployeeSearch('dd-emp-search', 'dd-emp-id', 'dd-emp-suggestions');
 
+      document.getElementById('dd-emp-search').addEventListener('change', function() {
+        var eid = document.getElementById('dd-emp-id').value;
+        if (!eid) return;
+        var emp = employees.find(function(e) { return e.id == eid || e.code == eid; });
+        if (emp) {
+          document.getElementById('dd-emp-code').value = emp.code || emp.id || '';
+          document.getElementById('dd-emp-name').value = emp.name || '';
+        }
+      });
       document.getElementById('transfer-emp-search').addEventListener('change', loadEmployeeCurrentDetails);
       document.getElementById('inv-emp-search').addEventListener('change', function() {
         let empId = document.getElementById('inv-emp-id').value;
@@ -17197,6 +17207,13 @@ function updateDashClock() {
           <div style="grid-column:span 2;background:#fff3e0;border-radius:8px;padding:10px;border:1px solid #ffcc80;">
             <h4 style="margin:0 0 8px;color:#e65100;">🍵 الشاي</h4>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+              <div class="form-group" style="grid-column:span 2;">
+                <label>الموظف</label>
+                <div class="emp-search-wrapper"><input type="text" id="dd-emp-search" class="emp-search-input" placeholder="ابحث بكود الموظف أو اسم..." autocomplete="off"><div class="emp-search-suggestions" id="dd-emp-suggestions"></div><input type="hidden" id="dd-emp-id"></div>
+              </div>
+              <div class="form-group"><label>الكود</label><input type="text" id="dd-emp-code" readonly style="padding:6px;border:1px solid #ccc;border-radius:6px;background:#f5f5f5;"></div>
+              <div class="form-group"><label>الاسم</label><input type="text" id="dd-emp-name" readonly style="padding:6px;border:1px solid #ccc;border-radius:6px;background:#f5f5f5;"></div>
+              <div class="form-group"><label>الدورة</label><select id="dd-period" style="padding:6px;border:1px solid #ccc;border-radius:6px;"><option value="الدورة الأولى (1-7)">الدورة الأولى (1-7)</option><option value="الدورة الثانية (15-21)">الدورة الثانية (15-21)</option></select></div>
               <div class="form-group"><label>الشاي (باكيت)</label><input type="number" id="dd-tea-packs" min="0" step="0.5" value="0" style="padding:6px;border:1px solid #ccc;border-radius:6px;"></div>
               <div class="form-group"><label>السكر (كجم)</label><input type="number" id="dd-sugar" min="0" step="0.5" value="0" style="padding:6px;border:1px solid #ccc;border-radius:6px;"></div>
             </div>
@@ -18232,6 +18249,11 @@ function formatQty(q){
 let dailyData = _safeJsonParse(_lsGet('linah_daily_data'), []);
 function openDailyDataForm() {
   document.getElementById('dd-date').value = new Date().toISOString().split('T')[0];
+  document.getElementById('dd-emp-search').value = '';
+  document.getElementById('dd-emp-id').value = '';
+  document.getElementById('dd-emp-code').value = '';
+  document.getElementById('dd-emp-name').value = '';
+  document.getElementById('dd-period').value = 'الدورة الأولى (1-7)';
   document.getElementById('dd-tea-packs').value = 0;
   document.getElementById('dd-sugar').value = 0;
   document.getElementById('dd-maint-cat').value = 'نظافة عامة';
@@ -18253,6 +18275,10 @@ function openDailyDataForm() {
 function saveDailyData() {
   var date = document.getElementById('dd-date').value;
   if (!date) { alert('اختر التاريخ أولاً.'); return; }
+  var empId = document.getElementById('dd-emp-id').value;
+  var empCode = document.getElementById('dd-emp-code').value.trim();
+  var empName = document.getElementById('dd-emp-name').value.trim();
+  var period = document.getElementById('dd-period').value;
   var teaPacks = parseFloat(document.getElementById('dd-tea-packs').value) || 0;
   var sugar = parseFloat(document.getElementById('dd-sugar').value) || 0;
   var maintCat = document.getElementById('dd-maint-cat').value;
@@ -18266,11 +18292,15 @@ function saveDailyData() {
   var septicTrips = parseInt(document.getElementById('dd-septic-trips').value) || 0;
   var septicSupervisor = document.getElementById('dd-septic-supervisor').value.trim();
   if (!teaPacks && !sugar && !maintTask && !septicName) { alert('ادخل بيانات على الأقل في قسم واحد.'); return; }
-  dailyData.push({ date: date, teaPacks: teaPacks, sugar: sugar, maintCat: maintCat, maintTask: maintTask, maintTech: maintTech, maintStatus: maintStatus, maintNotes: maintNotes, maintBefore: maintBefore, maintAfter: maintAfter, septicName: septicName, septicTrips: septicTrips, septicSupervisor: septicSupervisor, createdAt: new Date().toISOString() });
+  dailyData.push({ date: date, empId: empId, empCode: empCode, empName: empName, period: period, teaPacks: teaPacks, sugar: sugar, maintCat: maintCat, maintTask: maintTask, maintTech: maintTech, maintStatus: maintStatus, maintNotes: maintNotes, maintBefore: maintBefore, maintAfter: maintAfter, septicName: septicName, septicTrips: septicTrips, septicSupervisor: septicSupervisor, createdAt: new Date().toISOString() });
   _lsSet('linah_daily_data', JSON.stringify(dailyData));
   alert('✅ تم حفظ بيانات اليوم ' + date);
   renderDailyDataTable();
-  // reset form
+  document.getElementById('dd-emp-search').value = '';
+  document.getElementById('dd-emp-id').value = '';
+  document.getElementById('dd-emp-code').value = '';
+  document.getElementById('dd-emp-name').value = '';
+  document.getElementById('dd-period').value = 'الدورة الأولى (1-7)';
   document.getElementById('dd-tea-packs').value = 0;
   document.getElementById('dd-sugar').value = 0;
   document.getElementById('dd-maint-task').value = '';
@@ -18286,11 +18316,11 @@ function renderDailyDataTable() {
   var wrap = document.getElementById('daily-data-table-wrap');
   if (!wrap) return;
   if (!dailyData.length) { wrap.innerHTML = '<p style="color:#888;text-align:center;padding:20px;">لا توجد بيانات يومية بعد.</p>'; return; }
-  var html = '<table style="width:100%;border-collapse:collapse;font-size:12px;"><thead><tr style="background:#5d4037;color:white;"><th style="padding:6px;border:1px solid #5d4037;">التاريخ</th><th style="padding:6px;border:1px solid #5d4037;">🍵 الشاي (باكيت)</th><th style="padding:6px;border:1px solid #5d4037;">🍚 السكر (كجم)</th><th style="padding:6px;border:1px solid #5d4037;">🛠️ الصيانة</th><th style="padding:6px;border:1px solid #5d4037;">🚽 البيارة</th><th style="padding:6px;border:1px solid #5d4037;">عدد النقلات</th><th style="padding:6px;border:1px solid #5d4037;" class="no-print"></th></tr></thead><tbody>';
+  var html = '<table style="width:100%;border-collapse:collapse;font-size:12px;"><thead><tr style="background:#5d4037;color:white;"><th style="padding:6px;border:1px solid #5d4037;">التاريخ</th><th style="padding:6px;border:1px solid #5d4037;">الكود</th><th style="padding:6px;border:1px solid #5d4037;">الاسم</th><th style="padding:6px;border:1px solid #5d4037;">الدورة</th><th style="padding:6px;border:1px solid #5d4037;">الشاي (باكيت)</th><th style="padding:6px;border:1px solid #5d4037;">السكر (كجم)</th><th style="padding:6px;border:1px solid #5d4037;">🛠️ الصيانة</th><th style="padding:6px;border:1px solid #5d4037;">🚽 البيارة</th><th style="padding:6px;border:1px solid #5d4037;">نقلات</th><th style="padding:6px;border:1px solid #5d4037;" class="no-print"></th></tr></thead><tbody>';
   var sorted = dailyData.slice().sort(function(a,b){ return b.date.localeCompare(a.date); });
   sorted.forEach(function(d, i){
     var realIdx = dailyData.indexOf(d);
-    html += '<tr style="border-bottom:1px solid #e0e0e0;"><td style="padding:6px;border:1px solid #e0e0e0;">' + d.date + '</td><td style="padding:6px;border:1px solid #e0e0e0;text-align:center;">' + (d.teaPacks||'—') + '</td><td style="padding:6px;border:1px solid #e0e0e0;text-align:center;">' + (d.sugar||'—') + '</td><td style="padding:6px;border:1px solid #e0e0e0;">' + (d.maintTask || '—') + '</td><td style="padding:6px;border:1px solid #e0e0e0;">' + (d.septicName || '—') + '</td><td style="padding:6px;border:1px solid #e0e0e0;text-align:center;">' + (d.septicTrips || '—') + '</td><td class="no-print" style="padding:6px;border:1px solid #e0e0e0;text-align:center;"><button onclick="deleteDailyData(' + realIdx + ')" style="background:none;border:none;color:#d32f2f;cursor:pointer;font-size:14px;">✕</button></td></tr>';
+    html += '<tr style="border-bottom:1px solid #e0e0e0;"><td style="padding:6px;border:1px solid #e0e0e0;">' + d.date + '</td><td style="padding:6px;border:1px solid #e0e0e0;text-align:center;">' + (d.empCode || '—') + '</td><td style="padding:6px;border:1px solid #e0e0e0;">' + (d.empName || '—') + '</td><td style="padding:6px;border:1px solid #e0e0e0;text-align:center;">' + (d.period || '—') + '</td><td style="padding:6px;border:1px solid #e0e0e0;text-align:center;">' + (d.teaPacks||'—') + '</td><td style="padding:6px;border:1px solid #e0e0e0;text-align:center;">' + (d.sugar||'—') + '</td><td style="padding:6px;border:1px solid #e0e0e0;">' + (d.maintTask || '—') + '</td><td style="padding:6px;border:1px solid #e0e0e0;">' + (d.septicName || '—') + '</td><td style="padding:6px;border:1px solid #e0e0e0;text-align:center;">' + (d.septicTrips || '—') + '</td><td class="no-print" style="padding:6px;border:1px solid #e0e0e0;text-align:center;"><button onclick="deleteDailyData(' + realIdx + ')" style="background:none;border:none;color:#d32f2f;cursor:pointer;font-size:14px;">✕</button></td></tr>';
   });
   html += '</tbody></table>';
   wrap.innerHTML = html;
@@ -18303,9 +18333,9 @@ function deleteDailyData(idx) {
 }
 function exportDailyDataReport() {
   if (!dailyData.length) { alert('لا توجد بيانات للتصدير.'); return; }
-  var rows = [['التاريخ','الشاي (باكيت)','السكر (كجم)','نوع الصيانة','بند الصيانة','الفني','الحالة','قبل','بعد','ملاحظات','البيارة','عدد النقلات','المشرف']];
+  var rows = [['التاريخ','الكود','الاسم','الدورة','الشاي (باكيت)','السكر (كجم)','نوع الصيانة','بند الصيانة','الفني','الحالة','قبل','بعد','ملاحظات','البيارة','عدد النقلات','المشرف']];
   dailyData.sort(function(a,b){ return a.date.localeCompare(b.date); }).forEach(function(d){
-    rows.push([d.date, d.teaPacks||0, d.sugar||0, d.maintCat||'', d.maintTask||'', d.maintTech||'', d.maintStatus||'', d.maintBefore||'', d.maintAfter||'', d.maintNotes||'', d.septicName||'', d.septicTrips||0, d.septicSupervisor||'']);
+    rows.push([d.date, d.empCode||'', d.empName||'', d.period||'', d.teaPacks||0, d.sugar||0, d.maintCat||'', d.maintTask||'', d.maintTech||'', d.maintStatus||'', d.maintBefore||'', d.maintAfter||'', d.maintNotes||'', d.septicName||'', d.septicTrips||0, d.septicSupervisor||'']);
   });
   var ws = XLSX.utils.aoa_to_sheet(rows);
   var wb = XLSX.utils.book_new();
