@@ -2930,7 +2930,10 @@
         <span class="close-btn" onclick="closeModal('modal-compare-recipes')">&times;</span>
       </div>
       <div style="padding:15px;overflow-x:auto;">
-        <p style="color:#666;margin-bottom:10px;">التكلفة محسوبة على أساس السعر الحالي للخامات.</p>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+          <p style="color:#666;margin:0;">التكلفة محسوبة على أساس السعر الحالي للخامات.</p>
+          <button class="btn" onclick="exportCompareReport()" style="padding:4px 14px;font-size:12px;background:#e65100;color:#fff;border:none;border-radius:5px;">📤 تصدير</button>
+        </div>
         <div id="compare-recipes-table-wrap"></div>
       </div>
     </div>
@@ -17761,9 +17764,30 @@ function setupAutocomplete(inp) {
   });
 }
 
+function exportCompareReport() {
+  if (!RECIPES.length) return alert('لا توجد وصفات.');
+  var rows = [['الوصفة','عدد الخامات','كمية الفرد (كجم)','إجمالي التكلفة','تكلفة الفرد']];
+  RECIPES.forEach(function(r){
+    var totalCost = 0, totalItems = (r.items||[]).length;
+    (r.items||[]).forEach(function(it){
+      var cost = getIngCost(it.n, it.u);
+      if (cost !== undefined) totalCost += cost * it.q;
+    });
+    var cookedTotal = (r.items||[]).reduce(function(s,it){ return s + it.q * (getIngredientFactor(it.n) || 1); }, 0);
+    var cookedPP = cookedTotal / (r.base || 1);
+    var costPerPerson = totalCost / (r.base || 1);
+    rows.push([r.name, totalItems, parseFloat(cookedPP.toFixed(3)), parseFloat(totalCost.toFixed(2)), parseFloat(costPerPerson.toFixed(2))]);
+  });
+  var ws = XLSX.utils.aoa_to_sheet(rows);
+  ws['!cols'] = [{wch:25},{wch:10},{wch:15},{wch:15},{wch:12}];
+  var wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'مقارنة الوصفات');
+  XLSX.writeFile(wb, 'مقارنة_الوصفات_' + new Date().toISOString().split('T')[0] + '.xlsx');
+}
+
 function compareRecipes() {
   if (!RECIPES.length) { alert('لا توجد وصفات للمقارنة.'); return; }
-    var html = '<table style="width:100%;border-collapse:collapse;font-size:13px;"><thead><tr style="background:#e0f2f1;color:#004d40;"><th style="padding:8px;border:1px solid #b2dfdb;text-align:right;">الوصفة</th><th style="padding:8px;border:1px solid #b2dfdb;text-align:center;">أساس (فرد)</th><th style="padding:8px;border:1px solid #b2dfdb;text-align:center;">عدد الخامات</th><th style="padding:8px;border:1px solid #b2dfdb;text-align:center;">كمية الفرد (كجم)</th><th style="padding:8px;border:1px solid #b2dfdb;text-align:center;">إجمالي التكلفة</th><th style="padding:8px;border:1px solid #b2dfdb;text-align:center;">تكلفة الفرد</th></tr></thead><tbody>';
+    var html = '<table id="compare-recipes-table" style="width:100%;border-collapse:collapse;font-size:13px;"><thead><tr style="background:#e0f2f1;color:#004d40;"><th style="padding:8px;border:1px solid #b2dfdb;text-align:right;">الوصفة</th><th style="padding:8px;border:1px solid #b2dfdb;text-align:center;">عدد الخامات</th><th style="padding:8px;border:1px solid #b2dfdb;text-align:center;">كمية الفرد (كجم)</th><th style="padding:8px;border:1px solid #b2dfdb;text-align:center;">إجمالي التكلفة</th><th style="padding:8px;border:1px solid #b2dfdb;text-align:center;">تكلفة الفرد</th></tr></thead><tbody>';
   RECIPES.forEach(function(r){
     var totalCost = 0, missing = 0, totalItems = (r.items||[]).length;
     (r.items||[]).forEach(function(it){
@@ -17775,7 +17799,7 @@ function compareRecipes() {
     var cookedPP = cookedTotal / (r.base || 1);
     var costPerPerson = totalCost / (r.base || 1);
     var color = missing > 0 ? '#b71c1c' : (costPerPerson > 0 ? '#2e7d32' : '#888');
-    html += '<tr style="border-bottom:1px solid #e0e0e0;"><td style="padding:8px;border:1px solid #e0e0e0;text-align:right;font-weight:700;">' + r.name + '</td><td style="padding:8px;border:1px solid #e0e0e0;text-align:center;">' + r.base + '</td><td style="padding:8px;border:1px solid #e0e0e0;text-align:center;">' + totalItems + '</td><td style="padding:8px;border:1px solid #e0e0e0;text-align:center;font-weight:700;color:#1565c0;">' + (cookedPP > 0 ? formatQty(cookedPP) : '—') + '</td><td style="padding:8px;border:1px solid #e0e0e0;text-align:center;font-weight:700;color:' + color + ';">' + (totalCost > 0 ? formatQty(totalCost) + ' ج.م' : (missing > 0 ? '⚠️' : '—')) + '</td><td style="padding:8px;border:1px solid #e0e0e0;text-align:center;font-weight:700;color:' + color + ';font-size:15px;">' + (costPerPerson > 0 ? formatQty(costPerPerson) + ' ج.م' : (missing > 0 ? '⚠️' : '—')) + '</td></tr>';
+    html += '<tr style="border-bottom:1px solid #e0e0e0;"><td style="padding:8px;border:1px solid #e0e0e0;text-align:right;font-weight:700;">' + r.name + '</td><td style="padding:8px;border:1px solid #e0e0e0;text-align:center;">' + totalItems + '</td><td style="padding:8px;border:1px solid #e0e0e0;text-align:center;font-weight:700;color:#1565c0;">' + (cookedPP > 0 ? formatQty(cookedPP) : '—') + '</td><td style="padding:8px;border:1px solid #e0e0e0;text-align:center;font-weight:700;color:' + color + ';">' + (totalCost > 0 ? formatQty(totalCost) + ' ج.م' : (missing > 0 ? '⚠️' : '—')) + '</td><td style="padding:8px;border:1px solid #e0e0e0;text-align:center;font-weight:700;color:' + color + ';font-size:15px;">' + (costPerPerson > 0 ? formatQty(costPerPerson) + ' ج.م' : (missing > 0 ? '⚠️' : '—')) + '</td></tr>';
   });
   html += '</tbody></table>';
   document.getElementById('compare-recipes-table-wrap').innerHTML = html;
