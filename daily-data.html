@@ -147,12 +147,14 @@ fetch(SB + '/rest/v1/sync_data?id=eq.alldata&select=data', { headers:{'apikey':K
     if (ad.inventoryItems && ad.inventoryItems.length) { invItems = ad.inventoryItems; }
     if (ad.dynamicSeptics && ad.dynamicSeptics.length) {
       septicNames = ad.dynamicSeptics.map(function(s){
-        return (typeof s === 'string') ? s : (s.name || s.title || s.label || String(s));
+        if (typeof s === 'string') { try { var p = JSON.parse(s); if (p && typeof p === 'object') return p.name || p.title || p.label || s; } catch(e) {} return s; }
+        if (s && typeof s === 'object') return s.name || s.title || s.label || '';
+        return String(s);
       }).filter(function(s){ return s && s.trim(); });
     }
     // Populate septic datalist
     var dl = document.getElementById('septic-list');
-    if (dl && septicNames.length) { dl.innerHTML = septicNames.map(function(s){ return '<option value="'+s+'">'; }).join(''); }
+    if (dl && septicNames.length) { dl.innerHTML = septicNames.map(function(s){ return '<option value="' + s.replace(/"/g, '&quot;') + '">'; }).join(''); }
   })
   .catch(function(){});
 
