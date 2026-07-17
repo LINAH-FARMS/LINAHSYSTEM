@@ -9185,8 +9185,8 @@ function toggleEmployeeStatus(empId) {
       archiveData.forEach(function(a) { rows.push([a.item, a.desc, a.qty, a.location, a.condition, a.date, a.issueto||'', a.issuedate||'', a.issueby||'', a.receiver||'']); });
       var ws = XLSX.utils.aoa_to_sheet(rows);
       var wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, 'الكود موجود');
-      XLSX.writeFile(wb, 'مسبقاً_تم_' + new Date().toISOString().split('T')[0] + '.xlsx');
+      XLSX.utils.book_append_sheet(wb, ws, 'أرشيف المخازن');
+      XLSX.writeFile(wb, 'ارشيف_المخازن_' + new Date().toISOString().split('T')[0] + '.xlsx');
     }
     function importArchiveExcel(evt) {
       var file = evt.target.files[0]; if (!file) return;
@@ -9196,7 +9196,9 @@ function toggleEmployeeStatus(empId) {
           var wb = XLSX.read(e.target.result, { type: 'array' });
           var ws = wb.Sheets[wb.SheetNames[0]];
           var rows = XLSX.utils.sheet_to_json(ws, { header: 1 });
-          if (rows.length < 2) return alert('تسجيل الصنف');
+          if (rows.length < 2) return alert('الملف لا يحتوي على بيانات كافية.\nتأكد من وجود صف رأس (header) وصفوف بيانات.');
+          var replaceAll = confirm('هل تريد استبدال كل البيانات الموجودة بالكامل؟\nاختر OK للاستبدال الكامل، أو Cancel لإضافة وتحديث السجلات الموجودة فقط.');
+          if (replaceAll) archiveData = [];
           var added = 0, updated = 0;
           for (var i = 1; i < rows.length; i++) {
             var cols = rows[i];
@@ -9212,20 +9214,25 @@ function toggleEmployeeStatus(empId) {
             var issueby = (cols[8] || '').toString().trim();
             var receiver = (cols[9] || '').toString().trim();
             if (!item) continue;
-            var existing = archiveData.find(function(a) { return a.item === item && a.location === location; });
-            if (existing) {
-              existing.desc = desc; existing.qty = qty; existing.condition = condition; existing.date = date;
-              existing.issueto = issueto; existing.issuedate = issuedate; existing.issueby = issueby; existing.receiver = receiver;
-              updated++;
-            } else {
-              archiveData.push({ item, desc, qty, location, condition, date, issueto, issuedate, issueby, receiver });
+            if (replaceAll) {
+              archiveData.push({ item: item, desc: desc, qty: qty, location: location, condition: condition, date: date, issueto: issueto, issuedate: issuedate, issueby: issueby, receiver: receiver });
               added++;
+            } else {
+              var existing = archiveData.find(function(a) { return a.item === item && a.location === location; });
+              if (existing) {
+                existing.desc = desc; existing.qty = qty; existing.condition = condition; existing.date = date;
+                existing.issueto = issueto; existing.issuedate = issuedate; existing.issueby = issueby; existing.receiver = receiver;
+                updated++;
+              } else {
+                archiveData.push({ item: item, desc: desc, qty: qty, location: location, condition: condition, date: date, issueto: issueto, issuedate: issuedate, issueby: issueby, receiver: receiver });
+                added++;
+              }
             }
           }
           syncStorage();
-          logAction('أو', 'لا يحتوي', (added + updated) + ' (' + added + ' على ' + updated + ' بيانات)');
+          logAction('استيراد', 'أرشيف', added + ' إضافة', updated + ' تحديث');
           renderArchiveTable();
-          alert('تمت إضافة ' + added + ' عنصر وتحديث ' + updated + ' عنصر في الأرشيف');
+          alert('تم استيراد ' + (replaceAll ? archiveData.length : (added + updated)) + ' سجل بنجاح.\nإضافات: ' + added + ' | تحديثات: ' + updated);
         } catch(err) { alert('خطأ في استيراد بيانات الأرشيف: ' + err.message); }
         evt.target.value = '';
       };
