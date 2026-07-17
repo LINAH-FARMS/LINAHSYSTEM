@@ -1519,7 +1519,7 @@
           <input type="number" id="arc-qty" value="1" min="1">
         </div>
         <div class="form-group">
-          <label>الموقع</label>
+          <label>اسم المخزن</label>
           <input type="text" id="arc-location" placeholder="مثال: مخزن العمد">
         </div>
         <div class="form-group">
@@ -1531,8 +1531,24 @@
           </select>
         </div>
         <div class="form-group">
-          <label>تاريخ الإيداع</label>
+          <label>تاريخ إضافة العهدة</label>
           <input type="date" id="arc-date">
+        </div>
+        <div class="form-group">
+          <label>جهة الصرف</label>
+          <input type="text" id="arc-issueto" placeholder="جهة الصرف (الإدارة المستلمة)">
+        </div>
+        <div class="form-group">
+          <label>تاريخ الصرف</label>
+          <input type="date" id="arc-issuedate">
+        </div>
+        <div class="form-group">
+          <label>القائم على الصرف</label>
+          <input type="text" id="arc-issueby" placeholder="اسم المسؤول عن الصرف">
+        </div>
+        <div class="form-group">
+          <label>المستلم</label>
+          <input type="text" id="arc-receiver" placeholder="اسم المستلم">
         </div>
         <button class="btn btn-primary" id="btn-save-archive" onclick="saveArchiveRecord()" style="justify-content:center;height:42px;">➕ إضافة عهدة</button>
       </div>
@@ -1549,9 +1565,13 @@
               <th>اسم العهدة</th>
               <th>البيان</th>
               <th>العدد</th>
-              <th>الموقع</th>
+              <th>اسم المخزن</th>
               <th>الحالة</th>
-              <th>تاريخ الإيداع</th>
+              <th>تاريخ إضافة العهدة</th>
+              <th>جهة الصرف</th>
+              <th>تاريخ الصرف</th>
+              <th>القائم على الصرف</th>
+              <th>المستلم</th>
               <th class="no-print">إجراءات</th>
             </tr>
           </thead>
@@ -9099,12 +9119,12 @@ function toggleEmployeeStatus(empId) {
     var _arcEditIdx = -1;
     function renderArchiveTable() {
       var q = (document.getElementById('search-archive').value || '').toLowerCase();
-      var filtered = archiveData.filter(function(a) { return !q || a.item.toLowerCase().includes(q) || a.desc.toLowerCase().includes(q) || a.location.toLowerCase().includes(q); });
+      var filtered = archiveData.filter(function(a) { return !q || a.item.toLowerCase().includes(q) || a.desc.toLowerCase().includes(q) || a.location.toLowerCase().includes(q) || (a.issueto||'').toLowerCase().includes(q) || (a.issueby||'').toLowerCase().includes(q) || (a.receiver||'').toLowerCase().includes(q); });
       var tbody = document.getElementById('archive-table-body');
       tbody.innerHTML = filtered.length ? filtered.map(function(a, i) {
         var idx = archiveData.indexOf(a);
-        return '<tr><td>' + a.item + '</td><td>' + a.desc + '</td><td>' + a.qty + '</td><td>' + a.location + '</td><td>' + a.condition + '</td><td>' + a.date + '</td><td class="no-print"><button class="btn btn-sm" style="background:#1565c0;color:#fff;padding:2px 6px;font-size:11px;margin-left:4px;" onclick="editArchiveRecord(' + idx + ')">✏️</button><button class="btn btn-danger" style="padding:2px 6px;font-size:11px;" onclick="deleteArchiveRecord(' + idx + ')">🗑️</button></td></tr>';
-      }).join('') : '<tr><td colspan="7" style="text-align:center;color:#999;">لا توجد عهدات مسجلة</td></tr>';
+        return '<tr><td>' + a.item + '</td><td>' + a.desc + '</td><td>' + a.qty + '</td><td>' + a.location + '</td><td>' + a.condition + '</td><td>' + a.date + '</td><td>' + (a.issueto || '—') + '</td><td>' + (a.issuedate || '—') + '</td><td>' + (a.issueby || '—') + '</td><td>' + (a.receiver || '—') + '</td><td class="no-print"><button class="btn btn-sm" style="background:#1565c0;color:#fff;padding:2px 6px;font-size:11px;margin-left:4px;" onclick="editArchiveRecord(' + idx + ')">✏️</button><button class="btn btn-danger" style="padding:2px 6px;font-size:11px;" onclick="deleteArchiveRecord(' + idx + ')">🗑️</button></td></tr>';
+      }).join('') : '<tr><td colspan="11" style="text-align:center;color:#999;">لا توجد عهدات مسجلة</td></tr>';
     }
     function saveArchiveRecord() {
       var item = document.getElementById('arc-item').value.trim();
@@ -9113,19 +9133,23 @@ function toggleEmployeeStatus(empId) {
       var location = document.getElementById('arc-location').value.trim();
       var condition = document.getElementById('arc-condition').value;
       var date = document.getElementById('arc-date').value || new Date().toISOString().split('T')[0];
+      var issueto = document.getElementById('arc-issueto').value.trim();
+      var issuedate = document.getElementById('arc-issuedate').value;
+      var issueby = document.getElementById('arc-issueby').value.trim();
+      var receiver = document.getElementById('arc-receiver').value.trim();
       if (!item) return alert('الرجاء إدخال اسم الصنف');
       if (_arcEditIdx >= 0) {
         var a = archiveData[_arcEditIdx];
-        if (a) { a.item = item; a.desc = desc; a.qty = qty; a.location = location; a.condition = condition; a.date = date; }
+        if (a) { a.item = item; a.desc = desc; a.qty = qty; a.location = location; a.condition = condition; a.date = date; a.issueto = issueto; a.issuedate = issuedate; a.issueby = issueby; a.receiver = receiver; }
         _arcEditIdx = -1;
         syncStorage();
         logAction('مستلم', 'كمية', item, 'تم: ' + qty + ' | تسجيل: ' + location);
       } else {
-        archiveData.push({ item: item, desc: desc, qty: qty, location: location, condition: condition, date: date });
+        archiveData.push({ item: item, desc: desc, qty: qty, location: location, condition: condition, date: date, issueto: issueto, issuedate: issuedate, issueby: issueby, receiver: receiver });
         syncStorage();
         logAction('حركة', 'وبون', item, 'صرف: ' + qty + ' | المخزن: ' + location + ' | للإدارة: ' + condition);
       }
-      document.getElementById('arc-item').value = ''; document.getElementById('arc-desc').value = ''; document.getElementById('arc-qty').value = '1'; document.getElementById('arc-location').value = ''; document.getElementById('arc-condition').value = 'المستلمة'; document.getElementById('arc-date').value = '';
+      document.getElementById('arc-item').value = ''; document.getElementById('arc-desc').value = ''; document.getElementById('arc-qty').value = '1'; document.getElementById('arc-location').value = ''; document.getElementById('arc-condition').value = 'المستلمة'; document.getElementById('arc-date').value = ''; document.getElementById('arc-issueto').value = ''; document.getElementById('arc-issuedate').value = ''; document.getElementById('arc-issueby').value = ''; document.getElementById('arc-receiver').value = '';
       document.getElementById('btn-save-archive').textContent = '➕ إضافة عهدة';
       renderArchiveTable();
     }
@@ -9139,6 +9163,10 @@ function toggleEmployeeStatus(empId) {
       document.getElementById('arc-location').value = a.location;
       document.getElementById('arc-condition').value = a.condition;
       document.getElementById('arc-date').value = a.date;
+      document.getElementById('arc-issueto').value = a.issueto || '';
+      document.getElementById('arc-issuedate').value = a.issuedate || '';
+      document.getElementById('arc-issueby').value = a.issueby || '';
+      document.getElementById('arc-receiver').value = a.receiver || '';
       document.getElementById('btn-save-archive').textContent = '➕ إضافة عهدة';
     }
     function deleteArchiveRecord(idx) {
@@ -9153,8 +9181,8 @@ function toggleEmployeeStatus(empId) {
     }
     function exportArchiveExcel() {
       if (!archiveData.length) return alert('لا توجد عهدات للتصدير');
-      var rows = [['سجل الأصناف', 'كود', 'الصنف', 'واسمه', 'حقول', 'إلزامية هذا']];
-      archiveData.forEach(function(a) { rows.push([a.item, a.desc, a.qty, a.location, a.condition, a.date]); });
+      var rows = [['اسم العهدة','البيان','العدد','اسم المخزن','الحالة','تاريخ إضافة العهدة','جهة الصرف','تاريخ الصرف','القائم على الصرف','المستلم']];
+      archiveData.forEach(function(a) { rows.push([a.item, a.desc, a.qty, a.location, a.condition, a.date, a.issueto||'', a.issuedate||'', a.issueby||'', a.receiver||'']); });
       var ws = XLSX.utils.aoa_to_sheet(rows);
       var wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, 'الكود موجود');
@@ -9177,16 +9205,20 @@ function toggleEmployeeStatus(empId) {
             var desc = (cols[1] || '').toString().trim();
             var qty = parseInt(cols[2]) || 1;
             var location = (cols[3] || '').toString().trim();
-            var condition = (cols[4] || 'في').toString().trim();
-            if ('سجل الأصناف فارغ'.indexOf(condition) === -1) condition = 'الملف';
+            var condition = (cols[4] || 'جديدة').toString().trim();
             var date = cols[5] ? cols[5].toString().trim() : new Date().toISOString().split('T')[0];
+            var issueto = (cols[6] || '').toString().trim();
+            var issuedate = cols[7] ? cols[7].toString().trim() : '';
+            var issueby = (cols[8] || '').toString().trim();
+            var receiver = (cols[9] || '').toString().trim();
             if (!item) continue;
             var existing = archiveData.find(function(a) { return a.item === item && a.location === location; });
             if (existing) {
               existing.desc = desc; existing.qty = qty; existing.condition = condition; existing.date = date;
+              existing.issueto = issueto; existing.issuedate = issuedate; existing.issueby = issueby; existing.receiver = receiver;
               updated++;
             } else {
-              archiveData.push({ item, desc, qty, location, condition, date });
+              archiveData.push({ item, desc, qty, location, condition, date, issueto, issuedate, issueby, receiver });
               added++;
             }
           }
