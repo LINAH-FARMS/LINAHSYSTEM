@@ -18461,6 +18461,7 @@ function renderDDMaintMatsList() {
   }).join('');
 }
 function openDailyDataForm() {
+  try { importDailyDataFormData(); } catch(e) {}
   document.getElementById('dd-date').value = new Date().toISOString().split('T')[0];
   document.getElementById('dd-emp-search').value = '';
   document.getElementById('dd-emp-id').value = '';
