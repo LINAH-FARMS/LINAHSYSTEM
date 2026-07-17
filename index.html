@@ -13222,9 +13222,8 @@ function renderTeaSugarTable() {
                 maintTask: e.maintTask || '',
                 maintTech: e.maintTech || '',
                 maintStatus: e.maintStatus || '',
-                maintBefore: e.maintBefore || '',
-                maintAfter: e.maintAfter || '',
                 maintNotes: e.maintNotes || '',
+                maintMats: e.maintMats || [],
                 septicName: e.septicName || '',
                 septicTrips: e.septicTrips || 0,
                 septicSupervisor: e.septicSupervisor || '',
@@ -17380,9 +17379,17 @@ function updateDashClock() {
               <div class="form-group"><label>بند الصيانة</label><input type="text" id="dd-maint-task" placeholder="وصف العطل" style="padding:6px;border:1px solid #ccc;border-radius:6px;"></div>
               <div class="form-group"><label>الفني</label><input type="text" id="dd-maint-tech" placeholder="اسم الفني" style="padding:6px;border:1px solid #ccc;border-radius:6px;"></div>
               <div class="form-group"><label>الحالة</label><select id="dd-maint-status" style="padding:6px;border:1px solid #ccc;border-radius:6px;"><option>مفتوحة</option><option>تحت التنفيذ</option><option>تمت</option><option>ملغاة</option></select></div>
-              <div class="form-group" style="grid-column:span 2;"><label>ملاحظات</label><textarea id="dd-maint-notes" rows="2" style="width:100%;padding:6px;border:1px solid #ccc;border-radius:6px;font-family:Cairo,sans-serif;"></textarea></div>
-              <div class="form-group"><label>قبل</label><input type="text" id="dd-maint-before" placeholder="حالة قبل" style="padding:6px;border:1px solid #ccc;border-radius:6px;"></div>
-              <div class="form-group"><label>بعد</label><input type="text" id="dd-maint-after" placeholder="حالة بعد" style="padding:6px;border:1px solid #ccc;border-radius:6px;"></div>
+              <div class="form-group" style="grid-column:span 2;"><label>مكان الصيانة واي ملاحظات اخري</label><textarea id="dd-maint-notes" rows="2" style="width:100%;padding:6px;border:1px solid #ccc;border-radius:6px;font-family:Cairo,sans-serif;"></textarea></div>
+              <div class="form-group" style="grid-column:span 2;">
+                <label style="font-weight:700;color:#1565c0;">🧰 الخامات والأدوات المستخدمة</label>
+                <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
+                  <input type="text" id="dd-maint-mat-search" placeholder="🔍 اكتب كود أو اسم الخامة" style="flex:3;min-width:140px;padding:6px;border:2px solid #e0e0e0;border-radius:6px;font-size:12px;" oninput="searchDDMaintMat()" autocomplete="off">
+                  <input type="number" id="dd-maint-mat-qty" placeholder="الكمية" min="1" value="1" style="width:60px;padding:6px;border:2px solid #e0e0e0;border-radius:6px;font-size:12px;">
+                  <button type="button" class="btn" style="padding:4px 10px;font-size:12px;background:#1565c0;color:white;display:none;" id="btn-add-dd-maint-mat" onclick="addDDMaintMat()">➕ إضافة</button>
+                </div>
+                <div id="dd-maint-mat-results" style="margin-top:4px;max-height:150px;overflow-y:auto;border:1px solid #e0e0e0;border-radius:6px;display:none;"></div>
+                <div id="dd-maint-mats-list" style="margin-top:6px;display:flex;gap:4px;flex-wrap:wrap;"></div>
+              </div>
             </div>
           </div>
           <div style="grid-column:span 2;background:#e8f5e9;border-radius:8px;padding:10px;border:1px solid #a5d6a7;">
@@ -18402,6 +18409,54 @@ function formatQty(q){
 
 // ===== فورم البيانات اليومية (شاي - صيانة - بيارات) =====
 let dailyData = _safeJsonParse(_lsGet('linah_daily_data'), []);
+let ddMaintMaterials = [];
+let ddMaintMatSelectedCode = '';
+function searchDDMaintMat() {
+  var q = document.getElementById('dd-maint-mat-search').value.trim();
+  var resultsEl = document.getElementById('dd-maint-mat-results');
+  var btnAdd = document.getElementById('btn-add-dd-maint-mat');
+  if (!q) { resultsEl.style.display = 'none'; resultsEl.innerHTML = ''; btnAdd.style.display = 'none'; ddMaintMatSelectedCode = ''; return; }
+  var matches = (typeof inventoryItems !== 'undefined' ? inventoryItems : []).filter(function(i) { return (i.code||'').includes(q) || (i.name||'').includes(q); });
+  if (!matches.length) { resultsEl.style.display = 'block'; resultsEl.innerHTML = '<div style="padding:6px;color:#999;font-size:12px;">لا توجد نتائج</div>'; btnAdd.style.display = 'none'; ddMaintMatSelectedCode = ''; return; }
+  resultsEl.style.display = 'block';
+  resultsEl.innerHTML = matches.map(function(m,i) {
+    return '<div class="dd-maint-mat-result" data-code="' + m.code + '" style="padding:5px 8px;cursor:pointer;border-bottom:1px solid #eee;font-size:12px;display:flex;justify-content:space-between;align-items:center;' + (i===0?'background:#e3f2fd;':'') + '" onclick="selectDDMaintMatResult(\'' + m.code + '\')"><span><b>' + m.code + '</b> — ' + m.name + ' <span style="color:#666;">(' + (m.unit||'—') + ')</span></span></div>';
+  }).join('');
+  selectDDMaintMatResult(matches[0].code);
+}
+function selectDDMaintMatResult(code) {
+  ddMaintMatSelectedCode = code;
+  document.getElementById('btn-add-dd-maint-mat').style.display = 'inline-block';
+  document.querySelectorAll('.dd-maint-mat-result').forEach(function(el) { el.style.background = el.dataset.code === code ? '#e3f2fd' : ''; });
+}
+function addDDMaintMat() {
+  var code = ddMaintMatSelectedCode;
+  var qty = parseInt(document.getElementById('dd-maint-mat-qty').value) || 1;
+  if (!code) return;
+  var items = typeof inventoryItems !== 'undefined' ? inventoryItems : [];
+  var item = items.find(function(i) { return i.code === code; });
+  if (!item) return;
+  var existing = ddMaintMaterials.find(function(m) { return m.code === code; });
+  if (existing) { existing.qty += qty; }
+  else { ddMaintMaterials.push({ code: code, name: item.name, unit: item.unit || '', qty: qty }); }
+  renderDDMaintMatsList();
+  document.getElementById('dd-maint-mat-qty').value = 1;
+  document.getElementById('dd-maint-mat-search').value = '';
+  document.getElementById('dd-maint-mat-results').style.display = 'none';
+  document.getElementById('dd-maint-mat-results').innerHTML = '';
+  document.getElementById('btn-add-dd-maint-mat').style.display = 'none';
+  ddMaintMatSelectedCode = '';
+  document.getElementById('dd-maint-mat-search').focus();
+}
+function removeDDMaintMat(idx) { ddMaintMaterials.splice(idx,1); renderDDMaintMatsList(); }
+function renderDDMaintMatsList() {
+  var el = document.getElementById('dd-maint-mats-list');
+  if (!el) return;
+  if (!ddMaintMaterials.length) { el.innerHTML = ''; return; }
+  el.innerHTML = ddMaintMaterials.map(function(m,i) {
+    return '<span style="display:inline-flex;align-items:center;gap:4px;background:#e3f2fd;padding:3px 8px;border-radius:6px;border:1px solid #90caf9;font-size:12px;"><b>' + m.name + '</b> —' + m.qty + ' ' + m.unit + ' <span style="cursor:pointer;color:red;font-weight:bold;margin-right:4px;" onclick="removeDDMaintMat(' + i + ')">✕</span></span>';
+  }).join('');
+}
 function openDailyDataForm() {
   document.getElementById('dd-date').value = new Date().toISOString().split('T')[0];
   document.getElementById('dd-emp-search').value = '';
@@ -18441,13 +18496,11 @@ function saveDailyData() {
   var maintTech = document.getElementById('dd-maint-tech').value.trim();
   var maintStatus = document.getElementById('dd-maint-status').value;
   var maintNotes = document.getElementById('dd-maint-notes').value.trim();
-  var maintBefore = document.getElementById('dd-maint-before').value.trim();
-  var maintAfter = document.getElementById('dd-maint-after').value.trim();
   var septicName = document.getElementById('dd-septic-name').value.trim();
   var septicTrips = parseInt(document.getElementById('dd-septic-trips').value) || 0;
   var septicSupervisor = document.getElementById('dd-septic-supervisor').value.trim();
   if (!teaPacks && !sugar && !maintTask && !septicName) { alert('ادخل بيانات على الأقل في قسم واحد.'); return; }
-  dailyData.push({ date: date, empId: empId, empCode: empCode, empName: empName, period: period, teaPacks: teaPacks, sugar: sugar, maintCat: maintCat, maintTask: maintTask, maintTech: maintTech, maintStatus: maintStatus, maintNotes: maintNotes, maintBefore: maintBefore, maintAfter: maintAfter, septicName: septicName, septicTrips: septicTrips, septicSupervisor: septicSupervisor, createdAt: new Date().toISOString() });
+  dailyData.push({ date: date, empId: empId, empCode: empCode, empName: empName, period: period, teaPacks: teaPacks, sugar: sugar, maintCat: maintCat, maintTask: maintTask, maintTech: maintTech, maintStatus: maintStatus, maintNotes: maintNotes, maintMats: JSON.parse(JSON.stringify(ddMaintMaterials)), septicName: septicName, septicTrips: septicTrips, septicSupervisor: septicSupervisor, createdAt: new Date().toISOString() });
   _lsSet('linah_daily_data', JSON.stringify(dailyData));
   alert('✅ تم حفظ بيانات اليوم ' + date);
   renderDailyDataTable();
@@ -18461,8 +18514,10 @@ function saveDailyData() {
   document.getElementById('dd-maint-task').value = '';
   document.getElementById('dd-maint-tech').value = '';
   document.getElementById('dd-maint-notes').value = '';
-  document.getElementById('dd-maint-before').value = '';
-  document.getElementById('dd-maint-after').value = '';
+  document.getElementById('dd-maint-mat-search').value = '';
+  document.getElementById('dd-maint-mat-results').style.display = 'none';
+  ddMaintMaterials = [];
+  renderDDMaintMatsList();
   document.getElementById('dd-septic-name').value = '';
   document.getElementById('dd-septic-trips').value = 0;
   document.getElementById('dd-septic-supervisor').value = '';
@@ -18471,11 +18526,15 @@ function renderDailyDataTable() {
   var wrap = document.getElementById('daily-data-table-wrap');
   if (!wrap) return;
   if (!dailyData.length) { wrap.innerHTML = '<p style="color:#888;text-align:center;padding:20px;">لا توجد بيانات يومية بعد.</p>'; return; }
-  var html = '<table style="width:100%;border-collapse:collapse;font-size:12px;"><thead><tr style="background:#5d4037;color:white;"><th style="padding:6px;border:1px solid #5d4037;">التاريخ</th><th style="padding:6px;border:1px solid #5d4037;">الكود</th><th style="padding:6px;border:1px solid #5d4037;">الاسم</th><th style="padding:6px;border:1px solid #5d4037;">الدورة</th><th style="padding:6px;border:1px solid #5d4037;">الشاي (باكيت)</th><th style="padding:6px;border:1px solid #5d4037;">السكر (كجم)</th><th style="padding:6px;border:1px solid #5d4037;">🛠️ الصيانة</th><th style="padding:6px;border:1px solid #5d4037;">🚽 البيارة</th><th style="padding:6px;border:1px solid #5d4037;">نقلات</th><th style="padding:6px;border:1px solid #5d4037;" class="no-print"></th></tr></thead><tbody>';
+  var html = '<table style="width:100%;border-collapse:collapse;font-size:12px;"><thead><tr style="background:#5d4037;color:white;"><th style="padding:6px;border:1px solid #5d4037;">التاريخ</th><th style="padding:6px;border:1px solid #5d4037;">الكود</th><th style="padding:6px;border:1px solid #5d4037;">الاسم</th><th style="padding:6px;border:1px solid #5d4037;">الدورة</th><th style="padding:6px;border:1px solid #5d4037;">الشاي (باكيت)</th><th style="padding:6px;border:1px solid #5d4037;">السكر (كجم)</th><th style="padding:6px;border:1px solid #5d4037;">🛠️ الصيانة</th><th style="padding:6px;border:1px solid #5d4037;">🧰 الخامات</th><th style="padding:6px;border:1px solid #5d4037;">🚽 البيارة</th><th style="padding:6px;border:1px solid #5d4037;">نقلات</th><th style="padding:6px;border:1px solid #5d4037;" class="no-print"></th></tr></thead><tbody>';
   var sorted = dailyData.slice().sort(function(a,b){ return b.date.localeCompare(a.date); });
   sorted.forEach(function(d, i){
     var realIdx = dailyData.indexOf(d);
-    html += '<tr style="border-bottom:1px solid #e0e0e0;"><td style="padding:6px;border:1px solid #e0e0e0;">' + d.date + '</td><td style="padding:6px;border:1px solid #e0e0e0;text-align:center;">' + (d.empCode || '—') + '</td><td style="padding:6px;border:1px solid #e0e0e0;">' + (d.empName || '—') + '</td><td style="padding:6px;border:1px solid #e0e0e0;text-align:center;">' + (d.period || '—') + '</td><td style="padding:6px;border:1px solid #e0e0e0;text-align:center;">' + (d.teaPacks||'—') + '</td><td style="padding:6px;border:1px solid #e0e0e0;text-align:center;">' + (d.sugar||'—') + '</td><td style="padding:6px;border:1px solid #e0e0e0;">' + (d.maintTask || '—') + '</td><td style="padding:6px;border:1px solid #e0e0e0;">' + (d.septicName || '—') + '</td><td style="padding:6px;border:1px solid #e0e0e0;text-align:center;">' + (d.septicTrips || '—') + '</td><td class="no-print" style="padding:6px;border:1px solid #e0e0e0;text-align:center;"><button onclick="deleteDailyData(' + realIdx + ')" style="background:none;border:none;color:#d32f2f;cursor:pointer;font-size:14px;">✕</button></td></tr>';
+    var matsHtml = '';
+    if (d.maintMats && d.maintMats.length) {
+      matsHtml = d.maintMats.map(function(m) { return '<span style="display:inline-block;background:#e3f2fd;padding:1px 4px;margin:1px;border-radius:3px;font-size:10px;border:1px solid #90caf9;">' + m.name + ' — ' + m.qty + '</span>'; }).join(' ');
+    } else { matsHtml = '—'; }
+    html += '<tr style="border-bottom:1px solid #e0e0e0;"><td style="padding:6px;border:1px solid #e0e0e0;">' + d.date + '</td><td style="padding:6px;border:1px solid #e0e0e0;text-align:center;">' + (d.empCode || '—') + '</td><td style="padding:6px;border:1px solid #e0e0e0;">' + (d.empName || '—') + '</td><td style="padding:6px;border:1px solid #e0e0e0;text-align:center;">' + (d.period || '—') + '</td><td style="padding:6px;border:1px solid #e0e0e0;text-align:center;">' + (d.teaPacks||'—') + '</td><td style="padding:6px;border:1px solid #e0e0e0;text-align:center;">' + (d.sugar||'—') + '</td><td style="padding:6px;border:1px solid #e0e0e0;">' + (d.maintTask || '—') + '</td><td style="padding:6px;border:1px solid #e0e0e0;">' + matsHtml + '</td><td style="padding:6px;border:1px solid #e0e0e0;">' + (d.septicName || '—') + '</td><td style="padding:6px;border:1px solid #e0e0e0;text-align:center;">' + (d.septicTrips || '—') + '</td><td class="no-print" style="padding:6px;border:1px solid #e0e0e0;text-align:center;"><button onclick="deleteDailyData(' + realIdx + ')" style="background:none;border:none;color:#d32f2f;cursor:pointer;font-size:14px;">✕</button></td></tr>';
   });
   html += '</tbody></table>';
   wrap.innerHTML = html;
@@ -18488,9 +18547,10 @@ function deleteDailyData(idx) {
 }
 function exportDailyDataReport() {
   if (!dailyData.length) { alert('لا توجد بيانات للتصدير.'); return; }
-  var rows = [['التاريخ','الكود','الاسم','الدورة','الشاي (باكيت)','السكر (كجم)','نوع الصيانة','بند الصيانة','الفني','الحالة','قبل','بعد','ملاحظات','البيارة','عدد النقلات','المشرف']];
+  var rows = [['التاريخ','الكود','الاسم','الدورة','الشاي (باكيت)','السكر (كجم)','نوع الصيانة','بند الصيانة','الفني','الحالة','مكان وملاحظات','الخامات','البيارة','عدد النقلات','المشرف']];
   dailyData.sort(function(a,b){ return a.date.localeCompare(b.date); }).forEach(function(d){
-    rows.push([d.date, d.empCode||'', d.empName||'', d.period||'', d.teaPacks||0, d.sugar||0, d.maintCat||'', d.maintTask||'', d.maintTech||'', d.maintStatus||'', d.maintBefore||'', d.maintAfter||'', d.maintNotes||'', d.septicName||'', d.septicTrips||0, d.septicSupervisor||'']);
+    var matsStr = d.maintMats && d.maintMats.length ? d.maintMats.map(function(m){ return m.name + ' — ' + m.qty + ' ' + (m.unit||''); }).join(', ') : '';
+    rows.push([d.date, d.empCode||'', d.empName||'', d.period||'', d.teaPacks||0, d.sugar||0, d.maintCat||'', d.maintTask||'', d.maintTech||'', d.maintStatus||'', d.maintNotes||'', matsStr, d.septicName||'', d.septicTrips||0, d.septicSupervisor||'']);
   });
   var ws = XLSX.utils.aoa_to_sheet(rows);
   var wb = XLSX.utils.book_new();

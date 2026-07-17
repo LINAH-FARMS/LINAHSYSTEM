@@ -85,11 +85,16 @@ textarea{resize:vertical;min-height:60px}
 <div class="form-group"><label>الفني</label><input type="text" id="dd-maint-tech" placeholder="اسم الفني"></div>
 <div class="form-group"><label>الحالة</label><select id="dd-maint-status"><option>مفتوحة</option><option>تحت التنفيذ</option><option>تمت</option><option>ملغاة</option></select></div>
 </div>
-<div class="form-row">
-<div class="form-group"><label>قبل</label><input type="text" id="dd-maint-before" placeholder="حالة قبل"></div>
-<div class="form-group"><label>بعد</label><input type="text" id="dd-maint-after" placeholder="حالة بعد"></div>
+<div class="form-group"><label>🧰 الخامات والأدوات المستخدمة</label>
+<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
+<input type="text" id="dd-maint-mat-search" placeholder="🔍 اكتب كود أو اسم الخامة" style="flex:3;min-width:140px;padding:8px;border:2px solid #e0e0e0;border-radius:8px;font-size:13px;font-family:'Cairo',sans-serif;" oninput="searchDDMaintMat()" autocomplete="off">
+<input type="number" id="dd-maint-mat-qty" placeholder="الكمية" min="1" value="1" style="width:65px;padding:8px;border:2px solid #e0e0e0;border-radius:8px;font-size:13px;font-family:'Cairo',sans-serif;">
+<button type="button" style="padding:8px 14px;font-size:13px;background:#1565c0;color:white;border:none;border-radius:8px;cursor:pointer;font-family:'Cairo',sans-serif;display:none;font-weight:700;" id="btn-add-dd-maint-mat" onclick="addDDMaintMat()">➕ إضافة</button>
 </div>
-<div class="form-group"><label>ملاحظات</label><textarea id="dd-maint-notes" rows="2" placeholder="ملاحظات الصيانة"></textarea></div>
+<div id="dd-maint-mat-results" style="margin-top:4px;max-height:150px;overflow-y:auto;border:1px solid #e0e0e0;border-radius:8px;display:none;background:white;"></div>
+<div id="dd-maint-mats-list" style="margin-top:6px;display:flex;gap:4px;flex-wrap:wrap;"></div>
+</div>
+<div class="form-group"><label>مكان الصيانة واي ملاحظات اخري</label><textarea id="dd-maint-notes" rows="2" placeholder="مكان الصيانة واي ملاحظات"></textarea></div>
 </div>
 
 <div class="section section-septic">
@@ -124,6 +129,59 @@ try {
   if (dd) dailyData = JSON.parse(dd);
 } catch(e){}
 if (!Array.isArray(dailyData)) dailyData = [];
+
+var invItems = [];
+try { var iv = localStorage.getItem('lineh_inventory_items'); if (iv) invItems = JSON.parse(iv); } catch(e){}
+if (!Array.isArray(invItems)) invItems = [];
+
+var ddMaintMaterials = [];
+var ddMaintMatSelectedCode = '';
+
+function searchDDMaintMat() {
+  var q = document.getElementById('dd-maint-mat-search').value.trim();
+  var resultsEl = document.getElementById('dd-maint-mat-results');
+  var btnAdd = document.getElementById('btn-add-dd-maint-mat');
+  if (!q) { resultsEl.style.display = 'none'; resultsEl.innerHTML = ''; btnAdd.style.display = 'none'; ddMaintMatSelectedCode = ''; return; }
+  var matches = invItems.filter(function(i) { return (i.code||'').includes(q) || (i.name||'').includes(q); });
+  if (!matches.length) { resultsEl.style.display = 'block'; resultsEl.innerHTML = '<div style="padding:8px;color:#999;font-size:13px;">لا توجد نتائج</div>'; btnAdd.style.display = 'none'; ddMaintMatSelectedCode = ''; return; }
+  resultsEl.style.display = 'block';
+  resultsEl.innerHTML = matches.map(function(m,i) {
+    return '<div class="dd-maint-mat-result" data-code="' + m.code + '" style="padding:6px 10px;cursor:pointer;border-bottom:1px solid #eee;font-size:13px;display:flex;justify-content:space-between;align-items:center;' + (i===0?'background:#e3f2fd;':'') + '" onclick="selectDDMaintMatResult(\'' + m.code + '\')"><span><b>' + m.code + '</b> — ' + m.name + ' <span style="color:#666;">(' + (m.unit||'—') + ')</span></span></div>';
+  }).join('');
+  selectDDMaintMatResult(matches[0].code);
+}
+function selectDDMaintMatResult(code) {
+  ddMaintMatSelectedCode = code;
+  document.getElementById('btn-add-dd-maint-mat').style.display = 'inline-block';
+  document.querySelectorAll('.dd-maint-mat-result').forEach(function(el) { el.style.background = el.dataset.code === code ? '#e3f2fd' : ''; });
+}
+function addDDMaintMat() {
+  var code = ddMaintMatSelectedCode;
+  var qty = parseInt(document.getElementById('dd-maint-mat-qty').value) || 1;
+  if (!code) return;
+  var item = invItems.find(function(i) { return i.code === code; });
+  if (!item) return;
+  var existing = ddMaintMaterials.find(function(m) { return m.code === code; });
+  if (existing) { existing.qty += qty; }
+  else { ddMaintMaterials.push({ code: code, name: item.name, unit: item.unit || '', qty: qty }); }
+  renderDDMaintMatsList();
+  document.getElementById('dd-maint-mat-qty').value = 1;
+  document.getElementById('dd-maint-mat-search').value = '';
+  document.getElementById('dd-maint-mat-results').style.display = 'none';
+  document.getElementById('dd-maint-mat-results').innerHTML = '';
+  document.getElementById('btn-add-dd-maint-mat').style.display = 'none';
+  ddMaintMatSelectedCode = '';
+  document.getElementById('dd-maint-mat-search').focus();
+}
+function removeDDMaintMat(idx) { ddMaintMaterials.splice(idx,1); renderDDMaintMatsList(); }
+function renderDDMaintMatsList() {
+  var el = document.getElementById('dd-maint-mats-list');
+  if (!el) return;
+  if (!ddMaintMaterials.length) { el.innerHTML = ''; return; }
+  el.innerHTML = ddMaintMaterials.map(function(m,i) {
+    return '<span style="display:inline-flex;align-items:center;gap:4px;background:#e3f2fd;padding:4px 8px;border-radius:6px;border:1px solid #90caf9;font-size:12px;"><b>' + m.name + '</b> —' + m.qty + ' ' + m.unit + ' <span style="cursor:pointer;color:red;font-weight:bold;margin-right:4px;" onclick="removeDDMaintMat(' + i + ')">✕</span></span>';
+  }).join('');
+}
 
 document.getElementById('dd-date').value = new Date().toISOString().split('T')[0];
 
@@ -201,14 +259,12 @@ function saveDailyData(){
   var maintTask = document.getElementById('dd-maint-task').value.trim();
   var maintTech = document.getElementById('dd-maint-tech').value.trim();
   var maintStatus = document.getElementById('dd-maint-status').value;
-  var maintBefore = document.getElementById('dd-maint-before').value.trim();
-  var maintAfter = document.getElementById('dd-maint-after').value.trim();
   var maintNotes = document.getElementById('dd-maint-notes').value.trim();
   var septicName = document.getElementById('dd-septic-name').value.trim();
   var septicTrips = parseInt(document.getElementById('dd-septic-trips').value) || 0;
   var septicSupervisor = document.getElementById('dd-septic-supervisor').value.trim();
   if (!teaPacks && !sugar && !maintTask && !septicName) { showMsg('ادخل بيانات على الأقل في قسم واحد.', true); return; }
-  var entry = { date: date, empId: empId, empCode: code, empName: name, period: period, teaPacks: teaPacks, sugar: sugar, maintCat: maintCat, maintTask: maintTask, maintTech: maintTech, maintStatus: maintStatus, maintBefore: maintBefore, maintAfter: maintAfter, maintNotes: maintNotes, septicName: septicName, septicTrips: septicTrips, septicSupervisor: septicSupervisor, createdAt: new Date().toISOString() };
+  var entry = { date: date, empId: empId, empCode: code, empName: name, period: period, teaPacks: teaPacks, sugar: sugar, maintCat: maintCat, maintTask: maintTask, maintTech: maintTech, maintStatus: maintStatus, maintNotes: maintNotes, maintMats: JSON.parse(JSON.stringify(ddMaintMaterials)), septicName: septicName, septicTrips: septicTrips, septicSupervisor: septicSupervisor, createdAt: new Date().toISOString() };
   dailyData.push(entry);
   try { localStorage.setItem('linah_daily_data', JSON.stringify(dailyData)); } catch(e){}
   // Save to Supabase with localStorage fallback
@@ -254,7 +310,8 @@ function resetForm() {
   document.getElementById('dd-emp-search').value = ''; empHid.value = ''; empCode.value = ''; empName.value = '';
   document.getElementById('dd-tea-packs').value = 2; document.getElementById('dd-sugar').value = 1;
   document.getElementById('dd-maint-task').value = ''; document.getElementById('dd-maint-tech').value = '';
-  document.getElementById('dd-maint-before').value = ''; document.getElementById('dd-maint-after').value = '';
+  document.getElementById('dd-maint-mat-search').value = ''; document.getElementById('dd-maint-mat-results').style.display = 'none';
+  ddMaintMaterials = []; renderDDMaintMatsList();
   document.getElementById('dd-maint-notes').value = '';
   document.getElementById('dd-septic-name').value = ''; document.getElementById('dd-septic-trips').value = 0;
   document.getElementById('dd-septic-supervisor').value = '';
