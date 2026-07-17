@@ -145,7 +145,13 @@ fetch(SB + '/rest/v1/sync_data?id=eq.alldata&select=data', { headers:{'apikey':K
     var ad = rows[0].data;
     if (ad.employees && ad.employees.length) { employees = ad.employees; }
     if (ad.inventoryItems && ad.inventoryItems.length) { invItems = ad.inventoryItems; }
-    if (ad.dynamicSeptics && ad.dynamicSeptics.length) { septicNames = ad.dynamicSeptics; }
+    if (ad.dynamicSeptics && ad.dynamicSeptics.length) {
+      septicNames = ad.dynamicSeptics.map(function(s){
+        if (typeof s === 'string') return s;
+        if (s && typeof s === 'object') return s.name || s.title || s.label || JSON.stringify(s);
+        return String(s);
+      }).filter(Boolean);
+    }
     // Populate septic datalist
     var dl = document.getElementById('septic-list');
     if (dl && septicNames.length) { dl.innerHTML = septicNames.map(function(s){ return '<option value="'+s+'">'; }).join(''); }
