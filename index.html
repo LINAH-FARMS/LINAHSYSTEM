@@ -4686,17 +4686,6 @@
       });
       setupEmployeeSearch('transfer-emp-search', 'transfer-emp-id', 'transfer-emp-suggestions');
       setupEmployeeSearch('ts-emp-search', 'ts-emp-id', 'ts-emp-suggestions');
-      setupEmployeeSearch('dd-emp-search', 'dd-emp-id', 'dd-emp-suggestions');
-
-      document.getElementById('dd-emp-search').addEventListener('change', function() {
-        var eid = document.getElementById('dd-emp-id').value;
-        if (!eid) return;
-        var emp = employees.find(function(e) { return e.id == eid || e.code == eid; });
-        if (emp) {
-          document.getElementById('dd-emp-code').value = emp.code || emp.id || '';
-          document.getElementById('dd-emp-name').value = emp.name || '';
-        }
-      });
       document.getElementById('transfer-emp-search').addEventListener('change', loadEmployeeCurrentDetails);
       document.getElementById('inv-emp-search').addEventListener('change', function() {
         let empId = document.getElementById('inv-emp-id').value;
