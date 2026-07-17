@@ -2890,6 +2890,7 @@
       <div class="modal-header">
         <h2 id="rm-title">⚙️ إدارة الوصفات</h2>
         <div style="display:flex;gap:6px;">
+          <button class="btn" onclick="compareRecipes()" style="padding:3px 10px;font-size:11px;background:#00796b;color:#fff;border:none;border-radius:5px;">📊 مقارنة</button>
           <button class="btn" onclick="document.getElementById('rm-import-file').click()" style="padding:3px 10px;font-size:11px;background:#1565c0;color:#fff;border:none;border-radius:5px;">📥 استيراد</button>
           <button class="btn" onclick="exportRecipes()" style="padding:3px 10px;font-size:11px;background:#e65100;color:#fff;border:none;border-radius:5px;">📤 تصدير</button>
           <input type="file" id="rm-import-file" accept=".xlsx,.json" style="display:none;" onchange="importRecipes(this)">
@@ -2918,6 +2919,19 @@
           <div id="chef-cost-editor" style="max-height:200px;overflow-y:auto;"></div>
           <button type="button" class="btn btn-success" onclick="renderChefCostEditor()" style="padding:4px 12px;font-size:12px;margin-top:6px;">🔄 تحديث القائمة</button>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="modal-compare-recipes" class="modal">
+    <div class="modal-content" style="max-width:800px;border-top:5px solid #00796b;">
+      <div class="modal-header">
+        <h2>📊 مقارنة تكلفة الوصفات</h2>
+        <span class="close-btn" onclick="closeModal('modal-compare-recipes')">&times;</span>
+      </div>
+      <div style="padding:15px;overflow-x:auto;">
+        <p style="color:#666;margin-bottom:10px;">التكلفة محسوبة على أساس السعر الحالي للخامات.</p>
+        <div id="compare-recipes-table-wrap"></div>
       </div>
     </div>
   </div>
@@ -17745,6 +17759,25 @@ function setupAutocomplete(inp) {
     if (e.key === 'Enter') { e.preventDefault(); var sel = drop.querySelector('.ac-sel'); if (sel) { pick(sel.getAttribute('data-name')); } }
     if (e.key === 'Escape') { drop.style.display = 'none'; }
   });
+}
+
+function compareRecipes() {
+  if (!RECIPES.length) { alert('لا توجد وصفات للمقارنة.'); return; }
+  var html = '<table style="width:100%;border-collapse:collapse;font-size:13px;"><thead><tr style="background:#e0f2f1;color:#004d40;"><th style="padding:8px;border:1px solid #b2dfdb;text-align:right;">الوصفة</th><th style="padding:8px;border:1px solid #b2dfdb;text-align:center;">أساس (فرد)</th><th style="padding:8px;border:1px solid #b2dfdb;text-align:center;">عدد الخامات</th><th style="padding:8px;border:1px solid #b2dfdb;text-align:center;">بدون سعر</th><th style="padding:8px;border:1px solid #b2dfdb;text-align:center;">إجمالي التكلفة</th><th style="padding:8px;border:1px solid #b2dfdb;text-align:center;">تكلفة الفرد</th></tr></thead><tbody>';
+  RECIPES.forEach(function(r){
+    var totalCost = 0, missing = 0, totalItems = (r.items||[]).length;
+    (r.items||[]).forEach(function(it){
+      var cost = getIngCost(it.n, it.u);
+      if (cost !== undefined) totalCost += cost * it.q;
+      else missing++;
+    });
+    var costPerPerson = totalCost / (r.base || 1);
+    var color = missing > 0 ? '#b71c1c' : (costPerPerson > 0 ? '#2e7d32' : '#888');
+    html += '<tr style="border-bottom:1px solid #e0e0e0;"><td style="padding:8px;border:1px solid #e0e0e0;text-align:right;font-weight:700;">' + r.name + '</td><td style="padding:8px;border:1px solid #e0e0e0;text-align:center;">' + r.base + '</td><td style="padding:8px;border:1px solid #e0e0e0;text-align:center;">' + totalItems + '</td><td style="padding:8px;border:1px solid #e0e0e0;text-align:center;color:#b71c1c;font-weight:' + (missing>0?'700':'400') + ';">' + (missing > 0 ? ('⚠️ ' + missing) : '—') + '</td><td style="padding:8px;border:1px solid #e0e0e0;text-align:center;font-weight:700;color:' + color + ';">' + (totalCost > 0 ? formatQty(totalCost) + ' ج.م' : (missing > 0 ? '⚠️' : '—')) + '</td><td style="padding:8px;border:1px solid #e0e0e0;text-align:center;font-weight:700;color:' + color + ';font-size:15px;">' + (costPerPerson > 0 ? formatQty(costPerPerson) + ' ج.م' : (missing > 0 ? '⚠️' : '—')) + '</td></tr>';
+  });
+  html += '</tbody></table>';
+  document.getElementById('compare-recipes-table-wrap').innerHTML = html;
+  openModal('modal-compare-recipes');
 }
 
 // ===== إدارة الوصفات (إضافة / تعديل / حذف) =====
