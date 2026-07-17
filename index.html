@@ -16868,7 +16868,8 @@ function updateDashClock() {
 
       function esc(t) { return (t || '').replace(/[<>&]/g,function(c){return {'<':'&lt;','>':'&gt;','&':'&amp;'}[c]||c;}); }
 
-      let formsHtml = '';
+      let rows = '';
+      let idx = 0;
       checked.forEach(cb => {
         let tr = cb.closest('tr');
         if (!tr) return;
@@ -16883,39 +16884,52 @@ function updateDashClock() {
         let lastWorkDay = esc(td[8]?.textContent?.trim());
         let returnDate = esc(td[9]?.textContent?.trim());
         let vacType = esc(td[10]?.textContent?.trim());
-
-        formsHtml +=
-          '<div style="page-break-after:always;border:2px solid #000;padding:20px;margin-bottom:20px;border-radius:4px;">' +
-          '<div style="text-align:center;font-size:22px;font-weight:700;margin-bottom:20px;color:#000;">نموذج إجازة موظف</div>' +
-          '<table style="width:100%;border-collapse:collapse;margin-bottom:16px;">' +
-          '<tr><td style="padding:6px 8px;border:1px solid #000;font-weight:700;width:20%;">الكود</td><td style="padding:6px 8px;border:1px solid #000;width:30%;">' + code + '</td>' +
-          '<td style="padding:6px 8px;border:1px solid #000;font-weight:700;width:20%;">الاسم</td><td style="padding:6px 8px;border:1px solid #000;width:30%;">' + name + '</td></tr>' +
-          '<tr><td style="padding:6px 8px;border:1px solid #000;font-weight:700;">الجهة / الموقع</td><td style="padding:6px 8px;border:1px solid #000;" colspan="3">' + info + '</td></tr>' +
-          '<tr><td style="padding:6px 8px;border:1px solid #000;font-weight:700;">نوع الإجازة</td><td style="padding:6px 8px;border:1px solid #000;">' + vacType + '</td>' +
-          '<td style="padding:6px 8px;border:1px solid #000;font-weight:700;">عدد الأيام</td><td style="padding:6px 8px;border:1px solid #000;text-align:center;">' + days + '</td></tr>' +
-          '<tr><td style="padding:6px 8px;border:1px solid #000;font-weight:700;">تاريخ البداية</td><td style="padding:6px 8px;border:1px solid #000;">' + startDate + '</td>' +
-          '<td style="padding:6px 8px;border:1px solid #000;font-weight:700;">تاريخ النهاية</td><td style="padding:6px 8px;border:1px solid #000;">' + endDate + '</td></tr>' +
-          '<tr><td style="padding:6px 8px;border:1px solid #000;font-weight:700;">تاريخ السفر</td><td style="padding:6px 8px;border:1px solid #000;">' + (travelDate || '—') + '</td>' +
-          '<td style="padding:6px 8px;border:1px solid #000;font-weight:700;">آخر يوم عمل</td><td style="padding:6px 8px;border:1px solid #000;">' + (lastWorkDay || '—') + '</td></tr>' +
-          '<tr><td style="padding:6px 8px;border:1px solid #000;font-weight:700;">تاريخ العودة</td><td style="padding:6px 8px;border:1px solid #000;" colspan="3">' + (returnDate || '—') + '</td></tr>' +
-          '</table>' +
-          '<div style="margin-top:30px;display:flex;justify-content:space-between;">' +
-          '<div style="text-align:center;"><span style="font-weight:700;">توقيع الموظف</span><br><span style="border-top:1px solid #000;display:inline-block;width:140px;margin-top:6px;">&nbsp;</span></div>' +
-          '<div style="text-align:center;"><span style="font-weight:700;">المشرف المباشر</span><br><span style="border-top:1px solid #000;display:inline-block;width:140px;margin-top:6px;">&nbsp;</span></div>' +
-          '<div style="text-align:center;"><span style="font-weight:700;">الإدارة</span><br><span style="border-top:1px solid #000;display:inline-block;width:140px;margin-top:6px;">&nbsp;</span></div>' +
-          '</div>' +
-          '</div>';
+        idx++;
+        rows += '<tr>' +
+          '<td style="padding:5px 6px;border:1px solid #000;text-align:center;">' + idx + '</td>' +
+          '<td style="padding:5px 6px;border:1px solid #000;text-align:center;">' + code + '</td>' +
+          '<td style="padding:5px 6px;border:1px solid #000;">' + name + '</td>' +
+          '<td style="padding:5px 6px;border:1px solid #000;">' + info + '</td>' +
+          '<td style="padding:5px 6px;border:1px solid #000;text-align:center;">' + vacType + '</td>' +
+          '<td style="padding:5px 6px;border:1px solid #000;text-align:center;">' + startDate + '</td>' +
+          '<td style="padding:5px 6px;border:1px solid #000;text-align:center;">' + endDate + '</td>' +
+          '<td style="padding:5px 6px;border:1px solid #000;text-align:center;">' + days + '</td>' +
+          '<td style="padding:5px 6px;border:1px solid #000;text-align:center;">' + (travelDate||'—') + '</td>' +
+          '<td style="padding:5px 6px;border:1px solid #000;text-align:center;">' + (lastWorkDay||'—') + '</td>' +
+          '<td style="padding:5px 6px;border:1px solid #000;text-align:center;">' + (returnDate||'—') + '</td>' +
+          '</tr>';
       });
+
+      let emptyRows = Math.max(0, 5 - idx);
+      for (let i = 0; i < emptyRows; i++) {
+        idx++;
+        rows += '<tr>' + '<td style="padding:5px 6px;border:1px solid #000;text-align:center;">' + idx + '</td>' +
+          '<td style="padding:5px 6px;border:1px solid #000;"></td><td style="padding:5px 6px;border:1px solid #000;"></td>' +
+          '<td style="padding:5px 6px;border:1px solid #000;"></td><td style="padding:5px 6px;border:1px solid #000;"></td>' +
+          '<td style="padding:5px 6px;border:1px solid #000;"></td><td style="padding:5px 6px;border:1px solid #000;"></td>' +
+          '<td style="padding:5px 6px;border:1px solid #000;"></td><td style="padding:5px 6px;border:1px solid #000;"></td>' +
+          '<td style="padding:5px 6px;border:1px solid #000;"></td><td style="padding:5px 6px;border:1px solid #000;"></td>' +
+          '</tr>';
+      }
 
       let w = window.open('', '_blank', 'width=900,height=700');
       w.document.write('<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8"><title>طباعة الإجازات</title>' +
         '<style>' +
-        '@page{size:A4 portrait;margin:10mm 10mm;}' +
-        'body{font-family:"Traditional Arabic","Arabic Typesetting","Segoe UI",Tahoma,Arial,sans-serif;margin:0;padding:20px;font-size:14px;line-height:1.5;color:#000;}' +
-        '@media print{body{padding:0;} div[style*="page-break-after:always"]{page-break-after:always;}}' +
+        '@page{size:A4 landscape;margin:10mm 10mm;}' +
+        'body{font-family:"Traditional Arabic","Arabic Typesetting","Segoe UI",Tahoma,Arial,sans-serif;margin:0;padding:15px;font-size:12px;line-height:1.4;color:#000;}' +
+        'table{width:100%;border-collapse:collapse;}' +
+        'th{background:#e0e0e0;color:#000;font-weight:700;text-align:center;padding:6px 4px;border:1px solid #000;}' +
+        'td{padding:4px;border:1px solid #000;text-align:center;}' +
+        '.title{text-align:center;font-size:18px;font-weight:700;margin-bottom:10px;}' +
+        '@media print{body{padding:0;}}' +
         '</style></head><body>' +
-        (logoSrc ? '<div style="text-align:center;margin-bottom:10px;"><img src="' + logoSrc + '" style="height:50px;width:auto;"></div>' : '') +
-        formsHtml +
+        (logoSrc ? '<div style="text-align:center;margin-bottom:6px;"><img src="' + logoSrc + '" style="height:40px;width:auto;"></div>' : '') +
+        '<div class="title">سجل الإجازات</div>' +
+        '<table><thead><tr>' +
+        '<th style="width:4%;">م</th><th style="width:7%;">الكود</th><th style="width:14%;">الاسم</th><th style="width:12%;">الجهة</th>' +
+        '<th style="width:8%;">النوع</th><th style="width:10%;">البداية</th><th style="width:10%;">النهاية</th><th style="width:5%;">أيام</th>' +
+        '<th style="width:10%;">تاريخ السفر</th><th style="width:10%;">آخر يوم عمل</th><th style="width:10%;">تاريخ العودة</th>' +
+        '</tr></thead><tbody>' + rows + '</tbody></table>' +
         '<script>window.print();setTimeout(function(){window.close()},1500);</' + 'script>' +
         '</body></html>');
       w.document.close();
