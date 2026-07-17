@@ -18459,7 +18459,7 @@ function openDailyDataForm() {
   document.getElementById('dd-septic-name').value = '';
   document.getElementById('dd-septic-trips').value = 0;
   document.getElementById('dd-septic-supervisor').value = '';
-  document.getElementById('dd-septic-cost').value = 0;
+  var sepCostEl = document.getElementById('dd-septic-cost'); if (sepCostEl) sepCostEl.value = 0;
   var dl = document.getElementById('dd-septic-datalist');
   if (dl) {
     var septics = (typeof dynamicSeptics !== 'undefined' && dynamicSeptics.length) ? dynamicSeptics : ["بيارة محطة الفرز الجديدة قطاع 22","بيارة المطبخ","بيارة السكن الاداري","بيارة ق3","بيارة سكن نخالين 22","بيارة ق30","بيارة ق6","بيارة ق27","بيارة قطاع 25","بيارة قطاع 33","بيارة قطاع 24","بيارة البير الجديد","بيارة مبني الادارة","بيارة قطاع 27","بيارة قطاع 29","بيارة قطاع 30","بيارة قطاع 21","بيارة قطاع 1","بيارة قطاع 31","بيارة مجمع الحمامات الخارجيه"];
@@ -18580,6 +18580,7 @@ function _getSection(d) {
   return 'all';
 }
 function _renderTable(title, entries, columns, rowFn) {
+  console.log('[renderTable] title:', title, 'entries:', entries.length);
   if (!entries.length) return '';
   var html = '<h5 style="margin:16px 0 6px;font-size:14px;color:#5d4037;">' + title + ' (' + entries.length + ')</h5>';
   html += '<table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:10px;"><thead><tr style="background:#5d4037;color:white;">';
@@ -18594,10 +18595,21 @@ function _renderTable(title, entries, columns, rowFn) {
   return html;
 }
 function renderDailyDataTable() {
+  console.log('[renderDailyDataTable] dailyData length:', dailyData.length);
   var wrap = document.getElementById('daily-data-table-wrap');
-  if (!wrap) return;
+  console.log('[renderDailyDataTable] wrap element:', wrap);
+  if (!wrap) { console.log('[renderDailyDataTable] wrap not found!'); return; }
   if (!dailyData.length) { wrap.innerHTML = '<p style="color:#888;text-align:center;padding:20px;">لا توجد بيانات يومية بعد.</p>'; return; }
   var tea = [], maint = [], septic = [], other = [];
+  dailyData.forEach(function(d) {
+    var s = _getSection(d);
+    console.log('[renderDailyDataTable] entry section:', s, 'date:', d.date);
+    if (s === 'tea') tea.push(d);
+    else if (s === 'maint') maint.push(d);
+    else if (s === 'septic') septic.push(d);
+    else other.push(d);
+  });
+  console.log('[renderDailyDataTable] tea:', tea.length, 'maint:', maint.length, 'septic:', septic.length, 'other:', other.length);
   dailyData.forEach(function(d) {
     var s = _getSection(d);
     if (s === 'tea') tea.push(d);
@@ -18640,6 +18652,7 @@ function renderDailyDataTable() {
         return '<tr style="border-bottom:1px solid #e0e0e0;"><td style="padding:5px 4px;border:1px solid #e0e0e0;">' + d.date + '</td><td style="padding:5px 4px;border:1px solid #e0e0e0;text-align:center;">' + (d.empCode || '—') + '</td><td style="padding:5px 4px;border:1px solid #e0e0e0;">' + (d.empName || '—') + '</td><td style="padding:5px 4px;border:1px solid #e0e0e0;text-align:center;">' + (d.period || '—') + '</td><td style="padding:5px 4px;border:1px solid #e0e0e0;text-align:center;">' + (d.teaPacks||0) + '</td><td style="padding:5px 4px;border:1px solid #e0e0e0;text-align:center;">' + (d.sugar||0) + '</td><td style="padding:5px 4px;border:1px solid #e0e0e0;">' + (d.maintTask||'—') + '</td><td style="padding:5px 4px;border:1px solid #e0e0e0;">' + matsHtml + '</td><td style="padding:5px 4px;border:1px solid #e0e0e0;">' + (d.septicName||'—') + '</td><td style="padding:5px 4px;border:1px solid #e0e0e0;text-align:center;">' + (d.septicTrips||0) + '</td><td class="no-print" style="padding:5px 4px;border:1px solid #e0e0e0;text-align:center;"><button onclick="deleteDailyData(' + idx + ')" style="background:none;border:none;color:#d32f2f;cursor:pointer;font-size:14px;">✕</button></td></tr>';
       });
   }
+  console.log('[renderDailyDataTable] setting innerHTML, html length:', html.length);
   wrap.innerHTML = html || '<p style="color:#888;text-align:center;padding:20px;">لا توجد بيانات يومية بعد.</p>';
 }
 function deleteDailyData(idx) {
