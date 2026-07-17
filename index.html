@@ -18610,13 +18610,6 @@ function renderDailyDataTable() {
     else other.push(d);
   });
   console.log('[renderDailyDataTable] tea:', tea.length, 'maint:', maint.length, 'septic:', septic.length, 'other:', other.length);
-  dailyData.forEach(function(d) {
-    var s = _getSection(d);
-    if (s === 'tea') tea.push(d);
-    else if (s === 'maint') maint.push(d);
-    else if (s === 'septic') septic.push(d);
-    else other.push(d);
-  });
   var html = '';
   // Tea table
   html += _renderTable('🍵 الشاي', tea,
