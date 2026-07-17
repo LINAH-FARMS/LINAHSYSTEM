@@ -11321,6 +11321,14 @@ function toggleEmployeeStatus(empId) {
       }
       _surveyOpen = !_surveyOpen;
     }
+    function getPreparedWeight(w) {
+      var ings = w.ingredients || [];
+      var water = w.waterAdded || 0;
+      var pw = ings.reduce(function(s,i){ return s + (i.qty||0) * (getIngredientFactor(i.name) || 1); }, 0) + water;
+      var people = (w.engAte||0)+(w.engTakeaway||0)+(w.wrkAte||0)+(w.wrkTakeaway||0)+(w.guests||0);
+      if (people > 0 && pw < people * 0.15) pw = people * 0.15;
+      return pw;
+    }
     function editMealWaste(idx) { openMealWasteModal(idx); }
     function toggleMealWasteSection() {
       var el = document.getElementById('meal-waste-section');
@@ -11334,12 +11342,11 @@ function toggleEmployeeStatus(empId) {
       var filtered = getFilteredMealWaste();
       var totalWaste = 0, totalCost = 0, count = filtered.length, totalPrepared = 0, totalCookedQty = 0, totalPrepWaste = 0;
       filtered.forEach(function(w) {
-        totalPrepared += w.totalPrepared || 0;
+        totalPrepared += getPreparedWeight(w);
         totalWaste += (w.wasteEng||0) + (w.wasteWrk||0) + (w.wasteGuests||0) + (w.prepWaste||0);
         totalPrepWaste += w.prepWaste || 0;
         totalCost += w.cost || 0;
-        var ingSum = (w.ingredients||[]).reduce(function(s,i){return s+(i.qty||0);},0);
-        totalCookedQty += ingSum + (w.waterAdded||0);
+        totalCookedQty += getPreparedWeight(w);
       });
       var wastePct = totalPrepared > 0 ? (Math.min(totalWaste / totalPrepared, 1) * 100) : 0;
       var totalEngAte = 0, totalWrkAte = 0, totalWasteFromEng = 0, totalWasteFromWrk = 0, totalWasteFromGuests = 0, totalGuests = 0;
@@ -11392,14 +11399,15 @@ function toggleEmployeeStatus(empId) {
       tbody.innerHTML = '';
       filtered.forEach(function(w) {
         var realIdx = mealWaste.indexOf(w);
+        var pw = getPreparedWeight(w);
         var total = (w.wasteEng||0) + (w.wasteWrk||0) + (w.wasteGuests||0) + (w.prepWaste||0);
-        var pct = (w.totalPrepared||0) > 0 ? (Math.min(total / (w.totalPrepared||1), 1) * 100).toFixed(1) : 0;
+        var pct = pw > 0 ? (Math.min(total / pw, 1) * 100).toFixed(1) : 0;
         var avgEng = (w.engAte||0) > 0 ? ((w.wasteEng||0) / (w.engAte||1)) : 0;
         var avgWrk = (w.wrkAte||0) > 0 ? ((w.wasteWrk||0) / (w.wrkAte||1)) : 0;
         var avgGuests = (w.guests||0) > 0 ? ((w.wasteGuests||0) / (w.guests||1)) : 0;
         var people = (w.engAte||0) + (w.engTakeaway||0) + (w.wrkAte||0) + (w.wrkTakeaway||0) + (w.guests||0);
         var costPP = people > 0 ? ((w.cost||0) / people) : 0;
-        var wasteRatio = (w.totalPrepared||0) > 0 ? Math.min(((w.wasteEng||0)+(w.wasteWrk||0)+(w.wasteGuests||0)) / (w.totalPrepared||1), 1) : 0;
+        var wasteRatio = pw > 0 ? Math.min(((w.wasteEng||0)+(w.wasteWrk||0)+(w.wasteGuests||0)) / pw, 1) : 0;
         var wasteCost = wasteRatio * (w.cost||0);
         var logEntry = mealLogs.find(function(l) { return normalizeDateStr(l.date) === normalizeDateStr(w.date); });
         var empCount = 0;
@@ -11417,7 +11425,7 @@ function toggleEmployeeStatus(empId) {
           '<td>' + (w.meal||'') + '</td>' +
           '<td>' + (w.chef||'') + '</td>' +
           '<td><b>' + (empCount > 0 ? empCount : '—') + '</b></td>' +
-          '<td>' + (w.totalPrepared ? w.totalPrepared + ' كجم' : '—') + '</td>' +
+          '<td>' + (pw > 0 ? pw.toFixed(1) + ' كجم' : '—') + '</td>' +
           '<td style="color:#1565c0;">' + expectedKg + '</td>' +
           '<td style="color:#d32f2f;font-weight:700;">' + (w.wasteEng||0) + ' كجم' + (avgEng > 0 ? '<br><span style="font-size:10px;font-weight:400;color:#999;">' + avgEng.toFixed(2) + ' كجم/مهندس</span>' : '') + '</td>' +
           '<td style="color:#e65100;font-weight:700;">' + (w.wasteWrk||0) + ' كجم' + (avgWrk > 0 ? '<br><span style="font-size:10px;font-weight:400;color:#999;">' + avgWrk.toFixed(2) + ' كجم/عامل</span>' : '') + '</td>' +
@@ -11437,7 +11445,7 @@ function toggleEmployeeStatus(empId) {
       var ctx = canvas.getContext('2d');
       var totals = { totalPrepared: 0, wasteEng: 0, wasteWrk: 0, wasteGuests: 0, prepWaste: 0 };
       data.forEach(function(w) {
-        totals.totalPrepared += w.totalPrepared || 0;
+        totals.totalPrepared += getPreparedWeight(w);
         totals.wasteEng += w.wasteEng || 0;
         totals.wasteWrk += w.wasteWrk || 0;
         totals.wasteGuests += w.wasteGuests || 0;
@@ -11479,10 +11487,10 @@ function toggleEmployeeStatus(empId) {
         var avgEng = (w.engAte||0) > 0 ? ((w.wasteEng||0) / (w.engAte||1)).toFixed(2) : '';
         var avgWrk = (w.wrkAte||0) > 0 ? ((w.wasteWrk||0) / (w.wrkAte||1)).toFixed(2) : '';
         return { 'التاريخ':w.date, 'الوجبة':w.meal, 'الشيف':w.chef, 'الخامات':ings,
-          'الوزن المحضر (كجم)':w.totalPrepared, 'هدر المهندسين (كجم)':w.wasteEng, 'هدر العمال (كجم)':w.wasteWrk, 'هدر الضيوف (كجم)':w.wasteGuests||0,
+          'الوزن المحضر (كجم)':getPreparedWeight(w).toFixed(1), 'هدر المهندسين (كجم)':w.wasteEng, 'هدر العمال (كجم)':w.wasteWrk, 'هدر الضيوف (كجم)':w.wasteGuests||0,
           'هدر التحضير (كجم)':w.prepWaste||0, 'أكل مهندسين':w.engAte||0, 'تيك أواي مهندسين':w.engTakeaway||0, 'أكل عمال':w.wrkAte||0, 'تيك أواي عمال':w.wrkTakeaway||0, 'ضيوف':w.guests||0,
           'متوسط هدر/مهندس (كجم)':avgEng, 'متوسط هدر/عامل (كجم)':avgWrk,
-          'ماء مضاف (لتر)':w.waterAdded||0, 'نسبة هدر%':(w.totalPrepared>0?(Math.min(((w.wasteEng||0)+(w.wasteWrk||0)+(w.wasteGuests||0)+(w.prepWaste||0))/w.totalPrepared,1)*100).toFixed(1):0),
+          'ماء مضاف (لتر)':w.waterAdded||0, 'نسبة هدر%':(function(){var _pw=getPreparedWeight(w);return _pw>0?(Math.min(((w.wasteEng||0)+(w.wasteWrk||0)+(w.wasteGuests||0)+(w.prepWaste||0))/_pw,1)*100).toFixed(1):0;})(),
           'المسؤول':w.responsible };
       });
       var ws = XLSX.utils.json_to_sheet(xlData); var wb = XLSX.utils.book_new();
