@@ -100,7 +100,7 @@ textarea{resize:vertical;min-height:60px}
 <div class="section section-septic">
 <div class="section-title">🚽 البيارات</div>
 <div class="form-row">
-<div class="form-group"><label>البيارة</label><input type="text" id="dd-septic-name" placeholder="اسم البيارة"></div>
+<div class="form-group"><label>البيارة</label><input type="text" id="dd-septic-name" list="septic-list" placeholder="اسم البيارة"><datalist id="septic-list"></datalist></div>
 <div class="form-group"><label>عدد النقلات</label><input type="number" id="dd-septic-trips" min="0" value="0"></div>
 </div>
 <div class="form-group"><label>المشرف</label><input type="text" id="dd-septic-supervisor" placeholder="اسم المشرف"></div>
@@ -133,6 +133,24 @@ if (!Array.isArray(dailyData)) dailyData = [];
 var invItems = [];
 try { var iv = localStorage.getItem('lineh_inventory_items'); if (iv) invItems = JSON.parse(iv); } catch(e){}
 if (!Array.isArray(invItems)) invItems = [];
+
+var septicNames = [];
+try { var sn = localStorage.getItem('lineh_septic_records'); if (sn) { var sArr = JSON.parse(sn); septicNames = sArr.map(function(s){ return s.name || s.sector || ''; }).filter(Boolean); } } catch(e){}
+
+// Fetch reference data from Supabase for mobile users
+fetch(SB + '/rest/v1/sync_data?id=eq.alldata&select=data', { headers:{'apikey':KEY,'Authorization':'Bearer '+KEY} })
+  .then(function(r){ return r.json(); })
+  .then(function(rows){
+    if (!rows || !rows.length || !rows[0].data) return;
+    var ad = rows[0].data;
+    if (ad.employees && ad.employees.length) { employees = ad.employees; }
+    if (ad.inventoryItems && ad.inventoryItems.length) { invItems = ad.inventoryItems; }
+    if (ad.septicRecords && ad.septicRecords.length) { septicNames = ad.septicRecords.map(function(s){ return s.name || s.sector || ''; }).filter(Boolean); }
+    // Populate septic datalist
+    var dl = document.getElementById('septic-list');
+    if (dl && septicNames.length) { dl.innerHTML = septicNames.map(function(s){ return '<option value="'+s+'">'; }).join(''); }
+  })
+  .catch(function(){});
 
 var ddMaintMaterials = [];
 var ddMaintMatSelectedCode = '';
