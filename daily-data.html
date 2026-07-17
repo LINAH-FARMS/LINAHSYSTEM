@@ -160,6 +160,7 @@ try { var sn = localStorage.getItem('dyn_septics'); if (sn) { septicNames = JSON
       if (ad.dynamicSeptics) {
         var raw = ad.dynamicSeptics;
         if (typeof raw === 'string') { try { raw = JSON.parse(raw); } catch(e) {} }
+        if (!Array.isArray(raw) && raw && typeof raw === 'object') { raw = Object.values(raw); }
         if (Array.isArray(raw)) {
           septicNames = raw.map(function(s){
             if (typeof s === 'string') return s;
