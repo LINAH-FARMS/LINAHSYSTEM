@@ -108,6 +108,10 @@ textarea{resize:vertical;min-height:60px}
 </div>
 
 <script>
+const SB = 'https://cwqghiqykohefaggedjl.supabase.co';
+const KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN3cWdoaXF5a29oZWZhZ2dlZGpsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEwMjUyMjEsImV4cCI6MjA5NjYwMTIyMX0.3a3hRcNdmYQCtjYjBroAT6df1T_7oz-XWUeD3wagYw8';
+var HEADERS = { 'apikey': KEY, 'Authorization': 'Bearer ' + KEY, 'Content-Type': 'application/json' };
+
 var employees = [];
 try {
   var data = localStorage.getItem('lineh_employees');
@@ -204,9 +208,49 @@ function saveDailyData(){
   var septicTrips = parseInt(document.getElementById('dd-septic-trips').value) || 0;
   var septicSupervisor = document.getElementById('dd-septic-supervisor').value.trim();
   if (!teaPacks && !sugar && !maintTask && !septicName) { showMsg('ادخل بيانات على الأقل في قسم واحد.', true); return; }
-  dailyData.push({ date: date, empId: empId, empCode: code, empName: name, period: period, teaPacks: teaPacks, sugar: sugar, maintCat: maintCat, maintTask: maintTask, maintTech: maintTech, maintStatus: maintStatus, maintBefore: maintBefore, maintAfter: maintAfter, maintNotes: maintNotes, septicName: septicName, septicTrips: septicTrips, septicSupervisor: septicSupervisor, createdAt: new Date().toISOString() });
+  var entry = { date: date, empId: empId, empCode: code, empName: name, period: period, teaPacks: teaPacks, sugar: sugar, maintCat: maintCat, maintTask: maintTask, maintTech: maintTech, maintStatus: maintStatus, maintBefore: maintBefore, maintAfter: maintAfter, maintNotes: maintNotes, septicName: septicName, septicTrips: septicTrips, septicSupervisor: septicSupervisor, createdAt: new Date().toISOString() };
+  dailyData.push(entry);
   try { localStorage.setItem('linah_daily_data', JSON.stringify(dailyData)); } catch(e){}
-  showMsg('✅ تم حفظ بيانات اليوم ' + date, false);
+  // Save to Supabase with localStorage fallback
+  fetch(SB + '/rest/v1/sync_data?id=eq.daily_data_entries', {
+    method: 'GET',
+    headers: { 'apikey': KEY, 'Authorization': 'Bearer ' + KEY }
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(rows) {
+    var entries = [];
+    if (rows && rows.length > 0 && rows[0].data) {
+      try { entries = rows[0].data; if (typeof entries === 'string') entries = JSON.parse(entries); } catch(e) { entries = []; }
+    }
+    entries.push(entry);
+    if (rows && rows.length > 0) {
+      return fetch(SB + '/rest/v1/sync_data?id=eq.daily_data_entries', {
+        method: 'PATCH',
+        headers: HEADERS,
+        body: JSON.stringify({ data: entries, updated_at: new Date().toISOString() })
+      });
+    } else {
+      return fetch(SB + '/rest/v1/sync_data', {
+        method: 'POST',
+        headers: HEADERS,
+        body: JSON.stringify({ id: 'daily_data_entries', data: entries, updated_at: new Date().toISOString() })
+      });
+    }
+  })
+  .then(function(r) {
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    showMsg('✅ تم حفظ بيانات اليوم ' + date + ' (مُزامن مع السحابة)', false);
+  })
+  .catch(function(e) {
+    var pending = JSON.parse(localStorage.getItem('linah_daily_data_pending') || '[]');
+    pending.push(entry);
+    localStorage.setItem('linah_daily_data_pending', JSON.stringify(pending));
+    showMsg('⚠️ تم الحفظ محلياً (سيتم الرفع لاحقاً)', false);
+  });
+  resetForm();
+}
+
+function resetForm() {
   document.getElementById('dd-emp-search').value = ''; empHid.value = ''; empCode.value = ''; empName.value = '';
   document.getElementById('dd-tea-packs').value = 0; document.getElementById('dd-sugar').value = 0;
   document.getElementById('dd-maint-task').value = ''; document.getElementById('dd-maint-tech').value = '';
@@ -215,6 +259,43 @@ function saveDailyData(){
   document.getElementById('dd-septic-name').value = ''; document.getElementById('dd-septic-trips').value = 0;
   document.getElementById('dd-septic-supervisor').value = '';
 }
+
+// Retry pending entries on page load
+(function retryPending() {
+  try {
+    var local = JSON.parse(localStorage.getItem('linah_daily_data_pending') || '[]');
+    if (local.length === 0) return;
+    fetch(SB + '/rest/v1/sync_data?id=eq.daily_data_entries', {
+      method: 'GET',
+      headers: { 'apikey': KEY, 'Authorization': 'Bearer ' + KEY }
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(rows) {
+      var entries = [];
+      if (rows && rows.length > 0 && rows[0].data) {
+        try { entries = rows[0].data; if (typeof entries === 'string') entries = JSON.parse(entries); } catch(e) { entries = []; }
+      }
+      local.forEach(function(e) { entries.push(e); });
+      if (rows && rows.length > 0) {
+        return fetch(SB + '/rest/v1/sync_data?id=eq.daily_data_entries', {
+          method: 'PATCH',
+          headers: HEADERS,
+          body: JSON.stringify({ data: entries, updated_at: new Date().toISOString() })
+        });
+      } else {
+        return fetch(SB + '/rest/v1/sync_data', {
+          method: 'POST',
+          headers: HEADERS,
+          body: JSON.stringify({ id: 'daily_data_entries', data: entries, updated_at: new Date().toISOString() })
+        });
+      }
+    })
+    .then(function(r) {
+      if (r.ok) localStorage.removeItem('linah_daily_data_pending');
+    })
+    .catch(function(){});
+  } catch(e) {}
+})();
 </script>
 </body>
 </html>
