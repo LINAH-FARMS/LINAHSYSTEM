@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>البيانات اليومية - لينه فارمز</title>
+<link rel="icon" type="image/png" href="LOGO.png">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Cairo',sans-serif;background:#f5f5f5;min-height:100vh;padding:12px}
+.card{background:white;border-radius:16px;padding:20px 16px;max-width:500px;width:100%;margin:0 auto;box-shadow:0 4px 20px rgba(0,0,0,0.08)}
+.header{background:linear-gradient(135deg,#5d4037,#8d6e63);border-radius:14px;padding:20px;margin:-20px -16px 20px;text-align:center;color:white}
+.header .logo{font-size:42px;margin-bottom:4px}
+.header h1{font-size:18px;font-weight:800;margin-bottom:2px}
+.header .sub{font-size:12px;opacity:0.85}
+.form-group{margin-bottom:12px}
+label{display:block;font-weight:700;color:#555;margin-bottom:5px;font-size:13px}
+input,select,textarea{width:100%;padding:11px 12px;border:2px solid #e0e0e0;border-radius:10px;font-size:14px;font-family:'Cairo',sans-serif;transition:border 0.2s;background:white;-webkit-appearance:none}
+input:focus,select:focus,textarea:focus{border-color:#5d4037;outline:none}
+textarea{resize:vertical;min-height:60px}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.section{border-radius:12px;padding:14px;margin-bottom:14px}
+.section-tea{background:#fff3e0;border:1px solid #ffcc80}
+.section-maint{background:#e3f2fd;border:1px solid #90caf9}
+.section-septic{background:#e8f5e9;border:1px solid #a5d6a7}
+.section-title{font-size:15px;font-weight:700;margin-bottom:10px;padding-bottom:6px;border-bottom:2px dashed #e0e0e0}
+.section-tea .section-title{color:#e65100}
+.section-maint .section-title{color:#1565c0}
+.section-septic .section-title{color:#2e7d32}
+.btn-submit{width:100%;padding:16px;background:linear-gradient(135deg,#5d4037,#8d6e63);color:white;border:none;border-radius:12px;font-size:18px;font-weight:800;cursor:pointer;font-family:'Cairo',sans-serif;margin-top:6px;transition:transform 0.2s}
+.btn-submit:active{transform:scale(0.98)}
+#msg{text-align:center;padding:10px;margin-top:10px;border-radius:8px;font-weight:700;display:none}
+.emp-match{padding:8px 12px;border-bottom:1px solid #eee;cursor:pointer;font-size:13px}
+.emp-match:active,.emp-match:hover{background:#f5f5f5}
+.emp-match:last-child{border-bottom:none}
+#emp-suggestions{display:none;position:absolute;top:100%;left:0;right:0;background:white;border:2px solid #ddd;border-top:none;border-radius:0 0 10px 10px;max-height:200px;overflow-y:auto;z-index:99;box-shadow:0 4px 12px rgba(0,0,0,0.1)}
+.emp-wrapper{position:relative}
+</style>
+</head>
+<body>
+<div class="card">
+<div class="header">
+<div class="logo">📋</div>
+<h1>البيانات اليومية</h1>
+<div class="sub">شاي · صيانة · بيارات</div>
+</div>
+
+<form id="dailyForm" onsubmit="return false;">
+<div class="form-group">
+<label>📅 التاريخ</label>
+<input type="date" id="dd-date">
+</div>
+
+<div class="section section-tea">
+<div class="section-title">🍵 الشاي</div>
+<div class="form-group">
+<label>الموظف</label>
+<div class="emp-wrapper">
+<input type="text" id="dd-emp-search" placeholder="ابحث بكود الموظف أو اسم..." autocomplete="off">
+<div id="emp-suggestions"></div>
+</div>
+<input type="hidden" id="dd-emp-id">
+</div>
+<div class="form-row">
+<div class="form-group"><label>الكود</label><input type="text" id="dd-emp-code" readonly style="background:#f5f5f5;"></div>
+<div class="form-group"><label>الاسم</label><input type="text" id="dd-emp-name" readonly style="background:#f5f5f5;"></div>
+</div>
+<div class="form-row">
+<div class="form-group"><label>الدورة</label><select id="dd-period"><option value="الدورة الأولى (1-7)">الدورة الأولى (1-7)</option><option value="الدورة الثانية (15-21)">الدورة الثانية (15-21)</option></select></div>
+</div>
+<div class="form-row">
+<div class="form-group"><label>الشاي (باكيت)</label><input type="number" id="dd-tea-packs" min="0" step="0.5" value="0"></div>
+<div class="form-group"><label>السكر (كجم)</label><input type="number" id="dd-sugar" min="0" step="0.5" value="0"></div>
+</div>
+</div>
+
+<div class="section section-maint">
+<div class="section-title">🛠️ الصيانة</div>
+<div class="form-row">
+<div class="form-group"><label>نوع الصيانة</label><select id="dd-maint-cat"><option>نظافة عامة</option><option>كهرباء</option><option>سباكة</option><option>تكييف</option><option>نجارة</option><option>إنشاءات</option><option>مطعم</option></select></div>
+<div class="form-group"><label>بند الصيانة</label><input type="text" id="dd-maint-task" placeholder="وصف العطل"></div>
+</div>
+<div class="form-row">
+<div class="form-group"><label>الفني</label><input type="text" id="dd-maint-tech" placeholder="اسم الفني"></div>
+<div class="form-group"><label>الحالة</label><select id="dd-maint-status"><option>مفتوحة</option><option>تحت التنفيذ</option><option>تمت</option><option>ملغاة</option></select></div>
+</div>
+<div class="form-row">
+<div class="form-group"><label>قبل</label><input type="text" id="dd-maint-before" placeholder="حالة قبل"></div>
+<div class="form-group"><label>بعد</label><input type="text" id="dd-maint-after" placeholder="حالة بعد"></div>
+</div>
+<div class="form-group"><label>ملاحظات</label><textarea id="dd-maint-notes" rows="2" placeholder="ملاحظات الصيانة"></textarea></div>
+</div>
+
+<div class="section section-septic">
+<div class="section-title">🚽 البيارات</div>
+<div class="form-row">
+<div class="form-group"><label>البيارة</label><input type="text" id="dd-septic-name" placeholder="اسم البيارة"></div>
+<div class="form-group"><label>عدد النقلات</label><input type="number" id="dd-septic-trips" min="0" value="0"></div>
+</div>
+<div class="form-group"><label>المشرف</label><input type="text" id="dd-septic-supervisor" placeholder="اسم المشرف"></div>
+</div>
+
+<button type="button" class="btn-submit" onclick="saveDailyData()">💾 حفظ البيانات</button>
+</form>
+
+<div id="msg"></div>
+</div>
+
+<script>
+var employees = [];
+try {
+  var data = localStorage.getItem('lineh_employees');
+  if (data) employees = JSON.parse(data);
+} catch(e){}
+
+var dailyData = [];
+try {
+  var dd = localStorage.getItem('linah_daily_data');
+  if (dd) dailyData = JSON.parse(dd);
+} catch(e){}
+if (!Array.isArray(dailyData)) dailyData = [];
+
+document.getElementById('dd-date').value = new Date().toISOString().split('T')[0];
+
+var empInp = document.getElementById('dd-emp-search');
+var empHid = document.getElementById('dd-emp-id');
+var empSug = document.getElementById('emp-suggestions');
+var empCode = document.getElementById('dd-emp-code');
+var empName = document.getElementById('dd-emp-name');
+
+empInp.addEventListener('input', function(){
+  var q = this.value.trim().toLowerCase();
+  empSug.innerHTML = ''; empSug.style.display = 'none';
+  empCode.value = ''; empName.value = ''; empHid.value = '';
+  if (!q) return;
+  var matches = employees.filter(function(e){
+    return (e.name||'').toLowerCase().includes(q) || (e.code||'').toLowerCase().includes(q);
+  }).slice(0, 10);
+  if (!matches.length) return;
+  empSug.style.display = 'block';
+  matches.forEach(function(e){
+    var d = document.createElement('div');
+    d.className = 'emp-match';
+    d.innerText = '[' + (e.code||'') + '] ' + (e.name||'');
+    d.onclick = function(){
+      empInp.value = d.innerText;
+      empHid.value = e.id || e.code;
+      empCode.value = e.code || '';
+      empName.value = e.name || '';
+      empSug.style.display = 'none';
+    };
+    empSug.appendChild(d);
+  });
+});
+
+empInp.addEventListener('focus', function(){
+  if (!empHid.value) {
+    empSug.innerHTML = '';
+    employees.slice(0, 10).forEach(function(e){
+      var d = document.createElement('div');
+      d.className = 'emp-match';
+      d.innerText = '[' + (e.code||'') + '] ' + (e.name||'');
+      d.onclick = function(){
+        empInp.value = d.innerText;
+        empHid.value = e.id || e.code;
+        empCode.value = e.code || '';
+        empName.value = e.name || '';
+        empSug.style.display = 'none';
+      };
+      empSug.appendChild(d);
+    });
+    empSug.style.display = 'block';
+  }
+});
+
+empInp.addEventListener('blur', function(){ setTimeout(function(){ empSug.style.display = 'none'; }, 200); });
+
+function showMsg(text, isError){
+  var msg = document.getElementById('msg');
+  msg.style.display = 'block';
+  msg.textContent = text;
+  msg.style.background = isError ? '#ffebee' : '#e8f5e9';
+  msg.style.color = isError ? '#c62828' : '#2e7d32';
+}
+
+function saveDailyData(){
+  var date = document.getElementById('dd-date').value;
+  if (!date) { showMsg('اختر التاريخ أولاً.', true); return; }
+  var empId = empHid.value;
+  var code = empCode.value.trim();
+  var name = empName.value.trim();
+  var period = document.getElementById('dd-period').value;
+  var teaPacks = parseFloat(document.getElementById('dd-tea-packs').value) || 0;
+  var sugar = parseFloat(document.getElementById('dd-sugar').value) || 0;
+  var maintCat = document.getElementById('dd-maint-cat').value;
+  var maintTask = document.getElementById('dd-maint-task').value.trim();
+  var maintTech = document.getElementById('dd-maint-tech').value.trim();
+  var maintStatus = document.getElementById('dd-maint-status').value;
+  var maintBefore = document.getElementById('dd-maint-before').value.trim();
+  var maintAfter = document.getElementById('dd-maint-after').value.trim();
+  var maintNotes = document.getElementById('dd-maint-notes').value.trim();
+  var septicName = document.getElementById('dd-septic-name').value.trim();
+  var septicTrips = parseInt(document.getElementById('dd-septic-trips').value) || 0;
+  var septicSupervisor = document.getElementById('dd-septic-supervisor').value.trim();
+  if (!teaPacks && !sugar && !maintTask && !septicName) { showMsg('ادخل بيانات على الأقل في قسم واحد.', true); return; }
+  dailyData.push({ date: date, empId: empId, empCode: code, empName: name, period: period, teaPacks: teaPacks, sugar: sugar, maintCat: maintCat, maintTask: maintTask, maintTech: maintTech, maintStatus: maintStatus, maintBefore: maintBefore, maintAfter: maintAfter, maintNotes: maintNotes, septicName: septicName, septicTrips: septicTrips, septicSupervisor: septicSupervisor, createdAt: new Date().toISOString() });
+  try { localStorage.setItem('linah_daily_data', JSON.stringify(dailyData)); } catch(e){}
+  showMsg('✅ تم حفظ بيانات اليوم ' + date, false);
+  document.getElementById('dd-emp-search').value = ''; empHid.value = ''; empCode.value = ''; empName.value = '';
+  document.getElementById('dd-tea-packs').value = 0; document.getElementById('dd-sugar').value = 0;
+  document.getElementById('dd-maint-task').value = ''; document.getElementById('dd-maint-tech').value = '';
+  document.getElementById('dd-maint-before').value = ''; document.getElementById('dd-maint-after').value = '';
+  document.getElementById('dd-maint-notes').value = '';
+  document.getElementById('dd-septic-name').value = ''; document.getElementById('dd-septic-trips').value = 0;
+  document.getElementById('dd-septic-supervisor').value = '';
+}
+</script>
+</body>
+</html>
