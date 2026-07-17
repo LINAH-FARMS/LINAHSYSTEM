@@ -17369,8 +17369,8 @@ function updateDashClock() {
               <div class="form-group"><label>الكود</label><input type="text" id="dd-emp-code" readonly style="padding:6px;border:1px solid #ccc;border-radius:6px;background:#f5f5f5;"></div>
               <div class="form-group"><label>الاسم</label><input type="text" id="dd-emp-name" readonly style="padding:6px;border:1px solid #ccc;border-radius:6px;background:#f5f5f5;"></div>
               <div class="form-group"><label>الدورة</label><select id="dd-period" style="padding:6px;border:1px solid #ccc;border-radius:6px;"><option value="الدورة الأولى (1-7)">الدورة الأولى (1-7)</option><option value="الدورة الثانية (15-21)">الدورة الثانية (15-21)</option></select></div>
-              <div class="form-group"><label>الشاي (باكيت)</label><input type="number" id="dd-tea-packs" min="0" step="0.5" value="0" style="padding:6px;border:1px solid #ccc;border-radius:6px;"></div>
-              <div class="form-group"><label>السكر (كجم)</label><input type="number" id="dd-sugar" min="0" step="0.5" value="0" style="padding:6px;border:1px solid #ccc;border-radius:6px;"></div>
+              <div class="form-group"><label>الشاي (باكيت)</label><input type="number" id="dd-tea-packs" min="0" step="0.5" value="2" style="padding:6px;border:1px solid #ccc;border-radius:6px;"></div>
+              <div class="form-group"><label>السكر (كجم)</label><input type="number" id="dd-sugar" min="0" step="0.5" value="1" style="padding:6px;border:1px solid #ccc;border-radius:6px;"></div>
             </div>
           </div>
           <div style="grid-column:span 2;background:#e3f2fd;border-radius:8px;padding:10px;border:1px solid #90caf9;">
@@ -18409,8 +18409,8 @@ function openDailyDataForm() {
   document.getElementById('dd-emp-code').value = '';
   document.getElementById('dd-emp-name').value = '';
   document.getElementById('dd-period').value = 'الدورة الأولى (1-7)';
-  document.getElementById('dd-tea-packs').value = 0;
-  document.getElementById('dd-sugar').value = 0;
+  document.getElementById('dd-tea-packs').value = 2;
+  document.getElementById('dd-sugar').value = 1;
   document.getElementById('dd-maint-cat').value = 'نظافة عامة';
   document.getElementById('dd-maint-task').value = '';
   document.getElementById('dd-maint-tech').value = '';
@@ -18456,8 +18456,8 @@ function saveDailyData() {
   document.getElementById('dd-emp-code').value = '';
   document.getElementById('dd-emp-name').value = '';
   document.getElementById('dd-period').value = 'الدورة الأولى (1-7)';
-  document.getElementById('dd-tea-packs').value = 0;
-  document.getElementById('dd-sugar').value = 0;
+  document.getElementById('dd-tea-packs').value = 2;
+  document.getElementById('dd-sugar').value = 1;
   document.getElementById('dd-maint-task').value = '';
   document.getElementById('dd-maint-tech').value = '';
   document.getElementById('dd-maint-notes').value = '';
