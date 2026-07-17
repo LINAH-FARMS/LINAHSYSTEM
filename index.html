@@ -3890,7 +3890,6 @@
     ]);
     let bakeryProductions = _safeJsonParse(_lsGet('linah_bakery_productions'), []);
     let bakeryContractorSupplies = _safeJsonParse(_lsGet('linah_bakery_ctr_supplies'), []);
-    (function(){ if (bakeryContractorSupplies.length > 0) { var _changed = false; var _names = {}; bakeryContractorsNames.forEach(function(n){_names[n]=true;}); bakeryContractorSupplies.forEach(function(r) { if (typeof r.name !== 'string' || r.name === '[object Object]' || !r.name.trim()) { r.name = ''; _changed = true; } else if (!_names[r.name]) { _names[r.name] = true; bakeryContractorsNames.push(r.name); } }); bakeryContractorSupplies = bakeryContractorSupplies.filter(function(r) { return r.name; }); if (_changed) { try { localStorage.setItem('linah_bakery_ctr_supplies', JSON.stringify(bakeryContractorSupplies)); } catch(e){} try { localStorage.setItem('linah_bakery_contractors_names', JSON.stringify(bakeryContractorsNames)); } catch(e){} } } })();
     let bakeryInvoices = _safeJsonParse(_lsGet('linah_bakery_invoices'), []);
     let bakeryStockLog = _safeJsonParse(_lsGet('linah_bakery_stock_log'), []);
     let adminOvertime = _safeJsonParse(_lsGet('lineh_admin_overtime'), []);
@@ -3913,6 +3912,8 @@
     let dynamicVisitorTypes = _strArr(_safeJsonParse(_lsGet('dyn_visitor_types'), ["مورد","مفتش","ضيف","مقاول","موظف حكومي","ممثل جهة خارجية"]));
     let bakeryContractorsNames = _strArr(_safeJsonParse(_lsGet('linah_bakery_contractors_names'), ["محمد شعبان","ممدوح بكر","عاطف عبد المغيث","مصطفى على","اسامه سمير","فارس محمد"]));
     (function(){var _o=["محمد شعبان","ممدوح بكر","عاطف عبد المغيث","مصطفى على","اسامه سمير","فارس محمد"],_s={};_o.forEach(function(n){_s[n]=true;});bakeryContractorsNames=bakeryContractorsNames.filter(function(n){return _s[n];});if(!bakeryContractorsNames.length)bakeryContractorsNames=_o.slice();})();
+    // تنظيف أسماء المقاولين التالفة ([object Object]) وإضافة الأسماء الموجودة للقائمة
+    (function(){ if (bakeryContractorSupplies.length > 0) { var _changed = false; var _names = {}; bakeryContractorsNames.forEach(function(n){_names[n]=true;}); bakeryContractorSupplies.forEach(function(r) { if (typeof r.name !== 'string' || r.name === '[object Object]' || !r.name.trim()) { r.name = ''; _changed = true; } else if (!_names[r.name]) { _names[r.name] = true; bakeryContractorsNames.push(r.name); } }); bakeryContractorSupplies = bakeryContractorSupplies.filter(function(r) { return r.name; }); if (_changed) { try { localStorage.setItem('linah_bakery_ctr_supplies', JSON.stringify(bakeryContractorSupplies)); } catch(e){} try { localStorage.setItem('linah_bakery_contractors_names', JSON.stringify(bakeryContractorsNames)); } catch(e){} } } })();
     let evaluations = _safeJsonParse(_lsGet('lineh_evaluations'), []);
     let roomAssets = _safeJsonParse(_lsGet('lineh_room_assets'), []);
     let archiveData = _safeJsonParse(_lsGet('lineh_archive_data'), []);
