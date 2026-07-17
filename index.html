@@ -17705,6 +17705,48 @@ function updateIngCost(inp) {
   if (!isNaN(val)) { CHEF_ING_COSTS[key] = val; saveChefIngCosts(); }
 }
 
+function setupAutocomplete(inp) {
+  var wrap = inp.closest('.ac-wrap');
+  var drop = wrap.querySelector('.ac-dropdown');
+  function getOpts() {
+    var names = {};
+    RECIPES.forEach(function(r){ (r.items||[]).forEach(function(it){ names[it.n.trim()]=1; }); });
+    Object.keys(CHEF_ING_COSTS).forEach(function(k){ names[k.split('|')[0].trim()]=1; });
+    return Object.keys(names).sort();
+  }
+  function filter(v) {
+    var q = v.trim().toLowerCase();
+    if (!q) { drop.style.display = 'none'; return; }
+    var all = getOpts();
+    var matches = all.filter(function(n){ return n.toLowerCase().includes(q); });
+    if (!matches.length) { drop.style.display = 'none'; return; }
+    drop.innerHTML = matches.map(function(n){
+      var b = n.replace(new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'), 'gi'), function(m){ return '<b>'+m+'</b>'; });
+      return '<div class="ac-item" data-name="'+n+'" style="padding:5px 8px;cursor:pointer;font-size:13px;border-bottom:1px solid #eee;">'+b+'</div>';
+    }).join('');
+    drop.style.display = 'block';
+  }
+  function pick(n) {
+    inp.value = n; drop.style.display = 'none';
+  }
+  inp.addEventListener('input', function(){ filter(this.value); });
+  inp.addEventListener('focus', function(){ filter(this.value); });
+  inp.addEventListener('blur', function(){ setTimeout(function(){ drop.style.display = 'none'; }, 200); });
+  drop.addEventListener('mousedown', function(e){ e.preventDefault(); });
+  drop.addEventListener('click', function(e){
+    var item = e.target.closest('.ac-item');
+    if (item) { pick(item.getAttribute('data-name')); inp.focus(); }
+  });
+  inp.addEventListener('keydown', function(e){
+    var items = drop.querySelectorAll('.ac-item');
+    if (!items.length) return;
+    if (e.key === 'ArrowDown') { e.preventDefault(); var sel = drop.querySelector('.ac-sel'); if (!sel) { items[0].classList.add('ac-sel'); items[0].style.background = '#e3f2fd'; } else { var n = Array.prototype.indexOf.call(items, sel); sel.classList.remove('ac-sel'); sel.style.background = ''; if (n+1 < items.length) { items[n+1].classList.add('ac-sel'); items[n+1].style.background = '#e3f2fd'; } } }
+    if (e.key === 'ArrowUp') { e.preventDefault(); var sel = drop.querySelector('.ac-sel'); if (sel) { var n = Array.prototype.indexOf.call(items, sel); sel.classList.remove('ac-sel'); sel.style.background = ''; if (n>0) { items[n-1].classList.add('ac-sel'); items[n-1].style.background = '#e3f2fd'; } } }
+    if (e.key === 'Enter') { e.preventDefault(); var sel = drop.querySelector('.ac-sel'); if (sel) { pick(sel.getAttribute('data-name')); } }
+    if (e.key === 'Escape') { drop.style.display = 'none'; }
+  });
+}
+
 // ===== إدارة الوصفات (إضافة / تعديل / حذف) =====
 function openRecipeManager() {
   if (!requireAdmin()) return;
@@ -17745,13 +17787,16 @@ function addRecipeIngredientRow(n, u, q) {
   var div = document.createElement('div');
   div.style.cssText = 'display:flex;gap:6px;margin-bottom:5px;align-items:center;flex-wrap:wrap;';
   div.innerHTML =
-    '<input type="text" class="rm-ing-name" value="'+(n||'')+'" placeholder="الخامة" list="chef-ing-master" style="flex:2;min-width:130px;padding:5px;border:1px solid #ccc;border-radius:6px;font-size:13px;">'+
+    '<div class="ac-wrap" style="flex:2;min-width:130px;position:relative;">'+
+    '<input type="text" class="rm-ing-name ac-input" value="'+(n||'')+'" placeholder="الخامة" autocomplete="off" style="width:100%;padding:5px;border:1px solid #ccc;border-radius:6px;font-size:13px;box-sizing:border-box;">'+
+    '<div class="ac-dropdown" style="display:none;position:absolute;top:100%;left:0;right:0;background:#fff;border:1px solid #ccc;border-radius:0 0 6px 6px;max-height:180px;overflow-y:auto;z-index:9999;box-shadow:0 4px 12px rgba(0,0,0,0.15);"></div></div>'+
     '<select class="rm-ing-unit" style="padding:5px;border:1px solid #ccc;border-radius:6px;font-size:13px;"><option>كجم</option><option>جم</option><option>لتر</option><option>عدد</option><option>وحدة</option><option>كيس</option><option>ربطة</option><option>زجاجة</option><option>شيكارة</option><option>متر</option><option>لفة</option></select>'+
     '<input type="number" class="rm-ing-qty" value="'+(q!==undefined?q:'')+'" placeholder="الكمية" min="0" step="0.01" style="width:90px;padding:5px;border:1px solid #ccc;border-radius:6px;font-size:13px;">'+
     '<button type="button" class="btn btn-danger" onclick="this.parentElement.remove()" style="padding:3px 8px;font-size:11px;">✕</button>';
   var sel = div.querySelector('.rm-ing-unit');
   if (u) sel.value = u;
   wrap.appendChild(div);
+  setupAutocomplete(div.querySelector('.ac-input'));
 }
 function saveRecipe() {
   var name = document.getElementById('rm-name').value.trim();
