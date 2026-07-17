@@ -6874,6 +6874,7 @@
         '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:white;border-radius:8px;margin-bottom:6px;border-right:4px solid #e91e63;"><span>👩 سيدات (الحضور: ' + womenCount + ')</span><input type="number" id="bp-women" min="0" value="' + womenCount + '" style="width:70px;padding:4px 6px;border:1px solid #f48fb1;border-radius:4px;font-size:13px;font-family:Cairo,sans-serif;text-align:center;" oninput="updateBreadPlanTotal()"></div>' +
         '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:white;border-radius:8px;margin-bottom:6px;border-right:4px solid #1565c0;"><span>🎒 طلبة (الحضور: ' + studentCount + ')</span><input type="number" id="bp-students" min="0" value="' + studentCount + '" style="width:70px;padding:4px 6px;border:1px solid #90caf9;border-radius:4px;font-size:13px;font-family:Cairo,sans-serif;text-align:center;" oninput="updateBreadPlanTotal()"></div>' +
         '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:white;border-radius:8px;margin-bottom:6px;border-right:4px solid #78909c;"><span>🚗 ضيوف آخرين (الحضور: ' + otherGuestsCount + ')</span><input type="number" id="bp-other" min="0" value="' + otherGuestsCount + '" style="width:70px;padding:4px 6px;border:1px solid #b0bec5;border-radius:4px;font-size:13px;font-family:Cairo,sans-serif;text-align:center;" oninput="updateBreadPlanTotal()"></div>' +
+        '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:white;border-radius:8px;margin-bottom:6px;border-right:4px solid #37474f;"><span>🌙 الأمن الليلي (× 2 رغيف)</span><input type="number" id="bp-night" min="0" value="1" style="width:70px;padding:4px 6px;border:1px solid #90a4ae;border-radius:4px;font-size:13px;font-family:Cairo,sans-serif;text-align:center;" oninput="updateBreadPlanTotal()"></div>' +
         '</div></div>' +
         '<div style="background:#fff8e1;border-radius:10px;padding:12px;margin-bottom:10px;border:1px solid #ffe082;">' +
         '<div style="font-weight:700;color:#e65100;margin-bottom:8px;font-size:14px;display:flex;justify-content:space-between;align-items:center;"><span>👷 المقاولين</span><button onclick="addBreadPlanCtrRow()" style="padding:4px 12px;background:#e65100;color:white;border:none;border-radius:4px;cursor:pointer;font-size:12px;font-family:Cairo,sans-serif;">➕ إضافة مقاول</button></div>' +
@@ -6887,6 +6888,7 @@
         '<span>العدد:</span><b id="bp-loaves-students">' + studentLoaves + '</b>' +
         '<span>يدوياً تم:</span><b id="bp-loaves-other">' + otherLoaves + '</b>' +
         '<span>تعبئة بيانات عدد (5):</span><b id="bp-loaves-return">' + returnFromVacation + '</b>' +
+        '<span>الأمن الليلي:</span><b id="bp-loaves-night">2</b>' +
         '<span>الأرغفة:</span><b id="bp-loaves-ctr">0</b>' +
         '<hr style="grid-column:span 2;border:none;border-top:1px dashed #e0e0e0;margin:4px 0;">' +
         '<span style="font-weight:700;">سيدات:</span><b style="color:#e65100;font-size:15px;" id="bread-plan-total-display">' + totalLoaves + ' طلبة</b>' +
@@ -6954,18 +6956,22 @@
       var ctrInputs = document.querySelectorAll('#bread-plan-ctr-tbody input[id^="bpqty-"]');
       var ctrTotal = 0;
       ctrInputs.forEach(function(inp) { ctrTotal += parseInt(inp.value) || 0; });
+      var nightSecurity = parseInt(document.getElementById('bp-night').value) || 0;
+      var nightLoaves = nightSecurity * 2;
       var returnFromVacation = 30;
-      var total = workerLoaves + womenLoaves + studentLoaves + otherLoaves + returnFromVacation + ctrTotal;
+      var total = workerLoaves + womenLoaves + studentLoaves + otherLoaves + returnFromVacation + ctrTotal + nightLoaves;
       var ew = document.getElementById('bp-loaves-workers');
       var ewo = document.getElementById('bp-loaves-women');
       var es = document.getElementById('bp-loaves-students');
       var eo = document.getElementById('bp-loaves-other');
+      var en = document.getElementById('bp-loaves-night');
       var ec = document.getElementById('bp-loaves-ctr');
       var et = document.getElementById('bread-plan-total-display');
       if (ew) ew.textContent = workerLoaves;
       if (ewo) ewo.textContent = womenLoaves;
       if (es) es.textContent = studentLoaves;
       if (eo) eo.textContent = otherLoaves;
+      if (en) en.textContent = nightLoaves;
       if (ec) ec.textContent = ctrTotal;
       if (et) et.textContent = total + ' التقرير';
     }
@@ -7001,6 +7007,8 @@
       var womenLoaves = bpWomen * 2;
       var studentLoaves = bpStudents * 2;
       var otherLoaves = bpOther * 6;
+      var nightSecurity = parseInt(document.getElementById('bp-night').value) || 0;
+      var nightLoaves = nightSecurity * 2;
       var returnFromVacation = 30;
       var totalLoaves = workerLoaves + womenLoaves + studentLoaves + otherLoaves + returnFromVacation;
       var ctrInputs = document.querySelectorAll('#bread-plan-ctr-tbody tr');
@@ -7019,7 +7027,7 @@
         }
       });
       var farmLoaves = workerLoaves + womenLoaves + studentLoaves + otherLoaves;
-      totalLoaves += ctrLoaves;
+      totalLoaves += ctrLoaves + nightLoaves;
       var logoSrc = '';
       var logoEl = document.querySelector('img[alt="Logo"]');
       if (logoEl) logoSrc = logoEl.src;
@@ -7046,7 +7054,8 @@
         '<tr><td>الطالبات (' + bpStudents + ' × 2)</td><td style="text-align:center;">' + studentLoaves + '</td></tr>' +
         '<tr><td>ضيوف آخرون (' + bpOther + ' × 6)</td><td style="text-align:center;">' + otherLoaves + '</td></tr>' +
         '<tr><td>العائد من الإجازة</td><td style="text-align:center;">' + returnFromVacation + '</td></tr>' +
-        '<tr style="background:#e8f5e9;font-weight:700;"><td>إجمالي أرغفة المزرعة</td><td style="text-align:center;">' + (farmLoaves + returnFromVacation) + '</td></tr>' +
+        '<tr><td>الأمن الليلي (' + nightSecurity + ' × 2)</td><td style="text-align:center;">' + nightLoaves + '</td></tr>' +
+        '<tr style="background:#e8f5e9;font-weight:700;"><td>إجمالي أرغفة المزرعة</td><td style="text-align:center;">' + (farmLoaves + returnFromVacation + nightLoaves) + '</td></tr>' +
         '</table></div>' +
         (contractorsData.length > 0 ? '<div class="rp-section"><h3 style="color:#e65100;font-size:14px;margin:0 0 6px;">توريد المقاولين</h3><table class="rp-table"><tr><th>المقاول</th><th>عدد الأرغفة</th></tr>' + contractorsData.map(function(c) { return '<tr><td>' + c.name + '</td><td style="text-align:center;">' + c.qty + '</td></tr>'; }).join('') + '<tr style="background:#fff8e1;font-weight:700;"><td>إجمالي توريد المقاولين</td><td style="text-align:center;">' + ctrLoaves + '</td></tr></table></div>' : '') +
         '<div class="rp-section" style="background:#fff3e0;border-radius:8px;padding:10px;border:1px solid #ffcc80;text-align:center;font-size:15px;font-weight:700;color:#e65100;">إجمالي الأرغفة: ' + totalLoaves + ' رغيف</div>' +
