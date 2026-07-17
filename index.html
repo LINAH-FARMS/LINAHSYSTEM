@@ -17794,8 +17794,7 @@ function compareRecipes() {
       else missing++;
     });
     var costPerPerson = totalCost / (r.base || 1);
-    var color = missing > 0 ? '#b71c1c' : (costPerPerson > 0 ? '#2e7d32' : '#888');
-    html += '<tr style="border-bottom:1px solid #e0e0e0;"><td style="padding:8px;border:1px solid #e0e0e0;text-align:right;font-weight:700;">' + r.name + '</td><td style="padding:8px;border:1px solid #e0e0e0;text-align:center;">' + totalItems + '</td><td style="padding:8px;border:1px solid #e0e0e0;text-align:center;font-weight:700;color:' + color + ';font-size:15px;">' + (costPerPerson > 0 ? formatQty(costPerPerson) + ' ج.م' : (missing > 0 ? '⚠️' : '—')) + '</td></tr>';
+    html += '<tr style="border-bottom:1px solid #e0e0e0;"><td style="padding:8px;border:1px solid #e0e0e0;text-align:right;font-weight:700;">' + r.name + '</td><td style="padding:8px;border:1px solid #e0e0e0;text-align:center;">' + totalItems + '</td><td style="padding:8px;border:1px solid #e0e0e0;text-align:center;font-weight:700;color:#2e7d32;font-size:15px;">' + (costPerPerson > 0 ? formatQty(costPerPerson) + ' ج.م' : (missing > 0 ? '⚠️' : '—')) + '</td></tr>';
   });
   html += '</tbody></table>';
   document.getElementById('compare-recipes-table-wrap').innerHTML = html;
