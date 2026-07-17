@@ -2617,9 +2617,9 @@
         <thead>
           <tr>
             <th style="width:30px;" class="no-print"><input type="checkbox" class="check-all" data-table="table-tea-sugar" onchange="toggleAllCheckboxes(this)"></th>
-            <th>الموظف</th>
+            <th data-sort-key="empName">الموظف</th>
             <th data-sort-key="empCode">الإدارة</th>
-            <th data-sort-key="empName">الوظيفة</th>
+            <th data-sort-key="empTitle">الوظيفة</th>
             <th data-sort-key="period">الدورة</th>
             <th data-sort-key="teaPacks">الشاي (باكيت)</th>
             <th data-sort-key="sugarKg">السكر (كجم)</th>
@@ -10380,37 +10380,39 @@ function toggleEmployeeStatus(empId) {
       var m = parseInt(parts[1]) || 0;
       return names[m] + ' ' + parts[0];
     }
-    function renderTeaSugarTable() {
-      let tbody = document.getElementById('ts-table-body');
-      if(!tbody) return;
-      tbody.innerHTML = '';
-      var monthFilter = document.getElementById('ts-month-filter')?.value || '';
-      let filtered = [...teaSugarDisbursements];
-      if (monthFilter) filtered = filtered.filter(function(ts) { return _tsMonthKey(ts.date) === monthFilter; });
-      let st = sortState['table-tea-sugar'];
-      if (!st || !st.key) filtered = sortNewestFirst(filtered, 'date');
-      if (st && st.key) filtered = sortData(filtered, st.key, st.dir);
-      filtered.forEach((ts, idx) => {
-        let realIdx = teaSugarDisbursements.indexOf(ts);
-        let emp = employees.find(e => (e.id || e.code) == ts.empId || e.name === ts.empName);
-        let displayCode = (emp && emp.code) ? emp.code : (ts.empCode || '—');
-        let displayName = emp ? emp.name : (ts.empName || '—');
-        let tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td class="no-print"><input type="checkbox" class="row-check" data-table="table-tea-sugar"></td>
-          <td>${idx + 1}</td>
-          <td><b>${displayCode}</b></td>
-          <td><b>${displayName}</b></td>
-          <td>${ts.period}</td>
-          <td><span style="color:var(--warning);font-weight:700;">${ts.teaPacks}</span></td>
-          <td><span style="color:var(--warning);font-weight:700;">${ts.sugarKg}</span></td>
-          <td>${ts.date}</td>
-          <td class="no-print"><button class="btn btn-primary" style="padding:2px 6px;font-size:11px;" onclick="editTS(${realIdx})">✏️</button> <button class="btn btn-danger" style="padding:2px 6px;font-size:11px;" onclick="deleteTS(${realIdx})">🗑️</button></td>
-        `;
-        tbody.appendChild(tr);
-      });
-      renderTeaSugarBatchSummary();
-    }
+function renderTeaSugarTable() {
+  let tbody = document.getElementById('ts-table-body');
+  if(!tbody) return;
+  tbody.innerHTML = '';
+  var monthFilter = document.getElementById('ts-month-filter')?.value || '';
+  let filtered = [...teaSugarDisbursements];
+  if (monthFilter) filtered = filtered.filter(function(ts) { return _tsMonthKey(ts.date) === monthFilter; });
+  let st = sortState['table-tea-sugar'];
+  if (!st || !st.key) filtered = sortNewestFirst(filtered, 'date');
+  if (st && st.key) filtered = sortData(filtered, st.key, st.dir);
+  filtered.forEach((ts, idx) => {
+    let realIdx = teaSugarDisbursements.indexOf(ts);
+    let emp = employees.find(e => (e.id || e.code) == ts.empId || e.name === ts.empName);
+    let empName = emp ? (emp.name || emp.title) : (ts.empName || ts.empTitle || '—');
+    let empCode = emp ? (emp.code || emp.id) : (ts.empCode || '—');
+    let empDept = emp ? (emp.dept || emp.sector || '') : (ts.empDept || '');
+    let empTitle = emp ? (emp.title || emp.position || '') : (ts.empTitle || '');
+    let tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td class="no-print"><input type="checkbox" class="row-check" data-table="table-tea-sugar"></td>
+      <td><b>${empName}</b></td>
+      <td>${empCode}</td>
+      <td>${empDept} ${empTitle}</td>
+      <td>${ts.period}</td>
+      <td><span style="color:var(--warning);font-weight:700;">${ts.teaPacks}</span></td>
+      <td><span style="color:var(--warning);font-weight:700;">${ts.sugarKg}</span></td>
+      <td>${ts.date}</td>
+      <td class="no-print"><button class="btn btn-primary" style="padding:2px 6px;font-size:11px;" onclick="editTS(${realIdx})">✏️</button> <button class="btn btn-danger" style="padding:2px 6px;font-size:11px;" onclick="deleteTS(${realIdx})">🗑️</button></td>
+    `;
+    tbody.appendChild(tr);
+  });
+  renderTeaSugarBatchSummary();
+}
 
     function deleteTS(idx) { if (!requireAdmin()) return;
       if(confirm("⚠️ هل أنت متأكد من حذف هذا الصرف؟")) {
@@ -17207,6 +17209,8 @@ function updateDashClock() {
               <div class="form-group"><label>الفني</label><input type="text" id="dd-maint-tech" placeholder="اسم الفني" style="padding:6px;border:1px solid #ccc;border-radius:6px;"></div>
               <div class="form-group"><label>الحالة</label><select id="dd-maint-status" style="padding:6px;border:1px solid #ccc;border-radius:6px;"><option>مفتوحة</option><option>تحت التنفيذ</option><option>تمت</option><option>ملغاة</option></select></div>
               <div class="form-group" style="grid-column:span 2;"><label>ملاحظات</label><textarea id="dd-maint-notes" rows="2" style="width:100%;padding:6px;border:1px solid #ccc;border-radius:6px;font-family:Cairo,sans-serif;"></textarea></div>
+              <div class="form-group"><label>قبل</label><input type="text" id="dd-maint-before" placeholder="حالة قبل" style="padding:6px;border:1px solid #ccc;border-radius:6px;"></div>
+              <div class="form-group"><label>بعد</label><input type="text" id="dd-maint-after" placeholder="حالة بعد" style="padding:6px;border:1px solid #ccc;border-radius:6px;"></div>
             </div>
           </div>
           <div style="grid-column:span 2;background:#e8f5e9;border-radius:8px;padding:10px;border:1px solid #a5d6a7;">
@@ -18256,11 +18260,13 @@ function saveDailyData() {
   var maintTech = document.getElementById('dd-maint-tech').value.trim();
   var maintStatus = document.getElementById('dd-maint-status').value;
   var maintNotes = document.getElementById('dd-maint-notes').value.trim();
+  var maintBefore = document.getElementById('dd-maint-before').value.trim();
+  var maintAfter = document.getElementById('dd-maint-after').value.trim();
   var septicName = document.getElementById('dd-septic-name').value.trim();
   var septicTrips = parseInt(document.getElementById('dd-septic-trips').value) || 0;
   var septicSupervisor = document.getElementById('dd-septic-supervisor').value.trim();
   if (!teaPacks && !sugar && !maintTask && !septicName) { alert('ادخل بيانات على الأقل في قسم واحد.'); return; }
-  dailyData.push({ date: date, teaPacks: teaPacks, sugar: sugar, maintCat: maintCat, maintTask: maintTask, maintTech: maintTech, maintStatus: maintStatus, maintNotes: maintNotes, septicName: septicName, septicTrips: septicTrips, septicSupervisor: septicSupervisor, createdAt: new Date().toISOString() });
+  dailyData.push({ date: date, teaPacks: teaPacks, sugar: sugar, maintCat: maintCat, maintTask: maintTask, maintTech: maintTech, maintStatus: maintStatus, maintNotes: maintNotes, maintBefore: maintBefore, maintAfter: maintAfter, septicName: septicName, septicTrips: septicTrips, septicSupervisor: septicSupervisor, createdAt: new Date().toISOString() });
   _lsSet('linah_daily_data', JSON.stringify(dailyData));
   alert('✅ تم حفظ بيانات اليوم ' + date);
   renderDailyDataTable();
@@ -18270,6 +18276,8 @@ function saveDailyData() {
   document.getElementById('dd-maint-task').value = '';
   document.getElementById('dd-maint-tech').value = '';
   document.getElementById('dd-maint-notes').value = '';
+  document.getElementById('dd-maint-before').value = '';
+  document.getElementById('dd-maint-after').value = '';
   document.getElementById('dd-septic-name').value = '';
   document.getElementById('dd-septic-trips').value = 0;
   document.getElementById('dd-septic-supervisor').value = '';
@@ -18295,9 +18303,9 @@ function deleteDailyData(idx) {
 }
 function exportDailyDataReport() {
   if (!dailyData.length) { alert('لا توجد بيانات للتصدير.'); return; }
-  var rows = [['التاريخ','الشاي (باكيت)','السكر (كجم)','نوع الصيانة','بند الصيانة','الفني','الحالة','ملاحظات','البيارة','عدد النقلات','المشرف']];
+  var rows = [['التاريخ','الشاي (باكيت)','السكر (كجم)','نوع الصيانة','بند الصيانة','الفني','الحالة','قبل','بعد','ملاحظات','البيارة','عدد النقلات','المشرف']];
   dailyData.sort(function(a,b){ return a.date.localeCompare(b.date); }).forEach(function(d){
-    rows.push([d.date, d.teaPacks||0, d.sugar||0, d.maintCat||'', d.maintTask||'', d.maintTech||'', d.maintStatus||'', d.maintNotes||'', d.septicName||'', d.septicTrips||0, d.septicSupervisor||'']);
+    rows.push([d.date, d.teaPacks||0, d.sugar||0, d.maintCat||'', d.maintTask||'', d.maintTech||'', d.maintStatus||'', d.maintBefore||'', d.maintAfter||'', d.maintNotes||'', d.septicName||'', d.septicTrips||0, d.septicSupervisor||'']);
   });
   var ws = XLSX.utils.aoa_to_sheet(rows);
   var wb = XLSX.utils.book_new();
