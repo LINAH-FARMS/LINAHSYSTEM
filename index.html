@@ -2644,6 +2644,8 @@
       <button class="btn btn-primary" onclick="saveMealLog()">💾 تسجيل / تعديل الوجبات</button>
       <button class="btn btn-secondary" onclick="document.getElementById('meal-date').value='';document.getElementById('meal-chef').value='';document.getElementById('meal-edit-idx').value='-1';document.getElementById('meal-p-bf').value='';document.getElementById('meal-p-lh').value='';document.getElementById('meal-p-dn').value=''" style="height:42px;">🔄 جديد</button>
       <button class="btn btn-secondary" onclick="openWeeklyMenu()" style="height:42px;background:#1565c0;color:#fff;border:none;">📅 برنامج الأسبوع</button>
+      <button class="btn btn-danger" onclick="openMealWasteModal()" style="height:42px;">🗑️ إضافة هدر</button>
+      <button class="btn btn-secondary" onclick="toggleMealWasteSection()" style="height:42px;background:#c62828;color:#fff;border:none;">📊 سجل الهدر</button>
       <button class="btn btn-secondary" onclick="showPrintChoice('table-meal-log')">🖨️ طباعة</button>
       <button class="btn btn-excel" onclick="exportMealLogToExcel()" style="height:42px;background-color:#1565c0;">📤 تصدير Excel</button>
       <button class="btn btn-excel" onclick="document.getElementById('meal-excel-file').click()" style="height:42px;background-color:#0d47a1;">📥 استيراد شيت (Excel)</button>
@@ -2710,7 +2712,7 @@
         </div>
       </div>
     </div>
-    <div id="meal-waste-section" style="display:none;margin:10px 0;padding:15px;background:#fff5f5;border:2px solid #ffcdd2;border-radius:8px;">
+    <div id="meal-waste-section" style="margin:10px 0;padding:15px;background:#fff5f5;border:2px solid #ffcdd2;border-radius:8px;">
       <div id="mw-stats" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:15px;"></div>
       <div id="mw-chart-container" style="height:0;overflow:hidden;transition:height 0.3s;margin-bottom:10px;">
         <canvas id="mw-chart" style="max-height:250px;"></canvas>
@@ -11179,6 +11181,8 @@ function toggleEmployeeStatus(empId) {
       closeModal('modal-meal-waste');
       cancelMealWasteEdit();
       syncStorage(); renderMealWasteTable(); renderMealWasteStats();
+      var ws = document.getElementById('meal-waste-section');
+      if (ws && ws.style.display === 'none') { ws.style.display = 'block'; renderMealWasteStats(); renderMealWasteTable(); }
       logAction('المسؤول', 'مطلوب', 'البيارة: ' + normDate + ' | ' + meal + ' | ' + 'وعدد: ' + wasteEng + ' النقلات: ' + wasteWrk);
       alert('تم حفظ بيانات هدر الوجبات');
     }
