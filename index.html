@@ -2932,7 +2932,8 @@
       <div style="padding:15px;overflow-x:auto;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
           <p style="color:#666;margin:0;">التكلفة محسوبة على أساس السعر الحالي للخامات.</p>
-          <button class="btn" onclick="exportCompareReport()" style="padding:4px 14px;font-size:12px;background:#e65100;color:#fff;border:none;border-radius:5px;">📤 تصدير</button>
+          <button class="btn" onclick="exportCompareHTML()" style="padding:4px 14px;font-size:12px;background:#1565c0;color:#fff;border:none;border-radius:5px;">📄 HTML</button>
+          <button class="btn" onclick="exportCompareReport()" style="padding:4px 14px;font-size:12px;background:#e65100;color:#fff;border:none;border-radius:5px;">📤 Excel</button>
         </div>
         <div id="compare-recipes-table-wrap"></div>
       </div>
@@ -17762,6 +17763,27 @@ function setupAutocomplete(inp) {
     if (e.key === 'Enter') { e.preventDefault(); var sel = drop.querySelector('.ac-sel'); if (sel) { pick(sel.getAttribute('data-name')); } }
     if (e.key === 'Escape') { drop.style.display = 'none'; }
   });
+}
+
+function exportCompareHTML() {
+  if (!RECIPES.length) return alert('لا توجد وصفات.');
+  var rows = '';
+  RECIPES.forEach(function(r){
+    var totalCost = 0, totalItems = (r.items||[]).length;
+    (r.items||[]).forEach(function(it){
+      var cost = getIngCost(it.n, it.u);
+      if (cost !== undefined) totalCost += cost * it.q;
+    });
+    var costPerPerson = totalCost / (r.base || 1);
+    rows += '<tr><td style="padding:8px;border:1px solid #ccc;text-align:right;font-weight:700;">' + r.name + '</td><td style="padding:8px;border:1px solid #ccc;text-align:center;">' + totalItems + '</td><td style="padding:8px;border:1px solid #ccc;text-align:center;font-weight:700;color:#2e7d32;">' + (costPerPerson > 0 ? costPerPerson.toFixed(2) + ' ج.م' : '—') + '</td></tr>';
+  });
+  var html = '<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8"><title>مقارنة الوصفات</title><style>body{font-family:Cairo,Arial,sans-serif;margin:30px;}h2{color:#00796b;}table{width:100%;border-collapse:collapse;}th{background:#00796b;color:#fff;padding:10px;border:1px solid #00796b;}td{padding:8px;border:1px solid #ccc;}.footer{margin-top:20px;color:#888;font-size:12px;text-align:center;}</style></head><body><h2>📊 مقارنة تكلفة الوصفات</h2><table><thead><tr><th style="text-align:right;">الوصفة</th><th>عدد الخامات</th><th>تكلفة الفرد</th></tr></thead><tbody>' + rows + '</tbody></table><div class="footer">تم الإنشاء: ' + new Date().toLocaleString('ar-EG') + '</div></body></html>';
+  var blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'مقارنة_الوصفات_' + new Date().toISOString().split('T')[0] + '.html';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(a.href);
 }
 
 function exportCompareReport() {
