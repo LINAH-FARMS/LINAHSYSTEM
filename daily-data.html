@@ -138,42 +138,49 @@ var septicNames = [];
 try { var sn = localStorage.getItem('dyn_septics'); if (sn) { septicNames = JSON.parse(sn); if (!Array.isArray(septicNames)) septicNames = []; } } catch(e){}
 
 // Fetch reference data from Supabase for mobile users
-fetch(SB + '/rest/v1/sync_data?id=eq.alldata&select=data', { headers:{'apikey':KEY,'Authorization':'Bearer '+KEY} })
-  .then(function(r){ return r.json(); })
-  .then(function(rows){
-    if (!rows || !rows.length || !rows[0].data) { console.warn('daily-data: no alldata row'); return; }
-    var ad = rows[0].data;
-    console.log('daily-data: alldata keys:', Object.keys(ad));
-    if (ad.employees && ad.employees.length) { employees = ad.employees; }
-    if (ad.inventoryItems && ad.inventoryItems.length) { invItems = ad.inventoryItems; }
-    if (ad.dynamicSeptics) {
-      var raw = ad.dynamicSeptics;
-      console.log('daily-data: dynamicSeptics raw:', typeof raw, Array.isArray(raw) ? raw.length : raw);
-      if (typeof raw === 'string') { try { raw = JSON.parse(raw); } catch(e) {} }
-      if (Array.isArray(raw)) {
-        septicNames = raw.map(function(s){
-          if (typeof s === 'string') return s;
-          if (s && typeof s === 'object') {
-            if (s.name && typeof s.name === 'string') return s.name;
-            if (s.title && typeof s.title === 'string') return s.title;
-            var vals = Object.values(s).filter(function(v){ return typeof v === 'string' && v.length > 1; });
-            if (vals.length) return vals[0];
-          }
-          return '';
-        }).filter(function(s){ return s && s.trim(); });
+(function(){
+  var dbg = document.createElement('div');
+  dbg.id = 'sb-status';
+  dbg.style.cssText = 'text-align:center;font-size:11px;color:#999;margin-top:8px;';
+  dbg.textContent = '⚡ جاري تحميل البيانات...';
+  var card = document.querySelector('.card');
+  if (card) card.appendChild(dbg);
+  fetch(SB + '/rest/v1/sync_data?id=eq.alldata&select=data', { headers:{'apikey':KEY,'Authorization':'Bearer '+KEY} })
+    .then(function(r){
+      if (!r.ok) { dbg.textContent = '❌ خطأ في الاتصال: ' + r.status; return null; }
+      return r.json();
+    })
+    .then(function(rows){
+      if (!rows) return;
+      if (!rows.length || !rows[0].data) { dbg.textContent = '⚠️ لا توجد بيانات على السحابة (شغّل البرنامج وsync أولاً)'; return; }
+      var ad = rows[0].data;
+      if (ad.employees && ad.employees.length) employees = ad.employees;
+      if (ad.inventoryItems && ad.inventoryItems.length) invItems = ad.inventoryItems;
+      var cnt = 0;
+      if (ad.dynamicSeptics) {
+        var raw = ad.dynamicSeptics;
+        if (typeof raw === 'string') { try { raw = JSON.parse(raw); } catch(e) {} }
+        if (Array.isArray(raw)) {
+          septicNames = raw.map(function(s){
+            if (typeof s === 'string') return s;
+            if (s && typeof s === 'object') {
+              if (s.name && typeof s.name === 'string') return s.name;
+              if (s.title && typeof s.title === 'string') return s.title;
+              var vals = Object.values(s).filter(function(v){ return typeof v === 'string' && v.length > 1; });
+              if (vals.length) return vals[0];
+            }
+            return '';
+          }).filter(function(s){ return s && s.trim(); });
+          cnt = septicNames.length;
+        }
       }
-    } else {
-      console.warn('daily-data: no dynamicSeptics in alldata');
-    }
-    console.log('daily-data: septicNames count:', septicNames.length, septicNames.slice(0,3));
-    // Populate septic datalist
-    var dl = document.getElementById('septic-list');
-    if (dl && septicNames.length) {
-      dl.innerHTML = septicNames.map(function(s){ return '<option value="' + s.replace(/"/g, '&quot;') + '">'; }).join('');
-      console.log('daily-data: datalist populated');
-    }
-  })
-  .catch(function(e){ console.warn('daily-data: fetch error:', e); });
+      var dl = document.getElementById('septic-list');
+      if (dl && septicNames.length) { dl.innerHTML = septicNames.map(function(s){ return '<option value="' + s.replace(/"/g, '&quot;') + '">'; }).join(''); }
+      dbg.textContent = '✅ تم تحميل ' + cnt + ' بيارة';
+      setTimeout(function(){ dbg.style.display = 'none'; }, 4000);
+    })
+    .catch(function(e){ dbg.textContent = '❌ فشل التحميل: ' + (e.message || e); });
+})();
 
 var ddMaintMaterials = [];
 var ddMaintMatSelectedCode = '';
