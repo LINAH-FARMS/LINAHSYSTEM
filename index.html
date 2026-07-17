@@ -17401,10 +17401,13 @@ function updateDashClock() {
             </div>
           </div>
         </div>
-        <div style="margin-top:14px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
-          <button class="btn btn-primary" onclick="saveDailyData()" style="padding:8px 24px;font-size:15px;">💾 حفظ البيانات</button>
-          <button class="btn btn-success" onclick="exportDailyDataReport()" style="padding:8px 20px;font-size:14px;">📤 تصدير</button>
-          <button class="btn btn-secondary" onclick="closeModal('modal-daily-data')" style="padding:8px 20px;font-size:14px;">إغلاق</button>
+        <div style="margin-top:14px;display:flex;gap:6px;justify-content:center;flex-wrap:wrap;">
+          <button class="btn" onclick="saveTeaData()" style="padding:6px 14px;font-size:12px;background:#8d6e63;color:white;">🍵 حفظ الشاي</button>
+          <button class="btn" onclick="saveMaintData()" style="padding:6px 14px;font-size:12px;background:#1565c0;color:white;">🛠️ حفظ الصيانة</button>
+          <button class="btn" onclick="saveSepticData()" style="padding:6px 14px;font-size:12px;background:#2e7d32;color:white;">🚽 حفظ البيارة</button>
+          <button class="btn btn-primary" onclick="saveDailyData()" style="padding:6px 20px;font-size:13px;">💾 حفظ الكل</button>
+          <button class="btn btn-success" onclick="exportDailyDataReport()" style="padding:6px 16px;font-size:13px;">📤 تصدير</button>
+          <button class="btn btn-secondary" onclick="closeModal('modal-daily-data')" style="padding:6px 16px;font-size:13px;">إغلاق</button>
         </div>
         <div id="daily-data-table-wrap" style="margin-top:14px;max-height:250px;overflow-y:auto;"></div>
       </div>
@@ -18522,22 +18525,133 @@ function saveDailyData() {
   document.getElementById('dd-septic-trips').value = 0;
   document.getElementById('dd-septic-supervisor').value = '';
 }
+function saveTeaData() {
+  var date = document.getElementById('dd-date').value;
+  if (!date) { alert('اختر التاريخ أولاً.'); return; }
+  var empId = document.getElementById('dd-emp-id').value;
+  var empCode = document.getElementById('dd-emp-code').value.trim();
+  var empName = document.getElementById('dd-emp-name').value.trim();
+  var period = document.getElementById('dd-period').value;
+  var teaPacks = parseFloat(document.getElementById('dd-tea-packs').value) || 0;
+  var sugar = parseFloat(document.getElementById('dd-sugar').value) || 0;
+  if (!empId) { alert('اختر موظفاً أولاً.'); return; }
+  if (!teaPacks && !sugar) { alert('ادخل كمية الشاي أو السكر.'); return; }
+  dailyData.push({ date: date, empId: empId, empCode: empCode, empName: empName, period: period, teaPacks: teaPacks, sugar: sugar, section: 'tea', createdAt: new Date().toISOString() });
+  _lsSet('linah_daily_data', JSON.stringify(dailyData));
+  alert('✅ تم حفظ بيانات الشاي ' + date);
+  renderDailyDataTable();
+  document.getElementById('dd-emp-search').value = '';
+  document.getElementById('dd-emp-id').value = '';
+  document.getElementById('dd-emp-code').value = '';
+  document.getElementById('dd-emp-name').value = '';
+  document.getElementById('dd-tea-packs').value = 2;
+  document.getElementById('dd-sugar').value = 1;
+}
+function saveMaintData() {
+  var date = document.getElementById('dd-date').value;
+  if (!date) { alert('اختر التاريخ أولاً.'); return; }
+  var maintCat = document.getElementById('dd-maint-cat').value;
+  var maintTask = document.getElementById('dd-maint-task').value.trim();
+  var maintTech = document.getElementById('dd-maint-tech').value.trim();
+  var maintStatus = document.getElementById('dd-maint-status').value;
+  var maintNotes = document.getElementById('dd-maint-notes').value.trim();
+  if (!maintTask) { alert('ادخل بند الصيانة.'); return; }
+  dailyData.push({ date: date, maintCat: maintCat, maintTask: maintTask, maintTech: maintTech, maintStatus: maintStatus, maintNotes: maintNotes, maintMats: JSON.parse(JSON.stringify(ddMaintMaterials)), section: 'maint', createdAt: new Date().toISOString() });
+  _lsSet('linah_daily_data', JSON.stringify(dailyData));
+  alert('✅ تم حفظ بيانات الصيانة ' + date);
+  renderDailyDataTable();
+  document.getElementById('dd-maint-task').value = '';
+  document.getElementById('dd-maint-tech').value = '';
+  document.getElementById('dd-maint-notes').value = '';
+  document.getElementById('dd-maint-mat-search').value = '';
+  document.getElementById('dd-maint-mat-results').style.display = 'none';
+  ddMaintMaterials = [];
+  renderDDMaintMatsList();
+}
+function saveSepticData() {
+  var date = document.getElementById('dd-date').value;
+  if (!date) { alert('اختر التاريخ أولاً.'); return; }
+  var septicName = document.getElementById('dd-septic-name').value.trim();
+  var septicTrips = parseInt(document.getElementById('dd-septic-trips').value) || 0;
+  var septicSupervisor = document.getElementById('dd-septic-supervisor').value.trim();
+  if (!septicName) { alert('ادخل اسم البيارة.'); return; }
+  dailyData.push({ date: date, septicName: septicName, septicTrips: septicTrips, septicSupervisor: septicSupervisor, section: 'septic', createdAt: new Date().toISOString() });
+  _lsSet('linah_daily_data', JSON.stringify(dailyData));
+  alert('✅ تم حفظ بيانات البيارة ' + date);
+  renderDailyDataTable();
+  document.getElementById('dd-septic-name').value = '';
+  document.getElementById('dd-septic-trips').value = 0;
+  document.getElementById('dd-septic-supervisor').value = '';
+}
+function _getSection(d) {
+  if (d.section) return d.section;
+  if (d.teaPacks || d.sugar) return 'tea';
+  if (d.maintTask) return 'maint';
+  if (d.septicName) return 'septic';
+  return 'all';
+}
+function _renderTable(title, entries, columns, rowFn) {
+  if (!entries.length) return '';
+  var html = '<h5 style="margin:16px 0 6px;font-size:14px;color:#5d4037;">' + title + ' (' + entries.length + ')</h5>';
+  html += '<table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:10px;"><thead><tr style="background:#5d4037;color:white;">';
+  columns.forEach(function(c) { html += '<th style="padding:5px 4px;border:1px solid #5d4037;white-space:nowrap;">' + c + '</th>'; });
+  html += '<th style="padding:5px 4px;border:1px solid #5d4037;" class="no-print"></th></tr></thead><tbody>';
+  var sorted = entries.slice().sort(function(a,b){ return b.date.localeCompare(a.date); });
+  sorted.forEach(function(d) {
+    var realIdx = dailyData.indexOf(d);
+    html += rowFn(d, realIdx);
+  });
+  html += '</tbody></table>';
+  return html;
+}
 function renderDailyDataTable() {
   var wrap = document.getElementById('daily-data-table-wrap');
   if (!wrap) return;
   if (!dailyData.length) { wrap.innerHTML = '<p style="color:#888;text-align:center;padding:20px;">لا توجد بيانات يومية بعد.</p>'; return; }
-  var html = '<table style="width:100%;border-collapse:collapse;font-size:12px;"><thead><tr style="background:#5d4037;color:white;"><th style="padding:6px;border:1px solid #5d4037;">التاريخ</th><th style="padding:6px;border:1px solid #5d4037;">الكود</th><th style="padding:6px;border:1px solid #5d4037;">الاسم</th><th style="padding:6px;border:1px solid #5d4037;">الدورة</th><th style="padding:6px;border:1px solid #5d4037;">الشاي (باكيت)</th><th style="padding:6px;border:1px solid #5d4037;">السكر (كجم)</th><th style="padding:6px;border:1px solid #5d4037;">🛠️ الصيانة</th><th style="padding:6px;border:1px solid #5d4037;">🧰 الخامات</th><th style="padding:6px;border:1px solid #5d4037;">🚽 البيارة</th><th style="padding:6px;border:1px solid #5d4037;">نقلات</th><th style="padding:6px;border:1px solid #5d4037;" class="no-print"></th></tr></thead><tbody>';
-  var sorted = dailyData.slice().sort(function(a,b){ return b.date.localeCompare(a.date); });
-  sorted.forEach(function(d, i){
-    var realIdx = dailyData.indexOf(d);
-    var matsHtml = '';
-    if (d.maintMats && d.maintMats.length) {
-      matsHtml = d.maintMats.map(function(m) { return '<span style="display:inline-block;background:#e3f2fd;padding:1px 4px;margin:1px;border-radius:3px;font-size:10px;border:1px solid #90caf9;">' + m.name + ' — ' + m.qty + '</span>'; }).join(' ');
-    } else { matsHtml = '—'; }
-    html += '<tr style="border-bottom:1px solid #e0e0e0;"><td style="padding:6px;border:1px solid #e0e0e0;">' + d.date + '</td><td style="padding:6px;border:1px solid #e0e0e0;text-align:center;">' + (d.empCode || '—') + '</td><td style="padding:6px;border:1px solid #e0e0e0;">' + (d.empName || '—') + '</td><td style="padding:6px;border:1px solid #e0e0e0;text-align:center;">' + (d.period || '—') + '</td><td style="padding:6px;border:1px solid #e0e0e0;text-align:center;">' + (d.teaPacks||'—') + '</td><td style="padding:6px;border:1px solid #e0e0e0;text-align:center;">' + (d.sugar||'—') + '</td><td style="padding:6px;border:1px solid #e0e0e0;">' + (d.maintTask || '—') + '</td><td style="padding:6px;border:1px solid #e0e0e0;">' + matsHtml + '</td><td style="padding:6px;border:1px solid #e0e0e0;">' + (d.septicName || '—') + '</td><td style="padding:6px;border:1px solid #e0e0e0;text-align:center;">' + (d.septicTrips || '—') + '</td><td class="no-print" style="padding:6px;border:1px solid #e0e0e0;text-align:center;"><button onclick="deleteDailyData(' + realIdx + ')" style="background:none;border:none;color:#d32f2f;cursor:pointer;font-size:14px;">✕</button></td></tr>';
+  var tea = [], maint = [], septic = [], other = [];
+  dailyData.forEach(function(d) {
+    var s = _getSection(d);
+    if (s === 'tea') tea.push(d);
+    else if (s === 'maint') maint.push(d);
+    else if (s === 'septic') septic.push(d);
+    else other.push(d);
   });
-  html += '</tbody></table>';
-  wrap.innerHTML = html;
+  var html = '';
+  // Tea table
+  html += _renderTable('🍵 الشاي', tea,
+    ['التاريخ','الكود','الاسم','الدورة','الشاي (باكيت)','السكر (كجم)'],
+    function(d, idx) {
+      return '<tr style="border-bottom:1px solid #e0e0e0;"><td style="padding:5px 4px;border:1px solid #e0e0e0;">' + d.date + '</td><td style="padding:5px 4px;border:1px solid #e0e0e0;text-align:center;">' + (d.empCode || '—') + '</td><td style="padding:5px 4px;border:1px solid #e0e0e0;">' + (d.empName || '—') + '</td><td style="padding:5px 4px;border:1px solid #e0e0e0;text-align:center;">' + (d.period || '—') + '</td><td style="padding:5px 4px;border:1px solid #e0e0e0;text-align:center;">' + (d.teaPacks||0) + '</td><td style="padding:5px 4px;border:1px solid #e0e0e0;text-align:center;">' + (d.sugar||0) + '</td><td class="no-print" style="padding:5px 4px;border:1px solid #e0e0e0;text-align:center;"><button onclick="deleteDailyData(' + idx + ')" style="background:none;border:none;color:#d32f2f;cursor:pointer;font-size:14px;">✕</button></td></tr>';
+    });
+  // Maint table
+  html += _renderTable('🛠️ الصيانة', maint,
+    ['التاريخ','النوع','بند الصيانة','الفني','الحالة','الخامات','ملاحظات'],
+    function(d, idx) {
+      var matsHtml = '';
+      if (d.maintMats && d.maintMats.length) {
+        matsHtml = d.maintMats.map(function(m) { return '<span style="display:inline-block;background:#e3f2fd;padding:1px 4px;margin:1px;border-radius:3px;font-size:10px;border:1px solid #90caf9;">' + m.name + ' — ' + m.qty + '</span>'; }).join(' ');
+      } else { matsHtml = '—'; }
+      return '<tr style="border-bottom:1px solid #e0e0e0;"><td style="padding:5px 4px;border:1px solid #e0e0e0;">' + d.date + '</td><td style="padding:5px 4px;border:1px solid #e0e0e0;">' + (d.maintCat || '—') + '</td><td style="padding:5px 4px;border:1px solid #e0e0e0;">' + (d.maintTask || '—') + '</td><td style="padding:5px 4px;border:1px solid #e0e0e0;">' + (d.maintTech || '—') + '</td><td style="padding:5px 4px;border:1px solid #e0e0e0;text-align:center;">' + (d.maintStatus || '—') + '</td><td style="padding:5px 4px;border:1px solid #e0e0e0;">' + matsHtml + '</td><td style="padding:5px 4px;border:1px solid #e0e0e0;">' + (d.maintNotes || '—') + '</td><td class="no-print" style="padding:5px 4px;border:1px solid #e0e0e0;text-align:center;"><button onclick="deleteDailyData(' + idx + ')" style="background:none;border:none;color:#d32f2f;cursor:pointer;font-size:14px;">✕</button></td></tr>';
+    });
+  // Septic table
+  html += _renderTable('🚽 البيارات', septic,
+    ['التاريخ','البيارة','عدد النقلات','المشرف'],
+    function(d, idx) {
+      return '<tr style="border-bottom:1px solid #e0e0e0;"><td style="padding:5px 4px;border:1px solid #e0e0e0;">' + d.date + '</td><td style="padding:5px 4px;border:1px solid #e0e0e0;">' + (d.septicName || '—') + '</td><td style="padding:5px 4px;border:1px solid #e0e0e0;text-align:center;">' + (d.septicTrips || 0) + '</td><td style="padding:5px 4px;border:1px solid #e0e0e0;">' + (d.septicSupervisor || '—') + '</td><td class="no-print" style="padding:5px 4px;border:1px solid #e0e0e0;text-align:center;"><button onclick="deleteDailyData(' + idx + ')" style="background:none;border:none;color:#d32f2f;cursor:pointer;font-size:14px;">✕</button></td></tr>';
+    });
+  // Other (legacy combined) table
+  if (other.length) {
+    html += _renderTable('📋 بيانات عامة', other,
+      ['التاريخ','الكود','الاسم','الدورة','الشاي','السكر','الصيانة','الخامات','البيارة','نقلات'],
+      function(d, idx) {
+        var matsHtml = '';
+        if (d.maintMats && d.maintMats.length) {
+          matsHtml = d.maintMats.map(function(m) { return '<span style="display:inline-block;background:#e3f2fd;padding:1px 4px;margin:1px;border-radius:3px;font-size:10px;border:1px solid #90caf9;">' + m.name + ' — ' + m.qty + '</span>'; }).join(' ');
+        } else { matsHtml = '—'; }
+        return '<tr style="border-bottom:1px solid #e0e0e0;"><td style="padding:5px 4px;border:1px solid #e0e0e0;">' + d.date + '</td><td style="padding:5px 4px;border:1px solid #e0e0e0;text-align:center;">' + (d.empCode || '—') + '</td><td style="padding:5px 4px;border:1px solid #e0e0e0;">' + (d.empName || '—') + '</td><td style="padding:5px 4px;border:1px solid #e0e0e0;text-align:center;">' + (d.period || '—') + '</td><td style="padding:5px 4px;border:1px solid #e0e0e0;text-align:center;">' + (d.teaPacks||0) + '</td><td style="padding:5px 4px;border:1px solid #e0e0e0;text-align:center;">' + (d.sugar||0) + '</td><td style="padding:5px 4px;border:1px solid #e0e0e0;">' + (d.maintTask||'—') + '</td><td style="padding:5px 4px;border:1px solid #e0e0e0;">' + matsHtml + '</td><td style="padding:5px 4px;border:1px solid #e0e0e0;">' + (d.septicName||'—') + '</td><td style="padding:5px 4px;border:1px solid #e0e0e0;text-align:center;">' + (d.septicTrips||0) + '</td><td class="no-print" style="padding:5px 4px;border:1px solid #e0e0e0;text-align:center;"><button onclick="deleteDailyData(' + idx + ')" style="background:none;border:none;color:#d32f2f;cursor:pointer;font-size:14px;">✕</button></td></tr>';
+      });
+  }
+  wrap.innerHTML = html || '<p style="color:#888;text-align:center;padding:20px;">لا توجد بيانات يومية بعد.</p>';
 }
 function deleteDailyData(idx) {
   if (!confirm('حذف هذا السجل؟')) return;
@@ -18547,14 +18661,44 @@ function deleteDailyData(idx) {
 }
 function exportDailyDataReport() {
   if (!dailyData.length) { alert('لا توجد بيانات للتصدير.'); return; }
-  var rows = [['التاريخ','الكود','الاسم','الدورة','الشاي (باكيت)','السكر (كجم)','نوع الصيانة','بند الصيانة','الفني','الحالة','مكان وملاحظات','الخامات','البيارة','عدد النقلات','المشرف']];
-  dailyData.sort(function(a,b){ return a.date.localeCompare(b.date); }).forEach(function(d){
-    var matsStr = d.maintMats && d.maintMats.length ? d.maintMats.map(function(m){ return m.name + ' — ' + m.qty + ' ' + (m.unit||''); }).join(', ') : '';
-    rows.push([d.date, d.empCode||'', d.empName||'', d.period||'', d.teaPacks||0, d.sugar||0, d.maintCat||'', d.maintTask||'', d.maintTech||'', d.maintStatus||'', d.maintNotes||'', matsStr, d.septicName||'', d.septicTrips||0, d.septicSupervisor||'']);
+  var tea = [], maint = [], septic = [], other = [];
+  dailyData.forEach(function(d) {
+    var s = _getSection(d);
+    if (s === 'tea') tea.push(d);
+    else if (s === 'maint') maint.push(d);
+    else if (s === 'septic') septic.push(d);
+    else other.push(d);
   });
-  var ws = XLSX.utils.aoa_to_sheet(rows);
   var wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, 'البيانات اليومية');
+  function addSheet(name, header, data) {
+    if (!data.length) return;
+    var rows = [header];
+    data.sort(function(a,b){ return a.date.localeCompare(b.date); }).forEach(function(d) { rows.push(d); });
+    var ws = XLSX.utils.aoa_to_sheet(rows);
+    XLSX.utils.book_append_sheet(wb, ws, name);
+  }
+  if (tea.length) {
+    addSheet('🍵 الشاي', ['التاريخ','الكود','الاسم','الدورة','الشاي (باكيت)','السكر (كجم)'],
+      tea.map(function(d){ return [d.date, d.empCode||'', d.empName||'', d.period||'', d.teaPacks||0, d.sugar||0]; }));
+  }
+  if (maint.length) {
+    addSheet('🛠️ الصيانة', ['التاريخ','نوع الصيانة','بند الصيانة','الفني','الحالة','مكان وملاحظات','الخامات'],
+      maint.map(function(d){
+        var matsStr = d.maintMats && d.maintMats.length ? d.maintMats.map(function(m){ return m.name + ' — ' + m.qty + ' ' + (m.unit||''); }).join(', ') : '';
+        return [d.date, d.maintCat||'', d.maintTask||'', d.maintTech||'', d.maintStatus||'', d.maintNotes||'', matsStr];
+      }));
+  }
+  if (septic.length) {
+    addSheet('🚽 البيارات', ['التاريخ','البيارة','عدد النقلات','المشرف'],
+      septic.map(function(d){ return [d.date, d.septicName||'', d.septicTrips||0, d.septicSupervisor||'']; }));
+  }
+  if (other.length) {
+    addSheet('بيانات عامة', ['التاريخ','الكود','الاسم','الدورة','الشاي (باكيت)','السكر (كجم)','نوع الصيانة','بند الصيانة','الفني','الحالة','مكان وملاحظات','الخامات','البيارة','عدد النقلات','المشرف'],
+      other.map(function(d){
+        var matsStr = d.maintMats && d.maintMats.length ? d.maintMats.map(function(m){ return m.name + ' — ' + m.qty + ' ' + (m.unit||''); }).join(', ') : '';
+        return [d.date, d.empCode||'', d.empName||'', d.period||'', d.teaPacks||0, d.sugar||0, d.maintCat||'', d.maintTask||'', d.maintTech||'', d.maintStatus||'', d.maintNotes||'', matsStr, d.septicName||'', d.septicTrips||0, d.septicSupervisor||''];
+      }));
+  }
   XLSX.writeFile(wb, 'البيانات_اليومية_' + new Date().toISOString().split('T')[0] + '.xlsx');
 }
 </script>
