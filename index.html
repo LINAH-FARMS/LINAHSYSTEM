@@ -4584,7 +4584,7 @@
         sug.innerHTML = ''; sug.style.display = 'none';
         if(!q) { hid.value = ''; return; }
         let matches = employees.filter(e =>
-          (e.name||'').toLowerCase().includes(q) || (e.code||'').toLowerCase() === q
+          (e.name||'').toLowerCase().includes(q) || (e.code||'').toLowerCase().includes(q)
         ).slice(0, 10);
         if(!matches.length) return;
         sug.style.display = 'block';
@@ -4599,6 +4599,23 @@
           };
           sug.appendChild(d);
         });
+      });
+      inp.addEventListener('focus', function() {
+        if (!hid.value) {
+          sug.innerHTML = '';
+          employees.slice(0, 10).forEach(function(e) {
+            let d = document.createElement('div');
+            d.innerText = '[' + (e.code || '') + '] ' + (e.name || '');
+            d.onclick = function() {
+              inp.value = d.innerText;
+              hid.value = e.id || e.code;
+              sug.style.display = 'none';
+              inp.dispatchEvent(new Event('change'));
+            };
+            sug.appendChild(d);
+          });
+          sug.style.display = 'block';
+        }
       });
       inp.addEventListener('keydown', function(e) {
         if(e.key === 'Enter') {
