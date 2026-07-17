@@ -3153,7 +3153,7 @@
     <div id="bsup-contractors" class="bread-supply-sub-content active">
       <div class="control-panel no-print" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;">
         <div class="form-group"><label>التاريخ</label><input type="date" id="bctr-date"></div>
-        <div class="form-group"><label>المقاول</label><input type="text" id="bctr-name" placeholder="اسم المقاول" list="bctr-list"><datalist id="bctr-list"></datalist></div>
+        <div class="form-group"><label>المقاول</label><select id="bctr-name" style="width:100%;padding:6px;border:1px solid #cfd8dc;border-radius:5px;font-size:13px;"><option value="">-- اختر المقاول --</option></select></div>
         <div class="form-group"><label>عدد الأرغفة للمقاول</label><input type="number" id="bctr-count" min="1" value="0" oninput="estimateCtrProfit()"></div>
         <div class="form-group"><label>سعر الرغيف (ج.م)</label><input type="number" id="bctr-price" min="0" step="0.01" value="2" oninput="estimateCtrProfit()"></div>
         <div class="form-group"><label>المدفوع (ج.م)</label><input type="number" id="bctr-paid" min="0" step="0.01" value="0"></div>
@@ -3890,6 +3890,7 @@
     ]);
     let bakeryProductions = _safeJsonParse(_lsGet('linah_bakery_productions'), []);
     let bakeryContractorSupplies = _safeJsonParse(_lsGet('linah_bakery_ctr_supplies'), []);
+    (function(){ if (bakeryContractorSupplies.length > 0) { var _changed = false; var _names = {}; bakeryContractorsNames.forEach(function(n){_names[n]=true;}); bakeryContractorSupplies.forEach(function(r) { if (typeof r.name !== 'string' || r.name === '[object Object]' || !r.name.trim()) { r.name = ''; _changed = true; } else if (!_names[r.name]) { _names[r.name] = true; bakeryContractorsNames.push(r.name); } }); bakeryContractorSupplies = bakeryContractorSupplies.filter(function(r) { return r.name; }); if (_changed) { try { localStorage.setItem('linah_bakery_ctr_supplies', JSON.stringify(bakeryContractorSupplies)); } catch(e){} try { localStorage.setItem('linah_bakery_contractors_names', JSON.stringify(bakeryContractorsNames)); } catch(e){} } } })();
     let bakeryInvoices = _safeJsonParse(_lsGet('linah_bakery_invoices'), []);
     let bakeryStockLog = _safeJsonParse(_lsGet('linah_bakery_stock_log'), []);
     let adminOvertime = _safeJsonParse(_lsGet('lineh_admin_overtime'), []);
@@ -4469,9 +4470,11 @@
     }
 
     function populateBctrDatalist() {
-      var dl = document.getElementById('bctr-list');
-      if (!dl) return;
-      dl.innerHTML = bakeryContractorsNames.filter(function(n) { return typeof n === 'string' && n.trim(); }).map(function(n) { return '<option value="' + n.replace(/"/g,'&quot;') + '">'; }).join('');
+      var sel = document.getElementById('bctr-name');
+      if (!sel) return;
+      var cur = sel.value;
+      sel.innerHTML = '<option value="">-- اختر المقاول --</option>' + bakeryContractorsNames.filter(function(n) { return typeof n === 'string' && n.trim(); }).map(function(n) { return '<option value="' + n.replace(/"/g,'&quot;') + '">' + n + '</option>'; }).join('');
+      if (cur && Array.from(sel.options).some(function(o) { return o.value === cur; })) sel.value = cur;
     }
 
     function fillSelectWithOptions(selectId, optionsArray, placeholder) {
@@ -13544,8 +13547,9 @@ function toggleEmployeeStatus(empId) {
       try {
         let date = document.getElementById('bctr-date').value;
         if (!date) return alert('⚠️ اختر التاريخ.');
-        let name = document.getElementById('bctr-name').value.trim();
-        if (!name) return alert('⚠️ أدخل اسم المقاول.');
+        let name = document.getElementById('bctr-name').value;
+        if (!name) return alert('⚠️ اختر اسم المقاول من القائمة.');
+        if (name === '[object Object]') { alert('⚠️ اسم المقاول غير صالح. الرجاء اختيار اسم من القائمة.'); return; }
         let count = parseInt(document.getElementById('bctr-count').value) || 0;
         if (count < 1) return alert('⚠️ أدخل عدد الأرغفة.');
         let price = parseFloat(document.getElementById('bctr-price').value) || 2;
