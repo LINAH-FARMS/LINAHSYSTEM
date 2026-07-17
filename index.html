@@ -17395,7 +17395,7 @@ function updateDashClock() {
           <div style="grid-column:span 2;background:#e8f5e9;border-radius:8px;padding:10px;border:1px solid #a5d6a7;">
             <h4 style="margin:0 0 8px;color:#2e7d32;">🚽 البيارات</h4>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-              <div class="form-group"><label>البيارة</label><input type="text" id="dd-septic-name" list="septic-list" placeholder="اسم البيارة" style="padding:6px;border:1px solid #ccc;border-radius:6px;"><datalist id="septic-list"></datalist></div>
+              <div class="form-group"><label>البيارة</label><input type="text" id="dd-septic-name" list="dd-septic-datalist" placeholder="اسم البيارة" style="padding:6px;border:1px solid #ccc;border-radius:6px;"><datalist id="dd-septic-datalist"></datalist></div>
               <div class="form-group"><label>عدد النقلات</label><input type="number" id="dd-septic-trips" min="0" value="0" style="padding:6px;border:1px solid #ccc;border-radius:6px;"></div>
               <div class="form-group"><label>المشرف</label><input type="text" id="dd-septic-supervisor" placeholder="اسم المشرف" style="padding:6px;border:1px solid #ccc;border-radius:6px;"></div>
             </div>
@@ -18477,7 +18477,7 @@ function openDailyDataForm() {
   document.getElementById('dd-septic-trips').value = 0;
   document.getElementById('dd-septic-supervisor').value = '';
   document.getElementById('dd-septic-cost').value = 0;
-  var dl = document.getElementById('septic-list');
+  var dl = document.getElementById('dd-septic-datalist');
   if (dl && typeof dynamicSeptics !== 'undefined') {
     dl.innerHTML = dynamicSeptics.map(function(s){ return '<option value="'+s+'">'; }).join('');
   }
