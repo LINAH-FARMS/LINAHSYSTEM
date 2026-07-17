@@ -145,12 +145,22 @@ fetch(SB + '/rest/v1/sync_data?id=eq.alldata&select=data', { headers:{'apikey':K
     var ad = rows[0].data;
     if (ad.employees && ad.employees.length) { employees = ad.employees; }
     if (ad.inventoryItems && ad.inventoryItems.length) { invItems = ad.inventoryItems; }
-    if (ad.dynamicSeptics && ad.dynamicSeptics.length) {
-      septicNames = ad.dynamicSeptics.map(function(s){
-        if (typeof s === 'string') { try { var p = JSON.parse(s); if (p && typeof p === 'object') return p.name || p.title || p.label || s; } catch(e) {} return s; }
-        if (s && typeof s === 'object') return s.name || s.title || s.label || '';
-        return String(s);
-      }).filter(function(s){ return s && s.trim(); });
+    // Get septic names - handle all possible formats
+    var raw = ad.dynamicSeptics;
+    if (raw) {
+      if (typeof raw === 'string') { try { raw = JSON.parse(raw); } catch(e) {} }
+      if (Array.isArray(raw)) {
+        septicNames = raw.map(function(s){
+          if (typeof s === 'string') return s;
+          if (s && typeof s === 'object') {
+            if (s.name && typeof s.name === 'string') return s.name;
+            if (s.title && typeof s.title === 'string') return s.title;
+            var vals = Object.values(s).filter(function(v){ return typeof v === 'string' && v.length > 1; });
+            if (vals.length) return vals[0];
+          }
+          return '';
+        }).filter(function(s){ return s && s.trim(); });
+      }
     }
     // Populate septic datalist
     var dl = document.getElementById('septic-list');
