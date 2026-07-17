@@ -4372,12 +4372,19 @@
       if (!isNaN(num) && val.toString().trim() === num.toString()) return [0, num];
       // Try multiple date formats
       var ds = val.toString().trim();
+      // Convert Arabic-Indic numerals to Western
+      ds = ds.replace(/[٠-٩]/g, function(c) { return '٠١٢٣٤٥٦٧٨٩'.indexOf(c); });
+      // Strip Unicode formatting marks (RTL, LRM, etc.) that can appear in locale dates
+      ds = ds.replace(/[\u200E\u200F\u202A-\u202E\u2060-\u2064]/g, '');
       var d = ds.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
       if (d) return [0, new Date(d[1],d[2]-1,d[3]).getTime()];
-      var d2 = ds.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
-      if (d2) return [0, new Date(d2[3],d2[2]-1,d2[1]).getTime()];
-      var d3 = ds.match(/^(\d{1,2})-(\d{1,2})-(\d{4})/);
-      if (d3) return [0, new Date(d3[3],d3[2]-1,d3[1]).getTime()];
+      var d2 = ds.match(/^(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{4})/);
+      if (d2) {
+        var p1 = parseInt(d2[1]), p2 = parseInt(d2[2]);
+        if (p1 > 12 && p2 <= 12) return [0, new Date(d2[3], p2-1, p1).getTime()];
+        if (p2 > 12 && p1 <= 12) return [0, new Date(d2[3], p1-1, p2).getTime()];
+        return [0, new Date(d2[3], p2-1, p1).getTime()];
+      }
       return [1, ds.toLowerCase()];
     }
 
@@ -5726,7 +5733,7 @@
       let assetsStr = (emp.assets && emp.assets.length > 0) ? emp.assets.map(a => `${a.item} (${a.qty})`).join('، ') : "لا يوجد";
 
       let excludedRecord = Object.assign({}, emp);
-      excludedRecord.date = new Date().toLocaleDateString('ar-EG');
+      excludedRecord.date = new Date().toISOString().split('T')[0];
       excludedRecord.reason = extraNotes ? `${reason} (${extraNotes})` : reason;
       excludedRecord.assetsStr = (emp.assets && emp.assets.length > 0) ? emp.assets.map(a => `${a.item} (${a.qty})`).join('، ') : "لا يوجد";
 
@@ -5766,7 +5773,7 @@
           <td>${e.room || '—'}</td>
           <td><span class="status-badge ${e.status==='P'?'status-p':'status-v'}">${e.status==='P'?'تواجد P':'إجازة V'}</span></td>
           <td style="font-size:11px; max-width:150px; color:#555;">${e.assetsStr || e.assets || '—'}</td>
-          <td><span style="color:var(--danger); font-weight:600;">${e.date}</span></td>
+          <td><span style="color:var(--danger); font-weight:600;">${toArabicNumerals(e.date)}</span></td>
           <td><span style="font-style:italic; color:#d32f2f;">${e.reason}</span></td>
           <td class="no-print" style="display:flex;gap:4px;">
             <button class="btn btn-success" style="padding:2px 6px;font-size:11px;" onclick="restoreExcluded(${realIdx})">↩️ استرجاع</button>

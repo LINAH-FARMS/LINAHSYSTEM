@@ -5083,10 +5083,48 @@
       return null;
     }
 
+    function retryPendingReports() {
+      var local = JSON.parse(_lsGet('linah_reports') || '[]');
+      if (!local.length) return;
+      fetch(SUPABASE_URL + '/rest/v1/sync_data?id=eq.incident_reports', {
+        method: 'GET',
+        headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
+      })
+      .then(function(r) { return r.json(); })
+      .then(function(rows) {
+        var reports = [];
+        if (rows && rows.length > 0 && rows[0].data) {
+          try { reports = typeof rows[0].data === 'string' ? JSON.parse(rows[0].data) : rows[0].data; } catch(e) { reports = []; }
+        }
+        var added = 0;
+        local.forEach(function(lr) {
+          if (!reports.some(function(r) { return r.id === lr.id; })) {
+            reports.push(lr);
+            added++;
+          }
+        });
+        if (added === 0) return;
+        var method = rows && rows.length > 0 ? 'PATCH' : 'POST';
+        var url = rows && rows.length > 0 ? SUPABASE_URL + '/rest/v1/sync_data?id=eq.incident_reports' : SUPABASE_URL + '/rest/v1/sync_data';
+        return fetch(url, {
+          method: method,
+          headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/json' },
+          body: JSON.stringify(method === 'POST' ? { id: 'incident_reports', data: reports, updated_at: new Date().toISOString() } : { data: reports, updated_at: new Date().toISOString() })
+        }).then(function(r) {
+          if (r.ok) {
+            _lsSet('linah_reports', '[]');
+            console.log('✅ تم رفع ' + added + ' بلاغ محلي');
+          }
+        });
+      }).catch(function() {});
+    }
+
     function fetchReports() {
       document.getElementById('reports-loading').style.display = 'block';
       document.getElementById('reports-table-container').style.display = 'none';
       document.getElementById('reports-empty').style.display = 'none';
+
+      retryPendingReports();
 
       fetch(SUPABASE_URL + '/rest/v1/sync_data?id=eq.incident_reports', {
         method: 'GET',
@@ -5249,9 +5287,9 @@
       var total = reports.length;
       var urgent = 0, pending = 0, closed = 0, newCount = 0;
       var headers = _reportsHeaders;
-      var colType = _findReportCol(headers, ['القسم نوع', 'الطلب', 'بلاغ', 'الحالة']);
-      var colStatus = _findReportCol(headers, ['أولوية', 'status']);
-      var colPriority = _findReportCol(headers, ['عجلة', 'priorit', 'جديد']);
+      var colType = _findReportCol(headers, ['نوع العطل', 'نوع', 'type']);
+      var colStatus = _findReportCol(headers, ['الحالة', 'status']);
+      var colPriority = _findReportCol(headers, ['الأولوية', 'priorit', 'priority']);
 
       reports.forEach(function(r) {
         var p = colPriority ? (r[colPriority] || '') : '';
@@ -5275,9 +5313,9 @@
       var typeFilter = document.getElementById('reports-filter-type').value;
       var priorityFilter = document.getElementById('reports-filter-priority').value;
       var statusFilter = document.getElementById('reports-filter-status').value;
-      var colType = _findReportCol(_reportsHeaders, ['القسم نوع', 'الطلب', 'بلاغ', 'الحالة']);
-      var colStatus = _findReportCol(_reportsHeaders, ['أولوية', 'status']);
-      var colPriority = _findReportCol(_reportsHeaders, ['عجلة', 'priorit', 'سلوكي']);
+      var colType = _findReportCol(_reportsHeaders, ['نوع العطل', 'نوع', 'type']);
+      var colStatus = _findReportCol(_reportsHeaders, ['الحالة', 'status']);
+      var colPriority = _findReportCol(_reportsHeaders, ['الأولوية', 'priorit', 'priority']);
       var filtered = _reportsData.filter(function(r) {
         var vals = Object.values(r).join(' ').toLowerCase();
         if (search && vals.indexOf(search) === -1) return false;
@@ -5912,6 +5950,8 @@
       if (!isNaN(num) && ds === num.toString()) return [0, num];
       // Convert Arabic-Indic numerals to Western
       ds = ds.replace(/[٠-٩]/g, function(c) { return '٠١٢٣٤٥٦٧٨٩'.indexOf(c); });
+      // Strip Unicode formatting marks (RTL, LRM, etc.) that can appear in locale dates
+      ds = ds.replace(/[\u200E\u200F\u202A-\u202E\u2060-\u2064]/g, '');
       // Strip trailing time
       ds = ds.replace(/\s*\d{1,2}:\d{2}(:\d{2})?\s*$/, '');
       // Arabic month names: 15 يوليو 2026
@@ -5924,12 +5964,14 @@
       // YYYY-MM-DD or YYYY/MM/DD
       var d1 = ds.match(/^(\d{4})[\/\-\.](\d{1,2})[\/\-\.](\d{1,2})/);
       if (d1) return [0, new Date(d1[1], d1[2]-1, d1[3]).getTime()];
-      // DD-MM-YYYY or DD/MM/YYYY or DD.MM.YYYY
+      // DD-MM-YYYY or MM-DD-YYYY
       var d2 = ds.match(/^(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{4})/);
-      if (d2) return [0, new Date(d2[3], d2[2]-1, d2[1]).getTime()];
-      // MM-DD-YYYY
-      var d3 = ds.match(/^(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{4})/);
-      if (d3 && parseInt(d3[1]) <= 12 && parseInt(d3[2]) > 12) return [0, new Date(d3[3], d3[1]-1, d3[2]).getTime()];
+      if (d2) {
+        var p1 = parseInt(d2[1]), p2 = parseInt(d2[2]);
+        if (p1 > 12 && p2 <= 12) return [0, new Date(d2[3], p2-1, p1).getTime()]; // DD-MM-YYYY
+        if (p2 > 12 && p1 <= 12) return [0, new Date(d2[3], p1-1, p2).getTime()]; // MM-DD-YYYY
+        return [0, new Date(d2[3], p2-1, p1).getTime()]; // ambiguous → DD-MM-YYYY (Egypt locale)
+      }
       // Try Date.parse as fallback
       var parsed = Date.parse(ds);
       if (!isNaN(parsed)) return [0, parsed];
@@ -7795,7 +7837,7 @@
       let assetsStr = (emp.assets && emp.assets.length > 0) ? emp.assets.map(a => `${a.item} (${a.qty})`).join('، ') : "لا يوجد";
 
       let excludedRecord = Object.assign({}, emp);
-      excludedRecord.date = new Date().toLocaleDateString('ar-EG');
+      excludedRecord.date = new Date().toISOString().split('T')[0];
       excludedRecord.reason = extraNotes ? `${reason} (${extraNotes})` : reason;
       excludedRecord.assetsStr = (emp.assets && emp.assets.length > 0) ? emp.assets.map(a => `${a.item} (${a.qty})`).join('، ') : "لا يوجد";
 
@@ -7836,7 +7878,7 @@
           <td>${e.room || '—'}</td>
           <td><span class="status-badge ${e.status==='P'?'status-p':'status-v'}">${e.status==='P'?'متواجد':'في إجازة'}</span></td>
           <td style="font-size:11px; max-width:150px; color:#555;">${e.assetsStr || e.assets || '—'}</td>
-          <td><span style="color:var(--danger); font-weight:600;">${e.date}</span></td>
+          <td><span style="color:var(--danger); font-weight:600;">${toArabicNumerals(e.date)}</span></td>
           <td><span style="font-style:italic; color:#d32f2f;">${e.reason}</span></td>
           <td class="no-print" style="display:flex;gap:4px;">
             <button class="btn btn-success" style="padding:2px 6px;font-size:11px;" onclick="restoreExcluded(${realIdx})">↩️ استرجاع</button>
@@ -10505,9 +10547,9 @@ function toggleEmployeeStatus(empId) {
       let today = toArabicNumerals(todayStr);
       var todayND = normalizeDateStr(todayStr);
       var entry = mealLogs.find(function(l) { return normalizeDateStr(l.date) === todayND; });
-      var bfDisplay = entry && entry.breakfast ? toArabicNumerals(String(entry.breakfast + (entry.guestBf || 0))) : '—';
-      var lhDisplay = entry && entry.lunch ? toArabicNumerals(String(entry.lunch + (entry.guestLh || 0))) : '—';
-      var dnDisplay = entry && entry.dinner ? toArabicNumerals(String(entry.dinner + (entry.guestDn || 0))) : '—';
+      var bfDisplay = entry ? toArabicNumerals(String((entry.breakfast || 0) + (entry.guestBf || 0))) : '—';
+      var lhDisplay = entry ? toArabicNumerals(String((entry.lunch || 0) + (entry.guestLh || 0))) : '—';
+      var dnDisplay = entry ? toArabicNumerals(String((entry.dinner || 0) + (entry.guestDn || 0))) : '—';
       var statusIcon = entry ? (entry.userEdited ? '✏️' : '🤖') : '⏳';
       document.getElementById('today-report-date').innerHTML = `📊 تقرير اليوم ${today} <span style="font-size:14px;color:#666;">— عدد الأفراد: ${toArabicNumerals(String(s.pCount))} ${statusIcon}</span>`;
       document.getElementById('stat-today-p').innerText = toArabicNumerals(String(s.pCount));
@@ -11153,8 +11195,24 @@ function toggleEmployeeStatus(empId) {
       var prepWaste = parseFloat(document.getElementById('mw-prep-waste').value) || 0;
       var editIdx = parseInt(document.getElementById('mw-edit-idx').value);
       var normDate = normalizeDateStr(date);
-      // Auto-calculate total prepared weight from ingredients + water
-      totalPrepared = ingredients.reduce(function(s,i){return s+(i.qty||0);},0) + waterAdded;
+      // Auto-calculate total prepared weight using cooking factors + water
+      totalPrepared = ingredients.reduce(function(s,i){ return s + (i.qty||0) * (getIngredientFactor(i.name) || 1); }, 0) + (waterAdded||0);
+      (function(){
+        var dayNames = ['الأحد','الإثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
+        try {
+          var d = new Date(normDate + 'T12:00:00');
+          var dayName = dayNames[d.getDay()];
+          var _menu = loadWeeklyMenu();
+          var _dishes = _menu[dayName + '|' + meal] || [];
+          var _expPP = 0;
+          _dishes.forEach(function(dish) { _expPP += getRecipeWeightPerPerson(dish); });
+          var _totalPeople = (engAte||0)+(engTakeaway||0)+(wrkAte||0)+(wrkTakeaway||0)+(guests||0);
+          var _expectedTotal = _expPP * (_totalPeople || 1);
+          if (_expectedTotal > totalPrepared) totalPrepared = _expectedTotal;
+        } catch(e){}
+        var _totalPeople = (engAte||0)+(engTakeaway||0)+(wrkAte||0)+(wrkTakeaway||0)+(guests||0);
+        if (_totalPeople > 0) { var minPrep = _totalPeople * 0.15; if (totalPrepared < minPrep) totalPrepared = minPrep; }
+      })();
       // Recalculate ingredient cost from form
       var totalCostFromForm = 0;
       document.querySelectorAll('.mw-ing-row').forEach(function(r) {
@@ -11279,7 +11337,7 @@ function toggleEmployeeStatus(empId) {
         var ingSum = (w.ingredients||[]).reduce(function(s,i){return s+(i.qty||0);},0);
         totalCookedQty += ingSum + (w.waterAdded||0);
       });
-      var wastePct = totalPrepared > 0 ? (totalWaste / totalPrepared * 100) : 0;
+      var wastePct = totalPrepared > 0 ? (Math.min(totalWaste / totalPrepared, 1) * 100) : 0;
       var totalEngAte = 0, totalWrkAte = 0, totalWasteFromEng = 0, totalWasteFromWrk = 0, totalWasteFromGuests = 0, totalGuests = 0;
       filtered.forEach(function(w) {
         totalEngAte += w.engAte || 0;
@@ -11294,7 +11352,8 @@ function toggleEmployeeStatus(empId) {
       var avgGuests = totalGuests > 0 ? (totalWasteFromGuests / totalGuests) : 0;
       var totalPeople = totalEngAte + totalWrkAte + totalGuests;
       var costPerPerson = totalPeople > 0 ? (totalCost / totalPeople) : 0;
-      var wasteCost = totalPrepared > 0 ? ((totalWaste / totalPrepared) * totalCost) : 0;
+      var wasteR = totalPrepared > 0 ? Math.min(totalWaste / totalPrepared, 1) : 0;
+      var wasteCost = wasteR * totalCost;
       var totalEmpInFilter = employees.filter(function(e) { return e.status === 'P'; }).length;
       el.innerHTML = [
         '<div style="background:#2e7d32;color:white;padding:10px;border-radius:8px;text-align:center;"><div style="font-size:22px;font-weight:700;">' + totalEmpInFilter + '</div><div style="font-size:11px;">الموظفين الحاليين (P)</div></div>',
@@ -11330,13 +11389,14 @@ function toggleEmployeeStatus(empId) {
       filtered.forEach(function(w) {
         var realIdx = mealWaste.indexOf(w);
         var total = (w.wasteEng||0) + (w.wasteWrk||0) + (w.wasteGuests||0) + (w.prepWaste||0);
-        var pct = (w.totalPrepared||0) > 0 ? ((total / (w.totalPrepared||1)) * 100).toFixed(1) : 0;
+        var pct = (w.totalPrepared||0) > 0 ? (Math.min(total / (w.totalPrepared||1), 1) * 100).toFixed(1) : 0;
         var avgEng = (w.engAte||0) > 0 ? ((w.wasteEng||0) / (w.engAte||1)) : 0;
         var avgWrk = (w.wrkAte||0) > 0 ? ((w.wasteWrk||0) / (w.wrkAte||1)) : 0;
         var avgGuests = (w.guests||0) > 0 ? ((w.wasteGuests||0) / (w.guests||1)) : 0;
         var people = (w.engAte||0) + (w.engTakeaway||0) + (w.wrkAte||0) + (w.wrkTakeaway||0) + (w.guests||0);
         var costPP = people > 0 ? ((w.cost||0) / people) : 0;
-        var wasteCost = (w.totalPrepared||0) > 0 ? (((w.wasteEng||0)+(w.wasteWrk||0)+(w.wasteGuests||0)) / (w.totalPrepared||1) * (w.cost||0)) : 0;
+        var wasteRatio = (w.totalPrepared||0) > 0 ? Math.min(((w.wasteEng||0)+(w.wasteWrk||0)+(w.wasteGuests||0)) / (w.totalPrepared||1), 1) : 0;
+        var wasteCost = wasteRatio * (w.cost||0);
         var logEntry = mealLogs.find(function(l) { return normalizeDateStr(l.date) === normalizeDateStr(w.date); });
         var empCount = 0;
         if (logEntry) {
@@ -11344,14 +11404,15 @@ function toggleEmployeeStatus(empId) {
           else if (w.meal === 'غداء') empCount = logEntry.lunch || 0;
           else if (w.meal === 'عشاء') empCount = logEntry.dinner || 0;
         }
-        var wInfo = getExpectedWeightPerMeal(w.meal, empCount || 1);
+        if (!empCount) empCount = people;
+        var wInfo = getExpectedWeightPerMeal(w.meal, empCount || 1, w.date);
         var expectedKg = empCount > 0 && wInfo.perPersonKg > 0 ? (empCount * wInfo.perPersonKg).toFixed(1) : '—';
         var wastePerEmp = empCount > 0 ? (total / empCount).toFixed(2) : '—';
         tbody.innerHTML += '<tr>' +
           '<td>' + toArabicNumerals(w.date) + '</td>' +
           '<td>' + (w.meal||'') + '</td>' +
           '<td>' + (w.chef||'') + '</td>' +
-          '<td><b>' + (empCount || '—') + '</b></td>' +
+          '<td><b>' + (empCount > 0 ? empCount : '—') + '</b></td>' +
           '<td>' + (w.totalPrepared ? w.totalPrepared + ' كجم' : '—') + '</td>' +
           '<td style="color:#1565c0;">' + expectedKg + '</td>' +
           '<td style="color:#d32f2f;font-weight:700;">' + (w.wasteEng||0) + ' كجم' + (avgEng > 0 ? '<br><span style="font-size:10px;font-weight:400;color:#999;">' + avgEng.toFixed(2) + ' كجم/مهندس</span>' : '') + '</td>' +
@@ -11398,7 +11459,7 @@ function toggleEmployeeStatus(empId) {
             legend: { display: false },
             tooltip: {
               callbacks: {
-                label: function(c) { return c.raw + ' كجم' + (c.dataIndex === 5 ? ' (' + (totals.totalPrepared > 0 ? (target/totals.totalPrepared*100).toFixed(1) + '% من المُعَد)' : '0%)') : ''); }
+                label: function(c) { return c.raw + ' كجم' + (c.dataIndex === 5 ? ' (' + (totals.totalPrepared > 0 ? (Math.min(target/totals.totalPrepared,1)*100).toFixed(1) + '% من المُعَد)' : '0%)') : ''); }
               }
             }
           }
@@ -11417,7 +11478,7 @@ function toggleEmployeeStatus(empId) {
           'الوزن المحضر (كجم)':w.totalPrepared, 'هدر المهندسين (كجم)':w.wasteEng, 'هدر العمال (كجم)':w.wasteWrk, 'هدر الضيوف (كجم)':w.wasteGuests||0,
           'هدر التحضير (كجم)':w.prepWaste||0, 'أكل مهندسين':w.engAte||0, 'تيك أواي مهندسين':w.engTakeaway||0, 'أكل عمال':w.wrkAte||0, 'تيك أواي عمال':w.wrkTakeaway||0, 'ضيوف':w.guests||0,
           'متوسط هدر/مهندس (كجم)':avgEng, 'متوسط هدر/عامل (كجم)':avgWrk,
-          'ماء مضاف (لتر)':w.waterAdded||0, 'نسبة هدر%':(w.totalPrepared>0?(((w.wasteEng||0)+(w.wasteWrk||0)+(w.wasteGuests||0)+(w.prepWaste||0))/w.totalPrepared*100).toFixed(1):0),
+          'ماء مضاف (لتر)':w.waterAdded||0, 'نسبة هدر%':(w.totalPrepared>0?(Math.min(((w.wasteEng||0)+(w.wasteWrk||0)+(w.wasteGuests||0)+(w.prepWaste||0))/w.totalPrepared,1)*100).toFixed(1):0),
           'المسؤول':w.responsible };
       });
       var ws = XLSX.utils.json_to_sheet(xlData); var wb = XLSX.utils.book_new();
@@ -12869,6 +12930,12 @@ function toggleEmployeeStatus(empId) {
           if (rows && rows.length > 0 && rows[0].data) {
             try { entries = typeof rows[0].data === 'string' ? JSON.parse(rows[0].data) : rows[0].data; } catch(e) { entries = []; }
           }
+          // Also check localStorage for pending entries from external form
+          var pending = _safeJsonParse(localStorage.getItem('linah_meal_waste_pending') || '[]', []);
+          if (pending.length) {
+            pending.forEach(function(p) { if (!entries.some(function(e) { return e.createdAt === p.createdAt; })) entries.push(p); });
+            localStorage.removeItem('linah_meal_waste_pending');
+          }
           if (!entries.length) return;
           var imported = 0;
           entries.forEach(function(e) {
@@ -12892,31 +12959,34 @@ function toggleEmployeeStatus(empId) {
                 guests: e.guests || 0,
                 wasteGuests: e.wasteGuests || 0,
                 waterAdded: e.waterAdded || 0,
+                gasCost: e.gasCost || 0,
+                salaryCost: e.salaryCost || 0,
                 cost: e.cost || 0,
                 responsible: e.responsible || '',
+                createdAt: e.createdAt || new Date().toISOString(),
                 source: 'chef_form'
               }));
               imported++;
             }
-            // الإنتاج ج بيانات mealLogs
+            // Update mealLogs from waste entry
             var mealCount = (e.engAte||0) + (e.engTakeaway||0) + (e.wrkAte||0) + (e.wrkTakeaway||0) + (e.guests||0);
             if (mealCount > 0) {
               var nDate = normalizeDateStr(e.date);
               var existing = mealLogs.find(function(l) { return normalizeDateStr(l.date) === nDate; });
               if (existing) {
                 if (!existing.userEdited) {
-                  if (e.meal === 'م' || e.meal === 'إجمالي') { existing.breakfast = mealCount; }
-                  else if (e.meal === 'الإيرادات') { existing.lunch = mealCount; }
-                  else if (e.meal === 'ج') { existing.dinner = mealCount; }
+                  if (e.meal === 'فطار' || e.meal === 'إفطار') existing.breakfast = mealCount;
+                  else if (e.meal === 'غداء') existing.lunch = mealCount;
+                  else if (e.meal === 'عشاء') existing.dinner = mealCount;
                   if (e.chef) existing.chef = e.chef;
                   existing.autoGenerated = false;
                 }
                 existing.modifiedAt = new Date().toISOString();
               } else {
                 var newEntry = { date: nDate, breakfast: 0, lunch: 0, dinner: 0, guestBf: 0, guestLh: 0, guestDn: 0, chef: e.chef || '', autoGenerated: false };
-                if (e.meal === 'م' || e.meal === 'المدفوع') newEntry.breakfast = mealCount;
-                else if (e.meal === 'ج') newEntry.lunch = mealCount;
-                else if (e.meal === 'م') newEntry.dinner = mealCount;
+                if (e.meal === 'فطار' || e.meal === 'إفطار') newEntry.breakfast = mealCount;
+                else if (e.meal === 'غداء') newEntry.lunch = mealCount;
+                else if (e.meal === 'عشاء') newEntry.dinner = mealCount;
                 mealLogs.push(_ts(newEntry));
               }
             }
@@ -14512,6 +14582,7 @@ function toggleEmployeeStatus(empId) {
       try { renderDailyStatsTable(); } catch(e) { console.error('renderDailyStatsTable error:', e); }
       try { renderEvaluations(); } catch(e) { console.error('renderEvaluations error:', e); }
       try { renderFinanceTab(); } catch(e) { console.error('renderFinanceTab error:', e); }
+      try { retryPendingReports(); } catch(e) {}
       try { fetchReports(); } catch(e) { console.error('fetchReports error:', e); }
       try { importMealWasteFormData(); } catch(e) { console.error('importMealWasteFormData error:', e); }
       try { importMealSurveyFormData(); } catch(e) { console.error('importMealSurveyFormData error:', e); }
@@ -16459,7 +16530,7 @@ function updateDashClock() {
 
     function printSelectedRows(tableId) {
       let table = document.getElementById(tableId);
-      if (!table) return;
+      if (!table) { alert('لم يتم العثور على الجدول المطلوب.'); return; }
       let checked = table.querySelectorAll('.row-check:checked');
       if (!checked.length) { alert('الرجاء تحديد صفوف للطباعة.'); return; }
 
@@ -16490,7 +16561,8 @@ function updateDashClock() {
           let allTd = clone.querySelectorAll('td');
           let removeList = Array.from(allTd).filter((td, i) => excludeIndices.has(i));
           removeList.reverse().forEach(td => td.remove());
-          rowData.push({ html: clone.outerHTML, date: date });
+          var cleaned = clone.outerHTML.replace(/<td[^>]*><\/td>/g, '');
+          rowData.push({ html: cleaned, date: date });
 
           if (isContractorTable) {
             totalCount += parseInt(origTd[3]?.textContent) || 0;
@@ -16506,6 +16578,7 @@ function updateDashClock() {
         return;
       }
       rows = rowData.map(function(r) { return r.html; }).join('');
+      if (!rows) { alert('لا توجد بيانات للطباعة.'); return; }
 
       let logoImg = document.querySelector('.print-watermark img');
       let logoSrc = logoImg ? logoImg.src : '';
@@ -17522,12 +17595,16 @@ function saveWeeklyMenu() {
   saveWeeklyMenuData();
   closeModal('modal-weekly-menu');
 }
-function getExpectedWeightPerMeal(meal, pCount) {
+function getExpectedWeightPerMeal(meal, pCount, dateStr) {
   _weeklyMenu = loadWeeklyMenu();
-  var today = new Date();
   var dayNames = ['الأحد','الإثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
-  var dayName = dayNames[today.getDay()];
-  if (dayName === 'السبت') dayName = 'السبت';
+  var dayName;
+  if (dateStr) {
+    var d = new Date(dateStr + (dateStr.indexOf('T') === -1 ? 'T12:00:00' : ''));
+    dayName = dayNames[d.getDay()];
+  } else {
+    dayName = dayNames[new Date().getDay()];
+  }
   var dishes = _weeklyMenu[dayName + '|' + meal] || [];
   var totalWpp = 0;
   dishes.forEach(function(d) { totalWpp += getRecipeWeightPerPerson(d); });
@@ -17537,6 +17614,27 @@ function getExpectedWeightPerMeal(meal, pCount) {
 // تكلفة الخامات: مفتاح "الاسم|الوحدة" -> سعر الوحدة (ج.م)
 var CHEF_ING_COST_DEFAULT = {};
 [['13بهارات','جم',0.48],['ارز','كجم',34.0],['بابريكا','جم',0.48],['بصل بودرة','جم',0.36],['بصل','كجم',10.0],['بطاطس','كجم',25.0],['بقسماط مطحون','كجم',42.0],['بهارات 7','جم',0.0005],['بهارات الشوى','جم',0.48],['بيض','عدد',3.5],['ثوم بودرة','جم',0.36],['ثوم','كجم',180.0],['جبنة','عدد',13.0],['جزر','كجم',28.0],['جوز هند','كجم',380.0],['حبهان','جم',2.8],['حلاوة قطع','عدد',5.75],['حمص','كجم',80.0],['خضرة','ربطة',3.0],['خل','عدد',30.0],['خيار','كجم',25.0],['زبيب','كجم',330.0],['زيت حار','لتر',150.0],['زيت','لتر',100.0],['سمسم','جم',0.22],['سمنة','عدد',112.0],['سودانى','كجم',180.0],['سيلفر','عدد',305.0],['شطة حمراء','جم',0.18],['شعريه','كجم',26.0],['شيكارة فحم','عدد',741.0],['صلصلة','جم',0.1],['طحينة','كجم',160.0],['عدس اصفر','كجم',50.0],['عدس بجبه','كجم',48.0],['فاصوليا','كجم',70.0],['فرخة','عدد',210.0],['فلفل اسود','جم',0.58],['فول مدشوش','كجم',36.0],['فول مدمس','كجم',90.0],['فيجيتار','كجم',80.0],['قرنفل','جم',0.98],['كرات','ربطة',3.0],['كركم','جم',0.36],['كسبرة','جم',0.14],['كسبره ناعمه','جم',0.14],['كمون','جم',0.4],['كوسة','كجم',30.0],['كيس مخلل','عدد',273.6],['لحم','كجم',340.0],['لسان عصفور','كجم',26.0],['لوبيا','كجم',70.0],['ليمون','كجم',50.0],['مربى','عدد',3.99],['مرقه دجاج','عدد',1.5],['مكرونة اسباكيتى','كجم',26.0],['مكرونة','كجم',26.0],['ملح','عدد',1.75],['ملوخية','كجم',200.0],['موز','كجم',45.0],['نشا','كجم',40.0],['ورق لوري','جم',0.24],['سمن','كجم',100],['عدس','كجم',60],['علبة صلصة','وحدة',300],['علبة بلاستيك','وحدة',1],['كسبرة ناعمة','جم',30],['فلفل اسمر','جم',20],['طماطم','كجم',10],['دقيق','كجم',36],['زيت زيتون','زجاجة',1050],['فلفل','كجم',20],['سكر','كجم',33.5],['ارز بلبن','لتر',55],['بيضة','عدد',1.5],['علبة مربي 20 جرام','عدد',30],['علبة جبنة 125 جرام','عدد',13],['كيس حلاوة','عدد',5.75],['خبز بلدي','عدد',5],['ماء','لتر',5]].forEach(function(x){ CHEF_ING_COST_DEFAULT[x[0]+'|'+x[1]] = x[2]; });
+// معامل امتصاص الماء/فقدان الوزن أثناء الطبخ
+var INGREDIENT_FACTOR_MAP = {
+  'ارز':2.5,'ارز بلبن':2.5,'ارز مصري':2.5,'أرز ابو الذهب':2.5,
+  'عدس اصفر':2.5,'عدس بجبه':2.5,'عدس':2.5,'فول مدشوش':2,'فول مدمس':2,'فول':2,
+  'حمص':2,'فاصوليا':2,'لوبيا':2,'بسلة':1.5,
+  'مكرونة':2.5,'مكرونة اسباكيتى':2.5,'لسان عصفور':2.5,'شعريه':2.5,
+  'بطاطس':1.3,'جزر':1.2,'كوسة':1.2,
+  'طماطم':1.1,'بصل':1.1,
+  'ملوخية':2,'جوز هند':1,
+  'فرخة':0.8,'فراخ':0.8,'لحم':0.75,'لحمة':0.75,'بيض':0.75,'بيضة':0.75,
+  'ماء':1,'زيت':1,'سمن':1,'سمنة':1,'زيت حار':1
+};
+function getIngredientFactor(name) {
+  if (!name) return 1;
+  var key = name.trim();
+  if (INGREDIENT_FACTOR_MAP[key]) return INGREDIENT_FACTOR_MAP[key];
+  for (var k in INGREDIENT_FACTOR_MAP) {
+    if (key.indexOf(k) !== -1 || k.indexOf(key) !== -1) return INGREDIENT_FACTOR_MAP[k];
+  }
+  return 1;
+}
 function loadChefIngCosts() {
   try { var s = JSON.parse(localStorage.getItem('chef_ing_costs')); if (s && typeof s === 'object') return s; } catch(e){}
   return JSON.parse(JSON.stringify(CHEF_ING_COST_DEFAULT));
