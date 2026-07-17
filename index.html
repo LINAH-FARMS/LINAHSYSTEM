@@ -17927,7 +17927,15 @@ function resetRecipeForm() {
 function renderChefCostEditor() {
   var el = document.getElementById('chef-cost-editor');
   if (!el) return;
-  var keys = Object.keys(CHEF_ING_COSTS).sort();
+  var allIngs = {};
+  Object.keys(CHEF_ING_COSTS).forEach(function(k){ allIngs[k] = CHEF_ING_COSTS[k]; });
+  RECIPES.forEach(function(r){
+    (r.items||[]).forEach(function(it){
+      var key = it.n+'|'+it.u;
+      if (allIngs[key] === undefined) allIngs[key] = undefined;
+    });
+  });
+  var keys = Object.keys(allIngs).sort();
   el.innerHTML = keys.map(function(k){
     var parts = k.split('|');
     return '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:4px 0;border-bottom:1px solid #eee;font-size:13px;">'+
