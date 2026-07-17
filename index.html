@@ -12348,32 +12348,32 @@ function renderTeaSugarTable() {
 
     function exportSepticToExcel() {
       var data = sortNewestFirst(septicRecords, 'date').map(function(s) {
-        return { "صرف": s.date || '', "شاي وسكر": stripEmoji(s.name), "القيمة البيان": s.trips || 0, "الإجازات": (s.trips || 0) * 5, "القيمة": stripEmoji(s.supervisor) };
+        return { "التاريخ": s.date || '', "البيارة": s.name, "عدد النقلات": s.trips || 0, "الصرف (م³)": (s.trips || 0) * 5, "المشرف": s.supervisor };
       });
       var ws = XLSX.utils.json_to_sheet(data); var wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, "البيان"); XLSX.writeFile(wb, "المستبعدين_القيمة_" + new Date().toISOString().split('T')[0].replace(/-/g, '') + ".xlsx");
+      XLSX.utils.book_append_sheet(wb, ws, "البيارات"); XLSX.writeFile(wb, "البيارات_" + new Date().toISOString().split('T')[0].replace(/-/g, '') + ".xlsx");
     }
     function exportPeriodicMaintToExcel() {
       var data = sortNewestFirst(periodicMaintenance, 'startDate').map(function(p) {
-        return { "البيان": stripEmoji(p.name), "المقاولين": p.freq || '', "القيمة ملخص": p.startDate || '', "النسخة الكود": p.lastDone || '', "الاسم": p.nextDue || '', "الإدارة": stripEmoji(p.status) };
+        return { "البيان": p.name, "المقاولين": p.freq || '', "القيمة ملخص": p.startDate || '', "النسخة الكود": p.lastDone || '', "الاسم": p.nextDue || '', "الإدارة": p.status };
       });
       var ws = XLSX.utils.json_to_sheet(data); var wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, "الوظيفة الحالة"); XLSX.writeFile(wb, "المبنى_الغرفة_القوة_" + new Date().toISOString().split('T')[0].replace(/-/g, '') + ".xlsx");
+      XLSX.utils.book_append_sheet(wb, ws, "الصيانة الدورية"); XLSX.writeFile(wb, "الصيانة_الدورية_" + new Date().toISOString().split('T')[0].replace(/-/g, '') + ".xlsx");
     }
 
     function exportMealLogToExcel() {
       var data = sortNewestFirst(mealLogs, 'date').map(function(m) {
-        return { "تقرير": m.date || '', "تاريخي": m.breakfast || 0, "نسخة": m.lunch || 0, "تاريخ": m.dinner || 0, "الاستبعاد": stripEmoji(m.chef), "اسم": stripEmoji(m.notes) };
+        return { "التاريخ": m.date || '', "إفطار": m.breakfast || 0, "غداء": m.lunch || 0, "عشاء": m.dinner || 0, "الشيف": m.chef, "ملاحظات": m.notes };
       });
       var ws = XLSX.utils.json_to_sheet(data); var wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, "الموظف"); XLSX.writeFile(wb, "كود_الموظف_" + new Date().toISOString().split('T')[0].replace(/-/g, '') + ".xlsx");
+      XLSX.utils.book_append_sheet(wb, ws, "الوجبات"); XLSX.writeFile(wb, "الوجبات_" + new Date().toISOString().split('T')[0].replace(/-/g, '') + ".xlsx");
     }
-    function exportContractorsToExcel() {
+function exportContractorsToExcel() {
       var data = sortNewestFirst(contractors, 'startDate').map(function(c) {
-        return { "نوع التعاقد": stripEmoji(c.name), "رقم الموبايل": c.phone || '', "تاريخ": c.sector || '', "التعيين": c.room || '', "الإدارة المسمى": c.dailyRate || 0, "الوظيفي المحافظة": c.startDate || '', "المبنى الغرفة": c.endDate || '', "الموقف": stripEmoji(c.notes) };
+        return { "اسم المقاول": c.name, "الموبايل": c.phone || '', "القطاع": c.sector || '', "الغرفة": c.room || '', "الأجر اليومي": c.dailyRate || 0, "تاريخ البداية": c.startDate || '', "تاريخ النهاية": c.endDate || '', "ملاحظات": c.notes };
       });
       var ws = XLSX.utils.json_to_sheet(data); var wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, "العهدة"); XLSX.writeFile(wb, "السبب_المستبعدين_" + new Date().toISOString().split('T')[0].replace(/-/g, '') + ".xlsx");
+      XLSX.utils.book_append_sheet(wb, ws, "المقاولين"); XLSX.writeFile(wb, "المقاولين_" + new Date().toISOString().split('T')[0].replace(/-/g, '') + ".xlsx");
     }
 
     function exportHistoricalReportToExcel() {
@@ -12428,7 +12428,7 @@ function renderTeaSugarTable() {
 
     function exportExcludedToExcel() {
       var data = sortNewestFirst(excludedEmployees, 'date').map(function(e) {
-        return { "التاريخ": e.date || '', "الاسم": stripEmoji(e.name), "الكود": e.code || '', "نوع العقد": e.contract || '', "الرقم القومي": e.nationalId || '', "تاريخ التعيين": e.hireDate || '', "الإدارة": stripEmoji(e.dept), "الوظيفة": stripEmoji(e.title), "الجهة": stripEmoji(e.gov), "المبنى": e.sector || '', "الغرفة": e.room || '', "الحالة": e.status === 'P' ? 'متواجد' : 'في إجازة', "العهد": (e.assetsStr || '').toString().replace(/[^\u0600-\u06FF\u0660-\u0669\u0020-\u007E\s]/g, '').trim() || '', "السبب": stripEmoji(e.reason) };
+        return { "التاريخ": e.date || '', "الاسم": e.name, "الكود": e.code || '', "نوع العقد": e.contract || '', "الرقم القومي": e.nationalId || '', "تاريخ التعيين": e.hireDate || '', "الإدارة": e.dept, "الوظيفة": e.title, "الجهة": e.gov, "المبنى": e.sector || '', "الغرفة": e.room || '', "الحالة": e.status === 'P' ? 'متواجد' : 'في إجازة', "العهد": (e.assetsStr || '').toString().replace(/[^\u0600-\u06FF\u0660-\u0669\u0020-\u007E\s]/g, '').trim() || '', "السبب": e.reason };
       });
       var ws = XLSX.utils.json_to_sheet(data); var wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, "المستبعدين"); XLSX.writeFile(wb, "المستبعدين_" + new Date().toISOString().split('T')[0].replace(/-/g, '') + ".xlsx");
