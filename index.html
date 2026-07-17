@@ -17862,7 +17862,7 @@ function saveRecipe() {
   rows.forEach(function(inp){
     var n = inp.value.trim();
     if (!n) return;
-    var row = inp.parentElement;
+    var row = inp.closest('.ac-wrap').parentElement;
     var u = row.querySelector('.rm-ing-unit').value;
     var q = parseFloat(row.querySelector('.rm-ing-qty').value);
     if (isNaN(q)) q = 0;
