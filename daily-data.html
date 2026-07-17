@@ -135,7 +135,7 @@ try { var iv = localStorage.getItem('lineh_inventory_items'); if (iv) invItems =
 if (!Array.isArray(invItems)) invItems = [];
 
 var septicNames = [];
-try { var sn = localStorage.getItem('lineh_septic_records'); if (sn) { var sArr = JSON.parse(sn); septicNames = sArr.map(function(s){ return s.name || s.sector || ''; }).filter(Boolean); } } catch(e){}
+try { var sn = localStorage.getItem('dyn_septics'); if (sn) { septicNames = JSON.parse(sn); if (!Array.isArray(septicNames)) septicNames = []; } } catch(e){}
 
 // Fetch reference data from Supabase for mobile users
 fetch(SB + '/rest/v1/sync_data?id=eq.alldata&select=data', { headers:{'apikey':KEY,'Authorization':'Bearer '+KEY} })
@@ -145,7 +145,7 @@ fetch(SB + '/rest/v1/sync_data?id=eq.alldata&select=data', { headers:{'apikey':K
     var ad = rows[0].data;
     if (ad.employees && ad.employees.length) { employees = ad.employees; }
     if (ad.inventoryItems && ad.inventoryItems.length) { invItems = ad.inventoryItems; }
-    if (ad.septicRecords && ad.septicRecords.length) { septicNames = ad.septicRecords.map(function(s){ return s.name || s.sector || ''; }).filter(Boolean); }
+    if (ad.dynamicSeptics && ad.dynamicSeptics.length) { septicNames = ad.dynamicSeptics; }
     // Populate septic datalist
     var dl = document.getElementById('septic-list');
     if (dl && septicNames.length) { dl.innerHTML = septicNames.map(function(s){ return '<option value="'+s+'">'; }).join(''); }
