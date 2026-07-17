@@ -18585,9 +18585,15 @@ function saveSepticData() {
 }
 function _getSection(d) {
   if (d.section) return d.section;
-  if (d.teaPacks || d.sugar) return 'tea';
-  if (d.maintTask) return 'maint';
-  if (d.septicName) return 'septic';
+  var hasTea = d.teaPacks > 0 || d.sugar > 0;
+  var hasMaint = d.maintTask && d.maintTask.length > 0;
+  var hasSeptic = d.septicName && d.septicName.length > 0;
+  var count = (hasTea ? 1 : 0) + (hasMaint ? 1 : 0) + (hasSeptic ? 1 : 0);
+  if (count <= 1) {
+    if (hasTea) return 'tea';
+    if (hasMaint) return 'maint';
+    if (hasSeptic) return 'septic';
+  }
   return 'all';
 }
 function _renderTable(title, entries, columns, rowFn) {
