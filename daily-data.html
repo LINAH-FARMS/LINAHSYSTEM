@@ -179,7 +179,10 @@ try { var sn = localStorage.getItem('dyn_septics'); if (sn) { septicNames = JSON
         }
       }
       var dl = document.getElementById('septic-list');
-      if (dl && septicNames.length) { dl.innerHTML = septicNames.map(function(s){ return '<option value="' + s.replace(/"/g, '&quot;') + '">'; }).join(''); }
+      if (dl) {
+        var names = septicNames.length ? septicNames : ["بيارة محطة الفرز الجديدة قطاع 22","بيارة المطبخ","بيارة السكن الاداري","بيارة ق3","بيارة سكن نخالين 22","بيارة ق30","بيارة ق6","بيارة ق27","بيارة قطاع 25","بيارة قطاع 33","بيارة قطاع 24","بيارة البير الجديد","بيارة مبني الادارة","بيارة قطاع 27","بيارة قطاع 29","بيارة قطاع 30","بيارة قطاع 21","بيارة قطاع 1","بيارة قطاع 31","بيارة مجمع الحمامات الخارجيه"];
+        dl.innerHTML = names.map(function(s){ return '<option value="' + s.replace(/"/g, '&quot;') + '">'; }).join('');
+      }
       dbg.textContent = '✅ تم تحميل ' + cnt + ' بيارة';
       setTimeout(function(){ dbg.style.display = 'none'; }, 4000);
     })

@@ -3984,6 +3984,7 @@
     }
     let dynamicRooms = _strArr(_safeJsonParse(_lsGet('dyn_rooms'), ["غرفة 1","غرفة 2","غرفة 3","غرفة 4","غرفة 5","غرفة 6","غرفة 7","غرفة 8","غرفة 9","غرفة 10","غرفة 11","غرفة 12","غرفة 13"]));
     let dynamicSeptics = _strArr(_safeJsonParse(_lsGet('dyn_septics'), ["بيارة محطة الفرز الجديدة قطاع 22","بيارة المطبخ","بيارة السكن الاداري","بيارة ق3","بيارة سكن نخالين 22","بيارة ق30","بيارة ق6","بيارة ق27","بيارة قطاع 25","بيارة قطاع 33","بيارة قطاع 24","بيارة البير الجديد","بيارة مبني الادارة","بيارة قطاع 27","بيارة قطاع 29","بيارة قطاع 30","بيارة قطاع 21","بيارة قطاع 1","بيارة قطاع 31","بيارة مجمع الحمامات الخارجيه"]));
+    if (dynamicSeptics.length === 0) { dynamicSeptics = ["بيارة محطة الفرز الجديدة قطاع 22","بيارة المطبخ","بيارة السكن الاداري","بيارة ق3","بيارة سكن نخالين 22","بيارة ق30","بيارة ق6","بيارة ق27","بيارة قطاع 25","بيارة قطاع 33","بيارة قطاع 24","بيارة البير الجديد","بيارة مبني الادارة","بيارة قطاع 27","بيارة قطاع 29","بيارة قطاع 30","بيارة قطاع 21","بيارة قطاع 1","بيارة قطاع 31","بيارة مجمع الحمامات الخارجيه"]; _lsSet('dyn_septics', JSON.stringify(dynamicSeptics)); }
 
     let dynamicDepts = _safeJsonParse(_lsGet('dyn_depts'), ["الإدارة","الزراعة","الإنتاج","الصيانة","الأمن","النظافة","المخازن","الخدمات"]);
     let dynamicTitles = _safeJsonParse(_lsGet('dyn_titles'), ["مشرف","عامل","سائق","فني","مهندس زراعي","محاسب","أمين مخزن","طباخ","عامل نظافة"]);
@@ -18478,8 +18479,9 @@ function openDailyDataForm() {
   document.getElementById('dd-septic-supervisor').value = '';
   document.getElementById('dd-septic-cost').value = 0;
   var dl = document.getElementById('dd-septic-datalist');
-  if (dl && typeof dynamicSeptics !== 'undefined') {
-    dl.innerHTML = dynamicSeptics.map(function(s){ return '<option value="'+s+'">'; }).join('');
+  if (dl) {
+    var septics = (typeof dynamicSeptics !== 'undefined' && dynamicSeptics.length) ? dynamicSeptics : ["بيارة محطة الفرز الجديدة قطاع 22","بيارة المطبخ","بيارة السكن الاداري","بيارة ق3","بيارة سكن نخالين 22","بيارة ق30","بيارة ق6","بيارة ق27","بيارة قطاع 25","بيارة قطاع 33","بيارة قطاع 24","بيارة البير الجديد","بيارة مبني الادارة","بيارة قطاع 27","بيارة قطاع 29","بيارة قطاع 30","بيارة قطاع 21","بيارة قطاع 1","بيارة قطاع 31","بيارة مجمع الحمامات الخارجيه"];
+    dl.innerHTML = septics.map(function(s){ return '<option value="'+s+'">'; }).join('');
   }
   renderDailyDataTable();
   openModal('modal-daily-data');
