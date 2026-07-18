@@ -6783,6 +6783,7 @@
         document.body.appendChild(a); a.click();
         document.body.removeChild(a);
         setTimeout(function() { URL.revokeObjectURL(url); }, 5000);
+      }
       } catch(e) { alert('تعذر تصدير تقرير الشاي والسكر: ' + e.message); }
     }
   }
