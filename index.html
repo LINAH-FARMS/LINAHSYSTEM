@@ -11420,7 +11420,7 @@ function renderTeaSugarTable() {
       syncStorage(); renderMealWasteTable(); renderMealWasteStats();
       var ws = document.getElementById('meal-waste-section');
       if (ws && ws.style.display === 'none') { ws.style.display = 'block'; renderMealWasteStats(); renderMealWasteTable(); }
-      logAction('المسؤول', 'مطلوب', 'البيارة: ' + normDate + ' | ' + meal + ' | ' + 'وعدد: ' + wasteEng + ' النقلات: ' + wasteWrk);
+      logAction('المسؤول', 'مطلوب', 'هدر الوجبات: ' + normDate + ' | ' + meal + ' | ' + 'هدر المهندسين: ' + wasteEng + ' كجم' + ' | هدر العمال: ' + wasteWrk + ' كجم');
       alert('تم حفظ بيانات هدر الوجبات');
     }
     function saveIngredientMaster() {
@@ -11461,7 +11461,7 @@ function renderTeaSugarTable() {
       renderIngredientMasterList();
     }
     function deleteMealWaste(idx) { if (!requireAdmin()) return;
-      if (!confirm('الحالية نقلة م')) return;
+      if (!confirm('هل أنت متأكد من حذف سجل هدر الوجبات هذا؟')) return;
       var w = mealWaste[idx];
       var delDate = normalizeDateStr(w.date);
       _logDeletion('mealWaste', (w.date||'') + '|' + (w.meal||'') + '|' + (w.createdAt||''));
@@ -15382,7 +15382,7 @@ var reportsTab = document.getElementById('tab-reports');
       dedupBy(septicRecords, function(s) { return (s.date || '') + '|' + (s.name || s.sector || '') + '|' + (s.trips || s.quantity || ''); });
       dedupBy(teaSugarDisbursements, function(t) { return (t.date || '') + '|' + (t.period || t.type || '') + '|' + (t.empCode || t.empId || '') + '|' + (t.teaPacks || t.quantity || '') + '|' + (t.sugarKg || ''); });
       dedupBy(mealLogs, function(m) { return m.date || JSON.stringify(m); });
-      dedupBy(mealWaste, function(w) { return (w.date||'') + '|' + (w.meal||''); });
+      dedupBy(mealWaste, function(w) { return (w.date||'') + '|' + (w.meal||'') + '|' + (w.createdAt||''); });
       dedupBy(bakeryInvoices, function(inv) { return inv.id || inv._id || JSON.stringify(inv); });
       dedupBy(employees, function(e) { return e.code || e.name || JSON.stringify(e); });
       dedupBy(contractors, function(c) { return c.name || c.id || JSON.stringify(c); });
@@ -15658,7 +15658,8 @@ var reportsTab = document.getElementById('tab-reports');
         dynamicVisitorTypes,
         bakeryContractorsNames,
         ingredientMaster,
-        mealSurveys
+        mealSurveys,
+        mealWaste, dailyStats, finTransactions, finBudgets
       };
     }
 
