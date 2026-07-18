@@ -75,14 +75,14 @@ emps = data.get('employees', [])
 p_count = sum(1 for e in emps if e.get('status') == 'P')
 v_count = sum(1 for e in emps if e.get('status') == 'V')
 hosp = [h for h in data.get('hospitalities', []) if h.get('arrival','')[:10] >= fmt(start) and h.get('arrival','')[:10] <= fmt(end)]
-prods = [p for p in data.get('bakeryProductions', []) if p.get('date','') >= fmt(start) and p.get('date','') <= fmt(end)]
-ctr_sup = [c for c in data.get('bakeryContractorSupplies', []) if c.get('date','') >= fmt(start) and c.get('date','') <= fmt(end)]
-meals = [m for m in data.get('mealLogs', []) if m.get('date','') >= fmt(start) and m.get('date','') <= fmt(end)]
-maint = [m for m in data.get('maintenanceRecords', []) if m.get('date','') >= fmt(start) and m.get('date','') <= fmt(end)]
-septic = [s for s in data.get('septicRecords', []) if s.get('date','') >= fmt(start) and s.get('date','') <= fmt(end)]
+prods = [p for p in data.get('bakeryProductions', []) if p.get('date','')[:10] >= fmt(start) and p.get('date','')[:10] <= fmt(end)]
+ctr_sup = [c for c in data.get('bakeryContractorSupplies', []) if c.get('date','')[:10] >= fmt(start) and c.get('date','')[:10] <= fmt(end)]
+meals = [m for m in data.get('mealLogs', []) if m.get('date','')[:10] >= fmt(start) and m.get('date','')[:10] <= fmt(end)]
+maint = [m for m in data.get('maintenanceRecords', []) if m.get('date','')[:10] >= fmt(start) and m.get('date','')[:10] <= fmt(end)]
+septic = [s for s in data.get('septicRecords', []) if s.get('date','')[:10] >= fmt(start) and s.get('date','')[:10] <= fmt(end)]
 incidents = [i for i in data.get('incident_reports', []) if i.get('date','')[:10] >= fmt(start) and i.get('date','')[:10] <= fmt(end)]
-tea_sugar = [t for t in data.get('teaSugarDisbursements', []) if t.get('date','') >= fmt(start) and t.get('date','') <= fmt(end)]
-ts_batches = [b for b in data.get('teaSugarBatches', []) if b.get('date','') >= fmt(start) and b.get('date','') <= fmt(end)]
+tea_sugar = [t for t in data.get('teaSugarDisbursements', []) if t.get('date','')[:10] >= fmt(start) and t.get('date','')[:10] <= fmt(end)]
+ts_batches = [b for b in data.get('teaSugarBatches', []) if b.get('date','')[:10] >= fmt(start) and b.get('date','')[:10] <= fmt(end)]
 
 today_str = datetime.now().strftime('%Y-%m-%d')
 filename = f'C:\\Users\\Salem Magdy\\Desktop\\Lina_Weekly_{today_str}.xlsx'
