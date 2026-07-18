@@ -16377,7 +16377,8 @@ function updateDashClock() {
             var rcRoomNum = rcRoom.replace(/^غرفه\s*/i, '').replace(/^غرفة\s*/i, '').trim();
             if (rcRoomNum !== empRoomNum) continue;
             // Compare sector keywords
-            var rcKW = rcSector.split(/[\s()]+/).filter(function(k){ return k.length >= 2; });
+            var rcKW = (rcSector || '').split(/[\s()]+/).filter(function(k){ return k.length >= 2; })
+              .map(function(k){ return abbrMap[k] || k; });
             var sectorMatch = false;
             for (var ek of empKW) {
               for (var rk of rcKW) {
