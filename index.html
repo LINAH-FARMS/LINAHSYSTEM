@@ -2764,26 +2764,23 @@
         <button class="btn btn-secondary" onclick="resetPlan()" style="background:#757575;color:#fff;border:none;height:42px;">🔄 تفريغ</button>
       </div>
       <div style="display:flex;gap:12px;flex-wrap:wrap;">
-        <div style="flex:1;min-width:180px;border:1px solid #fff9c4;border-radius:8px;padding:10px;background:#fffde7;">
+        <div style="flex:1;min-width:220px;border:1px solid #fff9c4;border-radius:8px;padding:10px;background:#fffde7;">
           <h4 style="margin:0 0 8px;color:#f57f17;font-size:14px;">🌅 إفطار</h4>
           <div class="form-group"><label>عدد الأفراد</label><input type="number" id="plan-bf-count" min="0" style="width:100%;"></div>
-          <div class="form-group"><label>الأصناف</label>
-            <select multiple id="plan-bf-dishes" style="width:100%;height:70px;font-size:11px;font-family:Cairo;"></select>
-          </div>
+          <div style="margin-bottom:6px;display:flex;gap:4px;"><select id="plan-bf-add" style="flex:1;padding:6px;border:1px solid #ccc;border-radius:4px;font-size:12px;font-family:Cairo;"></select><button class="btn btn-success" onclick="addPlanDish('bf')" style="padding:2px 8px;font-size:16px;line-height:1;">+</button></div>
+          <div id="plan-bf-list"></div>
         </div>
-        <div style="flex:1;min-width:180px;border:1px solid #bbdefb;border-radius:8px;padding:10px;background:#e3f2fd;">
+        <div style="flex:1;min-width:220px;border:1px solid #bbdefb;border-radius:8px;padding:10px;background:#e3f2fd;">
           <h4 style="margin:0 0 8px;color:#1565c0;font-size:14px;">☀️ غداء</h4>
           <div class="form-group"><label>عدد الأفراد</label><input type="number" id="plan-lh-count" min="0" style="width:100%;"></div>
-          <div class="form-group"><label>الأصناف</label>
-            <select multiple id="plan-lh-dishes" style="width:100%;height:70px;font-size:11px;font-family:Cairo;"></select>
-          </div>
+          <div style="margin-bottom:6px;display:flex;gap:4px;"><select id="plan-lh-add" style="flex:1;padding:6px;border:1px solid #ccc;border-radius:4px;font-size:12px;font-family:Cairo;"></select><button class="btn btn-success" onclick="addPlanDish('lh')" style="padding:2px 8px;font-size:16px;line-height:1;">+</button></div>
+          <div id="plan-lh-list"></div>
         </div>
-        <div style="flex:1;min-width:180px;border:1px solid #e1bee7;border-radius:8px;padding:10px;background:#f3e5f5;">
+        <div style="flex:1;min-width:220px;border:1px solid #e1bee7;border-radius:8px;padding:10px;background:#f3e5f5;">
           <h4 style="margin:0 0 8px;color:#6a1b9a;font-size:14px;">🌙 عشاء</h4>
           <div class="form-group"><label>عدد الأفراد</label><input type="number" id="plan-dn-count" min="0" style="width:100%;"></div>
-          <div class="form-group"><label>الأصناف</label>
-            <select multiple id="plan-dn-dishes" style="width:100%;height:70px;font-size:11px;font-family:Cairo;"></select>
-          </div>
+          <div style="margin-bottom:6px;display:flex;gap:4px;"><select id="plan-dn-add" style="flex:1;padding:6px;border:1px solid #ccc;border-radius:4px;font-size:12px;font-family:Cairo;"></select><button class="btn btn-success" onclick="addPlanDish('dn')" style="padding:2px 8px;font-size:16px;line-height:1;">+</button></div>
+          <div id="plan-dn-list"></div>
         </div>
       </div>
       <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;">
@@ -17855,22 +17852,45 @@ function saveWeeklyMenu() {
 }
 
 // ===== تخطيط وجبات الغد =====
+function getPlanDishList(prefix) {
+  var list = document.getElementById('plan-' + prefix + '-list');
+  if (!list) return [];
+  var dishes = [];
+  list.querySelectorAll('input[type="hidden"]').forEach(function(h) {
+    if (h.value) dishes.push(h.value);
+  });
+  return dishes;
+}
 function populatePlanDishSelects() {
   var names = getRecipeNames();
-  ['plan-bf-dishes','plan-lh-dishes','plan-dn-dishes'].forEach(function(id) {
+  ['plan-bf-add','plan-lh-add','plan-dn-add'].forEach(function(id) {
     var sel = document.getElementById(id);
     if (!sel) return;
-    sel.innerHTML = names.map(function(n) { return '<option value="' + n.replace(/"/g,'&quot;') + '">' + n + '</option>'; }).join('');
+    sel.innerHTML = '<option value="">— اختر صنف —</option>' + names.map(function(n) { return '<option value="' + n.replace(/"/g,'&quot;') + '">' + n + '</option>'; }).join('');
   });
+}
+function addPlanDish(prefix) {
+  var sel = document.getElementById('plan-' + prefix + '-add');
+  var list = document.getElementById('plan-' + prefix + '-list');
+  if (!sel || !list) return;
+  var name = sel.value;
+  if (!name) return;
+  // Check if already added
+  if (list.querySelector('input[value="' + name.replace(/"/g,'&quot;') + '"]')) return;
+  var div = document.createElement('div');
+  div.style.cssText = 'display:flex;align-items:center;gap:4px;margin-bottom:4px;padding:3px 6px;background:#fff;border:1px solid #e0e0e0;border-radius:4px;';
+  div.innerHTML = '<input type="hidden" value="' + name.replace(/"/g,'&quot;') + '"><span style="flex:1;font-size:12px;">' + name + '</span><button class="btn btn-danger" onclick="this.parentElement.remove()" style="padding:0 5px;font-size:10px;line-height:1.5;">✕</button>';
+  list.appendChild(div);
+  sel.value = '';
 }
 function resetPlan() {
   ['plan-date','plan-bf-count','plan-lh-count','plan-dn-count'].forEach(function(id) {
     var el = document.getElementById(id);
     if (el) { if (el.type === 'date') el.value = ''; else el.value = ''; }
   });
-  ['plan-bf-dishes','plan-lh-dishes','plan-dn-dishes'].forEach(function(id) {
-    var sel = document.getElementById(id);
-    if (sel) Array.from(sel.options).forEach(function(o) { o.selected = false; });
+  ['plan-bf-list','plan-lh-list','plan-dn-list'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.innerHTML = '';
   });
   var res = document.getElementById('plan-results');
   if (res) res.style.display = 'none';
@@ -17883,13 +17903,27 @@ function loadPlanFromWeeklyMenu() {
   var dayNames = ['الأحد','الإثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
   var dayName = dayNames[tomorrow.getDay()];
   var meals = ['فطار','غداء','عشاء'];
-  var ids = ['plan-bf-dishes','plan-lh-dishes','plan-dn-dishes'];
+  var prefixes = ['bf','lh','dn'];
+  // Clear existing lists
+  prefixes.forEach(function(p) {
+    var list = document.getElementById('plan-' + p + '-list');
+    if (list) list.innerHTML = '';
+  });
   meals.forEach(function(meal, i) {
     var key = dayName + '|' + meal;
     var dishes = _weeklyMenu[key] || [];
-    var sel = document.getElementById(ids[i]);
-    if (!sel) return;
-    Array.from(sel.options).forEach(function(opt) { opt.selected = dishes.indexOf(opt.value) >= 0; });
+    dishes.forEach(function(d) {
+      var sel = document.getElementById('plan-' + prefixes[i] + '-add');
+      var list = document.getElementById('plan-' + prefixes[i] + '-list');
+      if (!sel || !list) return;
+      // Check if option exists
+      var opt = sel.querySelector('option[value="' + d.replace(/"/g,'&quot;') + '"]');
+      if (!opt) return;
+      var div = document.createElement('div');
+      div.style.cssText = 'display:flex;align-items:center;gap:4px;margin-bottom:4px;padding:3px 6px;background:#fff;border:1px solid #e0e0e0;border-radius:4px;';
+      div.innerHTML = '<input type="hidden" value="' + d.replace(/"/g,'&quot;') + '"><span style="flex:1;font-size:12px;">' + d + '</span><button class="btn btn-danger" onclick="this.parentElement.remove()" style="padding:0 5px;font-size:10px;line-height:1.5;">✕</button>';
+      list.appendChild(div);
+    });
   });
   // Auto-fill counts from current P count
   var s = getTodayMealStats();
@@ -17901,25 +17935,25 @@ function loadPlanFromWeeklyMenu() {
 function calcPlanIngredients() {
   var date = document.getElementById('plan-date').value;
   if (!date) { alert('⚠️ اختر التاريخ أولاً'); return; }
-  var meals = [
-    { id:'plan-bf', label:'🌅 إفطار', mealType:'فطار' },
-    { id:'plan-lh', label:'☀️ غداء', mealType:'غداء' },
-    { id:'plan-dn', label:'🌙 عشاء', mealType:'عشاء' }
+  var mealConfigs = [
+    { prefix:'bf', label:'🌅 إفطار' },
+    { prefix:'lh', label:'☀️ غداء' },
+    { prefix:'dn', label:'🌙 عشاء' }
   ];
   var totals = {}, mealSummaries = [], hasAny = false;
-  meals.forEach(function(meal) {
-    var count = parseInt(document.getElementById(meal.id+'-count').value) || 0;
-    var sel = document.getElementById(meal.id+'-dishes');
-    var selected = [];
-    if (sel) Array.from(sel.selectedOptions).forEach(function(opt) {
-      var r = getRecipeByName(opt.value);
-      if (r) selected.push(r);
+  mealConfigs.forEach(function(m) {
+    var count = parseInt(document.getElementById('plan-' + m.prefix + '-count').value) || 0;
+    var dishes = getPlanDishList(m.prefix);
+    var recipes = [];
+    dishes.forEach(function(d) {
+      var r = getRecipeByName(d);
+      if (r) recipes.push(r);
     });
-    if (count > 0 && selected.length > 0) {
+    if (count > 0 && recipes.length > 0) {
       hasAny = true;
-      mealSummaries.push(meal.label + ': ' + count + ' فرد ← ' + selected.map(function(r) { return r.name; }).join('، '));
+      mealSummaries.push(m.label + ': ' + count + ' فرد ← ' + recipes.map(function(r) { return r.name; }).join('، '));
     }
-    selected.forEach(function(r) {
+    recipes.forEach(function(r) {
       var factor = count / (r.base || 1);
       (r.items || []).forEach(function(it) {
         var key = it.n + '|' + (it.u || 'كجم');
@@ -17928,7 +17962,7 @@ function calcPlanIngredients() {
       });
     });
   });
-  if (!hasAny) { alert('⚠️ حدد الأفراد والأصناف لوجبة واحدة على الأقل'); return; }
+  if (!hasAny) { alert('⚠️ حدد الأفراد وأضف صنفاً واحداً على الأقل لكل وجبة'); return; }
   renderPlanResults(totals, mealSummaries);
 }
 function renderPlanResults(totals, mealSummaries) {
@@ -17958,20 +17992,22 @@ function exportPlanToExcel() {
   if (!el || el.style.display === 'none') { alert('⚠️ احسب الخامات المطلوبة أولاً'); return; }
   var rows = [];
   var totals = {};
-  var meals = [
-    { id:'plan-bf', meal:'إفطار' },
-    { id:'plan-lh', meal:'غداء' },
-    { id:'plan-dn', meal:'عشاء' }
+  var mealConfigs = [
+    { prefix:'bf', meal:'إفطار' },
+    { prefix:'lh', meal:'غداء' },
+    { prefix:'dn', meal:'عشاء' }
   ];
-  meals.forEach(function(meal) {
-    var count = parseInt(document.getElementById(meal.id+'-count').value) || 0;
-    var sel = document.getElementById(meal.id+'-dishes');
-    var selected = [];
-    if (sel) Array.from(sel.selectedOptions).forEach(function(opt) { var r = getRecipeByName(opt.value); if (r) selected.push(r); });
-    if (count > 0 && selected.length > 0) {
-      rows.push({ 'الوجبة': meal.meal, 'عدد الأفراد': count, 'الأصناف': selected.map(function(r) { return r.name; }).join(', ') });
+  mealConfigs.forEach(function(m) {
+    var count = parseInt(document.getElementById('plan-' + m.prefix + '-count').value) || 0;
+    var dishes = getPlanDishList(m.prefix);
+    var recipeNames = [];
+    dishes.forEach(function(d) { var r = getRecipeByName(d); if (r) recipeNames.push(r.name); });
+    if (count > 0 && recipeNames.length > 0) {
+      rows.push({ 'الوجبة': m.meal, 'عدد الأفراد': count, 'الأصناف': recipeNames.join(', ') });
     }
-    selected.forEach(function(r) {
+    dishes.forEach(function(d) {
+      var r = getRecipeByName(d);
+      if (!r) return;
       var factor = count / (r.base || 1);
       (r.items || []).forEach(function(it) {
         var key = it.n + '|' + (it.u || 'كجم');
