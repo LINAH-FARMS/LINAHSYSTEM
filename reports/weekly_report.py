@@ -102,8 +102,15 @@ meals = norm_filter(data.get('mealLogs', []), 'date')
 maint = norm_filter(data.get('maintenanceRecords', []), 'date')
 septic = norm_filter(data.get('septicRecords', []), 'date')
 incidents = norm_filter(data.get('incident_reports', []), 'date')
-tea_sugar = norm_filter(data.get('teaSugarDisbursements', []), 'date')
 ts_batches = norm_filter(data.get('teaSugarBatches', []), 'date')
+tea_sugar = norm_filter(data.get('teaSugarDisbursements', []), 'date')
+# Also include tea sugar by matching period of batches found this week
+ts_periods = set(b.get('period','') for b in ts_batches if b.get('period',''))
+if ts_periods:
+    for t in data.get('teaSugarDisbursements', []):
+        p = t.get('period','')
+        if p in ts_periods and t not in tea_sugar:
+            tea_sugar.append(t)
 
 today_str = datetime.now().strftime('%Y-%m-%d')
 filename = f'C:\\Users\\Salem Magdy\\Desktop\\Lina_Weekly_{today_str}.xlsx'
