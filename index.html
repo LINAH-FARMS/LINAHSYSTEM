@@ -1838,6 +1838,7 @@
     <div class="control-panel no-print">
       <select id="septic-name-select"></select>
       <input type="number" id="septic-trips" placeholder="عدد النقلات" min="1" value="1" style="width: 100px;">
+      <input type="number" id="septic-quantity" placeholder="الصرف (م³)" min="0" step="0.1" value="0" style="width: 100px;">
       <input type="text" id="septic-supervisor" placeholder="اسم المشرف المسؤول">
       <input type="date" id="septic-date">
       <button class="btn btn-primary" onclick="addSepticRecord()">💾 تسجيل عملية الكسح</button>
@@ -11688,15 +11689,16 @@ function renderTeaSugarTable() {
     function addSepticRecord() {
       let name = document.getElementById('septic-name-select').value;
       let trips = document.getElementById('septic-trips').value;
+      let quantity = document.getElementById('septic-quantity').value;
       let superv = document.getElementById('septic-supervisor').value.trim();
       if(!name) return alert("الرجاء اختيار اسم البيارة.");
       if(!trips || parseInt(trips) < 1) return alert("الرجاء إدخال عدد النقلات.");
       if(!superv) { document.getElementById('septic-supervisor').focus(); return alert("الرجاء إدخال اسم المشرف المسؤول."); }
 
       let dateInput = document.getElementById('septic-date').value;
-      septicRecords.push(_ts({ name, trips: parseInt(trips), supervisor: superv || '—', date: dateInput || '—' }));
+      septicRecords.push(_ts({ name, trips: parseInt(trips), quantity: parseFloat(quantity) || 0, supervisor: superv || '—', date: dateInput || '—' }));
       syncStorage(); renderSepticTable();
-      logAction('تسجيل', 'كسح بيارة', name, 'النقلات: ' + trips + ' | المشرف: ' + superv + ' | التاريخ: ' + dateInput);
+      logAction('تسجيل', 'كسح بيارة', name, 'النقلات: ' + trips + ' | الكمية: ' + (quantity||0) + 'م³ | المشرف: ' + superv + ' | التاريخ: ' + dateInput);
       document.getElementById('septic-supervisor').value = '';
       alert("تم تسجيل عملية الكسح بنجاح.");
     }
@@ -11715,7 +11717,7 @@ function renderTeaSugarTable() {
           <td class="no-print"><input type="checkbox" class="row-check" data-table="table-septic"></td>
           <td><b>${s.name}</b></td>
           <td><span style="color:var(--danger); font-weight:700;">${s.trips}</span></td>
-          <td><span style="color:var(--primary); font-weight:700;">${s.trips * 5} م³</span></td>
+          <td><span style="color:var(--primary); font-weight:700;">${s.quantity ? s.quantity + ' م³' : (s.trips * 5) + ' م³'}</span></td>
           <td>${s.supervisor}</td>
           <td>${s.date}</td>
           <td class="no-print"><button class="btn btn-danger" style="padding:2px 6px; font-size:11px;" onclick="deleteSeptic(${realIdx})">حذف</button></td>
@@ -12353,10 +12355,10 @@ function renderTeaSugarTable() {
         if (m.materials && m.materials.length) {
           mats = m.materials.map(function(x) { return stripEmoji(x.name) + ' ' + (x.qty || 0) + ' ' + (x.unit || ''); }).join(', ');
         }
-        return { "النهاية": m.date || '', "ملاحظات": stripEmoji(m.category), "المقاولين": stripEmoji(m.task), "تقرير": stripEmoji(m.tech), "المقاولين": stripEmoji(m.status), "اختر": mats, "نسخة": stripEmoji(m.notes) };
+        return { "التاريخ": m.date || '', "نوع الصيانة": stripEmoji(m.category), "بند الصيانة": stripEmoji(m.task), "الفني": stripEmoji(m.tech), "الحالة": stripEmoji(m.status), "الخامات": mats, "ملاحظات": stripEmoji(m.notes) };
       });
       var ws = XLSX.utils.json_to_sheet(data); var wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, "لا"); XLSX.writeFile(wb, "توجد_بيانات_" + new Date().toISOString().split('T')[0].replace(/-/g, '') + ".xlsx");
+      XLSX.utils.book_append_sheet(wb, ws, "الصيانة"); XLSX.writeFile(wb, "الصيانة_" + new Date().toISOString().split('T')[0].replace(/-/g, '') + ".xlsx");
     }
 
     function importMaintenanceFromExcel(evt) {
@@ -12435,14 +12437,14 @@ function renderTeaSugarTable() {
 
     function exportSepticToExcel() {
       var data = sortNewestFirst(septicRecords, 'date').map(function(s) {
-        return { "التاريخ": s.date || '', "البيارة": s.name, "عدد النقلات": s.trips || 0, "الصرف (م³)": (s.trips || 0) * 5, "المشرف": s.supervisor };
+        return { "التاريخ": s.date || '', "البيارة": s.name, "عدد النقلات": s.trips || 0, "الصرف (م³)": (s.quantity || (s.trips || 0) * 5), "المشرف": s.supervisor };
       });
       var ws = XLSX.utils.json_to_sheet(data); var wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, "البيارات"); XLSX.writeFile(wb, "البيارات_" + new Date().toISOString().split('T')[0].replace(/-/g, '') + ".xlsx");
     }
     function exportPeriodicMaintToExcel() {
       var data = sortNewestFirst(periodicMaintenance, 'startDate').map(function(p) {
-        return { "البيان": p.name, "المقاولين": p.freq || '', "القيمة ملخص": p.startDate || '', "النسخة الكود": p.lastDone || '', "الاسم": p.nextDue || '', "الإدارة": p.status };
+        return { "البيان": p.name, "التكرار": p.freq || '', "تاريخ البداية": p.startDate || '', "آخر تنفيذ": p.lastDone || '', "التالية": p.nextDue || '', "الحالة": p.status };
       });
       var ws = XLSX.utils.json_to_sheet(data); var wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, "الصيانة الدورية"); XLSX.writeFile(wb, "الصيانة_الدورية_" + new Date().toISOString().split('T')[0].replace(/-/g, '') + ".xlsx");

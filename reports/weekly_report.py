@@ -1,4 +1,4 @@
-import requests, json, sys, os
+import requests, json, sys, os, re
 from datetime import datetime, timedelta
 sys.stdout.reconfigure(encoding='utf-8')
 from openpyxl import Workbook
@@ -7,6 +7,24 @@ from openpyxl.utils import get_column_letter
 
 SUPABASE_URL = 'https://cwqghiqykohefaggedjl.supabase.co'
 SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN3cWdoaXF5a29oZWZhZ2dlZGpsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEwMjUyMjEsImV4cCI6MjA5NjYwMTIyMX0.3a3hRcNdmYQCtjYjBroAT6df1T_7oz-XWUeD3wagYw8'
+
+_ARABIC_DIGITS = str.maketrans('٠١٢٣٤٥٦٧٨٩', '0123456789')
+_EMOJI_PATTERN = re.compile(r'[\U00002600-\U000027BF\U0001F300-\U0001FAFF\U0000FE00-\U0000FE0F]')
+
+def norm_date(s):
+    if not s or not isinstance(s, str): return s or ''
+    s = s[:10]
+    s = s.translate(_ARABIC_DIGITS)
+    s = s.replace('\u200f', '').replace('\u200e', '').strip()
+    parts = s.split('/')
+    if len(parts) == 3:
+        d, m, y = parts
+        if len(y) == 4:
+            return f'{y}-{m.zfill(2)}-{d.zfill(2)}'
+    return s
+
+def strip_emoji(s):
+    return _EMOJI_PATTERN.sub('', s).strip() if isinstance(s, str) else (s or '')
 
 def fetch():
     r = requests.get(f'{SUPABASE_URL}/rest/v1/sync_data?id=eq.alldata&select=data', headers={'apikey': SUPABASE_KEY, 'Authorization': f'Bearer {SUPABASE_KEY}'})
@@ -43,6 +61,9 @@ def style_sheet(ws, headers, rows, col_widths=None, title=None):
         for c, w in enumerate(col_widths, 1):
             ws.column_dimensions[get_column_letter(c)].width = w
 
+def norm_filter(arr, key):
+    return [x for x in arr if norm_date(x.get(key,'')) >= fmt(start) and norm_date(x.get(key,'')) <= fmt(end)]
+
 print('[جاري سحب البيانات...]')
 data = fetch()
 
@@ -74,15 +95,15 @@ print(f'[الفترة] {fmt(start)} إلى {fmt(end)}')
 emps = data.get('employees', [])
 p_count = sum(1 for e in emps if e.get('status') == 'P')
 v_count = sum(1 for e in emps if e.get('status') == 'V')
-hosp = [h for h in data.get('hospitalities', []) if h.get('arrival','')[:10] >= fmt(start) and h.get('arrival','')[:10] <= fmt(end)]
-prods = [p for p in data.get('bakeryProductions', []) if p.get('date','')[:10] >= fmt(start) and p.get('date','')[:10] <= fmt(end)]
-ctr_sup = [c for c in data.get('bakeryContractorSupplies', []) if c.get('date','')[:10] >= fmt(start) and c.get('date','')[:10] <= fmt(end)]
-meals = [m for m in data.get('mealLogs', []) if m.get('date','')[:10] >= fmt(start) and m.get('date','')[:10] <= fmt(end)]
-maint = [m for m in data.get('maintenanceRecords', []) if m.get('date','')[:10] >= fmt(start) and m.get('date','')[:10] <= fmt(end)]
-septic = [s for s in data.get('septicRecords', []) if s.get('date','')[:10] >= fmt(start) and s.get('date','')[:10] <= fmt(end)]
-incidents = [i for i in data.get('incident_reports', []) if i.get('date','')[:10] >= fmt(start) and i.get('date','')[:10] <= fmt(end)]
-tea_sugar = [t for t in data.get('teaSugarDisbursements', []) if t.get('date','')[:10] >= fmt(start) and t.get('date','')[:10] <= fmt(end)]
-ts_batches = [b for b in data.get('teaSugarBatches', []) if b.get('date','')[:10] >= fmt(start) and b.get('date','')[:10] <= fmt(end)]
+hosp = norm_filter(data.get('hospitalities', []), 'arrival')
+prods = norm_filter(data.get('bakeryProductions', []), 'date')
+ctr_sup = norm_filter(data.get('bakeryContractorSupplies', []), 'date')
+meals = norm_filter(data.get('mealLogs', []), 'date')
+maint = norm_filter(data.get('maintenanceRecords', []), 'date')
+septic = norm_filter(data.get('septicRecords', []), 'date')
+incidents = norm_filter(data.get('incident_reports', []), 'date')
+tea_sugar = norm_filter(data.get('teaSugarDisbursements', []), 'date')
+ts_batches = norm_filter(data.get('teaSugarBatches', []), 'date')
 
 today_str = datetime.now().strftime('%Y-%m-%d')
 filename = f'C:\\Users\\Salem Magdy\\Desktop\\Lina_Weekly_{today_str}.xlsx'
@@ -107,10 +128,10 @@ style_sheet(ws, ['Item', 'Count'], [
 if prods:
     ws2 = wb.create_sheet('Bakery')
     style_sheet(ws2, ['Date', 'Bread', 'Flour', 'Bran', 'Salt', 'Yeast', 'Diesel'], [
-        [p.get('date',''), p.get('breadCount',0), p.get('flourUsed',0), p.get('branUsed',0), p.get('saltUsed',0), p.get('yeastUsed',0), p.get('dieselUsed',0)]
-        for p in sorted(prods, key=lambda x: x.get('date',''))
+        [norm_date(p.get('date','')), p.get('breadCount',0), p.get('flourUsed',0), p.get('branUsed',0), p.get('saltUsed',0), p.get('yeastUsed',0), p.get('dieselUsed',0)]
+        for p in sorted(prods, key=lambda x: norm_date(x.get('date','')))
     ], [14,10,10,10,10,10,10], title='Bakery Production')
-    data_end = 3 + len(prods)  # row after last data row
+    data_end = 3 + len(prods)
     ws2.cell(row=data_end, column=1, value='الإجمالي').font = Font(bold=True, size=11, color='1B5E20')
     ws2.cell(row=data_end, column=2, value=round(sum(float(p.get('breadCount',0)or 0) for p in prods)))
     ws2.cell(row=data_end, column=3, value=round(sum(float(p.get('flourUsed',0)or 0) for p in prods),1))
@@ -121,8 +142,8 @@ if prods:
 
 if ctr_sup:
     ws3 = wb.create_sheet('Contractors')
-    rows = [[c.get('date',''), c.get('name',''), c.get('count',0), c.get('price',0),
-             int(c.get('count',0)or 0)*float(c.get('price',0)or 0)] for c in sorted(ctr_sup, key=lambda x: x.get('date',''))]
+    rows = [[norm_date(c.get('date','')), c.get('name',''), c.get('count',0), c.get('price',0),
+             int(c.get('count',0)or 0)*float(c.get('price',0)or 0)] for c in sorted(ctr_sup, key=lambda x: norm_date(x.get('date','')))]
     style_sheet(ws3, ['Date', 'Name', 'Loaves', 'Price', 'Total'], rows, [14,20,10,10,12], title='Contractor Supply')
     data_end = 3 + len(ctr_sup)
     ws3.cell(row=data_end, column=1, value='الإجمالي').font = Font(bold=True, size=11, color='1B5E20')
@@ -132,30 +153,31 @@ if ctr_sup:
 if hosp:
     ws4 = wb.create_sheet('Hospitality')
     style_sheet(ws4, ['Name', 'Arrival', 'Departure', 'Guests'], [
-        [h.get('name',''), h.get('arrival','')[:10], (h.get('departure','')[:10] if h.get('departure') else ''), h.get('guests',1)]
-        for h in sorted(hosp, key=lambda x: x.get('arrival',''))
+        [h.get('name',''), norm_date(h.get('arrival','')), norm_date(h.get('departure','')) if h.get('departure') else '', h.get('guests',1)]
+        for h in sorted(hosp, key=lambda x: norm_date(x.get('arrival','')))
     ], [25,14,14,10], title='Hospitality')
 
 if maint:
     ws5 = wb.create_sheet('Maintenance')
     style_sheet(ws5, ['Date', 'Category', 'Task', 'Cost', 'Responsible'], [
-        [m.get('date',''), m.get('category',''), m.get('task',''), m.get('cost',0), m.get('responsible','')]
-        for m in sorted(maint, key=lambda x: x.get('date',''))
+        [norm_date(m.get('date','')), m.get('category',''), m.get('task',''), m.get('cost',0), m.get('responsible','')]
+        for m in sorted(maint, key=lambda x: norm_date(x.get('date','')))
     ], [14,15,30,10,20], title='Maintenance')
 
 if meals:
     ws6 = wb.create_sheet('Meals')
-    rows = [[m.get('date',''), m.get('breakfast',0), m.get('lunch',0), m.get('dinner',0),
+    rows = [[norm_date(m.get('date','')), m.get('breakfast',0), m.get('lunch',0), m.get('dinner',0),
              int(m.get('breakfast',0)or 0)+int(m.get('lunch',0)or 0)+int(m.get('dinner',0)or 0)]
-            for m in sorted(meals, key=lambda x: x.get('date',''))]
+            for m in sorted(meals, key=lambda x: norm_date(x.get('date','')))]
     style_sheet(ws6, ['Date', 'Breakfast', 'Lunch', 'Dinner', 'Total'], rows, [14,10,10,10,12], title='Meals')
 
 if septic:
     ws7 = wb.create_sheet('Septic')
-    style_sheet(ws7, ['Date', 'Name', 'Trips', 'Quantity'], [
-        [s.get('date',''), s.get('name',s.get('sector','')), s.get('trips',0), s.get('quantity',0)]
-        for s in sorted(septic, key=lambda x: x.get('date',''))
-    ], [14,20,10,10], title='Septic')
+    style_sheet(ws7, ['Date', 'Name', 'Trips', 'Quantity (m³)'], [
+        [norm_date(s.get('date','')), s.get('name',s.get('sector','')), s.get('trips',0),
+         s.get('quantity',s.get('pumpQty',s.get('amount',s.get('حجم',(s.get('trips',0) or 0)*5))))]
+        for s in sorted(septic, key=lambda x: norm_date(x.get('date','')))
+    ], [14,20,10,12], title='Septic')
 
 if incidents:
     ws8 = wb.create_sheet('Incidents')
@@ -166,17 +188,18 @@ if incidents:
 
 if tea_sugar:
     ws9 = wb.create_sheet('TeaSugar')
-    style_sheet(ws9, ['Date', 'Employee', 'Tea', 'Sugar', 'Period'], [
-        [t.get('date',''), t.get('empCode',t.get('name','')), t.get('teaPacks',0), t.get('sugarKg',0), t.get('period',t.get('type',''))]
-        for t in sorted(tea_sugar, key=lambda x: x.get('date',''))
-    ], [14,20,10,10,12], title='Tea & Sugar')
+    style_sheet(ws9, ['Date', 'Code', 'Name', 'Tea', 'Sugar', 'Period'], [
+        [norm_date(t.get('date','')), t.get('empCode',''), strip_emoji(t.get('empName',t.get('name',''))),
+         t.get('teaPacks',0), t.get('sugarKg',0), t.get('period',t.get('type',''))]
+        for t in sorted(tea_sugar, key=lambda x: norm_date(x.get('date','')))
+    ], [14,12,25,10,10,20], title='Tea & Sugar')
 
 if ts_batches:
     ws10 = wb.create_sheet('TeaSugarBatches')
     style_sheet(ws10, ['Date', 'Period', 'Tea Qty', 'Sugar Qty'], [
-        [b.get('date',''), b.get('period',''), b.get('teaQty',0), b.get('sugarQty',0)]
-        for b in sorted(ts_batches, key=lambda x: x.get('date',''))
-    ], [14,20,10,10], title='Tea Sugar Batches (الدورات)')
+        [norm_date(b.get('date','')), b.get('period',''), b.get('teaQty',0), b.get('sugarQty',0)]
+        for b in sorted(ts_batches, key=lambda x: norm_date(x.get('date','')))
+    ], [14,20,10,10], title='Tea Sugar Batches')
 
 wb.save(filename)
 print(f'[تم] {filename}')
