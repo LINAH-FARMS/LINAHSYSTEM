@@ -15017,6 +15017,9 @@ function exportContractorsToExcel() {
       try { renderTeaSugarTable(); } catch(e) { console.error('renderTeaSugarTable error:', e); }
       try { renderMealLogTable(); } catch(e) { console.error('renderMealLogTable error:', e); }
       try { renderMealSurvey(); } catch(e) { console.error('renderMealSurvey error:', e); }
+      try { renderMealWasteTable(); } catch(e) { console.error('renderMealWasteTable error:', e); }
+      try { renderMealWasteStats(); } catch(e) { console.error('renderMealWasteStats error:', e); }
+      try { populatePlanDishSelects(); } catch(e) { console.error('populatePlanDishSelects error:', e); }
       try { renderDashboard(); } catch(e) { console.error('renderDashboard error:', e); }
       try { renderQuickActions(); } catch(e) { console.error('renderQuickActions error:', e); }
       try { renderContractorsTable(); } catch(e) { console.error('renderContractorsTable error:', e); }
