@@ -5972,15 +5972,21 @@
       let container = document.getElementById(listId + '-list');
       if (!container) return;
       if (!arr.length) { container.innerHTML = '<div style="color:#999;padding:4px;">— لا توجد عناصر —</div>'; return; }
+      let lists = { sector: dynamicSectors, room: dynamicRooms, septic: dynamicSeptics, dept: dynamicDepts, title: dynamicTitles, 'ctr-sector': contractorSectors, 'visitor-type': dynamicVisitorTypes, 'bakery-ctr': bakeryContractorsNames };
+      let originalArr = lists[listId] || [];
       container.innerHTML = '<table style="width:100%;border-collapse:collapse;font-size:12px;">' +
-        arr.map((item, i) => `<tr>
+        arr.map((item, i) => {
+          let origIdx = originalArr.indexOf(item);
+          let realIdx = origIdx >= 0 ? origIdx : i;
+          return `<tr>
           <td style="padding:3px;border-bottom:1px solid #eee;">${i+1}</td>
           <td style="padding:3px;border-bottom:1px solid #eee;"><b>${item}</b></td>
           <td style="padding:3px;border-bottom:1px solid #eee;text-align:left;">
-            <button class="btn" style="padding:1px 6px;font-size:10px;background:#1565c0;color:white;" onclick="editDynamicItem('${inputId}','${listId}',${i})">تعديل</button>
-            <button class="btn btn-danger" style="padding:1px 6px;font-size:10px;" onclick="deleteDynamicItem('${listId}',${i})">حذف</button>
+            <button class="btn" style="padding:1px 6px;font-size:10px;background:#1565c0;color:white;" onclick="editDynamicItem('${inputId}','${listId}',${realIdx})">تعديل</button>
+            <button class="btn btn-danger" style="padding:1px 6px;font-size:10px;" onclick="deleteDynamicItem('${listId}',${realIdx})">حذف</button>
           </td>
-        </tr>`).join('') + '</table>';
+        </tr>`;
+        }).join('') + '</table>';
     }
 
     let dynamicEditIndex = null;
