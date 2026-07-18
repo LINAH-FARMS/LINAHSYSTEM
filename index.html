@@ -2752,6 +2752,46 @@
         </table>
       </div>
     </div>
+    <!-- ===== تخطيط وجبات الغد ===== -->
+    <div class="card no-print" style="margin:15px 0;padding:16px;border:2px solid #2e7d32;border-radius:12px;background:#f1f8e9;">
+      <h3 style="margin:0 0 12px;font-size:18px;display:flex;align-items:center;gap:10px;">
+        <span>📋 تخطيط وجبات الغد</span>
+        <span style="font-size:12px;color:#555;font-weight:400;">— خطط لوجبات اليوم التالي واحسب الخامات المطلوبة</span>
+      </h3>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:12px;">
+        <div class="form-group" style="min-width:130px;"><label>التاريخ</label><input type="date" id="plan-date"></div>
+        <button class="btn btn-secondary" onclick="loadPlanFromWeeklyMenu()" style="background:#1565c0;color:#fff;border:none;height:42px;">📅 تحميل من برنامج الأسبوع</button>
+        <button class="btn btn-secondary" onclick="resetPlan()" style="background:#757575;color:#fff;border:none;height:42px;">🔄 تفريغ</button>
+      </div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;">
+        <div style="flex:1;min-width:180px;border:1px solid #fff9c4;border-radius:8px;padding:10px;background:#fffde7;">
+          <h4 style="margin:0 0 8px;color:#f57f17;font-size:14px;">🌅 إفطار</h4>
+          <div class="form-group"><label>عدد الأفراد</label><input type="number" id="plan-bf-count" min="0" style="width:100%;"></div>
+          <div class="form-group"><label>الأصناف</label>
+            <select multiple id="plan-bf-dishes" style="width:100%;height:70px;font-size:11px;font-family:Cairo;"></select>
+          </div>
+        </div>
+        <div style="flex:1;min-width:180px;border:1px solid #bbdefb;border-radius:8px;padding:10px;background:#e3f2fd;">
+          <h4 style="margin:0 0 8px;color:#1565c0;font-size:14px;">☀️ غداء</h4>
+          <div class="form-group"><label>عدد الأفراد</label><input type="number" id="plan-lh-count" min="0" style="width:100%;"></div>
+          <div class="form-group"><label>الأصناف</label>
+            <select multiple id="plan-lh-dishes" style="width:100%;height:70px;font-size:11px;font-family:Cairo;"></select>
+          </div>
+        </div>
+        <div style="flex:1;min-width:180px;border:1px solid #e1bee7;border-radius:8px;padding:10px;background:#f3e5f5;">
+          <h4 style="margin:0 0 8px;color:#6a1b9a;font-size:14px;">🌙 عشاء</h4>
+          <div class="form-group"><label>عدد الأفراد</label><input type="number" id="plan-dn-count" min="0" style="width:100%;"></div>
+          <div class="form-group"><label>الأصناف</label>
+            <select multiple id="plan-dn-dishes" style="width:100%;height:70px;font-size:11px;font-family:Cairo;"></select>
+          </div>
+        </div>
+      </div>
+      <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn btn-primary" onclick="calcPlanIngredients()" style="flex:1;min-width:200px;">🔢 حساب الخامات المطلوبة</button>
+        <button class="btn btn-excel" onclick="exportPlanToExcel()" style="background:#2e7d32;color:#fff;border:none;">📤 تصدير Excel</button>
+      </div>
+      <div id="plan-results" style="display:none;margin-top:12px;"></div>
+    </div>
     <!-- ===== حاسبة الطباخ المتقدمة ===== -->
     <div class="card no-print" style="margin:15px 0;padding:16px;border:2px solid #bbdefb;border-radius:12px;background:#f5faff;">
       <h3 style="margin:0 0 10px;font-size:18px;display:flex;align-items:center;justify-content:space-between;gap:10px;">
@@ -5623,7 +5663,7 @@
       try { if(tabId === 'tab-inventory') { renderInventoryItems(); renderArchiveTable(); } } catch(e) { console.error('tab-inventory error:', e); }
       try { if(tabId === 'tab-periodic-maint') { renderPeriodicMaintenance(); } } catch(e) { console.error('tab-periodic-maint error:', e); }
       try { if(tabId === 'tab-tea-sugar') { renderTeaSugarTable(); } } catch(e) { console.error('tab-tea-sugar error:', e); }
-      try { if(tabId === 'tab-meal-log') { autoLogTodayMeals(); renderMealLogTable(); renderMealSurvey(); if(!document.getElementById('meal-date').value) document.getElementById('meal-date').value = new Date().toISOString().split('T')[0]; } } catch(e) { console.error('tab-meal-log error:', e); }
+      try { if(tabId === 'tab-meal-log') { autoLogTodayMeals(); renderMealLogTable(); renderMealSurvey(); if(!document.getElementById('meal-date').value) document.getElementById('meal-date').value = new Date().toISOString().split('T')[0]; populatePlanDishSelects(); var pd = document.getElementById('plan-date'); if(pd && !pd.value){ var tm=new Date();tm.setDate(tm.getDate()+1);pd.value=tm.toISOString().split('T')[0]; } } } catch(e) { console.error('tab-meal-log error:', e); }
       try { if(tabId === 'tab-contractors') { populateContractorSectorDropdown(); renderContractorsTable(); } } catch(e) { console.error('tab-contractors error:', e); }
       try { if(tabId === 'tab-bakery') { renderBakeryProductions(); renderBakeryIngredients(); updateBakeryStats(); populateBakeryDropdowns(); updateBakeryProductionIngredientStocks(); generateBakeryQR(); importBakeryFormData(); } } catch(e) { console.error('tab-bakery error:', e); }
       try { if(tabId === 'tab-bread-supply') { renderBakeryContractorSupplies(); renderBakeryInvoices(); updateBreadSupplyStats(); populateBakeryDropdowns(); } } catch(e) { console.error('tab-bread-supply error:', e); }
@@ -17813,6 +17853,147 @@ function saveWeeklyMenu() {
   saveWeeklyMenuData();
   closeModal('modal-weekly-menu');
 }
+
+// ===== تخطيط وجبات الغد =====
+function populatePlanDishSelects() {
+  var names = getRecipeNames();
+  ['plan-bf-dishes','plan-lh-dishes','plan-dn-dishes'].forEach(function(id) {
+    var sel = document.getElementById(id);
+    if (!sel) return;
+    sel.innerHTML = names.map(function(n) { return '<option value="' + n.replace(/"/g,'&quot;') + '">' + n + '</option>'; }).join('');
+  });
+}
+function resetPlan() {
+  ['plan-date','plan-bf-count','plan-lh-count','plan-dn-count'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) { if (el.type === 'date') el.value = ''; else el.value = ''; }
+  });
+  ['plan-bf-dishes','plan-lh-dishes','plan-dn-dishes'].forEach(function(id) {
+    var sel = document.getElementById(id);
+    if (sel) Array.from(sel.options).forEach(function(o) { o.selected = false; });
+  });
+  var res = document.getElementById('plan-results');
+  if (res) res.style.display = 'none';
+}
+function loadPlanFromWeeklyMenu() {
+  _weeklyMenu = loadWeeklyMenu();
+  var dateInput = document.getElementById('plan-date');
+  var tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1);
+  if (!dateInput.value) dateInput.value = tomorrow.toISOString().split('T')[0];
+  var dayNames = ['الأحد','الإثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
+  var dayName = dayNames[tomorrow.getDay()];
+  var meals = ['فطار','غداء','عشاء'];
+  var ids = ['plan-bf-dishes','plan-lh-dishes','plan-dn-dishes'];
+  meals.forEach(function(meal, i) {
+    var key = dayName + '|' + meal;
+    var dishes = _weeklyMenu[key] || [];
+    var sel = document.getElementById(ids[i]);
+    if (!sel) return;
+    Array.from(sel.options).forEach(function(opt) { opt.selected = dishes.indexOf(opt.value) >= 0; });
+  });
+  // Auto-fill counts from current P count
+  var s = getTodayMealStats();
+  ['plan-bf-count','plan-lh-count','plan-dn-count'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el && !el.value) el.value = s.pCount;
+  });
+}
+function calcPlanIngredients() {
+  var date = document.getElementById('plan-date').value;
+  if (!date) { alert('⚠️ اختر التاريخ أولاً'); return; }
+  var meals = [
+    { id:'plan-bf', label:'🌅 إفطار', mealType:'فطار' },
+    { id:'plan-lh', label:'☀️ غداء', mealType:'غداء' },
+    { id:'plan-dn', label:'🌙 عشاء', mealType:'عشاء' }
+  ];
+  var totals = {}, mealSummaries = [], hasAny = false;
+  meals.forEach(function(meal) {
+    var count = parseInt(document.getElementById(meal.id+'-count').value) || 0;
+    var sel = document.getElementById(meal.id+'-dishes');
+    var selected = [];
+    if (sel) Array.from(sel.selectedOptions).forEach(function(opt) {
+      var r = getRecipeByName(opt.value);
+      if (r) selected.push(r);
+    });
+    if (count > 0 && selected.length > 0) {
+      hasAny = true;
+      mealSummaries.push(meal.label + ': ' + count + ' فرد ← ' + selected.map(function(r) { return r.name; }).join('، '));
+    }
+    selected.forEach(function(r) {
+      var factor = count / (r.base || 1);
+      (r.items || []).forEach(function(it) {
+        var key = it.n + '|' + (it.u || 'كجم');
+        if (!totals[key]) totals[key] = { name: it.n, unit: it.u || 'كجم', qty: 0 };
+        totals[key].qty += it.q * factor;
+      });
+    });
+  });
+  if (!hasAny) { alert('⚠️ حدد الأفراد والأصناف لوجبة واحدة على الأقل'); return; }
+  renderPlanResults(totals, mealSummaries);
+}
+function renderPlanResults(totals, mealSummaries) {
+  var el = document.getElementById('plan-results');
+  if (!el) return;
+  var totalCost = 0;
+  var sorted = Object.keys(totals).sort().map(function(key) {
+    var t = totals[key];
+    var cost = getIngCost(t.name, t.unit);
+    var lineCost = cost !== undefined ? (cost * t.qty) : undefined;
+    if (lineCost !== undefined) totalCost += lineCost;
+    return '<tr><td>' + t.name + '</td><td style="text-align:center;">' + t.unit + '</td><td style="text-align:center;font-weight:700;color:#1565c0;">' + formatQty(t.qty) + '</td>' +
+      (lineCost !== undefined ? '<td style="text-align:center;color:#2e7d32;">' + formatQty(lineCost) + ' ج.م</td>' : '<td style="text-align:center;color:#999;">—</td>') + '</tr>';
+  }).join('');
+  el.style.display = 'block';
+  el.innerHTML = '<div style="background:#fff;border:2px solid #2e7d32;border-radius:10px;overflow:hidden;">' +
+    '<div style="background:#2e7d32;color:#fff;padding:10px 15px;font-weight:700;display:flex;justify-content:space-between;"><span>📋 الخامات المطلوبة — ' + Object.keys(totals).length + ' خامة</span>' +
+    '<span style="font-weight:400;font-size:12px;">لليوم ' + (document.getElementById('plan-date').value || '') + '</span></div>' +
+    '<div style="padding:10px;max-height:350px;overflow-y:auto;">' +
+    (mealSummaries.length ? '<div style="font-size:12px;color:#555;margin-bottom:10px;padding:8px;background:#f5f5f5;border-radius:6px;">' + mealSummaries.join('<br>') + '</div>' : '') +
+    '<table style="width:100%;border-collapse:collapse;font-size:13px;"><thead><tr style="background:#e8f5e9;"><th style="padding:6px 8px;border:1px solid #c8e6c9;text-align:right;">الخامة</th><th style="padding:6px 8px;border:1px solid #c8e6c9;">الوحدة</th><th style="padding:6px 8px;border:1px solid #c8e6c9;">الكمية</th><th style="padding:6px 8px;border:1px solid #c8e6c9;">التكلفة</th></tr></thead><tbody>' + sorted + '</tbody></table>' +
+    (totalCost > 0 ? '<div style="text-align:left;padding:8px;background:#e8f5e9;border-top:2px solid #2e7d32;font-weight:700;font-size:15px;color:#1b5e20;">الإجمالي التقديري: ' + formatQty(totalCost) + ' ج.م</div>' : '') +
+    '</div></div>';
+}
+function exportPlanToExcel() {
+  var el = document.getElementById('plan-results');
+  if (!el || el.style.display === 'none') { alert('⚠️ احسب الخامات المطلوبة أولاً'); return; }
+  var rows = [];
+  var totals = {};
+  var meals = [
+    { id:'plan-bf', meal:'إفطار' },
+    { id:'plan-lh', meal:'غداء' },
+    { id:'plan-dn', meal:'عشاء' }
+  ];
+  meals.forEach(function(meal) {
+    var count = parseInt(document.getElementById(meal.id+'-count').value) || 0;
+    var sel = document.getElementById(meal.id+'-dishes');
+    var selected = [];
+    if (sel) Array.from(sel.selectedOptions).forEach(function(opt) { var r = getRecipeByName(opt.value); if (r) selected.push(r); });
+    if (count > 0 && selected.length > 0) {
+      rows.push({ 'الوجبة': meal.meal, 'عدد الأفراد': count, 'الأصناف': selected.map(function(r) { return r.name; }).join(', ') });
+    }
+    selected.forEach(function(r) {
+      var factor = count / (r.base || 1);
+      (r.items || []).forEach(function(it) {
+        var key = it.n + '|' + (it.u || 'كجم');
+        if (!totals[key]) totals[key] = { name: it.n, unit: it.u || 'كجم', qty: 0 };
+        totals[key].qty += it.q * factor;
+      });
+    });
+  });
+  Object.keys(totals).sort().forEach(function(key) {
+    var t = totals[key];
+    rows.push({ 'الوجبة': '', 'عدد الأفراد': '', 'الأصناف': '', 'الخامة': t.name, 'الوحدة': t.unit, 'الكمية': formatQty(t.qty) });
+  });
+  if (rows.length === 0) return;
+  try {
+    var ws = XLSX.utils.json_to_sheet(rows);
+    var wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'تخطيط_الوجبات');
+    XLSX.writeFile(wb, 'تخطيط_وجبات_' + (document.getElementById('plan-date').value || '') + '.xlsx');
+  } catch(e) { alert('خطأ في التصدير: ' + e.message); }
+}
+// ===== نهاية تخطيط وجبات الغد =====
+
 function getExpectedWeightPerMeal(meal, pCount, dateStr) {
   _weeklyMenu = loadWeeklyMenu();
   var dayNames = ['الأحد','الإثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
