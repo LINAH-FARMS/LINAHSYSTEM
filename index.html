@@ -10680,11 +10680,11 @@ function renderTeaSugarTable() {
       if (stats.remainingTea < teaPacks) return alert('⚠️ كمية الشاي المتبقية لا تكفي. المتبقي: ' + Math.max(0,stats.remainingTea) + ' باكيت');
       if (stats.remainingSugar < sugarKg) return alert('⚠️ كمية السكر المتبقية لا تكفي. المتبقي: ' + Math.max(0,stats.remainingSugar) + ' كجم');
 
-      let emp = employees.find(e => e.id == empId || e.code == empId);
-      if (!emp) emp = employees.find(e => searchVal && e.name.includes(searchVal.replace(/^\[\w*\]\s*/, '')));
+      let emp = employees.find(e => (e.id || e.code) == empId);
+      if (!emp) emp = employees.find(e => searchVal && (e.name || '').includes(searchVal.replace(/^\[\w*\]\s*/, '')));
       teaSugarDisbursements.push(_ts({
-        id: 'ts_' + Date.now(), empId,
-        empCode: emp ? emp.code : '',
+        id: 'ts_' + Date.now(), empId: emp ? (emp.id || emp.code) : empId,
+        empCode: emp ? (emp.code || emp.id) : '',
         empName: emp ? emp.name : 'صالحة تم',
         empDept: emp ? emp.dept : '',
         empTitle: emp ? emp.title : '',
@@ -13274,14 +13274,14 @@ function exportContractorsToExcel() {
             if (section === 'tea') {
               var exists = teaSugarDisbursements.some(function(d) { return d.date === e.date && d.empCode === e.empCode && d.period === e.period && d.createdAt === e.createdAt; });
               if (!exists) {
-                var emp = employees.find(function(x) { return x.code == e.empCode || x.id == e.empId; });
+                var emp = employees.find(function(x) { return x.code == e.empCode || x.id == e.empId || (e.empName && x.name === e.empName); });
                 teaSugarDisbursements.push(_ts({
                   id: 'ts_' + Date.now() + '_' + Math.random().toString(36).slice(2,6),
-                  empId: e.empId || '',
-                  empCode: e.empCode || '',
-                  empName: e.empName || '',
-                  empDept: emp ? emp.dept : '',
-                  empTitle: emp ? emp.title : '',
+                  empId: e.empId || (emp ? emp.id : ''),
+                  empCode: e.empCode || (emp ? emp.code : ''),
+                  empName: e.empName || (emp ? emp.name : ''),
+                  empDept: emp ? emp.dept : (e.empDept || ''),
+                  empTitle: emp ? emp.title : (e.empTitle || ''),
                   period: e.period || '',
                   date: e.date,
                   teaPacks: e.teaPacks || 0,
