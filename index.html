@@ -12028,13 +12028,13 @@ function renderTeaSugarTable() {
 
     function exportInventoryToExcel() {
       let ws = XLSX.utils.json_to_sheet(inventoryVouchers); let wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, "الإدارة الشئون"); XLSX.writeFile(wb, "الإدارية_الوظيفة_عامل.xlsx");
+      XLSX.utils.book_append_sheet(wb, ws, "بونات الصرف"); XLSX.writeFile(wb, "بونات_صرف_المخزن_" + new Date().toISOString().split('T')[0] + ".xlsx");
     }
 
     function downloadTemplate_InventoryVouchers() {
-      let data = [{ "زراعي المحافظة": "BN000001", "الجيزة": "المبنى السكني رقم", "الغرفة الموقف": "الرصيد السنوي", "القوة نموذج": "ITM001", "القوة مزارع": "لينه المبنى", "السكني": "رقم", "الغرفة": 5, "السعة الأسرة": new Date().toLocaleDateString('ar-EG'), "سعة": "الغرف نموذج" }];
+      let data = [{ "رقم البون": "BN000001", "الإدارة": "المبنى السكني", "الموظف المستلم": "اسم الموظف", "اسم الصنف": "ITM001", "كود الصنف": "CODE001", "الوحدة": "عدد", "الكمية": 5, "تاريخ الصرف": new Date().toISOString().split('T')[0], "ملاحظات": "صرف عادي" }];
       let ws = XLSX.utils.json_to_sheet(data); let wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, "سعة السكن"); XLSX.writeFile(wb, "مزارع_لينه_قوالب_وتقارير.xlsx");
+      XLSX.utils.book_append_sheet(wb, ws, "بونات الصرف"); XLSX.writeFile(wb, "نموذج_بونات_الصرف.xlsx");
     }
 
     function editInventoryVoucher(idx) {
@@ -12071,15 +12071,15 @@ function renderTeaSugarTable() {
               if(v.startsWith('الشاي')) { skipRow = true; break; }
             }
             if(skipRow) return;
-            let itemName = (row["والسكر نموذج"] || row["ITEM_NAME"] || row["itemName"] || '').toString().trim();
-            let dept = (row["صرف"] || row["dept"] || row["DEPT"] || '').toString().trim();
-            let empName = (row["الشاي والسكر"] || row["EMP_NAME"] || row["empName"] || '').toString().trim();
-            let unit = (row["مزارع"] || row["unit"] || row["Unit"] || 'لينه').toString().trim();
-            let qty = parseInt(row["التاريخ"] || row["qty"] || row["QTY"] || 0);
-            let notes = (row["كود"] || row["notes"] || row["NOTES"] || '').toString().trim();
-            let itemCode = (row["الموظف اسم"] || row["ITEM_CODE"] || row["itemCode"] || '').toString().trim();
-            let voucherId = (row["الموظف الإدارة"] || row["voucherId"] || 'BN' + Date.now().toString().slice(-6) + Math.random().toString(36).slice(2,4)).toString().trim();
-            let date = (row["الوظيفة الشاي"] || row["date"] || row["DATE"] || '').toString().trim() || new Date().toLocaleDateString('ar-EG');
+            let itemName = (row["اسم الصنف"] || row["ITEM_NAME"] || row["itemName"] || '').toString().trim();
+            let dept = (row["الإدارة"] || row["dept"] || row["DEPT"] || '').toString().trim();
+            let empName = (row["الموظف المستلم"] || row["EMP_NAME"] || row["empName"] || '').toString().trim();
+            let unit = (row["الوحدة"] || row["unit"] || row["Unit"] || '').toString().trim();
+            let qty = parseInt(row["الكمية"] || row["qty"] || row["QTY"] || 0);
+            let notes = (row["ملاحظات"] || row["notes"] || row["NOTES"] || '').toString().trim();
+            let itemCode = (row["كود الصنف"] || row["ITEM_CODE"] || row["itemCode"] || '').toString().trim();
+            let voucherId = (row["رقم البون"] || row["voucherId"] || 'BN' + Date.now().toString().slice(-6) + Math.random().toString(36).slice(2,4)).toString().trim();
+            let date = (row["تاريخ الصرف"] || row["date"] || row["DATE"] || '').toString().trim() || new Date().toLocaleDateString('ar-EG');
             if(itemName && dept && empName && qty > 0) {
               inventoryVouchers.push({ voucherId, dept, empId: '', empName, itemName, itemCode, unit, qty, date, notes });
               added++;
@@ -12113,20 +12113,20 @@ function renderTeaSugarTable() {
 
     // --- الدورة الثانية الدورة الأولى ---
     function downloadTemplate_TeaSugar() {
-      let data = [{ "الدورة الثانية": "1001", "الدورة الأولى": "غير معروف", "تم": "الاستيراد سجل", "جديد": "، تم", "تخطي": "سجل موجود (1-7)", "مسبقاً (أو)": 2, "ناقص (خطأ)": 1 }];
+      let data = [{ "كود الموظف": "1001", "اسم الموظف": "اسم الموظف", "الشاي (باكيت)": 2, "السكر (كجم)": 1 }];
       let ws = XLSX.utils.json_to_sheet(data); let wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, "في قراءة"); XLSX.writeFile(wb, "الملف_بداية_الإجازة_نهاية_الإجازة_كود.xlsx");
+      XLSX.utils.book_append_sheet(wb, ws, "شاي وسكر"); XLSX.writeFile(wb, "نموذج_شاي_وسكر.xlsx");
     }
     function exportTeaSugarToExcel() {
       var monthFilter = document.getElementById('ts-month-filter')?.value || '';
       var items = monthFilter ? teaSugarDisbursements.filter(function(t) { return _tsMonthKey(t.date) === monthFilter; }) : teaSugarDisbursements;
       var data = sortNewestFirst(items, 'date').map(function(t) {
         var emp = employees.find(function(e) { return (e.id || e.code) == t.empId || e.name === t.empName; });
-        return { "الموظف": t.date || '', "اسم": t.period || '', "الموظف البيان": (emp && emp.code) ? emp.code : (t.empCode || ''), "عدد الأيام": stripEmoji(emp ? emp.name : (t.empName || t.empCode || '')), "تاريخ": t.teaPacks || 0, "السفر": t.sugarKg || 0 };
+        return { "كود الموظف": (emp && emp.code) ? emp.code : (t.empCode || ''), "اسم الموظف": stripEmoji(emp ? emp.name : (t.empName || t.empCode || '')), "الإدارة": stripEmoji(emp ? emp.dept : (t.empDept || '')), "الوظيفة": stripEmoji(emp ? emp.title : (t.empTitle || '')), "الشاي (باكيت)": t.teaPacks || 0, "السكر (كجم)": t.sugarKg || 0, "الدورة": t.period || '', "تاريخ الصرف": t.date || '' };
       });
       var ws = XLSX.utils.json_to_sheet(data); var wb = XLSX.utils.book_new();
-      var label = monthFilter ? _tsMonthName(monthFilter) : 'آخر';
-      XLSX.utils.book_append_sheet(wb, ws, "يوم عمل تاريخ"); XLSX.writeFile(wb, "الرجوع_ملاحظات_الإجازات_تقرير_" + label.replace(/ /g, '_') + ".xlsx");
+      var label = monthFilter ? _tsMonthName(monthFilter) : 'الكل';
+      XLSX.utils.book_append_sheet(wb, ws, "شاي وسكر"); XLSX.writeFile(wb, "تقرير_الشاي_والسكر_" + label.replace(/ /g, '_') + ".xlsx");
     }
 
     function importTeaSugarFromExcel(evt) {
@@ -12137,20 +12137,17 @@ function renderTeaSugarTable() {
         try {
           let data = new Uint8Array(e.target.result);
           let workbook = XLSX.read(data, {type: 'array'});
-          let sheetName = workbook.SheetNames.find(n => n.includes('الإجازات')) || workbook.SheetNames[0];
+          let sheetName = workbook.SheetNames.find(n => n.includes('شاي') || n.includes('Tea')) || workbook.SheetNames[0];
           let ws = workbook.Sheets[sheetName];
           let rows = XLSX.utils.sheet_to_json(ws, {header: 1});
-          if(!rows || rows.length < 2) return alert("الوصول المغادرة");
+          if(!rows || rows.length < 2) return alert("ملف فارغ، تأكد من وجود بيانات.");
 
-          // Find the header row dynamically by looking for known Arabic column headers
           let hRow = -1;
           for (let i = 0; i < Math.min(rows.length, 10); i++) {
             let r = rows[i];
             if (!r) continue;
             let txt = (r.join(' ') || '');
-            var _importKeywords = ['اسم الزائر','النوع المسمى','عدد','الأفراد الوجبات','الوصول'];
-            var _importHasKeyword = _importKeywords.some(function(w){return txt.indexOf(w)!==-1;});
-            if (_importHasKeyword && (txt.indexOf('المغادرة')!==-1 || txt.indexOf('اسم')!==-1)) {
+            if (txt.indexOf('شاي') !== -1 || txt.indexOf('سكر') !== -1 || (txt.indexOf('كود') !== -1 && txt.indexOf('اسم') !== -1)) {
               hRow = i;
               break;
             }
@@ -12158,22 +12155,16 @@ function renderTeaSugarTable() {
           if (hRow < 0) return alert('لم يتم العثور على صف العناوين. تأكد أن الشيت يحتوي على أعمدة: الكود، الاسم، شاي، سكر');
 
           let cols = rows[hRow];
-          // Map column indices by keyword matching
           function _colMatch(c, words) { var t = c.trim(); return words.some(function(w){return t.indexOf(w)!==-1;}); }
           let colText = cols.map(c => (c || '').toString().trim());
           let idx = {
-            date: colText.findIndex(c => _colMatch(c, ['النوع كهرباء','المهمة صيانة','مكيف'])),
-            code: colText.findIndex(c => _colMatch(c, ['الفني','المسؤول أحمد'])),
-            name: colText.findIndex(c => _colMatch(c, ['علي','الحالة مفتوحة'])),
-            title: colText.findIndex(c => _colMatch(c, ['الخامات'])),
-            dept: colText.findIndex(c => _colMatch(c, ['مروحة'])),
-            sector: colText.findIndex(c => _colMatch(c, ['ملاحظات /التاريخ'])),
-            period: colText.findIndex(c => _colMatch(c, ['الصيانة'])),
-            tea: colText.findIndex(c => _colMatch(c, ['نموذج','الصيانة','مزارع (لينه)'])),
-            sugar: colText.findIndex(c => _colMatch(c, ['التاريخ','النوع','المهمة (الفني)']))
+            date: colText.findIndex(c => _colMatch(c, ['تاريخ','التاريخ','Date','date'])),
+            code: colText.findIndex(c => _colMatch(c, ['كود','الكود','Code','code','empCode'])),
+            name: colText.findIndex(c => _colMatch(c, ['اسم','الاسم','Name','name','empName'])),
+            period: colText.findIndex(c => _colMatch(c, ['الدورة','دورة','period','Period'])),
+            tea: colText.findIndex(c => _colMatch(c, ['شاي','Tea','tea','باكيت','packs'])),
+            sugar: colText.findIndex(c => _colMatch(c, ['سكر','Sugar','sugar']))
           };
-          // Fallback: if code column not found by header, use first numeric column (index 0)
-          if (idx.code < 0 && rows[hRow + 1] && typeof rows[hRow + 1][0] === 'number') idx.code = 0;
 
           let added = 0;
           for (let i = hRow + 1; i < rows.length; i++) {
@@ -12185,33 +12176,23 @@ function renderTeaSugarTable() {
             let dateVal = idx.date >= 0 ? row[idx.date] : null;
             let empCode = idx.code >= 0 ? (row[idx.code] || '').toString().trim() : '';
             let empName = idx.name >= 0 ? (row[idx.name] || '').toString().trim() : '';
-            let period = idx.period >= 0 ? (row[idx.period] || '').toString().trim() || '' : '';
             let teaVal = idx.tea >= 0 ? parseInt(row[idx.tea]) || 0 : 0;
             let sugarVal = idx.sugar >= 0 ? parseFloat(row[idx.sugar]) || 0 : 0;
-
-            if (period) {
-              var _p = period.trim();
-              if (['الحالة','الخامات'].some(function(w){return _p.indexOf(w)!==-1;}) || /1\s*-\s*7/.test(_p)) period = 'الدورة الأولى (1-7)';
-              else if (['تقرير','الصيانة'].some(function(w){return _p.indexOf(w)!==-1;}) || /15\s*-\s*21/.test(_p)) period = 'الدورة الثانية (15-21)';
-            }
+            let period = '';
 
             let distDate;
             if (dateVal === null || dateVal === undefined || dateVal === '') {
               distDate = new Date().toISOString().split('T')[0];
-              if (!period) period = 'الدورة الأولى (1-7)';
             } else if (typeof dateVal === 'number') {
               let d = new Date((dateVal - 25569) * 86400000);
               distDate = d.toISOString().split('T')[0];
-              if (!period) {
-                let day = d.getDate();
-                if (day >= 1 && day <= 7) period = 'الدورة الأولى (1-7)';
-                else if (day >= 15 && day <= 21) period = 'الدورة الثانية (15-21)';
-                else if (day <= 14) period = 'الدورة الأولى (1-7)';
-                else period = 'الدورة الثانية (15-21)';
-              }
+              let day = d.getDate();
+              if (day >= 1 && day <= 7) period = 'الدورة الأولى (1-7)';
+              else if (day >= 15 && day <= 21) period = 'الدورة الثانية (15-21)';
+              else if (day <= 14) period = 'الدورة الأولى (1-7)';
+              else period = 'الدورة الثانية (15-21)';
             } else {
               distDate = dateVal.toString();
-              if (!period) period = 'الدورة الأولى (1-7)';
             }
 
             let emp = employees.find(e => e.code == empCode || (empCode && e.name === empName) || (!empCode && e.name === empName));
@@ -12225,7 +12206,7 @@ function renderTeaSugarTable() {
               id: 'ts_' + Date.now() + '_' + added,
               empId: emp ? emp.id : '',
               empCode: empCode || (emp ? emp.code : ''),
-              empName: empName || (emp ? emp.name : 'وجود أعمدة'),
+              empName: empName || (emp ? emp.name : ''),
               period: period,
               date: distDate,
               teaPacks: teaVal || 2,
@@ -12237,9 +12218,9 @@ function renderTeaSugarTable() {
 
           syncStorage();
           renderTeaSugarTable();
-          alert(`تم استيراد ${added} مهمة صيانة بنجاح.`);
+          alert(`تم استيراد ${added} سجل شاي وسكر بنجاح.`);
         } catch(err) {
-          alert("خطأ في الحالة أو النوع: " + err.message);
+          alert("خطأ في استيراد الشاي والسكر: " + err.message);
         }
       };
       reader.readAsArrayBuffer(file);
@@ -12248,10 +12229,10 @@ function renderTeaSugarTable() {
 
     function exportVacationsToExcel() {
       var data = sortNewestFirst(vacations, 'start').map(function(v) {
-        return { "الفني المسؤول": v.start || '', "الحالة الخامات": v.end || '', "ملاحظات التاريخ": v.code || '', "مفتوحة مروحة": stripEmoji(v.name), "،": stripEmoji(v.info), "سلك ،": v.days || 0, "غير محدد": v.travelDate || '', "تم الاستيراد سجل": v.lastWorkDay || '', "جديد ،": v.returnDate || '', "تم": stripEmoji(v.notes) };
+        return { "تاريخ البداية": v.start || '', "تاريخ النهاية": v.end || '', "كود الموظف": v.code || '', "اسم الموظف": stripEmoji(v.name), "البيان": stripEmoji(v.info), "عدد الأيام": v.days || 0, "تاريخ السفر": v.travelDate || '', "آخر يوم عمل": v.lastWorkDay || '', "تاريخ العودة": v.returnDate || '', "ملاحظات": stripEmoji(v.notes) };
       });
       var ws = XLSX.utils.json_to_sheet(data); var wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, "تخطي"); XLSX.writeFile(wb, "سجل_ناقص_" + new Date().toISOString().split('T')[0].replace(/-/g, '') + ".xlsx");
+      XLSX.utils.book_append_sheet(wb, ws, "الإجازات"); XLSX.writeFile(wb, "الإجازات_" + new Date().toISOString().split('T')[0].replace(/-/g, '') + ".xlsx");
     }
     function printVacationForm() {
       var checked = document.querySelectorAll('#table-vacations .row-check:checked');
