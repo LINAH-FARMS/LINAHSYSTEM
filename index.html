@@ -3266,6 +3266,7 @@
           <button class="btn" style="padding:4px 10px;font-size:12px;background:#1565c0;color:white;" onclick="exportBakeryContractorSuppliesToExcel()">📤 تصدير Excel</button>
           <button class="btn" style="padding:4px 10px;font-size:12px;background:#0d47a1;color:white;" onclick="document.getElementById('b-ctr-excel-file').click()">📥 استيراد شيت</button>
           <input type="file" id="b-ctr-excel-file" style="display:none;" accept=".xlsx, .xls" onchange="importBakeryContractorSuppliesFromExcel(event)">
+          <button class="btn" style="padding:4px 10px;font-size:12px;background:#1b5e20;color:white;" onclick="printBreadInvoice()">📄 فاتورة مطبوعة</button>
           <button class="btn" style="padding:4px 10px;font-size:12px;background:#1565c0;color:white;" onclick="showPrintChoice('table-bakery-ctr-supply')">🖨️ طباعة</button>
           <button class="btn" style="padding:4px 10px;font-size:12px;background:#c62828;color:white;" onclick="exportPdfActiveTab()">تصدير PDF</button>
         </div>
@@ -14288,6 +14289,124 @@ function exportContractorsToExcel() {
       let rows = sortNewestFirst(bakeryContractorSupplies, 'date').map(c => ({ 'التاريخ': c.date, 'المقاول': stripEmoji(c.name), 'عدد الأرغفة': c.count, 'سعر الرغيف': c.price, 'الإجمالي': ((c.count||0)*(c.price||0)).toFixed(2), 'المدفوع': parseFloat(c.paid||0).toFixed(2), 'المتبقي': (((c.count||0)*(c.price||0))-parseFloat(c.paid||0)).toFixed(2), 'المسؤول': stripEmoji(c.responsible), 'ملاحظات': stripEmoji(c.notes) }));
       let ws = XLSX.utils.json_to_sheet(rows); let wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, 'توريد المقاولين'); XLSX.writeFile(wb, 'توريد_المقاولين.xlsx');
+    }
+    function printBreadInvoice() {
+      var fromDate = document.getElementById('filt-ctr-from')?.value || '';
+      var toDate = document.getElementById('filt-ctr-to')?.value || '';
+      if (!fromDate || !toDate) { alert('⚠️ حدد الفترة أولاً (من تاريخ — إلى تاريخ) من الفلاتر أعلاه'); return; }
+      if (!_selectedContractors || _selectedContractors.length === 0) { alert('⚠️ اختر مقاولاً واحداً على الأقل من فلتر المقاولين'); return; }
+      var records = bakeryContractorSupplies.filter(function(r) {
+        return r.date >= fromDate && r.date <= toDate && _selectedContractors.indexOf(r.name) !== -1;
+      });
+      if (!records.length) { alert('⚠️ لا توجد توريدات للمقاولين المختارين في هذه الفترة'); return; }
+      // Group by contractor
+      var grouped = {};
+      records.forEach(function(r) {
+        if (!grouped[r.name]) grouped[r.name] = [];
+        grouped[r.name].push(r);
+      });
+      var logoSrc = '';
+      var logoEl = document.querySelector('img[alt="Logo"]');
+      if (logoEl) logoSrc = logoEl.src;
+      var invDate = new Date().toLocaleDateString('ar-EG', { year:'numeric', month:'long', day:'numeric' });
+      var invNo = 'INV-' + records[0].id + '-' + Date.now().toString().slice(-4);
+      var pages = Object.keys(grouped).map(function(ctrName, pi) {
+        var items = grouped[ctrName];
+        var totalLoaves = 0, totalRevenue = 0, totalPaid = 0;
+        var rows = items.map(function(r, i) {
+          totalLoaves += r.count || 0;
+          var rev = (r.count || 0) * (r.price || 0);
+          totalRevenue += rev;
+          var paid = parseFloat(r.paid) || 0;
+          totalPaid += paid;
+          var rem = rev - paid;
+          var statusIcon = paid >= rev ? '✅' : (paid > 0 ? '🟡' : '🔴');
+          return '<tr>' +
+            '<td style="text-align:center;">' + (i + 1) + '</td>' +
+            '<td style="text-align:center;">' + r.date + '</td>' +
+            '<td style="text-align:center;font-weight:700;">' + r.count + '</td>' +
+            '<td style="text-align:center;">' + parseFloat(r.price || 0).toFixed(2) + '</td>' +
+            '<td style="text-align:center;font-weight:700;">' + rev.toFixed(2) + '</td>' +
+            '<td style="text-align:center;">' + paid.toFixed(2) + '</td>' +
+            '<td style="text-align:center;font-weight:' + (rem > 0 ? '700;color:#c62828;' : '400;color:#2e7d32;') + '">' + rem.toFixed(2) + '</td>' +
+            '<td style="text-align:center;">' + statusIcon + (r.responsible || '—') + '</td>' +
+          '</tr>';
+        }).join('');
+        var tCount = Object.keys(grouped).length;
+        return '<div class="page">' +
+          '<div class="logo-section">' +
+            '<div class="right">' +
+              (logoSrc ? '<img src="' + logoSrc + '" alt="شعار لينه فارمز">' : '') +
+              '<div><div class="co-name">شركة لينة للتنمية السياحية والعمرانية</div><div class="co-sub">مخبز آلية — توريد خبز للمقاولين</div></div>' +
+            '</div>' +
+            '<div class="badge">فاتورة</div>' +
+          '</div>' +
+          '<div class="title">🧾 فاتورة توريد خبز</div>' +
+          '<div class="meta-row">' +
+            '<div class="meta-item"><span class="meta-label">رقم الفاتورة</span><span class="meta-val">' + invNo + '-' + (pi + 1) + '/' + tCount + '</span></div>' +
+            '<div class="meta-item"><span class="meta-label">تاريخ الطباعة</span><span class="meta-val">' + invDate + '</span></div>' +
+            '<div class="meta-item"><span class="meta-label">فترة التوريد</span><span class="meta-val">' + fromDate + ' → ' + toDate + '</span></div>' +
+          '</div>' +
+          '<div class="ctr-info">' +
+            '<div class="ctr-label">👤 المقاول</div><div class="ctr-name">' + ctrName + '</div>' +
+          '</div>' +
+          '<table>' +
+            '<thead><tr>' +
+              '<th style="width:30px;">م</th><th style="width:75px;">التاريخ</th><th style="width:65px;">عدد الأرغفة</th><th style="width:55px;">السعر</th><th style="width:65px;">الإجمالي</th><th style="width:65px;">المدفوع</th><th style="width:65px;">المتبقي</th><th>المسؤول</th>' +
+            '</tr></thead><tbody>' + rows + '</tbody>' +
+          '</table>' +
+          '<div class="totals">' +
+            '<div class="total-row"><span>إجمالي الأرغفة</span><span class="num">' + totalLoaves + ' رغيف</span></div>' +
+            '<div class="total-row"><span>إجمالي قيمة التوريدات</span><span class="num" style="color:#1b5e20;">' + totalRevenue.toFixed(2) + ' ج.م</span></div>' +
+            '<div class="total-row"><span>إجمالي المدفوع</span><span class="num" style="color:#1565c0;">' + totalPaid.toFixed(2) + ' ج.م</span></div>' +
+            '<div class="total-row total-due"><span>إجمالي المتبقي</span><span class="num" style="color:#c62828;">' + (totalRevenue - totalPaid).toFixed(2) + ' ج.م</span></div>' +
+          '</div>' +
+          '<div class="signatures">' +
+            '<div class="sign-box"><div class="label">تسليم المقاول</div><div class="line"></div><div class="sub">التوقيع</div></div>' +
+            '<div class="sign-box"><div class="label">مسؤول المخبز</div><div class="line"></div><div class="sub">التوقيع</div></div>' +
+            '<div class="sign-box"><div class="label">إعتماد الإدارة</div><div class="line"></div><div class="sub">التوقيع</div></div>' +
+          '</div>' +
+          '<div class="footer">فاتورة توريد خبز — لينه فارمز © ' + new Date().getFullYear() + '</div>' +
+        '</div>';
+      }).join('');
+      var w = window.open('', '_blank');
+      w.document.write('<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8"><title>فاتورة خبز — LINAHSYSTEM</title>' +
+        '<style>' +
+          '@page{size:A4 portrait;margin:1cm 1.5cm;}' +
+          'body{font-family:Cairo,"Traditional Arabic","Segoe UI",sans-serif;padding:0;margin:0;color:#333;background:#e0e0e0;}' +
+          '.page{width:210mm;min-height:297mm;margin:12px auto;background:#fff;padding:18px 22px;box-shadow:0 2px 20px rgba(0,0,0,0.12);page-break-after:always;position:relative;}' +
+          '.logo-section{display:flex;align-items:center;justify-content:space-between;border-bottom:3px double #b71c1c;padding-bottom:10px;margin-bottom:12px;}' +
+          '.logo-section .right{display:flex;align-items:center;gap:10px;}' +
+          '.logo-section .right img{width:50px;height:50px;border-radius:50%;object-fit:cover;border:2px solid #b71c1c;padding:2px;}' +
+          '.logo-section .right .co-name{font-weight:900;color:#b71c1c;font-size:17px;line-height:1.3;}' +
+          '.logo-section .right .co-sub{font-size:11px;color:#888;}' +
+          '.logo-section .badge{background:#b71c1c;color:#fff;padding:4px 16px;border-radius:20px;font-size:12px;font-weight:700;}' +
+          '.title{text-align:center;font-size:24px;font-weight:900;color:#b71c1c;margin:6px 0 10px;letter-spacing:1px;}' +
+          '.meta-row{display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:12px;padding:8px 12px;background:#f5f5f5;border-radius:6px;font-size:12px;}' +
+          '.meta-item{text-align:center;}' +
+          '.meta-label{display:block;color:#888;font-size:11px;}' +
+          '.meta-val{font-weight:700;color:#333;font-size:13px;}' +
+          '.ctr-info{display:flex;align-items:center;gap:8px;padding:10px 14px;background:#fff8e1;border:1px solid #ffcc02;border-radius:8px;margin-bottom:12px;}' +
+          '.ctr-label{font-size:13px;color:#888;}' +
+          '.ctr-name{font-size:18px;font-weight:900;color:#b71c1c;}' +
+          'table{width:100%;border-collapse:collapse;font-size:12px;margin:10px 0;}' +
+          'thead th{background:#b71c1c;color:#fff;padding:6px 4px;border:1px solid #b71c1c;text-align:center;font-size:11px;}' +
+          'tbody td{padding:5px 4px;border:1px solid #ffcdd2;text-align:center;}' +
+          'tbody tr:nth-child(even){background:#fff8f8;}' +
+          '.totals{margin:12px 0;padding:10px 16px;background:#f5f5f5;border-radius:8px;border:1px solid #e0e0e0;}' +
+          '.total-row{display:flex;justify-content:space-between;padding:3px 0;font-size:13px;}' +
+          '.total-row .num{font-weight:700;}' +
+          '.total-due{font-size:16px;font-weight:900;color:#b71c1c;border-top:2px solid #b71c1c;margin-top:4px;padding-top:6px;}' +
+          '.signatures{display:flex;justify-content:space-between;margin-top:25px;padding-top:15px;border-top:2px dashed #ffcdd2;}' +
+          '.sign-box{text-align:center;min-width:120px;}' +
+          '.sign-box .label{font-weight:700;color:#b71c1c;font-size:13px;margin-bottom:4px;}' +
+          '.sign-box .line{border-bottom:2px solid #333;height:35px;margin:6px 0;}' +
+          '.sign-box .sub{font-size:11px;color:#888;}' +
+          '.footer{text-align:center;margin-top:15px;font-size:10px;color:#999;border-top:1px solid #e0e0e0;padding-top:8px;}' +
+          '@media print{body{background:#fff;}.page{margin:0;box-shadow:none;padding:12px 16px;}}' +
+        '</style></head><body>' + pages + '</body></html>');
+      w.document.close();
+      setTimeout(function() { w.print(); }, 600);
     }
 
     function importBakeryIngredientsFromExcel(evt) {
