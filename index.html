@@ -16342,20 +16342,45 @@ function updateDashClock() {
       var validRooms = {};
       roomsCapacity.forEach(function(r) {
         var sector = (r.sector || '').trim();
-        // Normalize sector spelling variations
-        sector = sector.replace(/^جزوارين\s*$/i, 'جيزوارين').replace(/^جيزوارين\s*$/i, 'جيزوارين');
         var key = sector + '|' + (r.number || '');
         validRooms[key] = true;
       });
       var empInInvalidRoom = 0;
       employees.forEach(function(e) {
         if (e.sector && e.room) {
-          // Normalize employee room to just the number for comparison
-          var empRoomNum = String(e.room || '').replace(/^غرفه\s*/i, '').replace(/^غرفة\s*/i, '').trim();
-          // Normalize sector spelling
-          var empSector = (e.sector || '').trim().replace(/^جزوارين\s*$/i, 'جيزوارين').replace(/^جيزوارين\s*$/i, 'جيزوارين');
-          var key = empSector + '|' + empRoomNum;
-          if (!validRooms[key]) {
+          var empSector = (e.sector || '').trim();
+          var empRoom = (e.room || '').trim();
+          // Extract room number from employee room
+          var empRoomNum = empRoom.replace(/^غرفه\s*/i, '').replace(/^غرفة\s*/i, '').trim();
+          // Fuzzy match sector: find roomsCapacity sector that contains the key word
+          var matched = false;
+          for (var vk in validRooms) {
+            var parts = vk.split('|');
+            var rcSector = parts[0];
+            var rcRoom = parts[1];
+            // Check if employee sector keywords exist in roomsCapacity sector
+            var sectorMatch = false;
+            if (rcSector.includes(empSector) || empSector.includes(rcSector)) {
+              sectorMatch = true;
+            } else {
+              // Handle abbreviations
+              var empKeywords = empSector.split(/[\s()]+/);
+              var rcKeywords = rcSector.split(/[\s()]+/);
+              for (var ek of empKeywords) {
+                for (var rk of rcKeywords) {
+                  if (ek.length >= 3 && rk.length >= 3 && (ek.includes(rk) || rk.includes(ek))) {
+                    sectorMatch = true; break;
+                  }
+                }
+                if (sectorMatch) break;
+              }
+            }
+            if (sectorMatch && rcRoom === empRoomNum) {
+              matched = true;
+              break;
+            }
+          }
+          if (!matched) {
             empInInvalidRoom++;
             issues.push('بيانات ' + (e.name || e.code) + ' تغير بيانات القوة تغير الأصناف: ' + e.sector + ' / ' + e.room);
           }
