@@ -13091,12 +13091,8 @@ function exportContractorsToExcel() {
     }
 
     function importBakeryFormData() {
-      var _importedKeys = _safeJsonParse(_lsGet('linah_imported_bakery_keys'), {});
-      if (Object.keys(_importedKeys).length === 0) {
-        bakeryProductions.forEach(function(bp) { _importedKeys[normalizeDateStr(bp.date) + '|' + (bp.breadCount || '')] = true; });
-        bakeryContractorSupplies.forEach(function(bc) { _importedKeys['ctr_' + (bc.name||'') + '|' + normalizeDateStr(bc.date) + '|' + (bc.count||'')] = true; });
-        _lsSet('linah_imported_bakery_keys', JSON.stringify(_importedKeys));
-      }
+      // Use session-only tracking to avoid blocking future imports
+      var _importedKeys = _safeJsonParse(_lsGet('linah_imported_bakery_keys_session'), {});
       fetch(SUPABASE_URL+'/rest/v1/sync_data?id=eq.bakery_daily_reports&select=data', { headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY} })
         .then(function(r){return r.json();})
         .then(function(rows){
@@ -13129,29 +13125,30 @@ function exportContractorsToExcel() {
         });
         if (localReports.length) _lsRemove('linah_bakery_reports');
       } catch(_le) {}
-      reports.forEach(function(r) {
+reports.forEach(function(r) {
             var p = r.production || {};
             if (!p.date || !p.breadCount) return;
             var pKey = normalizeDateStr(p.date) + '|' + (p.breadCount || '');
-            if (_importedKeys[pKey]) return;
-            if (_isDeleted('bakeryProductions', pKey)) return;
             var pExists = bakeryProductions.some(function(bp) { return bp.date === p.date && bp.breadCount == p.breadCount; });
-            if (!pExists) {
-              bakeryProductions.push(_ts({
-                id: getBakeryNextId('PROD', bakeryProductions),
-                date: p.date,
-                breadCount: p.breadCount,
-                flourUsed: p.flourUsed || 0,
-                yeastUsed: p.yeastUsed || 0,
-                saltUsed: p.saltUsed || 0,
-                branUsed: p.branUsed || 0,
-                dieselUsed: p.dieselUsed || 0,
-                opCost: p.operatingCost || 1200,
-                notes: (p.bakerName ? 'تكلفة: ' + p.bakerName : '') + (p.notes ? ' | ' + p.notes : '')
-              }));
-              imported++;
+            if (!pExists && !_importedKeys[pKey]) {
+              if (!_isDeleted('bakeryProductions', pKey)) {
+                bakeryProductions.push(_ts({
+                  id: getBakeryNextId('PROD', bakeryProductions),
+                  date: p.date,
+                  breadCount: p.breadCount,
+                  flourUsed: p.flourUsed || 0,
+                  yeastUsed: p.yeastUsed || 0,
+                  saltUsed: p.saltUsed || 0,
+                  branUsed: p.branUsed || 0,
+                  dieselUsed: p.dieselUsed || 0,
+                  opCost: p.operatingCost || 1200,
+                  notes: (p.bakerName ? 'تكلفة: ' + p.bakerName : '') + (p.notes ? ' | ' + p.notes : '')
+                }));
+                imported++;
+              }
+              _importedKeys[pKey] = true;
             }
-            _importedKeys[pKey] = true;
+            // ALWAYS import contractors for this report, regardless of production
             (r.contractors || []).forEach(function(ct) {
               if (!ct.name || !ct.count) return;
               var ctKey = (ct.name||'') + '|' + normalizeDateStr(p.date) + '|' + (ct.count||'');
@@ -13176,7 +13173,7 @@ function exportContractorsToExcel() {
               _importedKeys['ctr_' + ctKey] = true;
             });
           });
-          _lsSet('linah_imported_bakery_keys', JSON.stringify(_importedKeys));
+          _lsSet('linah_imported_bakery_keys_session', JSON.stringify(_importedKeys));
           if (imported > 0) {
             syncStorage();
             renderBakeryProductions();
