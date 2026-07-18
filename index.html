@@ -9597,9 +9597,9 @@ function toggleEmployeeStatus(empId) {
           document.getElementById('vacation-balance-display').innerText = typeof emp.vacationBalance === 'number' ? 'رصيد الإجازة: ' + emp.vacationBalance + ' يوم' : '';
       }
       previewVacationDates();
-      // الإيداع ID أرشيف
+      // تعيين ID التعديل
       document.getElementById('vacation-edit-id').value = idx;
-      document.querySelector('#tab-vacations .btn-primary').innerText = 'بيانات المخازن أرشيف';
+      document.querySelector('#tab-vacations .btn-primary').innerText = '💾 حفظ التعديل';
       document.querySelector('#tab-vacations .btn-primary').onclick = function() { saveVacationEdit(idx); };
     }
 
@@ -9647,7 +9647,7 @@ function toggleEmployeeStatus(empId) {
       document.getElementById('vacation-emp-id').value = '';
       document.getElementById('vacation-balance-display').innerText = '';
       document.getElementById('vacation-edit-id').value = '';
-      document.querySelector('#tab-vacations .btn-primary').innerText = 'خصم من الرصيد';
+      document.querySelector('#tab-vacations .btn-primary').innerText = '💾 تسجيل الإجازة';
       document.querySelector('#tab-vacations .btn-primary').onclick = function() { addVacationMovement(); };
       alert('تم حفظ بيانات الإجازة بنجاح');
     }
