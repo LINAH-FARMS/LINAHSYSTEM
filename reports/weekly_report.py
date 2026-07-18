@@ -95,26 +95,6 @@ print(f'[الفترة] {fmt(start)} إلى {fmt(end)}')
 emps = data.get('employees', [])
 p_count = sum(1 for e in emps if e.get('status') == 'P')
 v_count = sum(1 for e in emps if e.get('status') == 'V')
-# Separate vacation by type for قوة calculation
-vacs = data.get('vacations', [])
-def is_active(v, s, e):
-    travel = norm_date(v.get('travelDate', v.get('start','')))
-    ret = norm_date(v.get('returnDate', v.get('end','')))
-    return travel <= e and ret >= s if travel and ret else False
-v_regular = set()  # اعتيادية
-v_ext = set()     # امتداد
-for v in vacs:
-    if not is_active(v, fmt(start), fmt(end)): continue
-    code = str(v.get('code',''))
-    if v.get('type') == 'اعتيادية':
-        v_regular.add(code)
-    elif v.get('type') == 'امتداد':
-        v_ext.add(code)
-# Workforce = Present + Extension (امتداد employees are still active)
-force_p = p_count + sum(1 for e in emps if e.get('status') == 'V' and str(e.get('code','')) in v_ext)
-v_regular_count = sum(1 for e in emps if e.get('status') == 'V' and str(e.get('code','')) in v_regular)
-v_ext_count = sum(1 for e in emps if e.get('status') == 'V' and str(e.get('code','')) in v_ext)
-v_other_count = v_count - v_regular_count - v_ext_count
 hosp = norm_filter(data.get('hospitalities', []), 'arrival')
 prods = norm_filter(data.get('bakeryProductions', []), 'date')
 ctr_sup = norm_filter(data.get('bakeryContractorSupplies', []), 'date')
@@ -159,16 +139,13 @@ wb = Workbook()
 
 ws = wb.active; ws.title = 'Summary'
 style_sheet(ws, ['Item', 'Count'], [
-    ['Total Employees', len(emps)],
-    ['القوة (Present + امتداد)', force_p],
-    ['Regular Vacation اعتيادي', v_regular_count],
-    ['Other Vacation', v_other_count],
+    ['Total Employees (القوة)', len(emps)], ['Present (P)', p_count], ['Vacation (V)', v_count],
     ['Hospitality', len(hosp)], ['Bakery Production', len(prods)],
     ['Contractor Supply', len(ctr_sup)], ['Meals', len(meals)],
     ['Maintenance', len(maint)], ['Septic', len(septic)],
     ['Incidents', len(incidents)], ['Tea & Sugar (Batches)', len(ts_batches)], ['Tea & Sugar (Disbursed)', len(tea_sugar)],
     ['Meal Waste', len(mw_data)]
-], [32, 12], title=f'Weekly Report {fmt(start)} to {fmt(end)}')
+], [28, 12], title=f'Weekly Report {fmt(start)} to {fmt(end)}')
 
 if prods:
     ws2 = wb.create_sheet('Bakery')
