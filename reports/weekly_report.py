@@ -105,6 +105,20 @@ incidents = norm_filter(data.get('incident_reports', []), 'date')
 ts_batches = norm_filter(data.get('teaSugarBatches', []), 'date')
 tea_sugar = norm_filter(data.get('teaSugarDisbursements', []), 'date')
 # Also include tea sugar by matching period of batches found this week
+# Fetch meal waste entries (stored under a separate sync_data id)
+try:
+    rw = requests.get(f'{SUPABASE_URL}/rest/v1/sync_data?id=eq.meal_waste_entries&select=data', headers={'apikey': SUPABASE_KEY, 'Authorization': f'Bearer {SUPABASE_KEY}'})
+    mw_raw = rw.json()
+    if isinstance(mw_raw, list) and len(mw_raw) > 0:
+        mw_d = mw_raw[0]
+        mw_data = json.loads(mw_d['data']) if isinstance(mw_d.get('data',''), str) else mw_d.get('data', [])
+        if not isinstance(mw_data, list): mw_data = []
+    else:
+        mw_data = []
+except Exception:
+    mw_data = []
+mw_data = norm_filter(mw_data, 'date')
+
 ts_periods = set(b.get('period','') for b in ts_batches if b.get('period',''))
 if ts_periods:
     for t in data.get('teaSugarDisbursements', []):
@@ -129,7 +143,8 @@ style_sheet(ws, ['Item', 'Count'], [
     ['Hospitality', len(hosp)], ['Bakery Production', len(prods)],
     ['Contractor Supply', len(ctr_sup)], ['Meals', len(meals)],
     ['Maintenance', len(maint)], ['Septic', len(septic)],
-    ['Incidents', len(incidents)], ['Tea & Sugar (Batches)', len(ts_batches)], ['Tea & Sugar (Disbursed)', len(tea_sugar)]
+    ['Incidents', len(incidents)], ['Tea & Sugar (Batches)', len(ts_batches)], ['Tea & Sugar (Disbursed)', len(tea_sugar)],
+    ['Meal Waste', len(mw_data)]
 ], [25, 12], title=f'Weekly Report {fmt(start)} to {fmt(end)}')
 
 if prods:
@@ -207,6 +222,26 @@ if ts_batches:
         [norm_date(b.get('date','')), b.get('period',''), b.get('teaQty',0), b.get('sugarQty',0)]
         for b in sorted(ts_batches, key=lambda x: norm_date(x.get('date','')))
     ], [14,20,10,10], title='Tea Sugar Batches')
+
+if mw_data:
+    ws11 = wb.create_sheet('MealWaste')
+    rows = []
+    for m in sorted(mw_data, key=lambda x: (norm_date(x.get('date','')), str(x.get('meal','')))):
+        waste = float(m.get('wasteEng',0)or 0) + float(m.get('wasteWrk',0)or 0) + float(m.get('wasteGuests',0)or 0)
+        ppl = (int(m.get('engAte',0)or 0) + int(m.get('wrkAte',0)or 0) + int(m.get('guests',0)or 0)) or 1
+        cost = float(m.get('cost',0)or 0)
+        wp_g = round(waste / ppl * 1000) if ppl > 0 else 0
+        rows.append([norm_date(m.get('date','')), m.get('meal',''), m.get('chef',m.get('responsible','')),
+                      ppl, round(waste, 1), wp_g, round(cost)])
+    style_sheet(ws11, ['Date', 'Meal', 'Chef', 'Meals Count', 'Waste (kg)', 'Waste/Person (g)', 'Cost (ج.م)'],
+                rows, [14,10,20,12,12,16,12], title='Meal Waste')
+    data_end = 3 + len(rows)
+    ws11.cell(row=data_end, column=1, value='الإجمالي').font = Font(bold=True, size=11, color='1B5E20')
+    ws11.cell(row=data_end, column=4, value=sum(r[3] for r in rows))
+    ws11.cell(row=data_end, column=5, value=round(sum(r[4] for r in rows), 1))
+    total_ppl = sum(r[3] for r in rows)
+    ws11.cell(row=data_end, column=6, value=round(sum(r[4] for r in rows) / max(total_ppl, 1) * 1000))
+    ws11.cell(row=data_end, column=7, value=round(sum(r[6] for r in rows)))
 
 wb.save(filename)
 print(f'[تم] {filename}')
