@@ -14372,11 +14372,6 @@ function exportContractorsToExcel() {
             '<div class="total-row"><span>إجمالي المدفوع</span><span class="num" style="color:#1565c0;">' + totalPaid.toFixed(2) + ' ج.م</span></div>' +
             '<div class="total-row total-due"><span>إجمالي المتبقي</span><span class="num" style="color:#c62828;">' + (totalRevenue - totalPaid).toFixed(2) + ' ج.م</span></div>' +
           '</div>' +
-          '<div class="signatures">' +
-            '<div class="sign-box"><div class="label">تسليم المقاول</div><div class="line"></div><div class="sub">التوقيع</div></div>' +
-            '<div class="sign-box"><div class="label">مسؤول المخبز</div><div class="line"></div><div class="sub">التوقيع</div></div>' +
-            '<div class="sign-box"><div class="label">إعتماد الإدارة</div><div class="line"></div><div class="sub">التوقيع</div></div>' +
-          '</div>' +
           '<div class="footer">فاتورة توريد خبز — لينه فارمز © ' + new Date().getFullYear() + '</div>' +
         '</div>';
       }).join('');
@@ -14408,11 +14403,6 @@ function exportContractorsToExcel() {
           '.total-row{display:flex;justify-content:space-between;padding:3px 0;font-size:13px;}' +
           '.total-row .num{font-weight:700;}' +
           '.total-due{font-size:16px;font-weight:900;color:#b71c1c;border-top:2px solid #b71c1c;margin-top:4px;padding-top:6px;}' +
-          '.signatures{display:flex;justify-content:space-between;margin-top:25px;padding-top:15px;border-top:2px dashed #ffcdd2;}' +
-          '.sign-box{text-align:center;min-width:120px;}' +
-          '.sign-box .label{font-weight:700;color:#b71c1c;font-size:13px;margin-bottom:4px;}' +
-          '.sign-box .line{border-bottom:2px solid #333;height:35px;margin:6px 0;}' +
-          '.sign-box .sub{font-size:11px;color:#888;}' +
           '.footer{text-align:center;margin-top:15px;font-size:10px;color:#999;border-top:1px solid #e0e0e0;padding-top:8px;}' +
           '@media print{body{background:#fff;}.page{margin:0;box-shadow:none;padding:12px 16px;}}' +
         '</style></head><body>' + pages + '</body></html>');
