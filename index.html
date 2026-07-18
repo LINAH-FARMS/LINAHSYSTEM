@@ -4951,9 +4951,9 @@
           let now = new Date(); now.setHours(0,0,0,0);
           return now >= a && now <= d;
         });
-        let gBf = todayGuests.reduce((s, h) => s + ((h.meals && h.meals.includes('غداء')) ? (h.guests || 1) : 0), 0);
-        let gLh = todayGuests.reduce((s, h) => s + ((h.meals && h.meals.includes('عشاء')) ? (h.guests || 1) : 0), 0);
-        let gDn = todayGuests.reduce((s, h) => s + ((h.meals && h.meals.includes('رغيف')) ? (h.guests || 1) : 0), 0);
+        let gBf = todayGuests.reduce((s, h) => s + ((h.meals && h.meals.includes('إفطار')) ? (h.guests || 1) : 0), 0);
+        let gLh = todayGuests.reduce((s, h) => s + ((h.meals && h.meals.includes('غداء')) ? (h.guests || 1) : 0), 0);
+        let gDn = todayGuests.reduce((s, h) => s + ((h.meals && h.meals.includes('عشاء')) ? (h.guests || 1) : 0), 0);
         let totalMeals = (pCount + gBf) + (pCount + gLh) + (pCount + gDn);
         if (g('dash-bakery-meals-badge')) g('dash-bakery-meals-badge').innerText = totalBread + totalMeals;
         if (g('dash-today-bread')) g('dash-today-bread').innerText = totalBread;
