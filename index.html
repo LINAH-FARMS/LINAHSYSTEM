@@ -6760,7 +6760,7 @@
         sectionsHtml += '<div class="rp-section">' + sec('المستبعدين', excludedEmployees.length + ' موظف') + '</div>';
       }
       if (!sectionsHtml) sectionsHtml = '<div style="text-align:center;padding:30px;color:#888;">بيانات الصيانة مهمة بيانات مفتوحة رغيف</div>';
-      var fullHtml = '<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8"><title>البيارات عملية - الخبز إنتاج</title>' +
+      var fullHtml = '<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8"><title>التقرير الأسبوعي</title>' +
         '<style>@page{size:A4;margin:1.5cm}body{font-family:"Cairo","Segoe UI",sans-serif;direction:rtl;padding:20px;color:#222;background:#fafafa;margin:0}' +
         '.rp-container{max-width:190mm;margin:0 auto;background:white;padding:20px 25px;box-shadow:0 2px 20px rgba(0,0,0,0.1)}' +
         '.rp-header{text-align:center;border-bottom:3px double #1b5e20;padding-bottom:15px;margin-bottom:18px}' +
@@ -6771,9 +6771,9 @@
         '.rp-footer{text-align:center;border-top:2px solid #e0e0e0;padding-top:10px;margin-top:20px;font-size:10px;color:#888}' +
         '</style></head><body><div class="rp-container">' +
         '<div class="rp-header">' + (logoSrc ? '<div style="text-align:center;margin-bottom:8px;"><img src="' + logoSrc + '" style="height:50px;width:auto;"></div>' : '') +
-        '<h1>بيانات إجمالي أيام</h1><h2>توريد الخبز - رغيف إجمالي</h2><div class="rp-date">بيانات ' + dateStr + '</div></div>' +
+        '<h1>التقرير الأسبوعي الشامل</h1><h2>لينه فارمز</h2><div class="rp-date">' + dateStr + '</div></div>' +
         sectionsHtml +
-        '<div class="rp-footer">أيام صرف المخزن بون - صنف صرف | ' + dateStr + '</div>' +
+        '<div class="rp-footer">تقرير أسبوعي — ' + dateStr + '</div>' +
         '</div></body></html>';
         var blob = new Blob([fullHtml], { type: 'text/html;charset=utf-8' });
         var url = URL.createObjectURL(blob);
