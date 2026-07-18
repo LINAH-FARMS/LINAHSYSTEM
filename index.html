@@ -16347,29 +16347,45 @@ function updateDashClock() {
         if (e.sector && e.room) {
           var empSector = (e.sector || '').trim();
           var empRoom = (e.room || '').trim();
-          // Extract room number from employee room
+          // Normalize room number
           var empRoomNum = empRoom.replace(/^غرفه\s*/i, '').replace(/^غرفة\s*/i, '').trim();
-          // Fuzzy match sector: find roomsCapacity sector that contains the key word
+          // Fuzzy match sector
           var matched = false;
           for (var vk in validRooms) {
             var parts = vk.split('|');
             var rcSector = parts[0];
             var rcRoom = parts[1];
-            // Check if employee sector keywords exist in roomsCapacity sector
             var sectorMatch = false;
+            // Direct includes
             if (rcSector.includes(empSector) || empSector.includes(rcSector)) {
               sectorMatch = true;
             } else {
-              // Handle abbreviations
-              var empKeywords = empSector.split(/[\s()]+/);
-              var rcKeywords = rcSector.split(/[\s()]+/);
+              // Keywords matching
+              var empKeywords = empSector.split(/[\s()]+/).filter(function(k){ return k.length >= 2; });
+              var rcKeywords = rcSector.split(/[\s()]+/).filter(function(k){ return k.length >= 2; });
               for (var ek of empKeywords) {
                 for (var rk of rcKeywords) {
-                  if (ek.length >= 3 && rk.length >= 3 && (ek.includes(rk) || rk.includes(ek))) {
+                  if (ek.length >= 2 && rk.length >= 2 && (ek.includes(rk) || rk.includes(ek))) {
                     sectorMatch = true; break;
                   }
                 }
                 if (sectorMatch) break;
+              }
+              // Handle known abbreviations
+              var abbrMap = {
+                'جزوارين': 'جيزوارين',
+                'الجيزوارين': 'جيزوارين',
+                'النخالين': 'نخالين',
+                'الإداري': 'إداري',
+                'المهندسين': 'مهندسين',
+                'العاملين': 'عاملين',
+                'الجديد': 'جديد',
+                'السكن': 'سكن'
+              };
+              var empNorm = abbrMap[empSector] || empSector;
+              var rcNorm = abbrMap[rcSector] || rcSector;
+              if (empNorm === rcNorm || (empNorm.length >= 2 && rcNorm.length >= 2 && (empNorm.includes(rcNorm) || rcNorm.includes(empNorm)))) {
+                sectorMatch = true;
               }
             }
             if (sectorMatch && rcRoom === empRoomNum) {
