@@ -16341,13 +16341,20 @@ function updateDashClock() {
       // Check employees in non-existent rooms
       var validRooms = {};
       roomsCapacity.forEach(function(r) {
-        var key = (r.sector || '') + '|' + (r.number || '');
+        var sector = (r.sector || '').trim();
+        // Normalize sector spelling variations
+        sector = sector.replace(/^جزوارين\s*$/i, 'جيزوارين').replace(/^جيزوارين\s*$/i, 'جيزوارين');
+        var key = sector + '|' + (r.number || '');
         validRooms[key] = true;
       });
       var empInInvalidRoom = 0;
       employees.forEach(function(e) {
         if (e.sector && e.room) {
-          var key = (e.sector || '') + '|' + (e.room || '');
+          // Normalize employee room to just the number for comparison
+          var empRoomNum = String(e.room || '').replace(/^غرفه\s*/i, '').replace(/^غرفة\s*/i, '').trim();
+          // Normalize sector spelling
+          var empSector = (e.sector || '').trim().replace(/^جزوارين\s*$/i, 'جيزوارين').replace(/^جيزوارين\s*$/i, 'جيزوارين');
+          var key = empSector + '|' + empRoomNum;
           if (!validRooms[key]) {
             empInInvalidRoom++;
             issues.push('بيانات ' + (e.name || e.code) + ' تغير بيانات القوة تغير الأصناف: ' + e.sector + ' / ' + e.room);
