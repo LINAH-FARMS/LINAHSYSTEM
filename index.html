@@ -13691,7 +13691,7 @@ function exportContractorsToExcel() {
           <td style="font-size:11px;color:#e65100;">${cstCtr.toFixed(2)}</td>
           <td class="bakery-cost">${cst.toFixed(2)}</td>
           <td style="font-size:11px;color:#666;">${costPerLoaf.toFixed(3)}</td>
-          <td class="no-print"><button class="btn btn-danger" style="padding:2px 6px;font-size:11px;" onclick="deleteBakeryProduction(${realIdx})">🗑️</button></td>
+          <td class="no-print"><button class="btn btn-warning" style="padding:2px 6px;font-size:11px;" onclick="editBakeryProduction(${realIdx})">✏️</button> <button class="btn btn-danger" style="padding:2px 6px;font-size:11px;" onclick="deleteBakeryProduction(${realIdx})">🗑️</button></td>
         </tr>`;
       }).join('');
     }
