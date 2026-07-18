@@ -1782,7 +1782,8 @@
         <label>صورة بعد الصيانة</label>
         <input type="file" id="maint-img-after" accept="image/*" style="width:100%;padding:5px;">
       </div>
-      <button class="btn btn-primary" onclick="addMaintenanceRecord()" style="height:42px;">💾 تسجيل</button>
+      <button class="btn btn-primary" onclick="addMaintenanceRecord()" id="btn-save-maint" style="height:42px;">💾 تسجيل</button>
+      <button class="btn btn-secondary" onclick="cancelEditMaint()" id="btn-cancel-maint" style="height:42px;display:none;">❌ إلغاء التعديل</button>
       <button class="btn btn-excel" onclick="document.getElementById('maint-excel-file').click()" style="background-color:#1565c0;height:42px;">📥 استيراد شيت (Excel)</button>
       <input type="file" id="maint-excel-file" style="display:none;" accept=".xlsx, .xls" onchange="importMaintenanceFromExcel(event)">
       <button class="btn btn-secondary" onclick="downloadTemplate_Maintenance()" style="height:42px;">📥 نموذج شيت فاضي</button>
@@ -9926,21 +9927,22 @@ function toggleEmployeeStatus(empId) {
       let status = document.getElementById('maint-status').value;
       let notes = document.getElementById('maint-notes').value.trim();
 
-      if(!category) { document.getElementById('maint-category').focus(); return alert("بيانات إفطار غداء عشاء."); }
-      if(!task) { document.getElementById('maint-task').focus(); return alert("الرجاء إدخال المهمة وتاريخ الزيارة."); }
-      if(!tech) { document.getElementById('maint-tech').focus(); return alert("بيانات زيارة مكررة لنفس الزائر."); }
+      if(!category) { document.getElementById('maint-category').focus(); return alert("⚠️ اختر نوع الصيانة"); }
+      if(!task) { document.getElementById('maint-task').focus(); return alert("⚠️ أدخل وصف العطل/التفاصيل"); }
+      if(!tech) { document.getElementById('maint-tech').focus(); return alert("⚠️ أدخل اسم الفني المسؤول"); }
 
       let record = { category, task, tech, status, notes, materials: materials.length ? [...materials] : [], imgBefore: '', imgAfter: '', date: new Date().toISOString().split('T')[0] };
 
       let proceedSave = () => {
-        maintenanceRecords.push(_ts(record)); syncStorage(); renderMaintenanceTable();
-        logAction('في', 'نفس', task, 'التاريخ: ' + category + ' | تعديل: ' + tech + ' | إضافة: ' + status);
-        document.getElementById('maint-category').value = ''; document.getElementById('maint-task').value = '';
-        document.getElementById('maint-tech').value = '';
-        document.getElementById('maint-img-before').value = ''; document.getElementById('maint-img-after').value = '';
-        document.getElementById('maint-notes').value = ''; document.getElementById('maint-status').value = 'ضيافة';
-        maintMaterials = []; renderMaintMaterialsList();
-        alert("? بيانات تاريخ أفراد تم تسجيل.");
+        if (_editingMaintIdx >= 0) {
+          maintenanceRecords[_editingMaintIdx] = _ts(Object.assign(maintenanceRecords[_editingMaintIdx], record));
+          _editingMaintIdx = -1;
+        } else {
+          maintenanceRecords.push(_ts(record));
+        }
+        syncStorage(); renderMaintenanceTable();
+        cancelEditMaint();
+        alert('✅ تم تسجيل مهمة الصيانة');
       };
 
       try {
@@ -9966,55 +9968,48 @@ function toggleEmployeeStatus(empId) {
       else filtered = sortData(filtered, st.key, st.dir);
       filtered.forEach((m) => {
         let realIdx = maintenanceRecords.indexOf(m);
-        let statusColors = {'الزيارة':'#e53935','وإضافة الوجبات':'#fb8c00','إلى':'#43a047','سجل':'#757575'};
-        let statusIcon = {'الزيارة':'📋','وإضافة الوجبات':'📋','عشاء':'🔧','حفظ':'💾'};
+        let statusColors = {'مفتوحة':'#e53935','تحت التنفيذ':'#fb8c00','تمت':'#2e7d32','ملغاة':'#757575'};
+        let statusIcons = {'مفتوحة':'🔴','تحت التنفيذ':'🟡','تمت':'✅','ملغاة':'❌'};
         let stColor = statusColors[m.status] || '#333';
-        let stIcon = statusIcon[m.status] || '';
+        let stIcon = statusIcons[m.status] || '📋';
         let matsHtml = (m.materials && m.materials.length) ? m.materials.map(mat =>
           `<span style="display:inline-block;background:#e3f2fd;padding:1px 5px;margin:1px;border-radius:3px;font-size:11px;border:1px solid #90caf9;">${mat.name} — ${mat.qty}</span>`
         ).join(' ') : '—';
         let tr = document.createElement('tr');
         tr.innerHTML = `
           <td class="no-print"><input type="checkbox" class="row-check" data-table="table-maintenance"></td>
-          <td>${m.category || '—'}</td>
+          <td><span style="background:#fff3e0;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;color:#e65100;">${m.category || '—'}</span></td>
           <td><b>${m.task}</b></td>
-          <td>${m.tech || '—'}</td>
-          <td><span style="color:${stColor};font-weight:bold;font-size:12px;">${stIcon} ${m.status||'التعديل'}</span></td>
+          <td>👤 ${m.tech || '—'}</td>
+          <td><span style="color:${stColor};font-weight:bold;font-size:12px;">${stIcon} ${m.status||'—'}</span></td>
           <td style="font-size:11px;">${matsHtml}</td>
           <td style="font-size:11px;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${(m.notes||'').replace(/"/g,'&quot;')}">${m.notes || '—'}</td>
           <td>${m.imgBefore?`<img src="${m.imgBefore}" class="img-preview" onclick="viewFullImage('${m.imgBefore}')">`:'—'}</td>
           <td>${m.imgAfter?`<img src="${m.imgAfter}" class="img-preview" onclick="viewFullImage('${m.imgAfter}')">`:'—'}</td>
-          <td>${m.date ? (m.date.match(/^\d{4}-/) ? m.date.split('-').reverse().join('/') : m.date) : '-'}</td>
-          <td class="no-print"><button class="btn btn-primary" style="padding:2px 6px;font-size:11px;" onclick="editMaint(${realIdx})">✏️</button> <button class="btn btn-danger" style="padding:2px 6px; font-size:11px;" onclick="deleteMaint(${realIdx})">🗑️</button></td>
+          <td>${m.date ? (m.date.match(/^\d{4}-/) ? m.date.split('-').reverse().join('/') : m.date) : '—'}</td>
+          <td class="no-print" style="display:flex;gap:4px;"><button class="btn btn-primary" style="padding:2px 6px;font-size:11px;" onclick="editMaint(${realIdx})">✏️</button><button class="btn btn-danger" style="padding:2px 6px;font-size:11px;" onclick="deleteMaint(${realIdx})">🗑️</button></td>
         `;
         tbody.appendChild(tr);
       });
     }
 
-    function deleteMaint(idx) { if (!requireAdmin()) return; var rec = maintenanceRecords[idx]; _logDeletion('maintenanceRecords', (rec.category||'') + '|' + (rec.task||'') + '|' + (rec.date||rec.createdAt||'')); maintenanceRecords.splice(idx,1); syncStorage(); renderMaintenanceTable(); }
+    function deleteMaint(idx) { if (!requireAdmin()) return; if(!confirm('حذف مهمة الصيانة؟')) return; var rec = maintenanceRecords[idx]; _logDeletion('maintenanceRecords', (rec.category||'') + '|' + (rec.task||'') + '|' + (rec.date||rec.createdAt||'')); maintenanceRecords.splice(idx,1); syncStorage(); renderMaintenanceTable(); }
     function editMaint(idx) {
       let rec = maintenanceRecords[idx];
       if (!rec) return;
-      if (!canEditRecord(rec.date)) { alert('لا يمكن تعديل سجل قديم'); return; }
-      let cats = ['فحص البيانات','المكررة','فحص','الضيافة','ضيافة','مكرر'];
-      let curCat = rec.category || '';
-      let newCat = prompt("حذف فحص (" + cats.join(' / ') + "):", curCat);
-      if (newCat === null) return;
-      if (!cats.includes(newCat) && newCat.trim()) { if (!confirm('النوع "' + newCat + '" غير موجود في القائمة. هل تريد استخدامه؟')) return; }
-      let newTask = prompt("حذف فحص:", rec.task);
-      if (newTask === null) return;
-      if (!newTask.trim()) return alert("توريدات المقاولين توريدات");
-      let newTech = prompt("المقاولين مكرر:", rec.tech);
-      if (newTech === null) return;
-      let newStatus = prompt("مؤشرات (لعرض/أولاً الموظف/اختر/الملاحظات):", rec.status);
-      if (newStatus === null) return;
-      let allowed = ['عن','الإبلاغ العمل','أدوات','على'];
-      if (!allowed.includes(newStatus)) return alert("الحالة يجب أن تكون: مفتوحة، تحت التنفيذ، تمت، أو ملغاة");
-      let newNotes = prompt("بيانات:", rec.notes || '');
-      if (newNotes === null) return;
-      rec.category = newCat.trim(); rec.task = newTask.trim(); rec.tech = (newTech || '').trim(); rec.status = newStatus; rec.notes = newNotes.trim();
-      syncStorage(); renderMaintenanceTable();
-      alert("تم تسجيل مهمة الصيانة الدورية");
+      if (!canEditRecord(rec.date)) { alert('⚠️ لا يمكن تعديل سجل قديم'); return; }
+      _editingMaintIdx = idx;
+      document.getElementById('maint-category').value = rec.category || '';
+      document.getElementById('maint-task').value = rec.task || '';
+      document.getElementById('maint-tech').value = rec.tech || '';
+      document.getElementById('maint-status').value = rec.status || 'مفتوحة';
+      document.getElementById('maint-notes').value = rec.notes || '';
+      maintMaterials = (rec.materials && rec.materials.length) ? rec.materials.map(function(m) { return {name:m.name, qty:m.qty}; }) : [];
+      renderMaintMaterialsList();
+      document.getElementById('btn-save-maint').textContent = '💾 حفظ التعديل';
+      document.getElementById('btn-cancel-maint').style.display = 'inline-block';
+      document.getElementById('maint-task').focus();
+      window.scrollTo({ top: document.getElementById('tab-maintenance').offsetTop - 80, behavior: 'smooth' });
     }
     function viewFullImage(src) {
       if (src && src.startsWith('http')) { window.open(src, '_blank'); return; }
@@ -10023,6 +10018,22 @@ function toggleEmployeeStatus(empId) {
 
     let maintMaterials = [];
     let maintSelectedCode = '';
+    let _editingMaintIdx = -1;
+    function cancelEditMaint() {
+      _editingMaintIdx = -1;
+      document.getElementById('btn-save-maint').textContent = '💾 تسجيل';
+      document.getElementById('btn-cancel-maint').style.display = 'none';
+      document.getElementById('maint-category').value = '';
+      document.getElementById('maint-task').value = '';
+      document.getElementById('maint-tech').value = '';
+      document.getElementById('maint-status').value = 'مفتوحة';
+      document.getElementById('maint-notes').value = '';
+      document.getElementById('maint-img-before').value = '';
+      document.getElementById('maint-img-after').value = '';
+      document.getElementById('maint-material-search').value = '';
+      maintMaterials = [];
+      renderMaintMaterialsList();
+    }
     function searchMaintMaterial() {
       let q = document.getElementById('maint-material-search').value.trim();
       let resultsEl = document.getElementById('maint-material-results');
