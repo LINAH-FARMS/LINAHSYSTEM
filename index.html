@@ -6782,11 +6782,10 @@
         a.href = url; a.download = 'الشاي_والسكر_' + fromDate + '_' + toDate + '.html';
         document.body.appendChild(a); a.click();
         document.body.removeChild(a);
-        setTimeout(function() { URL.revokeObjectURL(url); }, 5000);
-      }
+setTimeout(function() { URL.revokeObjectURL(url); }, 5000);
       } catch(e) { alert('تعذر تصدير تقرير الشاي والسكر: ' + e.message); }
     }
-  }
+}
 }
 var _breadSuggestionIdCounter = 0;
     function suggestBreadForTomorrow() {
