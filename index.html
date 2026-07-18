@@ -2752,78 +2752,58 @@
         </table>
       </div>
     </div>
-    <!-- ===== تخطيط وجبات الغد ===== -->
+    <!-- ===== حاسبة الوجبات المتكاملة ===== -->
     <div class="card no-print" style="margin:15px 0;padding:16px;border:2px solid #2e7d32;border-radius:12px;background:#f1f8e9;">
-      <h3 style="margin:0 0 12px;font-size:18px;display:flex;align-items:center;gap:10px;">
-        <span>📋 تخطيط وجبات الغد</span>
-        <span style="font-size:12px;color:#555;font-weight:400;">— خطط لوجبات اليوم التالي واحسب الخامات المطلوبة</span>
+      <h3 style="margin:0 0 12px;font-size:18px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;">
+        <span>📋 حاسبة الوجبات المتكاملة</span>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <button class="btn" onclick="openRecipeManager()" style="padding:4px 10px;font-size:11px;background:#6a1b9a;color:#fff;border:none;border-radius:6px;">⚙️ الوصفات</button>
+          <button class="btn" onclick="openIngredientMasterModal()" style="padding:4px 10px;font-size:11px;background:#37474f;color:#fff;border:none;border-radius:6px;">📦 الخامات</button>
+        </div>
       </h3>
       <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:12px;">
         <div class="form-group" style="min-width:130px;"><label>التاريخ</label><input type="date" id="plan-date"></div>
-        <button class="btn btn-secondary" onclick="loadPlanFromWeeklyMenu()" style="background:#1565c0;color:#fff;border:none;height:42px;">📅 تحميل من برنامج الأسبوع</button>
-        <button class="btn btn-secondary" onclick="resetPlan()" style="background:#757575;color:#fff;border:none;height:42px;">🔄 تفريغ</button>
+        <button class="btn btn-secondary" onclick="loadPlanFromWeeklyMenu()" style="background:#1565c0;color:#fff;border:none;height:38px;font-size:12px;">📅 تحميل من برنامج الأسبوع</button>
+        <button class="btn btn-secondary" onclick="resetPlan()" style="background:#757575;color:#fff;border:none;height:38px;font-size:12px;">🔄 تفريغ</button>
       </div>
       <div style="display:flex;gap:12px;flex-wrap:wrap;">
-        <div style="flex:1;min-width:220px;border:1px solid #fff9c4;border-radius:8px;padding:10px;background:#fffde7;">
+        <div style="flex:1;min-width:220px;border:2px solid #fff9c4;border-radius:8px;padding:10px;background:#fffde7;">
           <h4 style="margin:0 0 8px;color:#f57f17;font-size:14px;">🌅 إفطار</h4>
           <div class="form-group"><label>عدد الأفراد</label><input type="number" id="plan-bf-count" min="0" style="width:100%;"></div>
-          <div style="margin-bottom:6px;display:flex;gap:4px;"><select id="plan-bf-add" style="flex:1;padding:6px;border:1px solid #ccc;border-radius:4px;font-size:12px;font-family:Cairo;"></select><button class="btn btn-success" onclick="addPlanDish('bf')" style="padding:2px 8px;font-size:16px;line-height:1;">+</button></div>
+          <div style="margin-bottom:6px;display:flex;gap:4px;">
+            <select id="plan-bf-add" style="flex:1;padding:5px;border:1px solid #ccc;border-radius:4px;font-size:11px;font-family:Cairo;"></select>
+            <input type="number" id="plan-bf-hissa" value="1" min="1" style="width:45px;padding:5px;border:1px solid #ccc;border-radius:4px;font-size:11px;text-align:center;" title="عدد الحصص">
+            <button class="btn btn-success" onclick="addPlanDish('bf')" style="padding:2px 8px;font-size:14px;line-height:1;">+</button>
+          </div>
           <div id="plan-bf-list"></div>
         </div>
-        <div style="flex:1;min-width:220px;border:1px solid #bbdefb;border-radius:8px;padding:10px;background:#e3f2fd;">
+        <div style="flex:1;min-width:220px;border:2px solid #bbdefb;border-radius:8px;padding:10px;background:#e3f2fd;">
           <h4 style="margin:0 0 8px;color:#1565c0;font-size:14px;">☀️ غداء</h4>
           <div class="form-group"><label>عدد الأفراد</label><input type="number" id="plan-lh-count" min="0" style="width:100%;"></div>
-          <div style="margin-bottom:6px;display:flex;gap:4px;"><select id="plan-lh-add" style="flex:1;padding:6px;border:1px solid #ccc;border-radius:4px;font-size:12px;font-family:Cairo;"></select><button class="btn btn-success" onclick="addPlanDish('lh')" style="padding:2px 8px;font-size:16px;line-height:1;">+</button></div>
+          <div style="margin-bottom:6px;display:flex;gap:4px;">
+            <select id="plan-lh-add" style="flex:1;padding:5px;border:1px solid #ccc;border-radius:4px;font-size:11px;font-family:Cairo;"></select>
+            <input type="number" id="plan-lh-hissa" value="1" min="1" style="width:45px;padding:5px;border:1px solid #ccc;border-radius:4px;font-size:11px;text-align:center;" title="عدد الحصص">
+            <button class="btn btn-success" onclick="addPlanDish('lh')" style="padding:2px 8px;font-size:14px;line-height:1;">+</button>
+          </div>
           <div id="plan-lh-list"></div>
         </div>
-        <div style="flex:1;min-width:220px;border:1px solid #e1bee7;border-radius:8px;padding:10px;background:#f3e5f5;">
+        <div style="flex:1;min-width:220px;border:2px solid #e1bee7;border-radius:8px;padding:10px;background:#f3e5f5;">
           <h4 style="margin:0 0 8px;color:#6a1b9a;font-size:14px;">🌙 عشاء</h4>
           <div class="form-group"><label>عدد الأفراد</label><input type="number" id="plan-dn-count" min="0" style="width:100%;"></div>
-          <div style="margin-bottom:6px;display:flex;gap:4px;"><select id="plan-dn-add" style="flex:1;padding:6px;border:1px solid #ccc;border-radius:4px;font-size:12px;font-family:Cairo;"></select><button class="btn btn-success" onclick="addPlanDish('dn')" style="padding:2px 8px;font-size:16px;line-height:1;">+</button></div>
+          <div style="margin-bottom:6px;display:flex;gap:4px;">
+            <select id="plan-dn-add" style="flex:1;padding:5px;border:1px solid #ccc;border-radius:4px;font-size:11px;font-family:Cairo;"></select>
+            <input type="number" id="plan-dn-hissa" value="1" min="1" style="width:45px;padding:5px;border:1px solid #ccc;border-radius:4px;font-size:11px;text-align:center;" title="عدد الحصص">
+            <button class="btn btn-success" onclick="addPlanDish('dn')" style="padding:2px 8px;font-size:14px;line-height:1;">+</button>
+          </div>
           <div id="plan-dn-list"></div>
         </div>
       </div>
       <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;">
-        <button class="btn btn-primary" onclick="calcPlanIngredients()" style="flex:1;min-width:200px;">🔢 حساب الخامات المطلوبة</button>
+        <button class="btn btn-primary" onclick="calcPlanIngredients()" style="flex:2;min-width:200px;">🔢 حساب الخامات والتكاليف</button>
         <button class="btn btn-excel" onclick="exportPlanToExcel()" style="background:#2e7d32;color:#fff;border:none;">📤 تصدير Excel</button>
+        <button class="btn btn-secondary" onclick="printPlanResults()" style="background:#37474f;color:#fff;border:none;">🖨️ طباعة</button>
       </div>
       <div id="plan-results" style="display:none;margin-top:12px;"></div>
-    </div>
-    <!-- ===== حاسبة الطباخ المتقدمة ===== -->
-    <div class="card no-print" style="margin:15px 0;padding:16px;border:2px solid #bbdefb;border-radius:12px;background:#f5faff;">
-      <h3 style="margin:0 0 10px;font-size:18px;display:flex;align-items:center;justify-content:space-between;gap:10px;">
-        <span>🍳 حاسبة الطباخ</span>
-        <button class="btn" onclick="openRecipeManager()" style="padding:4px 12px;font-size:12px;background:#6a1b9a;color:#fff;border:none;border-radius:6px;">⚙️ إدارة الوصفات</button>
-      </h3>
-      <div class="control-panel" style="flex-wrap:wrap;align-items:flex-end;">
-        <div class="form-group" style="min-width:150px;"><label>الوجبة</label>
-          <select id="chef-meal-type" style="padding:10px;font-size:15px;font-family:Cairo;">
-            <option value="فطار">🌅 إفطار</option>
-            <option value="غداء">☀️ غداء</option>
-            <option value="عشاء">🌙 عشاء</option>
-          </select>
-        </div>
-        <div class="form-group" style="min-width:150px;"><label>عدد الأفراد</label>
-          <input type="number" id="chef-employees" min="1" step="1" value="380" style="padding:10px;font-size:15px;font-family:Cairo;">
-        </div>
-      </div>
-      <div id="chef-dishes-container" style="margin-top:10px;border:1px solid #e0e0e0;border-radius:8px;padding:10px;background:white;">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
-          <label style="font-weight:700;font-size:14px;color:#1565c0;">🍽️ الأصناف المقدمة</label>
-          <button class="btn btn-secondary" onclick="addChefDish()" style="padding:4px 12px;font-size:12px;">+ إضافة صنف</button>
-        </div>
-        <div id="chef-dishes-list"></div>
-      </div>
-      <div style="margin-top:10px;display:flex;gap:8px;">
-        <button class="btn btn-primary" onclick="calcChefMulti()" style="height:42px;flex:1;">🔢 احسب الخامات المطلوبة</button>
-        <button class="btn btn-secondary" onclick="printChefCalcMulti()" style="height:42px;">🖨️ طباعة</button>
-      </div>
-      <div class="table-container" id="chef-result-wrap" style="display:none;margin-top:10px;max-height:420px;overflow:auto;">
-        <table id="chef-result-table">
-          <thead><tr><th>الخامة</th><th>الوحدة</th><th>الكمية المطلوبة</th><th>التكلفة التقديرية</th></tr></thead>
-          <tbody id="chef-result-body"></tbody>
-        </table>
-      </div>
     </div>
   </div>
 
@@ -17856,8 +17836,10 @@ function getPlanDishList(prefix) {
   var list = document.getElementById('plan-' + prefix + '-list');
   if (!list) return [];
   var dishes = [];
-  list.querySelectorAll('input[type="hidden"]').forEach(function(h) {
-    if (h.value) dishes.push(h.value);
+  list.querySelectorAll('.plan-dish-item').forEach(function(item) {
+    var name = item.getAttribute('data-name');
+    var hissa = parseInt(item.getAttribute('data-hissa')) || 1;
+    if (name) dishes.push({ name: name, hissa: hissa });
   });
   return dishes;
 }
@@ -17871,17 +17853,28 @@ function populatePlanDishSelects() {
 }
 function addPlanDish(prefix) {
   var sel = document.getElementById('plan-' + prefix + '-add');
+  var hissaInput = document.getElementById('plan-' + prefix + '-hissa');
   var list = document.getElementById('plan-' + prefix + '-list');
   if (!sel || !list) return;
-  var name = sel.value;
+  var name = sel.value, hissa = parseInt(hissaInput ? hissaInput.value : 1) || 1;
   if (!name) return;
-  // Check if already added
-  if (list.querySelector('input[value="' + name.replace(/"/g,'&quot;') + '"]')) return;
+  if (list.querySelector('[data-name="' + name.replace(/"/g,'&quot;') + '"]')) return;
   var div = document.createElement('div');
+  div.className = 'plan-dish-item';
+  div.setAttribute('data-name', name);
+  div.setAttribute('data-hissa', hissa);
   div.style.cssText = 'display:flex;align-items:center;gap:4px;margin-bottom:4px;padding:3px 6px;background:#fff;border:1px solid #e0e0e0;border-radius:4px;';
-  div.innerHTML = '<input type="hidden" value="' + name.replace(/"/g,'&quot;') + '"><span style="flex:1;font-size:12px;">' + name + '</span><button class="btn btn-danger" onclick="this.parentElement.remove()" style="padding:0 5px;font-size:10px;line-height:1.5;">✕</button>';
+  div.innerHTML = '<span style="flex:1;font-size:12px;">' + name + ' <span style="color:#888;font-size:10px;">(x' + hissa + ')</span></span>' +
+    '<select onchange="updatePlanDishHissa(this)" style="width:45px;padding:1px 2px;border:1px solid #ddd;border-radius:3px;font-size:10px;font-family:Cairo;">' +
+    [1,2,3,4,5,6,8,10].map(function(n) { return '<option value="' + n + '"' + (n === hissa ? ' selected' : '') + '>' + n + '</option>'; }).join('') +
+    '</select><button class="btn btn-danger" onclick="this.parentElement.remove()" style="padding:0 5px;font-size:10px;line-height:1.5;">✕</button>';
   list.appendChild(div);
   sel.value = '';
+  if (hissaInput) hissaInput.value = '1';
+}
+function updatePlanDishHissa(sel) {
+  var item = sel.closest('.plan-dish-item');
+  if (item) item.setAttribute('data-hissa', sel.value);
 }
 function resetPlan() {
   ['plan-date','plan-bf-count','plan-lh-count','plan-dn-count'].forEach(function(id) {
@@ -17904,11 +17897,7 @@ function loadPlanFromWeeklyMenu() {
   var dayName = dayNames[tomorrow.getDay()];
   var meals = ['فطار','غداء','عشاء'];
   var prefixes = ['bf','lh','dn'];
-  // Clear existing lists
-  prefixes.forEach(function(p) {
-    var list = document.getElementById('plan-' + p + '-list');
-    if (list) list.innerHTML = '';
-  });
+  prefixes.forEach(function(p) { var el = document.getElementById('plan-' + p + '-list'); if (el) el.innerHTML = ''; });
   meals.forEach(function(meal, i) {
     var key = dayName + '|' + meal;
     var dishes = _weeklyMenu[key] || [];
@@ -17916,16 +17905,19 @@ function loadPlanFromWeeklyMenu() {
       var sel = document.getElementById('plan-' + prefixes[i] + '-add');
       var list = document.getElementById('plan-' + prefixes[i] + '-list');
       if (!sel || !list) return;
-      // Check if option exists
-      var opt = sel.querySelector('option[value="' + d.replace(/"/g,'&quot;') + '"]');
-      if (!opt) return;
+      if (list.querySelector('[data-name="' + d.replace(/"/g,'&quot;') + '"]')) return;
       var div = document.createElement('div');
+      div.className = 'plan-dish-item';
+      div.setAttribute('data-name', d);
+      div.setAttribute('data-hissa', '1');
       div.style.cssText = 'display:flex;align-items:center;gap:4px;margin-bottom:4px;padding:3px 6px;background:#fff;border:1px solid #e0e0e0;border-radius:4px;';
-      div.innerHTML = '<input type="hidden" value="' + d.replace(/"/g,'&quot;') + '"><span style="flex:1;font-size:12px;">' + d + '</span><button class="btn btn-danger" onclick="this.parentElement.remove()" style="padding:0 5px;font-size:10px;line-height:1.5;">✕</button>';
+      div.innerHTML = '<span style="flex:1;font-size:12px;">' + d + ' <span style="color:#888;font-size:10px;">(x1)</span></span>' +
+        '<select onchange="updatePlanDishHissa(this)" style="width:45px;padding:1px 2px;border:1px solid #ddd;border-radius:3px;font-size:10px;font-family:Cairo;">' +
+        [1,2,3,4,5,6,8,10].map(function(n) { return '<option value="' + n + '">' + n + '</option>'; }).join('') +
+        '</select><button class="btn btn-danger" onclick="this.parentElement.remove()" style="padding:0 5px;font-size:10px;line-height:1.5;">✕</button>';
       list.appendChild(div);
     });
   });
-  // Auto-fill counts from current P count
   var s = getTodayMealStats();
   ['plan-bf-count','plan-lh-count','plan-dn-count'].forEach(function(id) {
     var el = document.getElementById(id);
@@ -17944,17 +17936,14 @@ function calcPlanIngredients() {
   mealConfigs.forEach(function(m) {
     var count = parseInt(document.getElementById('plan-' + m.prefix + '-count').value) || 0;
     var dishes = getPlanDishList(m.prefix);
-    var recipes = [];
-    dishes.forEach(function(d) {
-      var r = getRecipeByName(d);
-      if (r) recipes.push(r);
-    });
-    if (count > 0 && recipes.length > 0) {
+    if (count > 0 && dishes.length > 0) {
       hasAny = true;
-      mealSummaries.push(m.label + ': ' + count + ' فرد ← ' + recipes.map(function(r) { return r.name; }).join('، '));
+      mealSummaries.push(m.label + ': ' + count + ' فرد ← ' + dishes.map(function(d) { return d.name + '(x' + d.hissa + ')'; }).join('، '));
     }
-    recipes.forEach(function(r) {
-      var factor = count / (r.base || 1);
+    dishes.forEach(function(d) {
+      var r = getRecipeByName(d.name);
+      if (!r) return;
+      var factor = (count / (r.base || 1)) * d.hissa;
       (r.items || []).forEach(function(it) {
         var key = it.n + '|' + (it.u || 'كجم');
         if (!totals[key]) totals[key] = { name: it.n, unit: it.u || 'كجم', qty: 0 };
@@ -17962,36 +17951,39 @@ function calcPlanIngredients() {
       });
     });
   });
-  if (!hasAny) { alert('⚠️ حدد الأفراد وأضف صنفاً واحداً على الأقل لكل وجبة'); return; }
+  if (!hasAny) { alert('⚠️ حدد الأفراد وأضف صنفاً واحداً على الأقل'); return; }
   renderPlanResults(totals, mealSummaries);
 }
 function renderPlanResults(totals, mealSummaries) {
   var el = document.getElementById('plan-results');
   if (!el) return;
-  var totalCost = 0;
+  var totalCost = 0, missingCost = 0;
   var sorted = Object.keys(totals).sort().map(function(key) {
     var t = totals[key];
-    var cost = getIngCost(t.name, t.unit);
-    var lineCost = cost !== undefined ? (cost * t.qty) : undefined;
-    if (lineCost !== undefined) totalCost += lineCost;
-    return '<tr><td>' + t.name + '</td><td style="text-align:center;">' + t.unit + '</td><td style="text-align:center;font-weight:700;color:#1565c0;">' + formatQty(t.qty) + '</td>' +
-      (lineCost !== undefined ? '<td style="text-align:center;color:#2e7d32;">' + formatQty(lineCost) + ' ج.م</td>' : '<td style="text-align:center;color:#999;">—</td>') + '</tr>';
+    var unitPrice = getIngCost(t.name, t.unit);
+    var lineCost = unitPrice !== undefined ? (unitPrice * t.qty) : undefined;
+    if (lineCost !== undefined) totalCost += lineCost; else missingCost++;
+    var unitPriceHtml = unitPrice !== undefined ? '<span style="color:#555;">' + unitPrice.toFixed(2) + ' ج</span>' : '<span style="color:#b71c1c;">—</span>';
+    var costHtml = lineCost !== undefined ? '<span style="font-weight:700;color:#2e7d32;">' + formatQty(lineCost) + ' ج.م</span>' : '<span style="color:#b71c1c;cursor:pointer;" onclick="openRecipeManager()">⚠️</span>';
+    return '<tr><td>' + t.name + '</td><td style="text-align:center;">' + t.unit + '</td><td style="text-align:center;font-weight:700;color:#1565c0;">' + formatQty(t.qty) + '</td><td style="text-align:center;">' + unitPriceHtml + '</td><td style="text-align:center;">' + costHtml + '</td></tr>';
   }).join('');
   el.style.display = 'block';
+  var mealIcon = {'bf':'🌅','lh':'☀️','dn':'🌙'};
   el.innerHTML = '<div style="background:#fff;border:2px solid #2e7d32;border-radius:10px;overflow:hidden;">' +
-    '<div style="background:#2e7d32;color:#fff;padding:10px 15px;font-weight:700;display:flex;justify-content:space-between;"><span>📋 الخامات المطلوبة — ' + Object.keys(totals).length + ' خامة</span>' +
-    '<span style="font-weight:400;font-size:12px;">لليوم ' + (document.getElementById('plan-date').value || '') + '</span></div>' +
+    '<div style="background:#2e7d32;color:#fff;padding:10px 15px;font-weight:700;display:flex;justify-content:space-between;flex-wrap:wrap;"><span>📋 الخامات المطلوبة ـ ' + Object.keys(totals).length + ' خامة</span>' +
+    '<span style="font-weight:400;font-size:12px;">' + (document.getElementById('plan-date').value || '') + '</span></div>' +
     '<div style="padding:10px;max-height:350px;overflow-y:auto;">' +
     (mealSummaries.length ? '<div style="font-size:12px;color:#555;margin-bottom:10px;padding:8px;background:#f5f5f5;border-radius:6px;">' + mealSummaries.join('<br>') + '</div>' : '') +
-    '<table style="width:100%;border-collapse:collapse;font-size:13px;"><thead><tr style="background:#e8f5e9;"><th style="padding:6px 8px;border:1px solid #c8e6c9;text-align:right;">الخامة</th><th style="padding:6px 8px;border:1px solid #c8e6c9;">الوحدة</th><th style="padding:6px 8px;border:1px solid #c8e6c9;">الكمية</th><th style="padding:6px 8px;border:1px solid #c8e6c9;">التكلفة</th></tr></thead><tbody>' + sorted + '</tbody></table>' +
-    (totalCost > 0 ? '<div style="text-align:left;padding:8px;background:#e8f5e9;border-top:2px solid #2e7d32;font-weight:700;font-size:15px;color:#1b5e20;">الإجمالي التقديري: ' + formatQty(totalCost) + ' ج.م</div>' : '') +
+    '<table style="width:100%;border-collapse:collapse;font-size:12px;"><thead><tr style="background:#e8f5e9;">' +
+    '<th style="padding:5px 6px;border:1px solid #c8e6c9;text-align:right;">الخامة</th><th style="padding:5px 6px;border:1px solid #c8e6c9;">الوحدة</th><th style="padding:5px 6px;border:1px solid #c8e6c9;">الكمية</th><th style="padding:5px 6px;border:1px solid #c8e6c9;">سعر الوحدة</th><th style="padding:5px 6px;border:1px solid #c8e6c9;">التكلفة</th></tr></thead><tbody>' + sorted + '</tbody></table>' +
+    (missingCost > 0 ? '<div style="text-align:center;padding:6px;background:#ffebee;font-size:12px;color:#b71c1c;">⚠️ ' + missingCost + ' خامة بدون سعر — افتح ⚙️ إدارة الوصفات > تحديث الأسعار</div>' : '') +
+    (totalCost > 0 ? '<div style="text-align:left;padding:8px;background:#e8f5e9;border-top:2px solid #2e7d32;font-weight:700;font-size:16px;color:#1b5e20;">الإجمالي التقديري: ' + formatQty(totalCost) + ' ج.م</div>' : '') +
     '</div></div>';
 }
 function exportPlanToExcel() {
   var el = document.getElementById('plan-results');
   if (!el || el.style.display === 'none') { alert('⚠️ احسب الخامات المطلوبة أولاً'); return; }
-  var rows = [];
-  var totals = {};
+  var rows = [], totals = {};
   var mealConfigs = [
     { prefix:'bf', meal:'إفطار' },
     { prefix:'lh', meal:'غداء' },
@@ -18000,15 +17992,14 @@ function exportPlanToExcel() {
   mealConfigs.forEach(function(m) {
     var count = parseInt(document.getElementById('plan-' + m.prefix + '-count').value) || 0;
     var dishes = getPlanDishList(m.prefix);
-    var recipeNames = [];
-    dishes.forEach(function(d) { var r = getRecipeByName(d); if (r) recipeNames.push(r.name); });
+    var recipeNames = dishes.map(function(d) { var r = getRecipeByName(d.name); return r ? r.name : d.name; });
     if (count > 0 && recipeNames.length > 0) {
       rows.push({ 'الوجبة': m.meal, 'عدد الأفراد': count, 'الأصناف': recipeNames.join(', ') });
     }
     dishes.forEach(function(d) {
-      var r = getRecipeByName(d);
+      var r = getRecipeByName(d.name);
       if (!r) return;
-      var factor = count / (r.base || 1);
+      var factor = (count / (r.base || 1)) * d.hissa;
       (r.items || []).forEach(function(it) {
         var key = it.n + '|' + (it.u || 'كجم');
         if (!totals[key]) totals[key] = { name: it.n, unit: it.u || 'كجم', qty: 0 };
@@ -18024,9 +18015,36 @@ function exportPlanToExcel() {
   try {
     var ws = XLSX.utils.json_to_sheet(rows);
     var wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'تخطيط_الوجبات');
-    XLSX.writeFile(wb, 'تخطيط_وجبات_' + (document.getElementById('plan-date').value || '') + '.xlsx');
+    XLSX.utils.book_append_sheet(wb, ws, 'حاسبة_الوجبات');
+    XLSX.writeFile(wb, 'حاسبة_وجبات_' + (document.getElementById('plan-date').value || '').replace(/-/g,'') + '.xlsx');
   } catch(e) { alert('خطأ في التصدير: ' + e.message); }
+}
+function printPlanResults() {
+  var el = document.getElementById('plan-results');
+  if (!el || el.style.display === 'none') { alert('⚠️ احسب الخامات المطلوبة أولاً'); return; }
+  var content = el.innerHTML;
+  var date = document.getElementById('plan-date').value || '';
+  var w = window.open('', '_blank');
+  w.document.write('<html dir="rtl"><head><meta charset="UTF-8"><title>تقرير حاسبة الوجبات</title>' +
+    '<style>' +
+    'body{font-family:Cairo,"Traditional Arabic",sans-serif;padding:20px;color:#222;}' +
+    'h2{color:#1b5e20;text-align:center;margin-bottom:5px;}' +
+    '.date{text-align:center;color:#666;margin-bottom:20px;font-size:14px;}' +
+    'table{width:100%;border-collapse:collapse;margin-top:10px;}' +
+    'th{background:#2e7d32;color:#fff;padding:8px;border:1px solid #2e7d32;text-align:center;font-size:13px;}' +
+    'td{padding:8px;border:1px solid #c8e6c9;text-align:center;font-size:12px;}' +
+    'tr:nth-child(even){background:#f5f5f5;}' +
+    '.total{text-align:left;padding:10px;background:#e8f5e9;font-weight:700;font-size:16px;border-top:2px solid #2e7d32;}' +
+    '.meal-summary{font-size:13px;color:#555;margin-bottom:10px;padding:10px;background:#f5f5f5;border-radius:6px;}' +
+    '.footer{text-align:center;margin-top:30px;color:#999;font-size:11px;}' +
+    '@media print{body{padding:10px;}}' +
+    '</style></head><body>' +
+    '<h2>📋 حاسبة الوجبات المتكاملة</h2>' +
+    '<div class="date">' + date + '</div>' + content +
+    '<div class="footer">تم الإنشاء بواسطة LINAHSYSTEM</div>' +
+    '</body></html>');
+  w.document.close();
+  setTimeout(function() { w.print(); }, 500);
 }
 // ===== نهاية تخطيط وجبات الغد =====
 
@@ -18430,104 +18448,7 @@ function renderChefCostEditor() {
   }).join('');
 }
 
-function addChefDish(){
-  var list=document.getElementById('chef-dishes-list');
-  var idx=list.children.length;
-  var div=document.createElement('div');
-  div.style.cssText='display:flex;gap:6px;align-items:center;margin-bottom:6px;';
-  div.innerHTML='<select class="chef-dish-select" style="flex:1;padding:6px 8px;border:1px solid #ccc;border-radius:6px;font-size:13px;font-family:Cairo;"><option value="">— اختر الصنف —</option>'+RECIPES.map(function(r,i){return '<option value="'+i+'">'+r.name+'</option>';}).join('')+'</select><input type="number" class="chef-dish-hissa" value="1" min="1" step="1" style="width:60px;padding:6px;border:1px solid #ccc;border-radius:6px;font-size:13px;text-align:center;" title="عدد الحصص"><button class="btn btn-danger" onclick="this.parentElement.remove()" style="padding:4px 8px;font-size:11px;">✕</button>';
-  list.appendChild(div);
-}
-function calcChefMulti(){
-  var empInp=document.getElementById('chef-employees');
-  var emp=parseInt(empInp.value);
-  if(isNaN(emp)||emp<=0){ alert('ادخل عدد الأفراد بشكل صحيح.'); return; }
-  var dishes=document.querySelectorAll('#chef-dishes-list .chef-dish-select');
-  var activeDishes=[];
-  dishes.forEach(function(sel){
-    if(sel.value){
-      var hissaInput=sel.parentElement.querySelector('.chef-dish-hissa');
-      var hissa=parseInt(hissaInput?hissaInput.value:1);
-      activeDishes.push({ recipe:RECIPES[parseInt(sel.value)], hissa:isNaN(hissa)||hissa<1?1:hissa });
-    }
-  });
-  if(activeDishes.length===0){ alert('أضف صنفاً واحداً على الأقل.'); return; }
-  var totals={};
-  var totalCost=0;
-  activeDishes.forEach(function(d){
-    var factor=emp/d.recipe.base;
-    d.recipe.items.forEach(function(it){
-      var key=it.n+'|'+it.u;
-      if(!totals[key]) totals[key]={ name:it.n, unit:it.u, qty:0 };
-      totals[key].qty+=it.q*factor*d.hissa;
-    });
-  });
-  var mealType=document.getElementById('chef-meal-type').value;
-  var names=activeDishes.map(function(d){ return d.recipe.name+' (x'+d.hissa+')'; }).join('، ');
-  var body=document.getElementById('chef-result-body');
-  var missingCount=0;
-  var sorted=Object.keys(totals).sort().map(function(k){
-    var t=totals[k];
-    var cost=getIngCost(t.name, t.unit);
-    var lineCost=(cost!==undefined)? (cost*t.qty) : 0;
-    if (cost!==undefined) totalCost+=lineCost; else missingCount++;
-    var costCell = (cost!==undefined) ? ('<td style="text-align:center;font-weight:700;color:#2e7d32;">'+formatQty(lineCost)+' ج.م</td>') : ('<td style="text-align:center;color:#b71c1c;font-size:11px;cursor:pointer;" title="اضغط لإضافة سعر" onclick="openRecipeManager()">⚠️ بدون سعر</td>');
-    return '<tr><td>'+t.name+'</td><td style="text-align:center;">'+t.unit+'</td><td style="text-align:center;font-weight:700;color:#1565c0;">'+formatQty(t.qty)+'</td>'+costCell+'</tr>';
-  }).join('');
-  var costRow = (totalCost>0) ? ('<tr class="summary-row"><td colspan="3" style="text-align:right;">إجمالي تكلفة الخامات التقديرية</td><td style="text-align:center;font-weight:700;color:#2e7d32;">'+formatQty(totalCost)+' ج.م</td></tr>') : '';
-  var missingRow = missingCount ? ('<tr><td colspan="4" style="text-align:center;color:#b71c1c;padding:8px;font-size:13px;background:#ffebee;"><b>⚠️ '+missingCount+' خامة بدون سعر</b> — اضغط على ⚠️ لإضافة السعر أو افتح ⚙️ إدارة الوصفات > تحديث أسعار</td></tr>') : '';
-  body.innerHTML='<tr style="background:#e3f2fd;font-weight:700;"><td colspan="4" style="text-align:center;">🍳 '+mealType+' | '+names+' | عدد الأفراد: '+emp+'</td></tr>'+sorted+costRow+missingRow;
-  document.getElementById('chef-result-wrap').style.display='block';
-}
-function printChefCalcMulti(){
-  var wrap=document.getElementById('chef-result-wrap');
-  if(wrap.style.display==='none'||!wrap.innerHTML.trim()){ alert('احسب الخامات أولاً.'); return; }
-  var body=document.getElementById('chef-result-body').innerHTML;
-  var emp=document.getElementById('chef-employees').value;
-  var mealType=document.getElementById('chef-meal-type').value;
-  var mealIcon={'فطار':'🌅','غداء':'☀️','عشاء':'🌙'}[mealType]||'🍳';
-  var today=new Date().toLocaleDateString('ar-EG',{year:'numeric',month:'long',day:'numeric',weekday:'long'});
-  var w=window.open('','_blank');
-  w.document.write('<html dir="rtl"><head><title>تقرير حاسبة الوجبات</title>'+
-  '<style>'+
-    '@page{size:A4 portrait;margin:1.5cm 2cm;}'+
-    'body{font-family:"Cairo",sans-serif;padding:0;margin:0;color:#333;}'+
-    '.header{text-align:center;padding-bottom:15px;border-bottom:3px solid #1b5e20;margin-bottom:15px;}'+
-    '.header h1{color:#1b5e20;font-size:22px;margin:0 0 4px;}'+
-    '.header .sub{color:#666;font-size:13px;}'+
-    '.header .date{color:#999;font-size:11px;margin-top:6px;}'+
-    '.info-bar{display:flex;justify-content:space-between;background:#f5faf5;padding:10px 14px;border-radius:8px;margin-bottom:15px;font-size:13px;}'+
-    '.info-bar div{text-align:center;}'+
-    '.info-bar .label{color:#888;font-size:11px;}'+
-    '.info-bar .value{font-weight:700;color:#1b5e20;font-size:15px;}'+
-    'table{width:100%;border-collapse:collapse;font-size:13px;margin-top:10px;}'+
-    'thead th{background:#1b5e20;color:#fff;padding:10px 12px;text-align:center;font-weight:600;font-size:14px;}'+
-    'thead th:first-child{text-align:right;}'+
-    'tbody td{padding:8px 12px;border-bottom:1px solid #e8f5e9;text-align:center;}'+
-    'tbody td:first-child{text-align:right;font-weight:600;}'+
-    'tbody tr:nth-child(even){background:#f8fdf8;}'+
-    'tbody tr:hover{background:#e8f5e9;}'+
-    '.summary-row td{background:#e8f5e9;color:#1b5e20;font-weight:700;font-size:14px;text-align:center!important;}'+
-    '.footer{text-align:center;margin-top:20px;padding-top:12px;border-top:1px solid #e0e0e0;font-size:11px;color:#999;}'+
-    '.watermark{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%)rotate(-20deg);font-size:80px;opacity:0.04;color:#1b5e20;pointer-events:none;z-index:-1;}'+
-    '@media print{body{padding:0;}}'+
-  '</style></head><body>'+
-  '<div class="watermark">🍳</div>'+
-  '<div class="header">'+
-    '<h1>🌿 لينه فارمز — حاسبة الوجبات</h1>'+
-    '<div class="sub">نظام الشئون الإدارية المتكامل</div>'+
-    '<div class="date">' + today + '</div>'+
-  '</div>'+
-  '<div class="info-bar">'+
-    '<div><div class="label">الوجبة</div><div class="value">' + mealIcon + ' ' + mealType + '</div></div>'+
-    '<div><div class="label">عدد الأفراد</div><div class="value">' + emp + '</div></div>'+
-    '<div><div class="label">تاريخ الطباعة</div><div class="value">' + new Date().toLocaleDateString('ar-EG') + '</div></div>'+
-  '</div>'+
-   '<table><thead><tr><th style="width:42%;">الخامة</th><th style="width:15%;">الوحدة</th><th style="width:22%;">الكمية المطلوبة</th><th style="width:21%;">التكلفة (ج.م)</th></tr></thead><tbody>' + body + '</tbody></table>'+
-  '<div class="footer">تم إنشاء هذا التقرير بواسطة منظومة الشئون الإدارية المتكاملة — لينه فارمز © ' + new Date().getFullYear() + '</div>'+
-  '</body></html>');
-  w.document.close(); w.print();
-}
+
 function formatQty(q){
   if(!isFinite(q)) return '0';
   var r=Math.round(q*1000)/1000;
