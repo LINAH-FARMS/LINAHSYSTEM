@@ -5841,6 +5841,7 @@
       }).filter(function(s) {
         if (!s || !s.trim()) return false;
         if (s.indexOf('?') !== -1) return false;
+        if (s.indexOf('[object') !== -1) return false;
         if (s.trim().length < 1) return false;
         return true;
       }).filter(function(s) {
@@ -9444,7 +9445,6 @@ function toggleEmployeeStatus(empId) {
         var empVacations = vacations.filter(function(v) { return v.code === empCode; });
         if (empVacations.length === 0) return;
         var active = empVacations.some(function(v) {
-          if (v.type === 'امتداد' || v.type === 'مأمورية') return false;
           var travel = v.travelDate || v.start;
           var ret = v.returnDate || v.end;
           if (!travel || !ret) return false;
