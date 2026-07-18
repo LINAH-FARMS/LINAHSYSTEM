@@ -4538,12 +4538,17 @@
         if (emp.title && !dynamicTitles.includes(emp.title.trim())) dynamicTitles.push(emp.title.trim());
         if (emp.gov && !allGovs.includes(emp.gov.trim())) allGovs.push(emp.gov.trim());
       });
+      // Remove invalid governorates and sort
+      var validGovs = allGovs.filter(function(g) {
+        var g2 = g.trim();
+        return g2 && g2 !== 'الفرافرة' && g2 !== 'فرافرة' && g2 !== 'الفرافره' && g2.length > 1;
+      }).sort(function(a, b) { return a.localeCompare(b, 'ar'); });
       _lsSet('dyn_depts', JSON.stringify(dynamicDepts));
       _lsSet('dyn_titles', JSON.stringify(dynamicTitles));
       rebuildDeptTitles();
 
       fillSelectWithOptions('form-emp-dept', dynamicDepts, '-- اختر الإدارة --');
-      fillSelectWithOptions('form-emp-gov', allGovs, '-- اختر المحافظة --');
+      fillSelectWithOptions('form-emp-gov', validGovs, '-- اختر المحافظة --');
       fillSelectWithOptions('form-emp-sector', dynamicSectors, '-- اختر المبنى --');
       var secSel = document.getElementById('form-emp-sector');
       if (secSel) { secSel.onchange = updateEmpRoomBySector; }
