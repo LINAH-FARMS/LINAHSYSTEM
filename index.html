@@ -16203,7 +16203,7 @@ var reportsTab = document.getElementById('tab-reports');
       if (typeof finInit === 'function') finInit();
       _reportsApiUrl = _lsGet('linah_reports_api_url') || '';
       setTimeout(function() {
-        _safe(renderTable); _safe(renderInventoryTable); _safe(renderInventoryItems); _safe(renderArchiveTable); _safe(renderVacationsTable); _safe(renderOvertimeCalendar);
+        _safe(renderTable); _safe(renderInventoryTable); _safe(renderInventoryItems); _safe(renderArchiveTable); _safe(renderVacationsTable); _safe(renderOvertimeCalendar); _safe(calculateSystemStats);
         setTimeout(function() {
           _safe(renderHospitalityTable); _safe(renderMaintenanceTable); _safe(renderSepticTable); _safe(renderPeriodicMaintenance); _safe(renderTeaSugarTable);
           setTimeout(function() {
