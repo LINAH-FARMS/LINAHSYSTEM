@@ -6536,59 +6536,57 @@
       });
       var sectionsHtml = '';
       if (opts['rpt-workforce']) {
-        sectionsHtml += '<div class="rp-section">' + sec('بيانات المخزن صرف', totalEmp + ' بيانات | ' + pCount + ' الشاي | ' + vCount + ' والسكر') + '</div>';
+        sectionsHtml += '<div class="rp-section">' + sec('القوة العاملة', totalEmp + ' إجمالي | ' + pCount + ' حاضر | ' + vCount + ' إجازة') + '</div>';
       }
       if (opts['rpt-housing']) {
         var occPct = totalBeds > 0 ? Math.round(occupiedBeds / totalBeds * 100) : 0;
-        sectionsHtml += '<div class="rp-section">' + sec('بيانات المهام', totalBeds + ' الدورية | ' + occupiedBeds + ' المقاولون (' + occPct + '%) | ' + vacantBeds + ' المستبعدون') + '</div>';
+        sectionsHtml += '<div class="rp-section">' + sec('السكن', totalBeds + ' سرير | ' + occupiedBeds + ' مشغول (' + occPct + '%) | ' + vacantBeds + ' شاغر') + '</div>';
       }
       if (opts['rpt-meals']) {
-        sectionsHtml += '<div class="rp-section">' + sec('التقرير اختر', 'النوع ' + (pCount + mealStats.gBf) + ' | والأقسام ' + (pCount + mealStats.gLh) + ' | والتاريخ ' + (pCount + mealStats.gDn)) + '</div>';
+        sectionsHtml += '<div class="rp-section">' + sec('الوجبات', 'فطار ' + (pCount + mealStats.gBf) + ' | غداء ' + (pCount + mealStats.gLh) + ' | عشاء ' + (pCount + mealStats.gDn)) + '</div>';
       }
       if (opts['rpt-guests']) {
         var gTotal = todayGuests.reduce(function(s,h) { return s + (parseInt(h.guests) || 1); }, 0);
-        sectionsHtml += '<div class="rp-section">' + sec('ثم أدخل', todayGuests.length + ' كلمة | ' + gTotal + ' المرور') + '</div>';
+        sectionsHtml += '<div class="rp-section">' + sec('الضيافة', todayGuests.length + ' زائر | ' + gTotal + ' ضيف') + '</div>';
       }
       if (opts['rpt-vacations']) {
-        sectionsHtml += '<div class="rp-section">' + sec('بيانات يومي', activeVacations.length + ' أسبوعي بيانات التاريخ من') + '</div>';
+        sectionsHtml += '<div class="rp-section">' + sec('الإجازات', activeVacations.length + ' سجل') + '</div>';
       }
       if (opts['rpt-maintenance']) {
-        var openM = todayMaint.filter(function(m) { return m.status === 'إلى' || m.status === 'open' || m.status === 'بيانات'; }).length;
-        sectionsHtml += '<div class="rp-section">' + sec('كلمة المرور', todayMaint.length + ' تأكيد | ' + openM + ' وتوليد') + '</div>';
+        var openM = todayMaint.filter(function(m) { return m.status === 'مفتوح' || m.status === 'open'; }).length;
+        sectionsHtml += '<div class="rp-section">' + sec('الصيانة', todayMaint.length + ' طلب | ' + openM + ' مفتوح') + '</div>';
       }
       if (opts['rpt-septic']) {
-        sectionsHtml += '<div class="rp-section">' + sec('بيانات التقرير', todaySeptic.length + ' خطأ') + '</div>';
+        sectionsHtml += '<div class="rp-section">' + sec('البيارات', todaySeptic.length + ' عملية') + '</div>';
       }
       if (opts['rpt-bakery-prod']) {
         var prodTotal = todayProd.reduce(function(s,p) { return s + (p.breadCount || 0); }, 0);
-        sectionsHtml += '<div class="rp-section">' + sec('بيانات كلمة السر', prodTotal + ' حدد') + '</div>';
+        sectionsHtml += '<div class="rp-section">' + sec('إنتاج المخبز', prodTotal + ' رغيف') + '</div>';
       }
       if (opts['rpt-bakery-supply']) {
         var ctrBread = todayCtr.reduce(function(s,c) { return s + (c.count || 0); }, 0);
-        var ctrRev = todayCtr.reduce(function(s,c) { return s + ((c.count || 0) * (c.price || 0)); }, 0);
-        var ctrPaid = todayCtr.reduce(function(s,c) { return s + (parseFloat(c.paid) || 0); }, 0);
         var ctrNames = todayCtr.map(function(c) { return c.name + ' ' + (c.count || 0); }).join(' | ');
-        sectionsHtml += '<div class="rp-section">' + sec('بيانات نوع التقرير', ctrBread + ' حدد | ' + ctrNames) + '</div>';
+        sectionsHtml += '<div class="rp-section">' + sec('توريد الخبز', ctrBread + ' رغيف | ' + ctrNames) + '</div>';
       }
       if (opts['rpt-inventory']) {
         var invItems = todayInv.reduce(function(s,v) { return s + (parseInt(v.qty) || 0); }, 0);
-        sectionsHtml += '<div class="rp-section">' + sec('بيانات التاريخ القوة', todayInv.length + ' العاملة | ' + invItems + ' كل') + '</div>';
+        sectionsHtml += '<div class="rp-section">' + sec('المخزن', todayInv.length + ' صرف | ' + invItems + ' صنف') + '</div>';
       }
       if (opts['rpt-tea']) {
         var teaQ = todayTea.reduce(function(s,t) { return s + (parseFloat(t.teaQty) || 0); }, 0);
         var sugarQ = todayTea.reduce(function(s,t) { return s + (parseFloat(t.sugarQty) || 0); }, 0);
-        sectionsHtml += '<div class="rp-section">' + sec('بيانات متواجد إجازة السكن', todayTea.length + ' سرير | مشغول ' + teaQ + ' | شاغر ' + sugarQ + ' الوجبات') + '</div>';
+        sectionsHtml += '<div class="rp-section">' + sec('الشاي والسكر', todayTea.length + ' صرف | شاي ' + teaQ + ' كجم | سكر ' + sugarQ + ' كجم') + '</div>';
       }
       if (opts['rpt-pm']) {
-        var pmDone = todayPM.filter(function(p) { return p.status === 'فطار' || p.status === '?'; }).length;
-        sectionsHtml += '<div class="rp-section">' + sec('غداء عشاء الضيوف', todayPM.length + ' زيارة | ' + pmDone + ' ضيف') + '</div>';
+        var pmDone = todayPM.filter(function(p) { return p.status === 'تم' || p.status === 'تم التنفيذ'; }).length;
+        sectionsHtml += '<div class="rp-section">' + sec('الصيانة الدورية', todayPM.length + ' مهمة | ' + pmDone + ' منفذ') + '</div>';
       }
       if (opts['rpt-contractors']) {
         var ctrDaily = contractors.reduce(function(s,c) { return s + (parseFloat(c.dailyRate) || 0); }, 0);
-        sectionsHtml += '<div class="rp-section">' + sec('بيانات الإجازات', contractors.length + ' موظف | في إجازة ' + ctrDaily.toFixed(0) + ' جنيه') + '</div>';
+        sectionsHtml += '<div class="rp-section">' + sec('المقاولين', contractors.length + ' مقاول | إجمالي يومي ' + ctrDaily.toFixed(0) + ' ج.م') + '</div>';
       }
       if (opts['rpt-excluded']) {
-        sectionsHtml += '<div class="rp-section">' + sec('بيانات اليوم', excludedEmployees.length + ' مفتوحة') + '</div>';
+        sectionsHtml += '<div class="rp-section">' + sec('المستبعدين', excludedEmployees.length + ' موظف') + '</div>';
       }
       if (!sectionsHtml) sectionsHtml = '<div style="text-align:center;padding:30px;color:#888;">بيانات الصيانة مهمة بيانات مفتوحة البيارات</div>';
       var fullHtml = '<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8"><title>عملية إنتاج - الخبز رغيف</title>' +
@@ -6697,6 +6695,26 @@
       if (opts['rpt-guests']) {
         var gTotal = uniqueGuests.reduce(function(s,h) { return s + (parseInt(h.guests) || 1); }, 0);
         sectionsHtml += '<div class="rp-section">' + sec('اليومي الشئون', uniqueGuests.length + ' الإدارية | ' + gTotal + ' منظومة') + '</div>';
+      if (opts['rpt-workforce']) {
+        sectionsHtml += '<div class="rp-section">' + sec('القوة العاملة', totalEmp + ' إجمالي | ' + pCount + ' حاضر | ' + vCount + ' إجازة') + '</div>';
+      }
+      if (opts['rpt-housing']) {
+        var occPct = totalBeds > 0 ? Math.round(occupiedBeds / totalBeds * 100) : 0;
+        sectionsHtml += '<div class="rp-section">' + sec('السكن', totalBeds + ' سرير | ' + occupiedBeds + ' مشغول (' + occPct + '%) | ' + vacantBeds + ' شاغر') + '</div>';
+      }
+      if (opts['rpt-meals']) {
+        var mBf = 0, mLh = 0, mDn = 0;
+        days.forEach(function(dateInput) {
+          var ms = getTodayMealStats();
+          mBf += pCount + ms.gBf;
+          mLh += pCount + ms.gLh;
+          mDn += pCount + ms.gDn;
+        });
+        sectionsHtml += '<div class="rp-section">' + sec('الوجبات', 'فطار ' + mBf + ' | غداء ' + mLh + ' | عشاء ' + mDn + ' (×' + days.length + ' يوم)') + '</div>';
+      }
+      if (opts['rpt-guests']) {
+        var gTotal = uniqueGuests.reduce(function(s,h) { return s + (parseInt(h.guests) || 1); }, 0);
+        sectionsHtml += '<div class="rp-section">' + sec('الضيافة', uniqueGuests.length + ' زائر | ' + gTotal + ' ضيف') + '</div>';
       }
       if (opts['rpt-vacations']) {
         var uniqueVac = [];
@@ -6704,42 +6722,42 @@
         allVac.forEach(function(v) {
           if (!vSeen[v.nationalId || v.name]) { vSeen[v.nationalId || v.name] = true; uniqueVac.push(v); }
         });
-        sectionsHtml += '<div class="rp-section">' + sec('بيانات الشئون', uniqueVac.length + ' الإدارية بيانات المتكاملة لينه فارمز') + '</div>';
+        sectionsHtml += '<div class="rp-section">' + sec('الإجازات', uniqueVac.length + ' سجل') + '</div>';
       }
       if (opts['rpt-maintenance']) {
-        var openM = allMaint.filter(function(m) { return m.status === 'التقرير' || m.status === 'open' || m.status === 'بيانات'; }).length;
-        sectionsHtml += '<div class="rp-section">' + sec('اليومي افتح', allMaint.length + ' البوب | ' + openM + ' أب') + '</div>';
+        var openM = allMaint.filter(function(m) { return m.status === 'مفتوح' || m.status === 'open'; }).length;
+        sectionsHtml += '<div class="rp-section">' + sec('الصيانة', allMaint.length + ' طلب | ' + openM + ' مفتوح') + '</div>';
       }
       if (opts['rpt-septic']) {
-        sectionsHtml += '<div class="rp-section">' + sec('بيانات بلوك', allSeptic.length + ' وجرّب') + '</div>';
+        sectionsHtml += '<div class="rp-section">' + sec('البيارات', allSeptic.length + ' عملية') + '</div>';
       }
       if (opts['rpt-bakery-prod']) {
         var prodTotal = allProd.reduce(function(s,p) { return s + (p.breadCount || 0); }, 0);
-        sectionsHtml += '<div class="rp-section">' + sec('بيانات تاني خطأ', prodTotal + ' في (إنشاء ' + days.length + ' التقرير)') + '</div>';
+        sectionsHtml += '<div class="rp-section">' + sec('إنتاج المخبز', prodTotal + ' رغيف (' + days.length + ' يوم)') + '</div>';
       }
       if (opts['rpt-bakery-supply']) {
         var ctrBread = allCtr.reduce(function(s,c) { return s + (c.count || 0); }, 0);
-        sectionsHtml += '<div class="rp-section">' + sec('بيانات تاريخ غير', ctrBread + ' صحيح (القوة ' + days.length + ' العاملة)') + '</div>';
+        sectionsHtml += '<div class="rp-section">' + sec('توريد الخبز', ctrBread + ' رغيف | ' + days.length + ' يوم') + '</div>';
       }
       if (opts['rpt-inventory']) {
         var invItems = allInv.reduce(function(s,v) { return s + (parseInt(v.qty) || 0); }, 0);
-        sectionsHtml += '<div class="rp-section">' + sec('بيانات كل متواجد', allInv.length + ' إجازة | ' + invItems + ' السكن') + '</div>';
+        sectionsHtml += '<div class="rp-section">' + sec('المخزن', allInv.length + ' صرف | ' + invItems + ' صنف') + '</div>';
       }
       if (opts['rpt-tea']) {
         var teaQ = allTea.reduce(function(s,t) { return s + (parseFloat(t.teaQty) || 0); }, 0);
         var sugarQ = allTea.reduce(function(s,t) { return s + (parseFloat(t.sugarQty) || 0); }, 0);
-        sectionsHtml += '<div class="rp-section">' + sec('بيانات سرير مشغول شاغر', allTea.length + ' الوجبات | فطار ' + teaQ + ' | غداء ' + sugarQ + ' عشاء') + '</div>';
+        sectionsHtml += '<div class="rp-section">' + sec('الشاي والسكر', allTea.length + ' صرف | شاي ' + teaQ + ' كجم | سكر ' + sugarQ + ' كجم') + '</div>';
       }
       if (opts['rpt-pm']) {
-        var pmDone = allPM.filter(function(p) { return p.status === 'إجمالي' || p.status === '?'; }).length;
-        sectionsHtml += '<div class="rp-section">' + sec('أيام الضيوف زيارة', allPM.length + ' ضيف | ' + pmDone + ' خلال') + '</div>';
+        var pmDone = allPM.filter(function(p) { return p.status === 'تم' || p.status === 'تم التنفيذ'; }).length;
+        sectionsHtml += '<div class="rp-section">' + sec('الصيانة الدورية', allPM.length + ' مهمة | ' + pmDone + ' منفذ') + '</div>';
       }
       if (opts['rpt-contractors']) {
         var ctrDaily = contractors.reduce(function(s,c) { return s + (parseFloat(c.dailyRate) || 0); }, 0);
-        sectionsHtml += '<div class="rp-section">' + sec('بيانات الإجازات', contractors.length + ' موظف | في إجازة ' + ctrDaily.toFixed(0) + ' جنيه') + '</div>';
+        sectionsHtml += '<div class="rp-section">' + sec('المقاولين', contractors.length + ' مقاول | إجمالي يومي ' + ctrDaily.toFixed(0) + ' ج.م') + '</div>';
       }
       if (opts['rpt-excluded']) {
-        sectionsHtml += '<div class="rp-section">' + sec('بيانات الفترة', excludedEmployees.length + ' مفتوحة') + '</div>';
+        sectionsHtml += '<div class="rp-section">' + sec('المستبعدين', excludedEmployees.length + ' موظف') + '</div>';
       }
       if (!sectionsHtml) sectionsHtml = '<div style="text-align:center;padding:30px;color:#888;">بيانات الصيانة مهمة بيانات مفتوحة رغيف</div>';
       var fullHtml = '<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8"><title>البيارات عملية - الخبز إنتاج</title>' +
@@ -7129,7 +7147,7 @@
         }
       });
       var farmLoaves = workerLoaves + womenLoaves + studentLoaves + otherLoaves;
-      totalLoaves += ctrLoaves + nightLoaves;
+      var totalLoaves = farmLoaves + returnFromVacation + nightLoaves + ctrLoaves;
       var logoSrc = '';
       var logoEl = document.querySelector('img[alt="Logo"]');
       if (logoEl) logoSrc = logoEl.src;
