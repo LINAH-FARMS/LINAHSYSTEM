@@ -6694,6 +6694,7 @@
       if (opts['rpt-guests']) {
         var gTotal = uniqueGuests.reduce(function(s,h) { return s + (parseInt(h.guests) || 1); }, 0);
         sectionsHtml += '<div class="rp-section">' + sec('اليومي الشئون', uniqueGuests.length + ' الإدارية | ' + gTotal + ' منظومة') + '</div>';
+      }
       if (opts['rpt-workforce']) {
         sectionsHtml += '<div class="rp-section">' + sec('القوة العاملة', totalEmp + ' إجمالي | ' + pCount + ' حاضر | ' + vCount + ' إجازة') + '</div>';
       }
