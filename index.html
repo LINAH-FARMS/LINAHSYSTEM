@@ -9702,12 +9702,13 @@ function toggleEmployeeStatus(empId) {
       if(document.getElementById('hosp-meal-dn').checked) meals.push("عشاء");
 
       if (editId) {
-        let idx = hospitalities.findIndex(h => h._id == editId);
+        let idx = hospitalities.findIndex(h => h._id == editId || (typeof h._id === 'undefined' && h.name === name && h.arrival === arrival));
+        if (idx === -1) idx = hospitalities.findIndex(h => h.name === name && h.arrival === arrival);
         if (idx !== -1) {
           hospitalities[idx] = { _id: editId, name, type, title, arrival, departure, guests, meals: meals.slice() };
         }
         document.getElementById('hosp-edit-id').value = '';
-        document.getElementById('hosp-save-btn').innerHTML = '💾 حفظ التعديلات';
+        document.getElementById('hosp-save-btn').innerHTML = '🛎️ تسجيل وإعتماد الزيارة';
         document.getElementById('hosp-save-btn').onclick = function() { addHospitalityRecord(); };
       } else {
         var dupHosp = hospitalities.find(function(h) { return h.name === name && h.arrival === arrival; });
@@ -9721,10 +9722,11 @@ function toggleEmployeeStatus(empId) {
       alert("تم تسجيل الزيارة وإضافة الوجبات إلى سجل الوجبات.");
     }
 
-    function editHospitality(id) {
-      let h = hospitalities.find(h => h._id == id);
+    function editHospitality(idx) {
+      let h = hospitalities[idx];
       if (!h) return;
-      document.getElementById('hosp-edit-id').value = h._id;
+      let id = h._id || Date.now().toString();
+      document.getElementById('hosp-edit-id').value = id;
       document.getElementById('hosp-name').value = h.name;
       document.getElementById('hosp-type').value = h.type;
       document.getElementById('hosp-title').value = h.title || '';
@@ -9771,7 +9773,7 @@ function toggleEmployeeStatus(empId) {
           <td style="text-align:center;font-weight:700;">${h.guests || 1}</td>
           <td style="text-align:center;">${(function(){ var mealLabels = []; var _ml = h.meals; if (_ml && typeof _ml === 'object' && typeof _ml.length === 'number') { for (var _i = 0; _i < _ml.length; _i++) { var _m = _ml[_i]; if (_m === 'إفطار' || _m === 'مأمورية') mealLabels.push('إفطار'); else if (_m === 'غداء' || _m === 'امتداد') mealLabels.push('غداء'); else if (_m === 'عشاء' || _m === 'اعتيادية') mealLabels.push('عشاء'); else mealLabels.push(_m); } } if (!mealLabels.length) return '<span style="color:#999;font-size:11px;">—</span>'; var _html = ''; for (var _j = 0; _j < mealLabels.length; _j++) { _html += '<span style="display:inline-block;background:#e3f2fd;color:#1565c0;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:700;margin:1px;">' + mealLabels[_j] + '</span>'; } return _html; })()}</td>
           <td class="no-print" style="white-space:nowrap;">
-            <button class="btn btn-secondary" style="padding:2px 6px; font-size:11px;" onclick="editHospitality('${h._id}')">📝</button>
+            <button class="btn btn-secondary" style="padding:2px 6px; font-size:11px;" onclick="editHospitality(${realIdx})">📝</button>
             <button class="btn btn-danger" style="padding:2px 6px; font-size:11px;" onclick="deleteHospitality(${realIdx})">حذف</button>
           </td>
         `;
