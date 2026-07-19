@@ -2025,6 +2025,7 @@
       <button class="btn btn-secondary" onclick="showPrintChoice('')">🖨️ طباعة</button>
       <button class="btn" style="background:#e65100;color:white;padding:6px 12px;font-size:13px;" onclick="openModal('modal-add-room')">🛏️ تعديل سعة الغرف</button>
       <button class="btn btn-warning" style="padding:6px 12px;font-size:12px;" onclick="exportBackupSystem()">💾 نسخة احتياطية</button>
+      <button class="btn" style="background:#1b5e20;color:white;padding:6px 12px;font-size:12px;" onclick="exportFullBackup()">☁️ نسخة كاملة + سحابة</button>
       <button class="btn btn-danger" style="padding:6px 12px;font-size:12px;" onclick="document.getElementById('header-import-backup').click();this.classList.remove('btn-restore-pulse')">📂 استعادة نسخة</button>
       <input type="file" id="header-import-backup" style="display:none;" accept=".json" onchange="importBackupSystem(event)">
       <button class="btn" style="background:#1565c0;color:white;padding:6px 12px;font-size:12px;" onclick="exportToSQLite()">📤 تصدير SQLite</button>
@@ -12982,10 +12983,59 @@ function exportContractorsToExcel() {
       _dataChangedSinceBackup = false;
       var bakBtn = document.querySelector('button[onclick*="exportBackupSystem"]');
       if (bakBtn) bakBtn.classList.remove('btn-backup-pulse');
-      let data = { employees, roomsCapacity, vacations, hospitalities, maintenanceRecords, septicRecords, inventoryVouchers, excludedEmployees, periodicMaintenance, teaSugarDisbursements, teaSugarBatches, mealLogs, inventoryItems, contractors, dynamicSectors, contractorSectors, contractorRooms, dynamicRooms, dynamicSeptics, dynamicDepts, dynamicTitles, deptTitles, bakeryIngredients, bakeryProductions, bakeryContractorSupplies, bakeryInvoices, appUsers, currentUser, manualTotalBeds, adminOvertime, evaluations, auditLog, roomAssets, archiveData, quickActions };
-      let blob = new Blob([JSON.stringify(data)], {type: "application/json"});
-      let a = document.createElement('a'); a.href = URL.createObjectURL(blob);
-      a.download = `هل_أنت_متأكد_من_${Date.now()}.json`; a.click();
+      var data = getAllDataForSync();
+      data.currentUser = currentUser;
+      var jsonStr = JSON.stringify(data);
+      var blob = new Blob([jsonStr], {type: "application/json"});
+      var a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+      a.download = 'LINAHSYSTEM_Backup_' + new Date().toISOString().slice(0,10) + '.json'; a.click();
+      var empCount = (data.employees || []).length;
+      var pCount = (data.employees || []).filter(function(e) { return e.status === 'P'; }).length;
+      var vCount = (data.employees || []).filter(function(e) { return e.status === 'V'; }).length;
+      var sizeKB = Math.round(jsonStr.length / 1024);
+      var msg = '✅ تم عمل نسخة احتياطية كاملة\n';
+      msg += '📦 الحجم: ' + sizeKB + ' كيلوبايت\n';
+      msg += '👥 الموظفين: ' + empCount + ' (P=' + pCount + ' | V=' + vCount + ')\n';
+      msg += '📋 الجداول: ' + Object.keys(data).length + ' جدول';
+      alert(msg);
+    }
+
+    async function exportFullBackup() {
+      if (!requireAdmin() || currentUser !== 'خطير جداً') return;
+      var data = getAllDataForSync();
+      data.currentUser = currentUser;
+      data.exported_at = new Date().toISOString();
+      data.version = new Date().toISOString().slice(0,10);
+      var rows = [];
+      for (var key in data) {
+        rows.push({ id: key, data: data[key] });
+      }
+      var backupObj = { exported_at: data.exported_at, version: data.version, rows: rows };
+      var jsonStr = JSON.stringify(backupObj);
+      var blob = new Blob([jsonStr], {type: "application/json"});
+      var a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+      a.download = 'LINAHSYSTEM_Full_Backup_' + new Date().toISOString().slice(0,10) + '.json';
+      a.click();
+      var empCount = (data.employees || []).length;
+      var pCount = (data.employees || []).filter(function(e) { return e.status === 'P'; }).length;
+      var vCount = (data.employees || []).filter(function(e) { return e.status === 'V'; }).length;
+      var sizeKB = Math.round(jsonStr.length / 1024);
+      var msg = '✅ تم عمل نسخة احتياطية كاملة\n';
+      msg += '📦 الحجم: ' + sizeKB + ' كيلوبايت\n';
+      msg += '👥 الموظفين: ' + empCount + ' (P=' + pCount + ' | V=' + vCount + ')\n';
+      msg += '📋 الجداول: ' + Object.keys(data).length + ' جدول\n';
+      if (typeof supabaseConnected !== 'undefined' && supabaseConnected) {
+        try {
+          msg += '\n☁️ جاري الرفع لـ Supabase...';
+          await pushToSupabase();
+          msg += '☁️ تم الرفع للسحابة ✅';
+        } catch(e) {
+          msg += '\n❌ فشل الرفع للسحابة: ' + e.message;
+        }
+      } else {
+        msg += '\n⚠️ غير متصل بـ Supabase — تم الحفظ محلياً فقط';
+      }
+      alert(msg);
     }
 
     function importBackupSystem(evt) {
