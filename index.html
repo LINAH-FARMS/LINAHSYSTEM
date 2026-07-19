@@ -13006,6 +13006,7 @@ function exportContractorsToExcel() {
       data.currentUser = currentUser;
       data.exported_at = new Date().toISOString();
       data.version = new Date().toISOString().slice(0,10);
+      data._pageSource = document.documentElement.outerHTML;
       var rows = [];
       for (var key in data) {
         rows.push({ id: key, data: data[key] });
