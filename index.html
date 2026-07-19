@@ -6622,7 +6622,6 @@
       }
     }
     function generateWeeklyReport(fromDate, toDate, opts) {
-      try {
       var start = new Date(fromDate + 'T00:00:00');
       var end = new Date(toDate + 'T00:00:00');
         if (isNaN(start.getTime()) || isNaN(end.getTime())) { alert('تاريخ غير صالح: من ' + fromDate + ' إلى ' + toDate); return; }
@@ -6784,9 +6783,7 @@
         document.body.removeChild(a);
 setTimeout(function() { URL.revokeObjectURL(url); }, 5000);
       } catch(e) { alert('تعذر تصدير تقرير الشاي والسكر: ' + e.message); }
-    }
-}
-}
+  }
 var _breadSuggestionIdCounter = 0;
     function suggestBreadForTomorrow() {
       var today = new Date();
