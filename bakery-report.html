@@ -321,44 +321,88 @@ function submitBakeryData() {
 
   var report = { production: production, contractors: contractors };
 
-  fetch(SB + '/rest/v1/sync_data?id=eq.bakery_daily_reports', {
-    method: 'GET',
-    headers: { 'apikey': KEY, 'Authorization': 'Bearer ' + KEY }
-  })
-  .then(function(r) { return r.json(); })
-  .then(function(rows) {
-    var reports = [];
-    if (rows && rows.length > 0 && rows[0].data) {
-      try { reports = rows[0].data; if (typeof reports === 'string') reports = JSON.parse(reports); } catch(e) { reports = []; }
-    }
-    reports.push(report);
+  function saveToDailyReport() {
+    return fetch(SB + '/rest/v1/sync_data?id=eq.bakery_daily_reports', {
+      method: 'GET',
+      headers: { 'apikey': KEY, 'Authorization': 'Bearer ' + KEY }
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(rows) {
+      var reports = [];
+      if (rows && rows.length > 0 && rows[0].data) {
+        try { reports = rows[0].data; if (typeof reports === 'string') reports = JSON.parse(reports); } catch(e) { reports = []; }
+      }
+      reports.push(report);
+      if (rows && rows.length > 0) {
+        return fetch(SB + '/rest/v1/sync_data?id=eq.bakery_daily_reports', {
+          method: 'PATCH', headers: HEADERS,
+          body: JSON.stringify({ data: reports, updated_at: new Date().toISOString() })
+        });
+      } else {
+        return fetch(SB + '/rest/v1/sync_data', {
+          method: 'POST', headers: HEADERS,
+          body: JSON.stringify({ id: 'bakery_daily_reports', data: reports, updated_at: new Date().toISOString() })
+        });
+      }
+    });
+  }
 
-    if (rows && rows.length > 0) {
-      return fetch(SB + '/rest/v1/sync_data?id=eq.bakery_daily_reports', {
-        method: 'PATCH',
-        headers: HEADERS,
-        body: JSON.stringify({ data: reports, updated_at: new Date().toISOString() })
+  function saveToAlldata() {
+    return fetch(SB + '/rest/v1/sync_data?id=eq.alldata&select=data', {
+      method: 'GET',
+      headers: { 'apikey': KEY, 'Authorization': 'Bearer ' + KEY }
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(rows) {
+      if (!rows || !rows.length || !rows[0].data) return;
+      var d = rows[0].data;
+      var bp = d.bakeryProductions || [];
+      var bcs = d.bakeryContractorSupplies || [];
+      var prodExists = bp.some(function(x) { return x.date === production.date && String(x.breadCount) === String(production.breadCount); });
+      if (!prodExists) {
+        bp.push({
+          id: 'PROD' + Date.now(),
+          date: production.date, breadCount: production.breadCount,
+          flourUsed: production.flourUsed, yeastUsed: production.yeastUsed,
+          saltUsed: production.saltUsed, branUsed: production.branUsed,
+          dieselUsed: production.dieselUsed, opCost: production.operatingCost,
+          notes: (production.bakerName ? 'تكلفة: ' + production.bakerName : '') + (production.notes ? ' | ' + production.notes : '')
+        });
+      }
+      contractors.forEach(function(ct) {
+        var exists = bcs.some(function(x) { return x.date === production.date && x.name === ct.name && String(x.count) === String(ct.count); });
+        if (!exists) {
+          bcs.push({
+            id: 'CTR' + Date.now() + '_' + Math.random().toString(36).slice(2,6),
+            date: production.date, name: ct.name, count: ct.count,
+            price: 2, paid: 0, responsible: ct.responsible || '', notes: '',
+            ingredients: ct.ingredients || {}
+          });
+        }
       });
-    } else {
-      return fetch(SB + '/rest/v1/sync_data', {
-        method: 'POST',
-        headers: HEADERS,
-        body: JSON.stringify({ id: 'bakery_daily_reports', data: reports, updated_at: new Date().toISOString() })
+      d.bakeryProductions = bp;
+      d.bakeryContractorSupplies = bcs;
+      return fetch(SB + '/rest/v1/sync_data?id=eq.alldata', {
+        method: 'PATCH', headers: HEADERS,
+        body: JSON.stringify({ data: d, updated_at: new Date().toISOString() })
       });
-    }
-  })
-  .then(function(r) {
-    if (!r.ok) throw new Error('HTTP ' + r.status);
-    document.getElementById('bakery-form').style.display = 'none';
-    document.getElementById('success-msg').style.display = 'block';
-  })
-  .catch(function(e) {
-    var existing = JSON.parse(localStorage.getItem('linah_bakery_reports') || '[]');
-    existing.push(report);
-    localStorage.setItem('linah_bakery_reports', JSON.stringify(existing));
-    document.getElementById('bakery-form').style.display = 'none';
-    document.getElementById('success-msg').style.display = 'block';
-  });
+    })
+    .catch(function() {});  // silent fail
+  }
+
+  saveToDailyReport()
+    .then(function() { return saveToAlldata(); })
+    .then(function() {
+      document.getElementById('bakery-form').style.display = 'none';
+      document.getElementById('success-msg').style.display = 'block';
+    })
+    .catch(function(e) {
+      var existing = JSON.parse(localStorage.getItem('linah_bakery_reports') || '[]');
+      existing.push(report);
+      localStorage.setItem('linah_bakery_reports', JSON.stringify(existing));
+      document.getElementById('bakery-form').style.display = 'none';
+      document.getElementById('success-msg').style.display = 'block';
+    });
 }
 
 function resetForm() {
