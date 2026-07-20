@@ -30,7 +30,7 @@ function fillMissingFromHR() {
         var e = emps[i];
         if (e.status === "X") continue;
         
-        var hasIssue = !e.code || !e.title || !e.startDate;
+        var hasIssue = !e.code || !e.title || !e.hireDate;
         if (!hasIssue) continue;
         totalWithIssues++;
         
@@ -52,10 +52,10 @@ function fillMissingFromHR() {
         
         if (!e.code && hr[0]) { e.code = hr[0].trim(); changed = true; }
         if (!e.title && hr[2]) { e.title = hr[2].trim(); changed = true; }
-        if (!e.startDate && hr[4]) {
+        if (!e.hireDate && hr[4]) {
           var parts = hr[4].split("/");
           if (parts.length === 3) {
-            e.startDate = parts[2] + "-" + ("0" + parts[1]).slice(-2) + "-" + ("0" + parts[0]).slice(-2);
+            e.hireDate = parts[2] + "-" + ("0" + parts[1]).slice(-2) + "-" + ("0" + parts[0]).slice(-2);
             changed = true;
           }
         }
