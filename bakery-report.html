@@ -164,7 +164,7 @@ function loadBakeryContractors() {
   .then(function(r) { return r.json(); })
   .then(function(rows) {
     if (rows && rows.length > 0 && rows[0].data && rows[0].data.bakeryContractorsNames) {
-      bakeryContractorsNames = rows[0].data.bakeryContractorsNames;
+      bakeryContractorsNames = rows[0].data.bakeryContractorsNames.filter(function(n){ return typeof n === 'string' && n !== '[object Object]' && n.trim(); });
     }
     _bctrLoaded = true;
   })
@@ -300,7 +300,7 @@ function submitBakeryData() {
     var count = parseInt((document.getElementById('ctr-count-' + n) || {}).value) || 0;
     var price = parseFloat((document.getElementById('ctr-price-' + n) || {}).value) || 2;
     var resp = (document.getElementById('ctr-resp-' + n) || {}).value || '';
-    if (name && count > 0) {
+    if (name && name !== '[object Object]' && count > 0) {
       var flourKg = count / 21;
       contractors.push({
         name: name,
