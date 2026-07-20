@@ -18203,8 +18203,14 @@ function exportCompareReport() {
 
 function compareRecipes() {
   if (!RECIPES.length) { alert('لا توجد وصفات للمقارنة.'); return; }
-    var html = '<table id="compare-recipes-table" style="width:100%;border-collapse:collapse;font-size:13px;"><thead><tr style="background:#e0f2f1;color:#004d40;"><th style="padding:8px;border:1px solid #b2dfdb;text-align:right;">الوصفة</th><th style="padding:8px;border:1px solid #b2dfdb;text-align:center;">عدد الخامات</th><th style="padding:8px;border:1px solid #b2dfdb;text-align:center;">تكلفة الفرد</th></tr></thead><tbody>';
-  RECIPES.forEach(function(r){
+  _compareRecipesData = RECIPES.slice();
+  renderCompareTable();
+  openModal('modal-compare-recipes');
+}
+var _compareRecipesData = [];
+function renderCompareTable() {
+  var html = '<table id="compare-recipes-table" style="width:100%;border-collapse:collapse;font-size:13px;"><thead><tr style="background:#e0f2f1;color:#004d40;"><th style="padding:8px;border:1px solid #b2dfdb;text-align:right;">الوصفة</th><th style="padding:8px;border:1px solid #b2dfdb;text-align:center;">عدد الخامات</th><th style="padding:8px;border:1px solid #b2dfdb;text-align:center;">تكلفة الفرد</th><th style="padding:8px;border:1px solid #b2dfdb;text-align:center;width:60px;"></th></tr></thead><tbody>';
+  _compareRecipesData.forEach(function(r){
     var totalCost = 0, missing = 0, totalItems = (r.items||[]).length;
     (r.items||[]).forEach(function(it){
       var cost = getIngCost(it.n, it.u);
@@ -18212,11 +18218,38 @@ function compareRecipes() {
       else missing++;
     });
     var costPerPerson = totalCost / (r.base || 1);
-    html += '<tr style="border-bottom:1px solid #e0e0e0;"><td style="padding:8px;border:1px solid #e0e0e0;text-align:right;font-weight:700;">' + r.name + '</td><td style="padding:8px;border:1px solid #e0e0e0;text-align:center;">' + totalItems + '</td><td style="padding:8px;border:1px solid #e0e0e0;text-align:center;font-weight:700;color:#2e7d32;font-size:15px;">' + (costPerPerson > 0 ? formatQty(costPerPerson) + ' ج.م' : (missing > 0 ? '⚠️' : '—')) + '</td></tr>';
+    html += '<tr style="border-bottom:1px solid #e0e0e0;"><td style="padding:8px;border:1px solid #e0e0e0;text-align:right;font-weight:700;">' + r.name + '</td><td style="padding:8px;border:1px solid #e0e0e0;text-align:center;">' + totalItems + '</td><td style="padding:8px;border:1px solid #e0e0e0;text-align:center;font-weight:700;color:#2e7d32;font-size:15px;">' + (costPerPerson > 0 ? formatQty(costPerPerson) + ' ج.م' : (missing > 0 ? '⚠️' : '—')) + '</td>' +
+      '<td style="padding:8px;border:1px solid #e0e0e0;text-align:center;"><button class="btn" onclick="analyzeRecipe(\'' + r.name.replace(/'/g,"\\'") + '\')" style="padding:2px 8px;font-size:11px;background:#1565c0;color:#fff;border:none;border-radius:4px;cursor:pointer;">🔍 تحليل</button></td></tr>';
   });
   html += '</tbody></table>';
   document.getElementById('compare-recipes-table-wrap').innerHTML = html;
-  openModal('modal-compare-recipes');
+}
+function analyzeRecipe(name) {
+  var r = RECIPES.find(function(x){ return x.name === name; });
+  if (!r) return;
+  var totalCost = 0, missing = 0;
+  var rows = (r.items||[]).map(function(it){
+    var cost = getIngCost(it.n, it.u);
+    var lineCost = cost !== undefined ? cost * it.q : undefined;
+    if (lineCost !== undefined) totalCost += lineCost; else missing++;
+    return '<tr><td style="padding:6px;border:1px solid #e0e0e0;">' + it.n + '</td><td style="padding:6px;border:1px solid #e0e0e0;text-align:center;">' + it.u + '</td><td style="padding:6px;border:1px solid #e0e0e0;text-align:center;">' + formatQty(it.q) + '</td><td style="padding:6px;border:1px solid #e0e0e0;text-align:center;">' + (cost !== undefined ? cost.toFixed(2) : '<span style="color:#c62828;">⚠️</span>') + '</td><td style="padding:6px;border:1px solid #e0e0e0;text-align:center;font-weight:700;' + (lineCost !== undefined ? 'color:#1565c0;' : 'color:#c62828;') + '">' + (lineCost !== undefined ? formatQty(lineCost) + ' ج.م' : '⚠️') + '</td><td style="padding:6px;border:1px solid #e0e0e0;text-align:center;color:#2e7d32;font-weight:700;">' + (lineCost !== undefined ? (lineCost / (r.base || 1)).toFixed(2) + ' ج.م' : '—') + '</td></tr>';
+  }).join('');
+  var base = r.base || 1;
+  var html =
+    '<div style="margin-bottom:10px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">' +
+    '<button class="btn" onclick="renderCompareTable()" style="padding:4px 12px;background:#546e7a;color:#fff;border:none;border-radius:5px;cursor:pointer;">🔙 رجوع</button>' +
+    '<span style="font-weight:700;font-size:16px;">' + r.name + '</span>' +
+    '<span style="color:#888;font-size:13px;">(أساس ' + base + ' فرد)</span>' +
+    '</div>' +
+    '<div style="overflow-x:auto;max-height:400px;overflow-y:auto;">' +
+    '<table style="width:100%;border-collapse:collapse;font-size:12px;"><thead><tr style="background:#e0f2f1;">' +
+    '<th style="padding:6px;border:1px solid #b2dfdb;text-align:right;">الخامة</th><th style="padding:6px;border:1px solid #b2dfdb;text-align:center;">الوحدة</th><th style="padding:6px;border:1px solid #b2dfdb;text-align:center;">الكمية</th><th style="padding:6px;border:1px solid #b2dfdb;text-align:center;">سعر الوحدة</th><th style="padding:6px;border:1px solid #b2dfdb;text-align:center;">التكلفة الكلية</th><th style="padding:6px;border:1px solid #b2dfdb;text-align:center;">تكلفة الفرد</th></tr></thead><tbody>' + rows + '</tbody></table></div>' +
+    '<div style="margin-top:10px;padding:10px;background:#e8f5e9;border-radius:8px;font-weight:700;font-size:15px;display:flex;justify-content:space-between;flex-wrap:wrap;">' +
+    '<span>إجمالي التكلفة: ' + formatQty(totalCost) + ' ج.م</span>' +
+    '<span style="color:#2e7d32;">تكلفة الفرد: ' + (totalCost / base).toFixed(2) + ' ج.م</span>' +
+    (missing > 0 ? '<span style="color:#c62828;">⚠️ ' + missing + ' خامة بدون سعر</span>' : '') +
+    '</div>';
+  document.getElementById('compare-recipes-table-wrap').innerHTML = html;
 }
 
 // ===== إدارة الوصفات (إضافة / تعديل / حذف) =====
