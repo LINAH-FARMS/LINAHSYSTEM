@@ -2,6 +2,21 @@ var _HR_DATA=[["11","محمد احمد زكى عطيه","محاسب اول مو�
 
 function normName(s){return s.replace(/[أإآا]/g,'ا').replace(/[ىي]/g,'ي').replace(/[ة]/g,'ه').replace(/\s+/g,' ').trim()}
 
+function convertDate(d){
+  if(!d) return '';
+  var parts = d.split("/");
+  if(parts.length===3) return parts[2] + "-" + ("0"+parts[1]).slice(-2) + "-" + ("0"+parts[0]).slice(-2);
+  return d;
+}
+
+function fillEmployee(e, hr){
+  var changed = false;
+  if(!e.code && hr[0]) { e.code = hr[0].trim(); changed = true; }
+  if(!e.title && hr[2]) { e.title = hr[2].trim(); changed = true; }
+  if(!e.hireDate && hr[4]) { e.hireDate = convertDate(hr[4]); changed = true; }
+  return changed;
+}
+
 function fillMissingFromHR() {
   try {
     var u = typeof SUPABASE_URL !== 'undefined' ? SUPABASE_URL : "https://cwqghiqykohefaggedjl.supabase.co";
@@ -17,53 +32,50 @@ function fillMissingFromHR() {
       
       var d = rows[0].data;
       var emps = d.employees;
-      var hrMap = {};
-      var matched = 0, updated = 0, totalWithIssues = 0;
       
+      // Build HR lookups
+      var hrByName = {}, hrByCode = {};
       for (var i = 0; i < _HR_DATA.length; i++) {
         var h = _HR_DATA[i];
         var name = normName(h[1]);
-        if (name) hrMap[name] = h;
+        if (name) hrByName[name] = h;
+        if (h[0]) hrByCode[h[0].trim()] = h;
       }
       
+      var matched = 0, updated = 0;
+      var matchedByName = {}, matchedByCode = {};
+      
+      // ===== Phase 1: Match by Name =====
       for (var i = 0; i < emps.length; i++) {
         var e = emps[i];
         if (e.status === "X") continue;
         
-        var hasIssue = !e.code || !e.title || !e.hireDate;
-        if (!hasIssue) continue;
-        totalWithIssues++;
-        
         var empName = normName(e.name);
-        var hr = hrMap[empName];
-        if (!hr) {
-          var keys = Object.keys(hrMap);
-          for (var j = 0; j < keys.length; j++) {
-            if (keys[j].length > 2 && (empName.includes(keys[j]) || keys[j].includes(empName))) {
-              hr = hrMap[keys[j]];
-              break;
-            }
-          }
-        }
+        var hr = hrByName[empName];
         if (!hr) continue;
         
+        matchedByName[i] = hr;
+        if (fillEmployee(e, hr)) updated++;
         matched++;
-        var changed = false;
+      }
+      
+      // ===== Phase 2: Match by Code (for unmatched employees) =====
+      for (var i = 0; i < emps.length; i++) {
+        if (matchedByName[i]) continue; // already matched by name
+        var e = emps[i];
+        if (e.status === "X") continue;
+        if (!e.code) continue; // no code to match
         
-        if (!e.code && hr[0]) { e.code = hr[0].trim(); changed = true; }
-        if (!e.title && hr[2]) { e.title = hr[2].trim(); changed = true; }
-        if (!e.hireDate && hr[4]) {
-          var parts = hr[4].split("/");
-          if (parts.length === 3) {
-            e.hireDate = parts[2] + "-" + ("0" + parts[1]).slice(-2) + "-" + ("0" + parts[0]).slice(-2);
-            changed = true;
-          }
-        }
-        if (changed) updated++;
+        var hr = hrByCode[e.code.trim()];
+        if (!hr) continue;
+        
+        matchedByCode[i] = hr;
+        if (fillEmployee(e, hr)) updated++;
+        matched++;
       }
       
       if (updated === 0) {
-        alert("تم العثور على " + matched + " موظف متطابق من أصل " + totalWithIssues + " موظف ناقص\nلكن لم يتم تحديث أي شيء (البيانات موجودة مسبقاً)");
+        alert("تم العثور على " + matched + " موظف متطابق\nلكن لم يتم تحديث أي شيء (البيانات موجودة مسبقاً أو لا توجد بيانات ناقصة)");
         return;
       }
       
@@ -74,7 +86,7 @@ function fillMissingFromHR() {
       })
       .then(function(r) { if (!r.ok) throw new Error("HTTP " + r.status); })
       .then(function() {
-        alert("تم العثور على " + matched + " موظف متطابق من أصل " + totalWithIssues + " موظف ناقص\nتم تحديث " + updated + " موظف بنجاح");
+        alert("✓ تم التحديث بنجاح\nالمرحلة 1 (بالإسم): " + Object.keys(matchedByName).length + " موظف\nالمرحلة 2 (بالكود): " + Object.keys(matchedByCode).length + " موظف\nإجمالي المطابقات: " + matched + "\nإجمالي التحديثات: " + updated);
       });
     })
     .catch(function(err) { alert("خطأ في الاتصال: " + err.message); });
