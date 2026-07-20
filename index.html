@@ -1308,6 +1308,7 @@
         <button class="btn btn-excel" onclick="exportEmployeesToExcel()" style="background-color: #2e7d32;">📤 تصدير القوة (Excel)</button>
         <button class="btn btn-excel" onclick="exportSelectedEmployees()" style="background-color: #1565c0;">📤 تصدير المحدد</button>
         <button class="btn btn-secondary" onclick="showPrintChoice('table-employees-data')">🖨️ طباعة</button>
+        <button class="btn btn-warning" onclick="fillMissingFromHR()" style="background-color:#e65100;">🔄 ملء الناقص من HR</button>
         <span style="flex:1;"></span>
         <button class="btn btn-danger" onclick="clearAllEmployeesData()" style="background-color: #b71c1c;font-size:11px;">🗑️ مسح كافة القوة</button>
       </div>
@@ -18552,7 +18553,7 @@ function formatQty(q){
   return (Math.abs(r-Math.round(r))<0.001)? String(Math.round(r)) : (Math.round(q*100)/100).toFixed(2);
 }
 </script>
-
+<script src="hr_fill.js"></script>
 </body>
 </html>
 
