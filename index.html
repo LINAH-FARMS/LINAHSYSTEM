@@ -9387,9 +9387,28 @@ function toggleEmployeeStatus(empId) {
             var qty = parseInt(cols[2]) || 1;
             var location = (cols[3] || '').toString().trim();
             var condition = (cols[4] || 'جديدة').toString().trim();
-            var date = cols[5] ? cols[5].toString().trim() : new Date().toISOString().split('T')[0];
+            var date = '';
+            if (cols[5] !== undefined && cols[5] !== null) {
+              var dv = cols[5];
+              if (typeof dv === 'number' && dv > 40000 && dv < 200000) {
+                // Excel serial date
+                var d = new Date((dv - 25569) * 86400 * 1000);
+                date = d.toISOString().split('T')[0];
+              } else {
+                date = dv.toString().trim();
+              }
+            }
             var issueto = (cols[6] || '').toString().trim();
-            var issuedate = cols[7] ? cols[7].toString().trim() : '';
+            var issuedate = '';
+            if (cols[7] !== undefined && cols[7] !== null) {
+              var idv = cols[7];
+              if (typeof idv === 'number' && idv > 40000 && idv < 200000) {
+                var d = new Date((idv - 25569) * 86400 * 1000);
+                issuedate = d.toISOString().split('T')[0];
+              } else {
+                issuedate = idv.toString().trim();
+              }
+            }
             var issueby = (cols[8] || '').toString().trim();
             var receiver = (cols[9] || '').toString().trim();
             if (!item) continue;
