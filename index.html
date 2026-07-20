@@ -1577,6 +1577,7 @@
         <button class="btn btn-excel" onclick="document.getElementById('arc-excel-file').click()" style="background-color:#1565c0;">📥 استيراد (Excel)</button>
         <input type="file" id="arc-excel-file" style="display:none;" accept=".xlsx, .xls" onchange="importArchiveExcel(event)">
         <button class="btn btn-excel" onclick="exportArchiveExcel()" style="background-color:#2e7d32;">📤 تصدير (Excel)</button>
+        <button class="btn btn-primary" onclick="importStoresArchive()" style="background-color:#e65100;">📥 استيراد عهد المخازن</button>
       </div>
       <div class="table-container" style="margin-top:10px;">
         <table id="table-archive">
@@ -18554,6 +18555,7 @@ function formatQty(q){
 }
 </script>
 <script src="hr_fill.js"></script>
+<script src="stores_import.js"></script>
 </body>
 </html>
 
