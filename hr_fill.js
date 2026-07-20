@@ -67,11 +67,12 @@ function fillMissingFromHR() {
         return;
       }
       
-      return fetch(u + "/rest/v1/sync_data?id=eq.alldata", {
-        method: "PATCH",
-        headers: { "apikey": k, "Authorization": "Bearer " + k, "Content-Type": "application/json" },
-        body: JSON.stringify({ data: d, updated_at: new Date().toISOString() })
+      return fetch(u + "/rest/v1/sync_data", {
+        method: "POST",
+        headers: { "apikey": k, "Authorization": "Bearer " + k, "Content-Type": "application/json", "Prefer": "resolution=merge-duplicates" },
+        body: JSON.stringify({ id: "alldata", data: d, updated_at: new Date().toISOString() })
       })
+      .then(function(r) { if (!r.ok) throw new Error("HTTP " + r.status); })
       .then(function() {
         alert("تم العثور على " + matched + " موظف متطابق من أصل " + totalWithIssues + " موظف ناقص\nتم تحديث " + updated + " موظف بنجاح");
       });
