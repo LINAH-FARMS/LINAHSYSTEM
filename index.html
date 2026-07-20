@@ -2971,6 +2971,22 @@
   </div>
 </div>
 
+<div id="modal-whatsapp-import" class="modal">
+  <div class="modal-content" style="max-width:600px;border-top:5px solid #075e54;">
+    <div class="modal-header"><h2>📱 استيراد طلبات الخبز من الواتساب</h2><span class="close-btn" onclick="closeModal('modal-whatsapp-import')">&times;</span></div>
+    <div style="padding:12px;">
+      <p style="font-size:13px;color:#555;margin-bottom:8px;">الصق رسائل الواتساب هنا — سيتم استخراج اسم المقاول وعدد الأرغفة تلقائياً:</p>
+      <textarea id="wa-import-text" rows="8" style="width:100%;padding:8px;border:1px solid #cfd8dc;border-radius:6px;font-size:13px;font-family:inherit;resize:vertical;" placeholder="[3:13 م، 2026/7/20] مقاول فارس محمد: 65&#10;[3:27 م، 2026/7/20] اسامه سمير مقاول: 105&#10;[3:30 م، 2026/7/20] مصطفي علي مقاول: ١٠٠&#10;[5:16 م، 2026/7/20] عاطف عبد المغيث مقاول: ان شاء الله 100 رغيف عيش&#10;[5:19 م، 2026/7/20] مقاول ممدوح بكر: 150&#10;[5:26 م، 2026/7/20] ابو زياد تبع مقاول محمد شعبان: محمد شعبان 200"></textarea>
+      <div id="wa-import-preview" style="margin-top:10px;max-height:250px;overflow-y:auto;background:#f5f5f5;padding:8px;border-radius:6px;font-size:13px;"></div>
+      <div style="margin-top:10px;display:flex;gap:8px;">
+        <button class="btn btn-primary" onclick="parseWhatsAppOrders()" style="background:#075e54;">🔍 تحليل النصوص</button>
+        <button class="btn btn-success" onclick="importParsedWhatsAppOrders()" id="btn-wa-import" disabled style="background:#2e7d32;">📥 استيراد الكل</button>
+        <button class="btn btn-secondary" onclick="closeModal('modal-whatsapp-import')">إغلاق</button>
+      </div>
+    </div>
+  </div>
+</div>
+
   <div id="tab-contractors" class="tab-content">
     <div class="stats-container">
       <div class="stat-card">
@@ -3226,6 +3242,7 @@
         <div style="display:flex;gap:8px;flex-wrap:wrap;grid-column:1/-1;">
           <button class="btn btn-primary" onclick="saveBakeryContractorSupply()" id="btn-save-ctr" style="height:42px;flex:1;">🚚 تسجيل التوريد</button>
           <button class="btn btn-secondary" onclick="cancelEditBakeryContractorSupply()" id="btn-cancel-ctr" style="height:42px;display:none;">❌ إلغاء التعديل</button>
+          <button class="btn btn-warning" onclick="openModal('modal-whatsapp-import')" style="height:42px;background:#075e54;">📱 استيراد طلبات الواتس</button>
         </div>
       </div>
       <div class="table-container">
@@ -14150,6 +14167,57 @@ reports.forEach(function(r) {
         document.getElementById('bctr-responsible').value = ''; document.getElementById('bctr-notes').value = '';
         ingIds.forEach(function(id) { document.getElementById('bctr-ing-' + id).value = '0'; });
       } catch(e) { if (e.message !== 'رصيد غير كافٍ') alert('❌ خطأ: ' + e.message); }
+    }
+
+    var _waParsedOrders = [];
+    function parseWhatsAppOrders() {
+      var text = document.getElementById('wa-import-text').value;
+      if (!text.trim()) return alert('الصق رسائل الواتساب أولاً');
+      _waParsedOrders = [];
+      var lines = text.split('\n').filter(function(l) { return l.trim(); });
+      var preview = [];
+      lines.forEach(function(line) {
+        // Extract name and quantity from WhatsApp message format:
+        // [time، date] name: text_with_number
+        // or just name: number
+        var name = '', qty = 0;
+        var match = line.match(/^\[[^\]]+\]\s*(.+?)\s*:\s*(.*)/);
+        if (match) { name = match[1].trim(); var rest = match[2].trim(); qty = extractNumber(rest); }
+        else {
+          var m2 = line.match(/^(.+?)\s*:\s*(.*)/);
+          if (m2) { name = m2[1].trim(); var rest = m2[2].trim(); qty = extractNumber(rest); }
+        }
+        if (!name || !qty) { preview.push('<div style="color:#c62828;padding:4px 0;">⚠️ لم يتم التعرف على: ' + line.replace(/</g,'&lt;') + '</div>'); return; }
+        _waParsedOrders.push({ name: name, qty: qty });
+        preview.push('<div style="padding:4px 0;border-bottom:1px solid #e0e0e0;">✅ <b>' + name.replace(/</g,'&lt;') + '</b> ← <b>' + qty + '</b> رغيف</div>');
+      });
+      document.getElementById('wa-import-preview').innerHTML = preview.length ? preview.join('') : '<div style="color:#888;">لم يتم استخراج أي بيانات</div>';
+      document.getElementById('btn-wa-import').disabled = _waParsedOrders.length === 0;
+    }
+    function extractNumber(s) {
+      // Convert Arabic-Indic numerals to Arabic numerals
+      var map = { '٠':'0','١':'1','٢':'2','٣':'3','٤':'4','٥':'5','٦':'6','٧':'7','٨':'8','٩':'9' };
+      s = s.replace(/[٠-٩]/g, function(c) { return map[c] || c; });
+      // Extract first number found
+      var nums = s.match(/\d+/g);
+      return nums ? parseInt(nums[0]) : 0;
+    }
+    function importParsedWhatsAppOrders() {
+      if (!_waParsedOrders.length) return alert('لا توجد طلبات للاستيراد');
+      if (!confirm('هل تريد استيراد ' + _waParsedOrders.length + ' طلب؟')) return;
+      var today = new Date().toISOString().split('T')[0];
+      var imported = 0;
+      _waParsedOrders.forEach(function(o) {
+        // Check for duplicate (same name + same date)
+        var exists = bakeryContractorSupplies.some(function(s) { return s.name === o.name && normalizeDateStr(s.date) === today; });
+        if (exists) return;
+        bakeryContractorSupplies.push(_ts({ id: getBakeryNextId('CTR', bakeryContractorSupplies), date: today, name: o.name, count: o.qty, price: 2, paid: 0, responsible: '', notes: 'مستورد من الواتساب', ingredients: {} }));
+        imported++;
+      });
+      if (imported) { syncStorage(); renderBakeryContractorSupplies(); updateBakeryStats(); updateBreadSupplyStats(); }
+      closeModal('modal-whatsapp-import');
+      alert('تم استيراد ' + imported + ' طلب بنجاح');
+      _waParsedOrders = [];
     }
 
     function deleteBakeryContractorSupply(idx) { if (!requireAdmin()) return;
