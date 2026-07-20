@@ -3228,18 +3228,6 @@
         <div style="display:flex;gap:8px;flex-wrap:wrap;grid-column:1/-1;">
           <button class="btn btn-primary" onclick="saveBakeryContractorSupply()" id="btn-save-ctr" style="height:42px;flex:1;">🚚 تسجيل التوريد</button>
           <button class="btn btn-secondary" onclick="cancelEditBakeryContractorSupply()" id="btn-cancel-ctr" style="height:42px;display:none;">❌ إلغاء التعديل</button>
-          <button class="btn btn-warning" onclick="toggleWhatsAppImport()" style="height:42px;background:#075e54;">📱 استيراد طلبات الواتس</button>
-        </div>
-      </div>
-      <div id="wa-import-section" style="display:none;margin-top:10px;padding:12px;background:#f0fdf4;border:2px solid #075e54;border-radius:8px;">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-          <span style="font-weight:700;color:#075e54;">🥖 اعداد الخبز للغد — الصق الرسائل وستضاف تلقائياً</span>
-          <button onclick="this.parentElement.parentElement.style.display='none'" style="background:none;border:none;font-size:18px;cursor:pointer;">&times;</button>
-        </div>
-        <textarea id="wa-import-text" rows="4" style="width:100%;padding:8px;border:1px solid #cfd8dc;border-radius:6px;font-size:13px;font-family:inherit;resize:vertical;" placeholder="[3:13 م، 2026/7/20] مقاول فارس محمد: 65&#10;[3:27 م، 2026/7/20] اسامه سمير مقاول: 105"></textarea>
-        <div style="margin-top:8px;display:flex;gap:8px;">
-          <button class="btn btn-primary" onclick="parseAndImportWhatsApp()" style="background:#075e54;">📥 استيراد لتاريخ الغد</button>
-          <span id="wa-import-status" style="font-size:13px;color:#666;align-self:center;"></span>
         </div>
       </div>
       <div class="table-container">
@@ -7028,6 +7016,12 @@ var _breadSuggestionIdCounter = 0;
         '<div style="background:#fff8e1;border-radius:10px;padding:12px;margin-bottom:10px;border:1px solid #ffe082;">' +
         '<div style="font-weight:700;color:#e65100;margin-bottom:8px;font-size:14px;display:flex;justify-content:space-between;align-items:center;"><span>👷 المقاولين</span><button onclick="addBreadPlanCtrRow()" style="padding:4px 12px;background:#e65100;color:white;border:none;border-radius:4px;cursor:pointer;font-size:12px;font-family:Cairo,sans-serif;">➕ إضافة مقاول</button></div>' +
         '<div style="max-height:150px;overflow-y:auto;"><table id="bread-plan-ctr-table" style="width:100%;border-collapse:collapse;font-size:12px;"><thead><tr><th style="padding:6px;background:#fff3e0;border:1px solid #e0e0e0;">المقاول</th><th style="padding:6px;background:#fff3e0;border:1px solid #e0e0e0;width:80px;">رغيف تم</th><th style="padding:6px;background:#fff3e0;border:1px solid #e0e0e0;width:30px;"></th></tr></thead><tbody id="bread-plan-ctr-tbody"></tbody></table></div>' +
+        '<div style="margin-top:8px;padding:8px;background:#fff;border-radius:6px;border:1px dashed #e65100;">' +
+        '<div style="font-size:12px;font-weight:600;color:#e65100;margin-bottom:4px;">📱 الصق رسائل واتساب المقاولين لإضافتهم تلقائياً:</div>' +
+        '<textarea id="wa-ctr-import" rows="2" style="width:100%;padding:6px;border:1px solid #e0e0e0;border-radius:4px;font-size:12px;font-family:inherit;resize:vertical;" placeholder="مقاول فارس محمد: 65&#10;اسامه سمير مقاول: 105&#10;مصطفي علي مقاول: ١٠٠"></textarea>' +
+        '<button onclick="importWhatsAppCtrToBreadPlan()" style="margin-top:4px;padding:4px 12px;background:#075e54;color:white;border:none;border-radius:4px;cursor:pointer;font-size:12px;font-family:Cairo,sans-serif;">📥 استيراد</button>' +
+        '<span id="wa-ctr-status" style="font-size:11px;color:#666;margin-right:8px;"></span>' +
+        '</div>' +
         '</div>' +
         '<div style="background:#fff3e0;border-radius:10px;padding:12px;margin-bottom:10px;border:1px solid #ffcc80;">' +
         '<div style="font-weight:700;color:#e65100;margin-bottom:8px;font-size:14px;">بيانات نسخ الإجمالي</div>' +
@@ -14166,18 +14160,11 @@ reports.forEach(function(r) {
       } catch(e) { if (e.message !== 'رصيد غير كافٍ') alert('❌ خطأ: ' + e.message); }
     }
 
-    function toggleWhatsAppImport() {
-      var el = document.getElementById('wa-import-section');
-      el.style.display = el.style.display === 'none' ? 'block' : 'none';
-    }
-    function parseAndImportWhatsApp() {
-      var text = document.getElementById('wa-import-text').value;
-      if (!text.trim()) return alert('الصق رسائل واتساب الخبز أولاً');
-      var statusEl = document.getElementById('wa-import-status');
-      var tomorrow = new Date(Date.now() + 86400000);
-      var dateStr = tomorrow.toISOString().split('T')[0];
+    function importWhatsAppCtrToBreadPlan() {
+      var text = document.getElementById('wa-ctr-import').value;
+      if (!text.trim()) return;
       var lines = text.split('\n').filter(function(l) { return l.trim(); });
-      var imported = 0, errors = 0;
+      var imported = 0;
       lines.forEach(function(line) {
         var name = '', qty = 0;
         var match = line.match(/^\[[^\]]+\]\s*(.+?)\s*:\s*(.*)/);
@@ -14186,16 +14173,22 @@ reports.forEach(function(r) {
           var m2 = line.match(/^(.+?)\s*:\s*(.*)/);
           if (m2) { name = m2[1].trim(); qty = _extractNumber(m2[2]); }
         }
-        if (!name || !qty) { errors++; return; }
-        var exists = bakeryContractorSupplies.some(function(s) { return s.name === name && normalizeDateStr(s.date) === dateStr; });
-        if (exists) return;
-        bakeryContractorSupplies.push(_ts({ id: getBakeryNextId('CTR', bakeryContractorSupplies), date: dateStr, name: name, count: qty, price: 2, paid: 0, responsible: '', notes: '🥖 اعداد الخبز للغد', ingredients: {} }));
+        if (!name || !qty) return;
+        // Add row to bread plan contractor table
+        var id = 'bpctr-' + (++_breadPlanCtrCounter);
+        var tbody = document.getElementById('bread-plan-ctr-tbody');
+        if (!tbody) return;
+        var tr = document.createElement('tr');
+        tr.id = 'bprow-' + id;
+        tr.innerHTML = '<td style="border:1px solid #e0e0e0;padding:4px;"><input type="text" id="bpname-' + id + '" value="' + name.replace(/"/g,'&quot;') + '" style="width:100%;border:none;padding:6px;font-size:13px;font-family:Cairo,sans-serif;background:transparent;"></td><td style="border:1px solid #e0e0e0;padding:4px;width:80px;"><input type="number" id="bpqty-' + id + '" min="0" value="' + qty + '" style="width:70px;border:none;padding:6px;font-size:13px;font-family:Cairo,sans-serif;text-align:center;" oninput="updateBreadPlanTotal()"></td><td style="border:1px solid #e0e0e0;padding:4px;width:30px;"><button onclick="removeBreadPlanCtrRow(\'bprow-' + id + '\')" style="background:none;border:none;color:#d32f2f;cursor:pointer;font-size:16px;">✕</button></td>';
+        tbody.appendChild(tr);
         imported++;
       });
-      if (imported) { syncStorage(); renderBakeryContractorSupplies(); updateBakeryStats(); updateBreadSupplyStats(); }
-      statusEl.textContent = '✅ تم إضافة ' + imported + ' طلب لتاريخ ' + dateStr + (errors ? ' | فشل ' + errors : '');
-      document.getElementById('wa-import-text').value = '';
-      if (imported) setTimeout(function() { statusEl.textContent = ''; }, 5000);
+      document.getElementById('wa-ctr-import').value = '';
+      var statusEl = document.getElementById('wa-ctr-status');
+      statusEl.textContent = '✅ تم إضافة ' + imported + ' مقاول';
+      updateBreadPlanTotal();
+      setTimeout(function() { statusEl.textContent = ''; }, 3000);
     }
     function _extractNumber(s) {
       var map = { '٠':'0','١':'1','٢':'2','٣':'3','٤':'4','٥':'5','٦':'6','٧':'7','٨':'8','٩':'9' };
