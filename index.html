@@ -14167,13 +14167,16 @@ reports.forEach(function(r) {
       var imported = 0;
       lines.forEach(function(line) {
         var name = '', qty = 0;
+        // Try to parse [time، date] name: text
         var match = line.match(/^\[[^\]]+\]\s*(.+?)\s*:\s*(.*)/);
         if (match) { name = match[1].trim(); qty = _extractNumber(match[2]); }
         else {
+          // Try to parse name: text
           var m2 = line.match(/^(.+?)\s*:\s*(.*)/);
           if (m2) { name = m2[1].trim(); qty = _extractNumber(m2[2]); }
         }
-        if (!name || !qty) return;
+        // If parsing failed, use the whole line as name
+        if (!name) name = line.replace(/^\[[^\]]+\]\s*/, '').trim();
         // Add row to bread plan contractor table
         var id = 'bpctr-' + (++_breadPlanCtrCounter);
         var tbody = document.getElementById('bread-plan-ctr-tbody');
