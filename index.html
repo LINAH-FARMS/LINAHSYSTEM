@@ -1583,16 +1583,16 @@
         <table id="table-archive">
           <thead>
             <tr>
-              <th>اسم العهدة</th>
-              <th>البيان</th>
-              <th>العدد</th>
-              <th>اسم المخزن</th>
-              <th>الحالة</th>
-              <th>تاريخ إضافة العهدة</th>
-              <th>جهة الصرف</th>
-              <th>تاريخ الصرف</th>
-              <th>القائم على الصرف</th>
-              <th>المستلم</th>
+              <th data-sort-key="item" class="sortable">اسم العهدة</th>
+              <th data-sort-key="desc" class="sortable">البيان</th>
+              <th data-sort-key="qty" class="sortable">العدد</th>
+              <th data-sort-key="location" class="sortable">اسم المخزن</th>
+              <th data-sort-key="condition" class="sortable">الحالة</th>
+              <th data-sort-key="date" class="sortable">تاريخ إضافة العهدة</th>
+              <th data-sort-key="issueto" class="sortable">جهة الصرف</th>
+              <th data-sort-key="issuedate" class="sortable">تاريخ الصرف</th>
+              <th data-sort-key="issueby" class="sortable">القائم على الصرف</th>
+              <th data-sort-key="receiver" class="sortable">المستلم</th>
               <th class="no-print">إجراءات</th>
             </tr>
           </thead>
@@ -6188,7 +6188,8 @@
             'table-bakery-ingredients': 'renderBakeryIngredients',
             'table-bakery-production': 'renderBakeryProductions',
             'table-bakery-ctr-supply': 'renderBakeryContractorSupplies',
-            'table-bakery-invoices': 'renderBakeryInvoices'
+            'table-bakery-invoices': 'renderBakeryInvoices',
+            'table-archive': 'renderArchiveTable'
           };
           let fn = renderMap[tableId];
           if (fn && window[fn]) window[fn]();
@@ -6203,7 +6204,8 @@
                  'table-contractors','table-excluded','table-inventory','table-items-registry',
                  'table-bakery-ingredients','table-bakery-production','table-bakery-sales','table-bakery-orders',
                  'table-bakery-ctr-supply','table-bakery-invoices',
-                 'table-evaluations'];
+                 'table-evaluations',
+                 'table-archive'];
       ids.forEach(id => { if (document.getElementById(id)) initSortableTable(id); });
     }
 
@@ -9279,6 +9281,8 @@ function toggleEmployeeStatus(empId) {
     function renderArchiveTable() {
       var q = (document.getElementById('search-archive').value || '').toLowerCase();
       var filtered = archiveData.filter(function(a) { return !q || a.item.toLowerCase().includes(q) || a.desc.toLowerCase().includes(q) || a.location.toLowerCase().includes(q) || (a.issueto||'').toLowerCase().includes(q) || (a.issueby||'').toLowerCase().includes(q) || (a.receiver||'').toLowerCase().includes(q); });
+      var st = sortState['table-archive'];
+      if (st && st.key) filtered = sortData(filtered, st.key, st.dir);
       var tbody = document.getElementById('archive-table-body');
       tbody.innerHTML = filtered.length ? filtered.map(function(a, i) {
         var idx = archiveData.indexOf(a);
