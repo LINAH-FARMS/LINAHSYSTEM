@@ -1362,6 +1362,7 @@
       <button class="btn btn-warning" onclick="autoRepairHousing()" style="background-color: #1565c0;">🔧 إعادة توزيع سكن الموظفين</button>
       <button class="btn btn-secondary" onclick="downloadTemplate_Housing()">📥 نموذج استيراد فاضٍ (Excel)</button>
       <button class="btn btn-excel" onclick="exportHousingToExcel()" style="background-color: #2e7d32;">📤 تصدير السعة (Excel)</button>
+      <button class="btn btn-excel" onclick="exportHousingEmployeesToExcel()" style="background-color: #1565c0;">📤 تصدير سكن الموظفين (Excel)</button>
       <button class="btn btn-excel" onclick="document.getElementById('excel-housing-file').click()" style="background-color: #1565c0;">📥 استيراد السعة (Excel)</button>
       <input type="file" id="excel-housing-file" style="display: none;" accept=".xlsx, .xls" onchange="handleHousingExcelImport(event)">
       <button class="btn btn-danger" onclick="document.getElementById('excel-replace-housing-file').click()" style="background-color: #e65100;">🔄 استيراد سكن جديد (استبدال كامل)</button>
@@ -11996,6 +11997,30 @@ function renderTeaSugarTable() {
       let wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, "الأيام السابقة تم");
       XLSX.writeFile(wb, "تحميل_بيانات_البون_في_نموذج.xlsx");
+    }
+
+    function exportHousingEmployeesToExcel() {
+      var choice = confirm('تصدير كل الموظفين؟\n\nOK = الكل\nإلغاء = اختار التصدير حسب التحديد');
+      var exportAll = choice;
+      var emps = exportAll ? employees : employees.filter(function(e) { return e.room && e.sector; });
+      emps = emps.filter(function(e) { return e.room && e.sector; }).sort(function(a,b) { return (a.sector||'').localeCompare(b.sector||'', 'ar') || (a.room||'').localeCompare(b.room||'', 'ar', {numeric:true}); });
+      if (!emps.length) return alert('لا يوجد موظفين بسكن للتصدير.');
+      var data = emps.map(function(e) {
+        return {
+          'المبنى': e.sector || '',
+          'الغرفة': e.room || '',
+          'الكود': e.code || e.id || '',
+          'الاسم': e.name || '',
+          'الحالة': e.status === 'P' ? 'موجود' : e.status === 'V' ? 'إجازة' : e.status || '',
+          'القسم': e.dept || '',
+          'الوظيفة': e.title || ''
+        };
+      });
+      var ws = XLSX.utils.json_to_sheet(data);
+      ws['!cols'] = [{wch:18},{wch:10},{wch:10},{wch:22},{wch:10},{wch:18},{wch:18}];
+      var wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'سكن الموظفين');
+      XLSX.writeFile(wb, 'سكن_الموظفين_' + new Date().toISOString().split('T')[0] + '.xlsx');
     }
 
     function handleHousingExcelImport(evt) {
