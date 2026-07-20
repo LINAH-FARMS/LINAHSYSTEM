@@ -18073,25 +18073,35 @@ function getIngredientFactor(name) {
 }
 function loadChefIngCosts() {
   try { var s = JSON.parse(localStorage.getItem('chef_ing_costs')); if (s && typeof s === 'object') return s; } catch(e){}
-  return JSON.parse(JSON.stringify(CHEF_ING_COST_DEFAULT));
+  var merged = JSON.parse(JSON.stringify(CHEF_ING_COST_DEFAULT));
+  // دمج الأسعار من ingredientMaster كمصدر أساسي موحد
+  if (typeof ingredientMaster !== 'undefined' && ingredientMaster.length) {
+    ingredientMaster.forEach(function(ing) {
+      if (ing.price > 0) merged[ing.name + '|' + (ing.unit || 'كجم')] = ing.price;
+    });
+  }
+  return merged;
 }
 var CHEF_ING_COSTS = loadChefIngCosts();
 function saveChefIngCosts() { try { localStorage.setItem('chef_ing_costs', JSON.stringify(CHEF_ING_COSTS)); } catch(e){} }
-function getIngCost(n, u) {
-  var v = CHEF_ING_COSTS[n+'|'+u];
-  if (v !== undefined) return v;
-  var ing = ingredientMaster.find(function(i) { return i.name === n; });
-  return ing ? ing.price : undefined;
-}
+function getIngCost(n, u) { return CHEF_ING_COSTS[n+'|'+u]; }
 function getIngCostInput(n, u) {
-  var wrap = document.createElement('span');
   var v = getIngCost(n, u);
-  return '<input type="number" step="0.01" min="0" value="' + (v!==undefined?v:'') + '" placeholder="سعر/'+u+'" data-cost="'+n+'|'+u+'" style="width:80px;padding:3px;border:1px solid #cfd8dc;border-radius:5px;font-size:12px;" onchange="updateIngCost(this)">';
+  var missing = (v === undefined);
+  return '<span style="display:inline-flex;align-items:center;gap:4px;">' +
+    (missing ? '<span style="color:#c62828;font-weight:700;" title="سعر مفقود">⚠️</span>' : '') +
+    '<input type="number" step="0.01" min="0" value="' + (v!==undefined?v:'') + '" placeholder="سعر/'+u+'" data-cost="'+n+'|'+u+'" style="width:80px;padding:3px;border:1px solid ' + (missing ? '#c62828' : '#cfd8dc') + ';border-radius:5px;font-size:12px;" onchange="updateIngCost(this)">' +
+    '</span>';
 }
 function updateIngCost(inp) {
   var key = inp.getAttribute('data-cost');
   var val = parseFloat(inp.value);
-  if (!isNaN(val)) { CHEF_ING_COSTS[key] = val; saveChefIngCosts(); }
+  if (!isNaN(val)) {
+    CHEF_ING_COSTS[key] = val; saveChefIngCosts();
+    var parts = key.split('|');
+    var ing = ingredientMaster.find(function(i) { return i.name === parts[0]; });
+    if (ing) { ing.price = val; saveIngredientMaster(); }
+  }
 }
 
 function setupAutocomplete(inp) {
