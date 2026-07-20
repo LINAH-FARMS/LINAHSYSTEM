@@ -3932,21 +3932,31 @@
     let ingredientMaster = _safeJsonParse(_lsGet('linah_ingredient_master'), []);
     if (!ingredientMaster.length) {
       ingredientMaster = [
-        {name:'سولار',unit:'لتر',price:34},{name:'وقود الفرن',unit:'فاليو',price:48},{name:'الورشة',unit:'سكن',price:70},
-        {name:'إداري سكن',unit:'البوابه',price:50},{name:'سكن العمال',unit:'سكن',price:26},{name:'العمال',unit:'سكن',price:125},
-        {name:'العمال سكن العمال',unit:'كرفان',price:99},{name:'سكن المهندسين',unit:'قطاع',price:1.75},{name:'قطاع',unit:'فاليو',price:3.99},
-        {name:'خيمة',unit:'قطاع',price:26},{name:'غرفة قطاع',unit:'غرفة',price:36},{name:'فاليو غرفة',unit:'خيمة',price:5.75},
-        {name:'خيمة',unit:'خيمة',price:160},{name:'خيمة',unit:'ادارى',price:26},{name:'البوابه',unit:'غرفه',price:13},
-        {name:'جزوارين',unit:'نخالين',price:0.10},{name:'فاليو فندق',unit:'نخالين',price:26},{name:'كرفان',unit:'بيارة',price:80},
-        {name:'مبنى',unit:'بيارة',price:40},{name:'مبنى بيارة',unit:'مبنى',price:380},{name:'فاليو الإنتاج',unit:'الزراعي',price:100},
-        {name:'الادارة الزراعيه',unit:'الأمن',price:741},{name:'الإداري الشئون',unit:'الإدارية',price:1.50},{name:'الحركة',unit:'والنقل',price:180},
-        {name:'الصيانة والهندسة',unit:'الفنية',price:30},{name:'ادارة',unit:'اداره',price:330},{name:'الجودة مهندس',unit:'زراعي',price:150},{name:'مشرف موقع',unit:'مشرف',price:273.60},{name:'إداري',unit:'مشرف',price:180},
-        {name:'إداري',unit:'أول',price:200},{name:'مشرف إداري',unit:'ثاني',price:42},{name:'مشرف الصيانة',unit:'الفنية',price:180},
-        {name:'رئيس قسم',unit:'المطبخ',price:0.48},{name:'13عامل',unit:'زراعي',price:0.48},{name:'فرد أمن',unit:'فني',price:0.58},
-        {name:'صيانة',unit:'سائق',price:2.80},{name:'تراك',unit:'قائد',price:0.40},{name:'فريق',unit:'الزيتون',price:0.36},
-        {name:'قائد فريق',unit:'الشئون',price:0.36},{name:'الإدارية نخال',unit:'مدخل',price:0.36},{name:'مدير',unit:'مدير',price:0.22},
-        {name:'الرى',unit:'والتسميد',price:0.98},{name:'مهندس',unit:'جودة',price:0.48},{name:'ضيوف سيدات',unit:'طلبة',price:0.24},
-        {name:'مدرسة',unit:'مقدمي',price:80},{name:'خدمة 7',unit:'نخالين',price:0.0005},{name:'سائقين مقدم',unit:'خدمة',price:0.14},{name:'بدون اجر',unit:'مقدم',price:0.14}
+        {name:'ارز',unit:'كجم',price:35},{name:'بصل',unit:'كجم',price:8},{name:'بطاطس',unit:'كجم',price:20},{name:'ثوم',unit:'كجم',price:180},
+        {name:'جزر',unit:'كجم',price:15},{name:'جوز هند',unit:'كجم',price:380},{name:'حمص',unit:'كجم',price:80},{name:'خيار',unit:'كجم',price:12},
+        {name:'زيت',unit:'لتر',price:60},{name:'سمن',unit:'كجم',price:100},{name:'سمنة',unit:'كجم',price:120},{name:'طحينة',unit:'كجم',price:160},
+        {name:'عدس اصفر',unit:'كجم',price:52},{name:'عدس بجبة',unit:'كجم',price:48},{name:'فاصوليا بيضاء',unit:'كجم',price:72},{name:'فول مدشوش',unit:'كجم',price:48},
+        {name:'فول',unit:'كجم',price:80},{name:'كوسة',unit:'كجم',price:30},{name:'لحم',unit:'كجم',price:250},{name:'لسان عصفور',unit:'كجم',price:26},
+        {name:'لوبيا',unit:'كجم',price:72},{name:'ليمون',unit:'كجم',price:20},{name:'مكرونة',unit:'كجم',price:26},{name:'مكرونة اسبكتى',unit:'كجم',price:26},
+        {name:'ملوخية',unit:'كجم',price:200},{name:'نشا',unit:'كجم',price:40},{name:'طماطم',unit:'كجم',price:10},{name:'دقيق',unit:'كجم',price:36},
+        {name:'فلفل',unit:'كجم',price:20},{name:'سكر',unit:'كجم',price:33.5},{name:'شعرية',unit:'كجم',price:26},{name:'زبيب',unit:'كجم',price:330},
+        {name:'سودانى',unit:'كجم',price:200},{name:'عدس',unit:'كجم',price:60},{name:'بسلة',unit:'كجم',price:40},{name:'سباجيتى',unit:'كجم',price:26},
+        {name:'دجاجة',unit:'عدد',price:110},{name:'فرخة',unit:'عدد',price:110},{name:'بيضة',unit:'عدد',price:1.5},{name:'علبة جبنة 125 جرام',unit:'عدد',price:13},
+        {name:'علبة مربي 20 جرام',unit:'عدد',price:30},{name:'كيس حلاوة',unit:'عدد',price:5.75},{name:'خبز بلدي',unit:'عدد',price:5},
+        {name:'مرقة دجاج',unit:'عدد',price:1.5},{name:'علبة صلصة',unit:'وحدة',price:30},{name:'علبة بلاستيك',unit:'وحدة',price:1},
+        {name:'زيت زيتون',unit:'زجاجة',price:60},{name:'خل',unit:'لتر',price:10},{name:'لبن',unit:'لتر',price:55},
+        {name:'مربى',unit:'علبة',price:30},{name:'جبنة',unit:'عدد',price:13},{name:'حلاوة قطع',unit:'عدد',price:5.75},
+        {name:'سمنة روابى',unit:'كجم',price:120},{name:'زيت حار',unit:'لتر',price:25},{name:'بقسماط ناعم',unit:'كجم',price:42},
+        {name:'ماء',unit:'لتر',price:0},{name:'سيلفر',unit:'لفة',price:300},{name:'فحم',unit:'شيكارة',price:680},
+        {name:'فلفل اسمر',unit:'جم',price:0.5},{name:'كسبرة ناعمة',unit:'جم',price:0.3},{name:'كمون',unit:'جم',price:0.4},
+        {name:'كركم',unit:'جم',price:0.3},{name:'13 بهار',unit:'جم',price:0.5},{name:'7 بهارات',unit:'جم',price:0.5},
+        {name:'بهارات شوي',unit:'جم',price:0.5},{name:'ورق لاورا',unit:'جم',price:0.5},{name:'حبهان',unit:'جم',price:2},
+        {name:'بابريكا',unit:'جم',price:0.3},{name:'ثوم بودرة',unit:'جم',price:0.3},{name:'بصل بودرة',unit:'جم',price:0.3},
+        {name:'شطة',unit:'جم',price:0.3},{name:'كاري',unit:'جم',price:0.5},{name:'كبابة صيني',unit:'جم',price:0.5},
+        {name:'كرات',unit:'ربطة',price:3},{name:'خضرة',unit:'ربطة',price:3},{name:'كسبرة خضراء',unit:'ربطة',price:3},
+        {name:'سمسم',unit:'جم',price:0.2},{name:'فلفل حار',unit:'كجم',price:20},{name:'فلفل رومي',unit:'كجم',price:20},
+        {name:'باذنجان رومي',unit:'كجم',price:15},{name:'ملح',unit:'كيس',price:2},{name:'زيت طبخ',unit:'لتر',price:60},
+        {name:'فلفل بارد',unit:'كجم',price:20},{name:'بسلة',unit:'كيس',price:10}
       ];
       _lsSet('linah_ingredient_master', JSON.stringify(ingredientMaster));
     }
@@ -14048,7 +14058,7 @@ reports.forEach(function(r) {
 
     function addBakeryStock() {
       let sel = document.getElementById('stock-add-material');
-      sel.innerHTML = '<option value="">تم التحليل</option>' + bakeryIngredients.map(i => '<option value="' + i.id + '">' + i.name + ' (' + (i.currentQty||0) + ' ' + i.unit + ')</option>').join('');
+      sel.innerHTML = '<option value="">اختر المكون</option>' + bakeryIngredients.map(i => '<option value="' + i.id + '">' + i.name + ' (' + (i.currentQty||0) + ' ' + i.unit + ')</option>').join('');
       document.getElementById('stock-add-qty').value = '';
       document.getElementById('stock-add-notes').value = '';
       openModal('modal-add-stock');
@@ -14060,7 +14070,7 @@ reports.forEach(function(r) {
       if (!ing) return alert('الرجاء إدخال مكون الإنتاج.');
       let qty = parseFloat(document.getElementById('stock-add-qty').value) || 0;
         if (!qty || qty <= 0) return alert('الرجاء إدخال كمية التوريد قبل الحفظ.');
-      let notes = document.getElementById('stock-add-notes').value.trim() || 'التاريخ الدقيق';
+      let notes = document.getElementById('stock-add-notes').value.trim() || 'إضافة رصيد';
       let before = ing.currentQty || 0;
       ing.currentQty = before + qty;
       let entry = {
@@ -14104,7 +14114,7 @@ reports.forEach(function(r) {
         `<tr>
           <td>${e.date}</td>
           <td><b>${e.materialName}</b></td>
-          <td style="color:${e.type === 'in' ? '#1b5e20' : '#d32f2f'};font-weight:700;">${e.type === 'in' ? '? كجم' : '? الأرغفة'}</td>
+          <td style="color:${e.type === 'in' ? '#1b5e20' : '#d32f2f'};font-weight:700;">${e.type === 'in' ? 'إضافة رصيد' : 'استخدام'}</td>
           <td style="font-weight:700;">${e.quantity} ${e.unit}</td>
           <td>${e.unit}</td>
           <td>${e.balanceBefore}</td>
@@ -17619,7 +17629,7 @@ function updateDashClock() {
         </div>
         <div class="form-group">
           <label>الكمية</label>
-          <input type="number" id="stock-add-qty" min="0.1" step="0.1" placeholder="الكمية المضافـة">
+          <input type="number" id="stock-add-qty" min="0.1" step="0.1" placeholder="الكمية المضافة">
         </div>
         <div class="form-group">
           <label>ملاحظات</label>
@@ -18067,7 +18077,12 @@ function loadChefIngCosts() {
 }
 var CHEF_ING_COSTS = loadChefIngCosts();
 function saveChefIngCosts() { try { localStorage.setItem('chef_ing_costs', JSON.stringify(CHEF_ING_COSTS)); } catch(e){} }
-function getIngCost(n, u) { return CHEF_ING_COSTS[n+'|'+u]; }
+function getIngCost(n, u) {
+  var v = CHEF_ING_COSTS[n+'|'+u];
+  if (v !== undefined) return v;
+  var ing = ingredientMaster.find(function(i) { return i.name === n; });
+  return ing ? ing.price : undefined;
+}
 function getIngCostInput(n, u) {
   var wrap = document.createElement('span');
   var v = getIngCost(n, u);
