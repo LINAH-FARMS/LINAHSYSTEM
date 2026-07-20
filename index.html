@@ -18074,10 +18074,15 @@ function getIngredientFactor(name) {
 function loadChefIngCosts() {
   try { var s = JSON.parse(localStorage.getItem('chef_ing_costs')); if (s && typeof s === 'object') return s; } catch(e){}
   var merged = JSON.parse(JSON.stringify(CHEF_ING_COST_DEFAULT));
-  // دمج الأسعار من ingredientMaster كمصدر أساسي موحد
+  // دمج الأسعار من ingredientMaster للخامات المستخدمة في الوصفات فقط
   if (typeof ingredientMaster !== 'undefined' && ingredientMaster.length) {
+    var recipeIngs = {};
+    if (typeof RECIPES !== 'undefined') {
+      RECIPES.forEach(function(r){ (r.items||[]).forEach(function(it){ recipeIngs[it.n+'|'+it.u] = true; }); });
+    }
     ingredientMaster.forEach(function(ing) {
-      if (ing.price > 0) merged[ing.name + '|' + (ing.unit || 'كجم')] = ing.price;
+      var key = ing.name + '|' + (ing.unit || 'كجم');
+      if (recipeIngs[key] && ing.price > 0) merged[key] = ing.price;
     });
   }
   return merged;
@@ -18429,20 +18434,19 @@ function resetRecipeForm() {
 function renderChefCostEditor() {
   var el = document.getElementById('chef-cost-editor');
   if (!el) return;
-  var allIngs = {};
-  Object.keys(CHEF_ING_COSTS).forEach(function(k){ allIngs[k] = CHEF_ING_COSTS[k]; });
+  var ingMap = {};
   RECIPES.forEach(function(r){
     (r.items||[]).forEach(function(it){
       var key = it.n+'|'+it.u;
-      if (allIngs[key] === undefined) allIngs[key] = undefined;
+      if (!ingMap[key]) ingMap[key] = { name: it.n, unit: it.u };
     });
   });
-  var keys = Object.keys(allIngs).sort();
+  var keys = Object.keys(ingMap).sort();
   el.innerHTML = keys.map(function(k){
-    var parts = k.split('|');
+    var item = ingMap[k];
     return '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:4px 0;border-bottom:1px solid #eee;font-size:13px;">'+
-      '<span>'+parts[0]+' <span style="color:#888;font-size:11px;">('+parts[1]+')</span></span>'+
-      '<span>'+getIngCostInput(parts[0], parts[1])+'</span></div>';
+      '<span>'+item.name+' <span style="color:#888;font-size:11px;">('+item.unit+')</span></span>'+
+      '<span>'+getIngCostInput(item.name, item.unit)+'</span></div>';
   }).join('');
 }
 
