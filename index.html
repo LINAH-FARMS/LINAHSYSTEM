@@ -1356,17 +1356,12 @@
 
     <div class="control-panel no-print">
       <button class="btn btn-primary" onclick="populateRoomSectorDropdown(); openModal('modal-add-room')">🏠 إضافة / تعديل غرفة وسعتها</button>
-      <button class="btn btn-danger" onclick="deleteEmptyRooms()" style="background-color: #c62828;">🗑️ حذف كل الغرف الفاضية</button>
-      <button class="btn btn-warning" onclick="clearInvalidRoomAssignments()" style="background-color: #b71c1c;">🧹 حذف الغرف المكررة الفاضية</button>
+      <button class="btn btn-danger" onclick="deleteEmptyRooms()" style="background-color: #c62828;">🗑️ حذف الغرف الفاضية</button>
       <button class="btn btn-warning" onclick="diagnoseAndFixHousing()" style="background-color: #e65100;">🔍 تشخيص ومعالجة بيانات السكن</button>
       <button class="btn btn-warning" onclick="autoRepairHousing()" style="background-color: #1565c0;">🔧 إعادة توزيع سكن الموظفين</button>
-      <button class="btn btn-secondary" onclick="downloadTemplate_Housing()">📥 نموذج استيراد فاضٍ (Excel)</button>
-      <button class="btn btn-excel" onclick="exportHousingToExcel()" style="background-color: #2e7d32;">📤 تصدير السعة (Excel)</button>
       <button class="btn btn-excel" onclick="exportHousingEmployeesToExcel()" style="background-color: #1565c0;">📤 تصدير سكن الموظفين (Excel)</button>
-      <button class="btn btn-excel" onclick="document.getElementById('excel-housing-file').click()" style="background-color: #1565c0;">📥 استيراد السعة (Excel)</button>
-      <input type="file" id="excel-housing-file" style="display: none;" accept=".xlsx, .xls" onchange="handleHousingExcelImport(event)">
-      <button class="btn btn-danger" onclick="document.getElementById('excel-replace-housing-file').click()" style="background-color: #e65100;">🔄 استيراد سكن جديد (استبدال كامل)</button>
-      <input type="file" id="excel-replace-housing-file" style="display: none;" accept=".xlsx, .xls" onchange="replaceHousingFromExcel(event)">
+      <button class="btn btn-excel" onclick="document.getElementById('import-housing-employees').click()" style="background-color: #2e7d32;">📥 استيراد سكن الموظفين (Excel)</button>
+      <input type="file" id="import-housing-employees" style="display:none;" accept=".xlsx,.xls" onchange="importHousingEmployeesFromExcel(event)">
       <button class="btn" onclick="printHousing()" style="background:#1565c0;color:#fff;">🖨️ طباعة تقرير السكن</button>
     </div>
 
@@ -12021,6 +12016,38 @@ function renderTeaSugarTable() {
       var wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, 'سكن الموظفين');
       XLSX.writeFile(wb, 'سكن_الموظفين_' + new Date().toISOString().split('T')[0] + '.xlsx');
+    }
+
+    function importHousingEmployeesFromExcel(evt) {
+      var file = evt.target.files[0]; if (!file) return;
+      var reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          var data = new Uint8Array(e.target.result);
+          var wb = XLSX.read(data, {type:'array'});
+          var rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
+          if (!rows || !rows.length) return alert('الملف فارغ.');
+          var updated = 0, skipped = 0;
+          rows.forEach(function(r) {
+            var code = String(r['الكود'] || '').trim();
+            var sector = String(r['المبنى'] || '').trim();
+            var room = String(r['الغرفة'] || '').trim();
+            var status = String(r['الحالة'] || '').trim();
+            if (!code || !sector || !room) { skipped++; return; }
+            var emp = employees.find(function(e) { return (e.code || e.id) === code; });
+            if (!emp) { skipped++; return; }
+            emp.sector = sector;
+            emp.room = room;
+            if (status === 'موجود') emp.status = 'P';
+            else if (status === 'إجازة') emp.status = 'V';
+            updated++;
+          });
+          syncStorage(); renderAll();
+          alert('تم استيراد ' + updated + ' موظف بنجاح.\nتخطي: ' + skipped);
+        } catch(ex) { alert('خطأ: ' + ex.message); }
+      };
+      reader.readAsArrayBuffer(file);
+      evt.target.value = '';
     }
 
     function handleHousingExcelImport(evt) {
