@@ -9140,7 +9140,7 @@ function toggleEmployeeStatus(empId) {
       let itemName = document.getElementById('inv-item-name').value.trim();
       let itemCode = document.getElementById('inv-item-code').value;
       let unit = document.getElementById('inv-unit-select').value;
-      let qty = document.getElementById('inv-qty').value;
+      let qty = parseInt(document.getElementById('inv-qty').value) || 1;
       let notes = document.getElementById('inv-notes').value.trim();
 
       if(!itemName || !qty || !empId) {
@@ -9153,6 +9153,22 @@ function toggleEmployeeStatus(empId) {
       let voucher = { voucherId, dept, empId, empName, itemName, itemCode, unit, qty: parseInt(qty), date: new Date().toISOString().split('T')[0], notes };
       inventoryVouchers.push(_ts(voucher)); syncStorage(); renderInventoryTable();
       logAction('السكان', 'اسم الأصل', itemName, 'الكمية: ' + voucherId + ' | ملاحظات: ' + dept + ' | تاريخ: ' + empName + ' | الإضافة: ' + qty);
+      
+      // Update archive: deduct qty from matching archive records
+      var remaining = qty;
+      for (var ai = 0; ai < archiveData.length && remaining > 0; ai++) {
+        var a = archiveData[ai];
+        if (!a.item || a.qty <= 0) continue;
+        // Match if itemName is part of archive item name (flexible match)
+        if (a.item.toLowerCase().indexOf(itemName.toLowerCase()) !== -1 || itemName.toLowerCase().indexOf(a.item.toLowerCase()) !== -1) {
+          var deduct = Math.min(remaining, a.qty);
+          a.qty -= deduct;
+          remaining -= deduct;
+          if (a.desc) a.desc += ' | ';
+          a.desc = (a.desc || '') + 'تم صرف ' + deduct + ' بتاريخ ' + new Date().toISOString().split('T')[0];
+        }
+      }
+      if (remaining < qty) { syncStorage(); renderArchiveTable(); }
       
       document.getElementById('inv-item-name').value = '';
       document.getElementById('inv-item-code').value = '';
