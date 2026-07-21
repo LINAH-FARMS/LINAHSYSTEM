@@ -1606,12 +1606,12 @@
   <div id="tab-vacations" class="tab-content">
     <div class="control-panel no-print">
       <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px;padding-bottom:8px;border-bottom:1px solid rgba(0,0,0,0.06);">
-        <input type="text" id="search-vac" class="search-input" placeholder="ابحث باسم الموظف أو الكود..." oninput="renderVacationsTable()" style="flex:2;min-width:180px;">
+        <input type="text" id="vacation-emp-search" class="search-input" placeholder="ابحث باسم الموظف أو الكود لفلترة الجدول..." oninput="renderVacationsTable()" style="flex:2;min-width:180px;">
       </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
         <h3 style="font-size: 16px; margin:0;">تسجيل حركة إجازة جديدة:</h3>
-        <div class="emp-search-wrapper" style="width:auto;flex:2;min-width:200px;"><input type="text" id="vacation-emp-search" class="emp-search-input" placeholder="ابحث بكود الموظف أو اسم..." autocomplete="off"><div class="emp-search-suggestions" id="vacation-emp-suggestions"></div>      <input type="hidden" id="vacation-emp-id">
-      <input type="hidden" id="vacation-edit-id" value=""></div>
+        <select id="vacation-emp-select" style="flex:2;min-width:200px;"><option value="">-- اختر موظف --</option></select>
+      <input type="hidden" id="vacation-edit-id" value="">
       <span id="vacation-balance-display" style="font-size:12px;color:#1b5e20;font-weight:600;white-space:nowrap;"></span>
       <select id="vacation-type" style="min-width:100px;">
         <option value="اعتيادية">اعتيادية</option>
@@ -4591,6 +4591,21 @@
       fillSelectWithOptions('transfer-title-select', dynamicTitles, '-- اختر الوظيفة --');
       fillSelectWithOptions('hosp-type', dynamicVisitorTypes, '');
       populateBctrDatalist();
+      populateVacationEmpSelect();
+    }
+
+    function populateVacationEmpSelect() {
+      var sel = document.getElementById('vacation-emp-select');
+      if (!sel) return;
+      var cur = sel.value;
+      sel.innerHTML = '<option value="">-- اختر موظف --</option>';
+      employees.forEach(function(e) {
+        var opt = document.createElement('option');
+        opt.value = e.id || e.code;
+        opt.textContent = '[' + (e.code||'') + '] ' + (e.name||'');
+        sel.appendChild(opt);
+      });
+      if (cur && Array.from(sel.options).some(function(o) { return o.value === cur; })) sel.value = cur;
     }
 
     function populateBctrDatalist() {
@@ -4717,12 +4732,11 @@
 
     function initEmployeeSearchInputs() {
       setupEmployeeSearch('inv-emp-search', 'inv-emp-id', 'inv-emp-suggestions');
-      setupEmployeeSearch('vacation-emp-search', 'vacation-emp-id', 'vacation-emp-suggestions');
-      document.getElementById('vacation-emp-search').addEventListener('change', function() {
-        let empId = document.getElementById('vacation-emp-id').value;
+      populateVacationEmpSelect();
+      document.getElementById('vacation-emp-select').addEventListener('change', function() {
         let balSpan = document.getElementById('vacation-balance-display');
-        if (!empId) { balSpan.innerText = ''; return; }
-        let emp = employees.find(e => (e.id || e.code) == empId);
+        if (!this.value) { balSpan.innerText = ''; return; }
+        let emp = employees.find(e => (e.id || e.code) == this.value);
         if (emp) {
           balSpan.innerText = typeof emp.vacationBalance === 'number' ? 'رصيد الإجازة: ' + emp.vacationBalance + ' يوم' : '';
         } else {
@@ -9581,7 +9595,7 @@ function toggleEmployeeStatus(empId) {
     }
 
     function addVacationMovement() {
-      let empId = document.getElementById('vacation-emp-id').value;
+      let empId = document.getElementById('vacation-emp-select').value;
       let vtype = document.getElementById('vacation-type').value;
       let start = document.getElementById('vacation-start-date').value;
       let days = parseInt(document.getElementById('vacation-days').value) || 0;
@@ -9630,7 +9644,7 @@ function toggleEmployeeStatus(empId) {
       let tbody = document.getElementById('vacations-table-body');
       if(!tbody) return; tbody.innerHTML = '';
       var currentYear = new Date().getFullYear();
-      let q = document.getElementById('search-vac').value.toLowerCase();
+      let q = document.getElementById('vacation-emp-search').value.toLowerCase();
       let filtered = [...vacations];
       filtered = filtered.filter(function(v) {
         var matchSearch = (v.name||'').toLowerCase().includes(q) || ((v.code||'').toLowerCase() === q);
@@ -9718,8 +9732,7 @@ function toggleEmployeeStatus(empId) {
       if (!canEditRecord(v.start || v.date)) { alert('لا يمكن تعديل سجل إجازة قديم'); return; }
       var emp = employees.find(function(e) { return (e.code || e.id) === v.code; });
       // اسم العهدة
-      document.getElementById('vacation-emp-search').value = '[' + v.code + '] ' + v.name;
-      document.getElementById('vacation-emp-id').value = v.code;
+      document.getElementById('vacation-emp-select').value = v.code;
       document.getElementById('vacation-type').value = v.type || 'البيان';
       document.getElementById('vacation-start-date').value = v.start;
       document.getElementById('vacation-days').value = v.days;
@@ -9737,7 +9750,7 @@ function toggleEmployeeStatus(empId) {
     function saveVacationEdit(idx) {
       var v = vacations[idx];
       if (!v) return;
-      var empId = document.getElementById('vacation-emp-id').value;
+      var empId = document.getElementById('vacation-emp-select').value;
       var vtype = document.getElementById('vacation-type').value;
       var start = document.getElementById('vacation-start-date').value;
       var days = parseInt(document.getElementById('vacation-days').value) || 0;
@@ -9774,8 +9787,7 @@ function toggleEmployeeStatus(empId) {
       document.getElementById('vacation-days').value = '';
       document.getElementById('vacation-start-date').value = '';
       document.getElementById('vacation-preview').style.display = 'none';
-      document.getElementById('vacation-emp-search').value = '';
-      document.getElementById('vacation-emp-id').value = '';
+      document.getElementById('vacation-emp-select').value = '';
       document.getElementById('vacation-balance-display').innerText = '';
       document.getElementById('vacation-edit-id').value = '';
       document.querySelector('#tab-vacations .btn-primary').innerText = '💾 تسجيل الإجازة';
@@ -17350,7 +17362,7 @@ function updateDashClock() {
           let allTd = clone.querySelectorAll('td');
           let removeList = Array.from(allTd).filter((td, i) => excludeIndices.has(i));
           removeList.reverse().forEach(td => td.remove());
-          var cleaned = clone.outerHTML.replace(/<td[^>]*><\/td>/g, '');
+          var cleaned = clone.outerHTML.replace(/<td[^>]*><\/td>/g, '').replace(/[\u{1F300}-\u{1FFFF}]/gu, '');
           rowData.push({ html: cleaned, date: date });
 
           if (isContractorTable) {
@@ -17384,19 +17396,30 @@ function updateDashClock() {
           '</table></div>';
       }
 
-      let title = tableId ? tableId.replace(/table-/g, '').replace(/-/g, ' ') : 'تقرير';
+      let logoEl = document.querySelector('img[alt="Logo"]');
+      let logoSrc2 = logoEl ? logoEl.src : logoSrc;
+      let title, headerExtra = '';
+      if (tableId === 'table-bakery-ctr-supply') {
+        let fromDate = document.getElementById('filt-ctr-from')?.value || '';
+        let toDate = document.getElementById('filt-ctr-to')?.value || '';
+        title = 'بيان توريد خبز لمقاول';
+        if (fromDate || toDate) headerExtra = '<div style="text-align:center;font-size:13px;color:#555;margin:4px 0 10px;">عن الفترة: ' + (fromDate || '—') + ' إلى ' + (toDate || '—') + '</div>';
+      } else {
+        title = tableId ? tableId.replace(/table-/g, '').replace(/-/g, ' ') : 'تقرير';
+      }
       let w = window.open('', '_blank', 'width=900,height=700');
       w.document.write('<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8"><title>' + title + '</title>' +
-        '<style>body{font-family:"Segoe UI",Tahoma,Arial,sans-serif;padding:20px;}' +
+        '<style>body{font-family:"Cairo","Segoe UI",Tahoma,Arial,sans-serif;padding:20px;}' +
         'table{width:100%;border-collapse:collapse;margin:10px 0;font-size:12px;}' +
         'th,td{border:1px solid #ddd;padding:5px 6px;text-align:center;}' +
         'th{background:#1b5e20;color:white;}' +
-        'h2{text-align:center;color:#1b5e20;}' +
+        'h2{text-align:center;color:#1b5e20;margin:0;}' +
+        '.print-header{display:flex;align-items:center;gap:12px;justify-content:center;border-bottom:3px double #1b5e20;padding-bottom:10px;margin-bottom:12px;}' +
+        '.print-header img{width:50px;height:50px;border-radius:50%;object-fit:cover;border:2px solid #1b5e20;padding:2px;}' +
         '.print-watermark{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-15deg);z-index:-1;pointer-events:none;}' +
         '.print-watermark img{width:500px;height:auto;opacity:0.07;}' +
         '@media print{body{padding:0;}}</style></head><body>' +
-        (logoSrc ? '<div class="print-watermark"><img src="' + logoSrc + '"></div>' : '') +
-        '<h2>' + title + '</h2>' +
+        (logoSrc2 ? '<div class="print-header"><img src="' + logoSrc2 + '"><div><h2>' + title + '</h2>' + headerExtra + '</div></div>' : '<h2>' + title + '</h2>' + headerExtra) +
         '<table>' + headerRow + rows + '</table>' +
         summaryHtml +
         '<div style="text-align:center;color:#888;margin-top:15px;font-size:11px;">طباعة: ' + new Date().toLocaleString('ar-EG') + '</div>' +
