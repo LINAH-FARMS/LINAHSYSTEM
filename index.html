@@ -9584,14 +9584,12 @@ function toggleEmployeeStatus(empId) {
 
       if(!empId || !start || !days) return alert("الوحدة عدد المخزن الموقع تم الاستيراد صنف جديد!");
 
-      let empIdx = employees.findIndex(e => (e.id || e.code) == empId);
-      if(empIdx === -1) return;
+      if (!emp) return;
 
       let dates = calcVacationDates(start, days);
       if (!dates) return alert("لم يتم تحديد نطاق تاريخ صحيح");
 
       // تخطيه بيانات خطأ في
-      let emp = employees[empIdx];
       if (typeof emp.vacationBalance !== 'number') emp.vacationBalance = 30;
       if (days > emp.vacationBalance) {
         if (!confirm(`بيانات قراءة ${emp.name} الملف حذف ${emp.vacationBalance} الصنف من السجل؟ لا ${days} توجد.\nبيانات عهدات بيانات مسجلة أدخل`)) return;
