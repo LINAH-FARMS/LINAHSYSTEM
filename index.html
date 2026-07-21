@@ -9628,9 +9628,12 @@ function toggleEmployeeStatus(empId) {
       let tbody = document.getElementById('vacations-table-body');
       if(!tbody) return; tbody.innerHTML = '';
       var currentYear = new Date().getFullYear();
-      let q = (document.getElementById('search-vac')?.value || '').trim().toLowerCase();
+      let q = document.getElementById('search-vac').value.toLowerCase();
       let filtered = [...vacations];
-      if (q) filtered = filtered.filter(function(v) { return (v.name||'').toLowerCase().includes(q) || (v.code||'').toLowerCase().includes(q) || (v.info||'').toLowerCase().includes(q); });
+      filtered = filtered.filter(function(v) {
+        var matchSearch = (v.name||'').toLowerCase().includes(q) || ((v.code||'').toLowerCase() === q);
+        return matchSearch;
+      });
       let st = sortState['table-vacations'];
       if (!st || !st.key) filtered = sortNewestFirst(filtered, 'start');
       if (st && st.key) filtered = sortData(filtered, st.key, st.dir);
