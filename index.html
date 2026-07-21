@@ -1605,6 +1605,9 @@
 
   <div id="tab-vacations" class="tab-content">
     <div class="control-panel no-print">
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px;padding-bottom:8px;border-bottom:1px solid rgba(0,0,0,0.06);">
+        <input type="text" id="search-vac" class="search-input" placeholder="ابحث باسم الموظف أو الكود..." oninput="renderVacationsTable()" style="flex:2;min-width:180px;">
+      </div>
       <h3 style="font-size: 16px; margin-left: 10px;">تسجيل حركة إجازة جديدة:</h3>
       <div class="emp-search-wrapper"><input type="text" id="vacation-emp-search" class="emp-search-input" placeholder="ابحث بكود الموظف أو اسم..." autocomplete="off"><div class="emp-search-suggestions" id="vacation-emp-suggestions"></div>      <input type="hidden" id="vacation-emp-id">
       <input type="hidden" id="vacation-edit-id" value=""></div>
@@ -9625,7 +9628,9 @@ function toggleEmployeeStatus(empId) {
       let tbody = document.getElementById('vacations-table-body');
       if(!tbody) return; tbody.innerHTML = '';
       var currentYear = new Date().getFullYear();
+      let q = (document.getElementById('search-vac')?.value || '').trim().toLowerCase();
       let filtered = [...vacations];
+      if (q) filtered = filtered.filter(function(v) { return (v.name||'').toLowerCase().includes(q) || (v.code||'').toLowerCase().includes(q) || (v.info||'').toLowerCase().includes(q); });
       let st = sortState['table-vacations'];
       if (!st || !st.key) filtered = sortNewestFirst(filtered, 'start');
       if (st && st.key) filtered = sortData(filtered, st.key, st.dir);
