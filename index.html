@@ -291,7 +291,7 @@
 
     .emp-search-wrapper { position: relative; width: 100%; }
     .emp-search-suggestions {
-      position: absolute; top: 100%; left: 0; right: 0; z-index: 999;
+      position: absolute; top: 100%; left: 0; right: 0; z-index: 99999;
       background: #fff; border: 1px solid #cfd8dc; border-radius: 0 0 5px 5px;
       max-height: 200px; overflow-y: auto; display: none;
       box-shadow: 0 4px 12px rgba(0,0,0,0.15);
@@ -1608,8 +1608,9 @@
       <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px;padding-bottom:8px;border-bottom:1px solid rgba(0,0,0,0.06);">
         <input type="text" id="search-vac" class="search-input" placeholder="ابحث باسم الموظف أو الكود..." oninput="renderVacationsTable()" style="flex:2;min-width:180px;">
       </div>
-      <h3 style="font-size: 16px; margin-left: 10px;">تسجيل حركة إجازة جديدة:</h3>
-      <div class="emp-search-wrapper"><input type="text" id="vacation-emp-search" class="emp-search-input" placeholder="ابحث بكود الموظف أو اسم..." autocomplete="off"><div class="emp-search-suggestions" id="vacation-emp-suggestions"></div>      <input type="hidden" id="vacation-emp-id">
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+        <h3 style="font-size: 16px; margin:0;">تسجيل حركة إجازة جديدة:</h3>
+        <div class="emp-search-wrapper" style="width:auto;flex:2;min-width:200px;"><input type="text" id="vacation-emp-search" class="emp-search-input" placeholder="ابحث بكود الموظف أو اسم..." autocomplete="off"><div class="emp-search-suggestions" id="vacation-emp-suggestions"></div>      <input type="hidden" id="vacation-emp-id">
       <input type="hidden" id="vacation-edit-id" value=""></div>
       <span id="vacation-balance-display" style="font-size:12px;color:#1b5e20;font-weight:600;white-space:nowrap;"></span>
       <select id="vacation-type" style="min-width:100px;">
@@ -1617,6 +1618,7 @@
         <option value="امتداد">امتداد</option>
         <option value="مأمورية">مأمورية</option>
       </select>
+      </div>
       <input type="date" id="vacation-start-date" title="تاريخ بداية الإجازة" onchange="previewVacationDates()">
       <input type="number" id="vacation-days" min="1" value="" placeholder="عدد الأيام" oninput="previewVacationDates()" style="width:80px;">
       <div id="vacation-preview" style="display:none;grid-column:1/-1;padding:6px 12px;background:#e3f2fd;border-radius:6px;font-size:12px;">
