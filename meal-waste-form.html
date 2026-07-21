@@ -84,10 +84,7 @@ textarea{resize:vertical;min-height:60px}
         <div class="step-num">2</div>
         <div class="step-title">بيانات الهدر</div>
       </div>
-      <div class="form-group">
-        <label>الوزن النهائي بعد الطبخ <span class="unit">(كجم)</span></label>
-        <input type="number" id="mw-total-prepared" min="0" step="0.1" placeholder="مثلاً: 150">
-      </div>
+      <input type="hidden" id="mw-total-prepared" value="0">
       <div style="background:#e3f2fd;border-radius:10px;padding:8px;margin-bottom:8px;">
         <div style="font-size:13px;font-weight:700;color:#1565c0;margin-bottom:6px;">👨‍💼 المهندسين — إجمالي: <strong id="mw-eng-total-display">0</strong></div>
         <div style="display:flex;gap:6px;flex-wrap:wrap;">
@@ -187,15 +184,18 @@ function calcWasteSummary() {
   var wrkAte = parseFloat(document.getElementById('mw-wrk-ate').value) || 0;
   var wrkTakeaway = parseFloat(document.getElementById('mw-wrk-takeaway').value) || 0;
   var guests = parseFloat(document.getElementById('mw-guests').value) || 0;
-  var totalPrepared = parseFloat(document.getElementById('mw-total-prepared').value) || 0;
+  var totalServings = engAte + engTakeaway + wrkAte + wrkTakeaway + guests;
+  var totalWaste = wasteEng + wasteWrk + wasteGuests;
+  var estPortionKg = 0.7;
+  var totalPrepared = (totalServings * estPortionKg) + totalWaste;
+  document.getElementById('mw-total-prepared').value = totalPrepared.toFixed(1);
 
   document.getElementById('mw-eng-total-display').textContent = engAte + engTakeaway;
   document.getElementById('mw-wrk-total-display').textContent = wrkAte + wrkTakeaway;
 
-  var totalWaste = wasteEng + wasteWrk + wasteGuests;
   var html = '';
   if (totalPrepared > 0) {
-    html += '<div>🥘 الوزن النهائي بعد الطبخ: <strong>' + totalPrepared.toFixed(1) + '</strong> كجم</div>';
+    html += '<div>🥘 الوزن النهائي بعد الطبخ (تقديري): <strong>' + totalPrepared.toFixed(1) + '</strong> كجم</div>';
   }
   if (totalWaste > 0 && totalPrepared > 0) {
     var pct = (totalWaste / totalPrepared * 100);
@@ -313,7 +313,7 @@ function resetForm() {
   document.getElementById('mw-date').value = new Date().toISOString().split('T')[0];
   selectMeal(document.querySelector('.meal-btn[data-meal="غداء"]'));
   document.getElementById('mw-chef').value = '';
-  document.getElementById('mw-total-prepared').value = '';
+  // mw-total-prepared auto-calculated
   document.getElementById('mw-waste-eng').value = '';
   document.getElementById('mw-waste-wrk').value = '';
   document.getElementById('mw-waste-guests').value = '';
