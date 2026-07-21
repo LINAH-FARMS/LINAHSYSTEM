@@ -164,7 +164,7 @@ function loadBakeryContractors() {
   .then(function(r) { return r.json(); })
   .then(function(rows) {
     if (rows && rows.length > 0 && rows[0].data && rows[0].data.bakeryContractorsNames) {
-      bakeryContractorsNames = rows[0].data.bakeryContractorsNames.filter(function(n){ return typeof n === 'string' && n !== '[object Object]' && n.trim(); });
+      bakeryContractorsNames = rows[0].data.bakeryContractorsNames.map(function(n){ return typeof n==='string'?n:(n&&n.name?n.name:String(n)); }).filter(function(n){ return typeof n === 'string' && n !== '[object Object]' && n.trim(); });
     }
     _bctrLoaded = true;
   })
@@ -208,7 +208,7 @@ function addContractor() {
     (bakeryContractorsNames.length > 0
       ? '<select id="ctr-name-' + n + '" style="width:100%;padding:11px 12px;border:2px solid #e0e0e0;border-radius:10px;font-size:14px;font-family:Cairo;background:white;-webkit-appearance:none;">' +
         '<option value="">-- اختر المقاول --</option>' +
-        bakeryContractorsNames.map(function(nm) { var _nm = String(nm); return '<option value="' + _nm.replace(/"/g,'&quot;') + '">' + _nm + '</option>'; }).join('') +
+        bakeryContractorsNames.map(function(nm) { var _nm = typeof nm==='string'?nm:(nm&&nm.name?nm.name:String(nm)); return '<option value="' + _nm.replace(/"/g,'&quot;') + '">' + _nm + '</option>'; }).join('') +
         '</select>'
       : '<input type="text" id="ctr-name-' + n + '" placeholder="أدخل اسم المقاول" style="width:100%;padding:11px 12px;border:2px solid #e0e0e0;border-radius:10px;font-size:14px;font-family:Cairo;">'
     ) +

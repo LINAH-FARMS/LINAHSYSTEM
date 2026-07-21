@@ -1868,6 +1868,11 @@
   <div id="tab-dynamic" class="tab-content">
     <h2 style="margin-bottom:20px;">➕ لوحة الإدارة المرنة — المباني / الإدارات / المسميات / التحويلات</h2>
 
+    <div onclick="document.getElementById('bakery-ctr-section').scrollIntoView({behavior:'smooth'});document.getElementById('new-bakery-ctr').focus()" style="background:#fff3e0;border:2px solid #e65100;border-radius:10px;padding:12px;margin-bottom:15px;cursor:pointer;">
+      <div style="font-weight:700;color:#e65100;">🍞 مقاولي الخبز — اضغط هنا للانتقال السريع</div>
+      <div style="font-size:12px;color:#bf360c;">حالياً: محمد شعبان، ممدوح بكر، عاطف عبد المغيث، مصطفى على، اسامه سمير، فارس محمد (6 مقاولين)</div>
+    </div>
+
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(350px,1fr));gap:15px;">
 
       <!-- المباني -->
@@ -1931,13 +1936,17 @@
       </div>
 
       <!-- مقاولي الخبز -->
-      <div style="background:#fff;border-radius:12px;padding:15px;border:1px solid #e0e0e0;">
+      <div id="bakery-ctr-section" style="background:#fff;border-radius:12px;padding:15px;border:1px solid #e0e0e0;">
         <h4 style="margin:0 0 10px 0;color:#e65100;">🍞 مقاولي الخبز</h4>
         <div style="display:flex;gap:6px;flex-wrap:wrap;">
           <input type="text" id="new-bakery-ctr" placeholder="اسم المقاول" style="flex:1;min-width:100px;padding:6px 10px;border:2px solid #e0e0e0;border-radius:6px;font-size:13px;">
           <button class="btn btn-primary" onclick="addBakeryContractorName()" id="btn-bakery-ctr" style="padding:6px 12px;font-size:13px;">➕ إضافة</button>
         </div>
         <div id="bakery-ctr-list" style="margin-top:8px;font-size:12px;"></div>
+        <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;">
+          <button class="btn btn-warning" onclick="fixBakeryContractors()" style="padding:4px 10px;font-size:11px;">🔧 إصلاح وإعادة تعيين</button>
+          <button class="btn btn-primary" onclick="syncBakeryContractorsToSupabase()" style="padding:4px 10px;font-size:11px;">📤 مزامنة مع Supabase</button>
+        </div>
       </div>
 
       <!-- ربط الوظائف بالإدارات -->
@@ -4006,9 +4015,9 @@
     let dynamicTitles = _safeJsonParse(_lsGet('dyn_titles'), ["مشرف","عامل","سائق","فني","مهندس زراعي","محاسب","أمين مخزن","طباخ","عامل نظافة"]);
     let dynamicVisitorTypes = _strArr(_safeJsonParse(_lsGet('dyn_visitor_types'), ["مورد","مفتش","ضيف","مقاول","موظف حكومي","ممثل جهة خارجية"]));
     let bakeryContractorsNames = _strArr(_safeJsonParse(_lsGet('linah_bakery_contractors_names'), ["محمد شعبان","ممدوح بكر","عاطف عبد المغيث","مصطفى على","اسامه سمير","فارس محمد"]));
-    (function(){var _o=["محمد شعبان","ممدوح بكر","عاطف عبد المغيث","مصطفى على","اسامه سمير","فارس محمد"],_s={};_o.forEach(function(n){_s[n]=true;});bakeryContractorsNames=bakeryContractorsNames.filter(function(n){return _s[n];});if(!bakeryContractorsNames.length)bakeryContractorsNames=_o.slice();})();
+    (function(){var _o=["محمد شعبان","ممدوح بكر","عاطف عبد المغيث","مصطفى على","اسامه سمير","فارس محمد"],_s={};_o.forEach(function(n){_s[n]=true;});bakeryContractorsNames=bakeryContractorsNames.map(function(n){return typeof n==='string'?n:(n&&n.name?n.name:String(n));}).filter(function(n){return _s[n]||(n&&n.trim()&&_s[n.trim()]);});if(!bakeryContractorsNames.length)bakeryContractorsNames=_o.slice();})();
     // تنظيف أسماء المقاولين التالفة ([object Object]) وإضافة الأسماء الموجودة للقائمة
-    (function(){ if (bakeryContractorSupplies.length > 0) { var _changed = false; var _names = {}; bakeryContractorsNames.forEach(function(n){_names[n]=true;}); bakeryContractorSupplies.forEach(function(r) { if (typeof r.name !== 'string' || r.name === '[object Object]' || !r.name.trim()) { r.name = 'غير معروف'; _changed = true; } else if (!_names[r.name] && r.name !== 'غير معروف') { _names[r.name] = true; bakeryContractorsNames.push(r.name); } }); if (_changed) { try { localStorage.setItem('linah_bakery_ctr_supplies', JSON.stringify(bakeryContractorSupplies)); } catch(e){} try { localStorage.setItem('linah_bakery_contractors_names', JSON.stringify(bakeryContractorsNames)); } catch(e){} } } })();
+    (function(){ if (bakeryContractorSupplies.length > 0) { var _changed = false; var _names = {}; bakeryContractorsNames.forEach(function(n){_names[n]=true;}); bakeryContractorSupplies.forEach(function(r) { if (typeof r.name !== 'string' || r.name === '[object Object]' || !r.name.trim()) { r.name = 'غير معروف'; _changed = true; } else { var _cn = typeof r.name === 'string' ? r.name.trim() : (r.name && r.name.name ? r.name.name.trim() : String(r.name).trim()); if (!_names[_cn]) { _names[_cn] = true; bakeryContractorsNames.push(_cn); } } }); if (_changed) { try { localStorage.setItem('linah_bakery_ctr_supplies', JSON.stringify(bakeryContractorSupplies)); } catch(e){} try { localStorage.setItem('linah_bakery_contractors_names', JSON.stringify(bakeryContractorsNames)); } catch(e){} } } })();
     let evaluations = _safeJsonParse(_lsGet('lineh_evaluations'), []);
     let roomAssets = _safeJsonParse(_lsGet('lineh_room_assets'), []);
     let archiveData = _safeJsonParse(_lsGet('lineh_archive_data'), []);
@@ -5743,6 +5752,27 @@
       document.getElementById('new-bakery-ctr').value = '';
       syncStorage(); rebuildAllDropdowns(); renderDynamicLists();
       populateBctrDatalist();
+    }
+    function fixBakeryContractors() {
+      var _o = ["محمد شعبان","ممدوح بكر","عاطف عبد المغيث","مصطفى على","اسامه سمير","فارس محمد"];
+      bakeryContractorsNames = _o.slice();
+      syncStorage(); rebuildAllDropdowns(); renderDynamicLists();
+      populateBctrDatalist();
+      alert("تم إعادة تعيين قائمة المقاولين إلى الـ 6 الأساسيين.");
+    }
+    function syncBakeryContractorsToSupabase() {
+      var raw = { id: 'alldata' };
+      raw.bakeryContractorsNames = bakeryContractorsNames;
+      raw.userId = currentUser;
+      raw.timestamp = new Date().toISOString();
+      fetch(SB + '/rest/v1/sync_data?id=eq.alldata', {
+        method: 'PUT',
+        headers: { 'apikey': KEY, 'Authorization': 'Bearer ' + KEY, 'Content-Type': 'application/json', 'Prefer': 'resolution=merge-duplicates' },
+        body: JSON.stringify({ id: 'alldata', data: raw })
+      }).then(function(r) {
+        if (r.ok) alert("✅ تم مزامنة قائمة المقاولين مع Supabase بنجاح!");
+        else alert("❌ فشلت المزامنة: " + r.status);
+      }).catch(function(e) { alert("❌ خطأ: " + e.message); });
     }
     function addDynamicTitle() {
       let titleName = document.getElementById('new-title').value.trim();
