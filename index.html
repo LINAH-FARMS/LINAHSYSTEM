@@ -1286,7 +1286,7 @@
 
     <div class="control-panel no-print" style="border:1px solid rgba(27,94,32,0.08);border-radius:10px;padding:10px;">
       <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px;padding-bottom:8px;border-bottom:1px solid rgba(0,0,0,0.06);">
-        <input type="text" id="search-emp" class="search-input" placeholder="ابحث باسم الموظف أو الكود..." oninput="renderTable()" style="flex:2;min-width:180px;">
+        <input type="text" id="search-emp" class="search-input" placeholder="ابحث باسم الموظف أو الكود..." autocomplete="off" oninput="renderTable()" style="flex:2;min-width:180px;">
         <select id="filter-status" onchange="renderTable()" style="flex:1;min-width:120px;">
           <option value="">كل الحالات</option>
           <option value="P">تواجد (P)</option>
@@ -4593,6 +4593,7 @@
       fillSelectWithOptions('transfer-title-select', dynamicTitles, '-- اختر الوظيفة --');
       fillSelectWithOptions('hosp-type', dynamicVisitorTypes, '');
       populateBctrDatalist();
+      initEmployeeDatalists();
     }
 
     function populateVacationEmpSelect() {}
@@ -4661,69 +4662,42 @@
       opts.forEach(function(o) { sel.appendChild(o); });
     }
 
-    function setupEmployeeSearch(inputId, hiddenId, suggestionsId) {
-      let inp = document.getElementById(inputId);
-      let hid = document.getElementById(hiddenId);
-      let sug = document.getElementById(suggestionsId);
-      if(!inp || !hid || !sug) return;
-      let hideSuggestions = () => { setTimeout(() => { sug.style.display = 'none'; }, 200); };
-      inp.addEventListener('input', function() {
-        let q = this.value.trim().toLowerCase();
-        sug.innerHTML = ''; sug.style.display = 'none';
-        if(!q) { hid.value = ''; return; }
-        let matches = employees.filter(e =>
-          (e.name||'').toLowerCase().includes(q) || (e.code||'').toLowerCase().includes(q)
-        ).slice(0, 10);
-        if(!matches.length) return;
-        sug.style.display = 'block';
-        matches.forEach(e => {
-          let d = document.createElement('div');
-          d.innerText = `[${e.code||'أقصى'}] ${e.name}`;
-          d.onclick = () => {
-            inp.value = d.innerText;
-            hid.value = e.id || e.code;
-            sug.style.display = 'none';
-            inp.dispatchEvent(new Event('change'));
-          };
-          sug.appendChild(d);
+    function initEmployeeDatalists() {
+      var ids = ['inv-emp-name', 'housing-emp-search', 'transfer-emp-search', 'ts-emp-search', 'vacation-emp-select'];
+      ids.forEach(function(id) {
+        var inp = document.getElementById(id);
+        if (!inp) return;
+        inp.setAttribute('autocomplete', 'off');
+        var old = document.getElementById(id + '-dl');
+        if (old) old.remove();
+        var dl = document.createElement('datalist');
+        dl.id = id + '-dl';
+        employees.forEach(function(e) {
+          var opt = document.createElement('option');
+          opt.value = '[' + (e.code || '') + '] ' + (e.name || '');
+          dl.appendChild(opt);
         });
+        inp.setAttribute('list', dl.id);
+        document.body.appendChild(dl);
       });
-      inp.addEventListener('focus', function() {
-        if (!hid.value) {
-          sug.innerHTML = '';
-          employees.slice(0, 10).forEach(function(e) {
-            let d = document.createElement('div');
-            d.innerText = '[' + (e.code || '') + '] ' + (e.name || '');
-            d.onclick = function() {
-              inp.value = d.innerText;
-              hid.value = e.id || e.code;
-              sug.style.display = 'none';
-              inp.dispatchEvent(new Event('change'));
-            };
-            sug.appendChild(d);
-          });
-          sug.style.display = 'block';
-        }
+    }
+
+    function findEmpByInput(val) {
+      val = val.trim();
+      var m = val.match(/^\[(.+?)\]\s*/);
+      var code = m ? m[1] : '';
+      return employees.find(function(e) {
+        return (e.code||'') === code || (e.id||'') === code ||
+               (e.name||'').toLowerCase() === val.toLowerCase() ||
+               (e.code||'') === val || (e.id||'') === val;
       });
-      inp.addEventListener('keydown', function(e) {
-        if(e.key === 'Enter') {
-          e.preventDefault();
-          if(sug.style.display === 'block' && sug.firstChild) {
-            sug.firstChild.click();
-          } else if(hid.value) {
-            let btn = inp.closest('.control-panel')?.querySelector('.btn-primary');
-            if(btn) btn.click();
-          }
-        }
-      });
-      inp.addEventListener('blur', hideSuggestions);
     }
 
     function showVacationBalance() {
       var q = document.getElementById('vacation-emp-select').value.trim();
       var balSpan = document.getElementById('vacation-balance-display');
       if (!q) { balSpan.innerText = ''; return; }
-      var emp = employees.find(function(e) { return (e.code||'') === q || (e.id||'') === q || (e.name||'').toLowerCase() === q.toLowerCase(); });
+      var emp = findEmpByInput(q);
       if (emp) {
         balSpan.innerText = typeof emp.vacationBalance === 'number' ? 'رصيد الإجازة: ' + emp.vacationBalance + ' يوم' : '';
       } else {
@@ -4732,7 +4706,7 @@
     }
 
     function initEmployeeSearchInputs() {
-      populateVacationEmpSelect();
+      initEmployeeDatalists();
     }
 
     function syncStorage(noTimestamp, skipSync) {
@@ -5836,7 +5810,7 @@
         div.innerHTML = "لم يتم اختيار موظف بعد.";
         return;
       }
-      let emp = employees.find(e => (e.code||'') === q || (e.id||'') === q || (e.name||'').toLowerCase() === q.toLowerCase());
+      let emp = findEmpByInput(q);
       if(emp) {
         div.innerHTML = `الإدارة الحالية: <span style="color:blue;">[ ${emp.dept || 'غير محددة'} ]</span> | المسمى الحالي: <span style="color:purple;">[ ${emp.title || 'غير محدد'} ]</span>`;
         document.getElementById('transfer-dept-select').value = dynamicDepts.includes(emp.dept) ? emp.dept : dynamicDepts[0];
@@ -5850,7 +5824,8 @@
       let targetDept = document.getElementById('transfer-dept-select').value;
       let targetTitle = document.getElementById('transfer-title-select').value;
       
-      let empIndex = employees.findIndex(e => (e.code||'') === q || (e.id||'') === q || (e.name||'').toLowerCase() === q.toLowerCase());
+      let emp = findEmpByInput(q);
+      let empIndex = emp ? employees.indexOf(emp) : -1;
       if(empIndex !== -1) {
         let oldDept = employees[empIndex].dept || 'الإدارة الحالية';
         let oldTitle = employees[empIndex].title || 'لم يتم';
@@ -8901,7 +8876,7 @@ function toggleEmployeeStatus(empId) {
       var q = document.getElementById('housing-emp-search').value.trim();
       var resultDiv = document.getElementById('housing-emp-result');
       if (!q) { resultDiv.style.display = 'none'; return; }
-      var emp = employees.find(function(e) { return (e.code||'').toLowerCase() === q.toLowerCase() || (e.id||'').toLowerCase() === q.toLowerCase() || (e.name||'').toLowerCase() === q.toLowerCase(); });
+      var emp = findEmpByInput(q);
       if (!emp) { resultDiv.style.display = 'none'; return; }
       document.getElementById('housing-result-name').textContent = emp.name || '-';
       document.getElementById('housing-result-code').textContent = '[' + (emp.code || 'تعديل') + ']';
@@ -8933,7 +8908,7 @@ function toggleEmployeeStatus(empId) {
       sortSelectOptions(roomSel);
       var qEmp = document.getElementById('housing-emp-search').value.trim();
       if (qEmp) {
-        var emp = employees.find(function(e) { return (e.code||'').toLowerCase() === qEmp.toLowerCase() || (e.id||'').toLowerCase() === qEmp.toLowerCase() || (e.name||'').toLowerCase() === qEmp.toLowerCase(); });
+        var emp = findEmpByInput(qEmp);
         if (emp && emp.room) roomSel.value = emp.room;
       }
     }
@@ -8941,10 +8916,9 @@ function toggleEmployeeStatus(empId) {
     function saveHousingAssignment() {
       if (!requireAdmin()) return;
       var qEmp = document.getElementById('housing-emp-search').value.trim();
-      var emp = employees.find(function(e) { return (e.code||'').toLowerCase() === qEmp.toLowerCase() || (e.id||'').toLowerCase() === qEmp.toLowerCase() || (e.name||'').toLowerCase() === qEmp.toLowerCase(); });
+      var emp = findEmpByInput(qEmp);
       var empId = emp ? (emp.id || emp.code) : '';
       if (!empId) return;
-      var emp = employees.find(function(e) { return (e.id || e.code) == empId; });
       if (!emp) return;
       var sector = document.getElementById('housing-edit-sector').value;
       var room = document.getElementById('housing-edit-room').value;
@@ -9182,7 +9156,7 @@ function toggleEmployeeStatus(empId) {
         return alert("من فضلك املأ البيانات الأساسية: تحديد الموظف المستلم، اسم الصنف، والكمية!");
       }
 
-      let empObj = employees.find(e => (e.name||'').toLowerCase() === empNameRaw.toLowerCase() || (e.code||'').toLowerCase() === empNameRaw.toLowerCase());
+      let empObj = findEmpByInput(empNameRaw);
       let empId = empObj ? (empObj.id || empObj.code) : '';
       let empName = empObj ? empObj.name : empNameRaw;
 
@@ -9575,7 +9549,7 @@ function toggleEmployeeStatus(empId) {
 
     function addVacationMovement() {
       var q = document.getElementById('vacation-emp-select').value.trim();
-      var emp = employees.find(function(e) { return (e.code||'') === q || (e.id||'') === q || (e.name||'').toLowerCase() === q.toLowerCase(); });
+      var emp = findEmpByInput(q);
       var empId = emp ? (emp.id || emp.code) : '';
       let vtype = document.getElementById('vacation-type').value;
       let start = document.getElementById('vacation-start-date').value;
@@ -10790,7 +10764,7 @@ function renderTeaSugarTable() {
 
     function addTeaSugarRecord() {
       let q = document.getElementById('ts-emp-search').value.trim();
-      let emp = employees.find(function(e) { return (e.code||'') === q || (e.id||'') === q || (e.name||'').toLowerCase() === q.toLowerCase(); });
+      let emp = findEmpByInput(q);
       let empId = emp ? (emp.id || emp.code) : '';
       let empName = emp ? emp.name : q;
       let period = document.getElementById('ts-period').value;
