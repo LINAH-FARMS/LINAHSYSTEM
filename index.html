@@ -7284,8 +7284,8 @@ var _breadSuggestionIdCounter = 0;
     function captureDailyStats() {
       var today = new Date().toISOString().split('T')[0];
       var total = employees.length;
-      var perm = employees.filter(function(e) { return (e.contract || 'طلبة') === 'مدرسة'; });
-      var casual = employees.filter(function(e) { return (e.contract || 'اعداد') === 'الخبز'; });
+      var perm = employees.filter(function(e) { return (e.contract || 'دائم') === 'دائم'; });
+      var casual = employees.filter(function(e) { return (e.contract || 'دائم') === 'كاجول'; });
       var permP = perm.filter(function(e) { return e.status === 'P'; }).length;
       var permV = perm.filter(function(e) { return e.status === 'V'; }).length;
       var casP = casual.filter(function(e) { return e.status === 'P'; }).length;
@@ -7346,7 +7346,7 @@ var _breadSuggestionIdCounter = 0;
             return match && vStart <= dateStr && vEnd >= dateStr;
           });
           var isPresent = e.status !== 'V' && !onVac;
-          if ((e.contract || 'للغد') === 'إعداد') { if (isPresent) permP++; else permV++; }
+          if ((e.contract || 'دائم') === 'دائم') { if (isPresent) permP++; else permV++; }
           else if (isPresent) casP++;
         });
         var hospGuests = calcGuestsForDate(dateStr);
@@ -8115,7 +8115,7 @@ var _breadSuggestionIdCounter = 0;
         id: Date.now().toString(),
         code: rec.code || '',
         name: rec.name,
-        contract: rec.contract || 'للموظف',
+        contract: rec.contract || 'دائم',
         nationalId: rec.nationalId || '',
         dept: rec.dept || '',
         title: rec.title || '',
@@ -16974,7 +16974,7 @@ function updateDashClock() {
       XLSX.utils.book_append_sheet(wb, ws4, '٩ يناير');
       var contractMap = {};
       employees.forEach(function(e) {
-        var c = e.contractType || 'فبراير مارس';
+        var c = e.contractType || 'غير محدد';
         if (!contractMap[c]) contractMap[c] = 0;
         contractMap[c]++;
       });
