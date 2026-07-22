@@ -4020,11 +4020,9 @@
 
     let dynamicDepts = _safeJsonParse(_lsGet('dyn_depts'), ["الإدارة","الزراعة","الإنتاج","الصيانة","الأمن","النظافة","المخازن","الخدمات"]);
     let dynamicTitles = _safeJsonParse(_lsGet('dyn_titles'), ["مشرف","عامل","سائق","فني","مهندس زراعي","محاسب","أمين مخزن","طباخ","عامل نظافة"]);
-    let dynamicVisitorTypes = _strArr(_safeJsonParse(_lsGet('dyn_visitor_types'), ["مورد","مفتش","ضيف","مقاول","موظف حكومي","ممثل جهة خارجية"]));
+    let dynamicVisitorTypes = _strArr(_safeJsonParse(_lsGet('dyn_visitor_types'), ["ضيوف","سيدات","طلبة مدرسة","سائقين","مقدم خدمة بدون اجر","مقدم خدمة باجر","امن ليلي"]));
     let bakeryContractorsNames = _strArr(_safeJsonParse(_lsGet('linah_bakery_contractors_names'), ["محمد شعبان","ممدوح بكر","عاطف عبد المغيث","مصطفى على","اسامه سمير","فارس محمد"]));
-    (function(){var _o=["محمد شعبان","ممدوح بكر","عاطف عبد المغيث","مصطفى على","اسامه سمير","فارس محمد"],_s={};_o.forEach(function(n){_s[n]=true;});bakeryContractorsNames=bakeryContractorsNames.map(function(n){return typeof n==='string'?n:(n&&n.name?n.name:String(n));}).filter(function(n){return _s[n]||(n&&n.trim()&&_s[n.trim()]);});if(!bakeryContractorsNames.length)bakeryContractorsNames=_o.slice();})();
-    // تنظيف أسماء المقاولين التالفة ([object Object]) وإضافة الأسماء الموجودة للقائمة
-    (function(){ if (bakeryContractorSupplies.length > 0) { var _changed = false; var _names = {}; bakeryContractorsNames.forEach(function(n){_names[n]=true;}); bakeryContractorSupplies.forEach(function(r) { if (typeof r.name !== 'string' || r.name === '[object Object]' || !r.name.trim()) { r.name = 'غير معروف'; _changed = true; } else { var _cn = typeof r.name === 'string' ? r.name.trim() : (r.name && r.name.name ? r.name.name.trim() : String(r.name).trim()); if (!_names[_cn]) { _names[_cn] = true; bakeryContractorsNames.push(_cn); } } }); if (_changed) { try { localStorage.setItem('linah_bakery_ctr_supplies', JSON.stringify(bakeryContractorSupplies)); } catch(e){} try { localStorage.setItem('linah_bakery_contractors_names', JSON.stringify(bakeryContractorsNames)); } catch(e){} } } })();
+    (function(){ var _seen={},_cleaned=[]; function _add(n){ var c=typeof n==='string'?n.trim():(n&&n.name?n.name.trim():String(n).trim()); if(c&&c!=='[object Object]'&&!_seen[c]){_seen[c]=true;_cleaned.push(c);} } bakeryContractorsNames.forEach(_add); if(bakeryContractorSupplies.length>0){ bakeryContractorSupplies.forEach(function(r){ if(typeof r.name!=='string'||r.name==='[object Object]'||!r.name.trim()){ r.name='غير معروف'; } else { _add(r.name); } }); } if(JSON.stringify(_cleaned)!==JSON.stringify(bakeryContractorsNames)){ bakeryContractorsNames=_cleaned; try{localStorage.setItem('linah_bakery_contractors_names',JSON.stringify(bakeryContractorsNames));}catch(e){} } })();
     let evaluations = _safeJsonParse(_lsGet('lineh_evaluations'), []);
     let roomAssets = _safeJsonParse(_lsGet('lineh_room_assets'), []);
     let archiveData = _safeJsonParse(_lsGet('lineh_archive_data'), []);
@@ -14080,8 +14078,6 @@ reports.forEach(function(r) {
         let name = document.getElementById('bctr-name').value;
         if (!name) return alert('⚠️ اختر اسم المقاول من القائمة.');
         if (name === '[object Object]') { alert('⚠️ اسم المقاول غير صالح. الرجاء اختيار اسم من القائمة.'); return; }
-        var fixedNames = ["محمد شعبان","ممدوح بكر","عاطف عبد المغيث","مصطفى على","اسامه سمير","فارس محمد"];
-        if (fixedNames.indexOf(name) === -1) return alert('⚠️ اسم المقاول "' + name + '" غير معروف. الاختيار من القائمة فقط.');
         let count = parseInt(document.getElementById('bctr-count').value) || 0;
         if (count < 1) return alert('⚠️ أدخل عدد الأرغفة.');
         let price = parseFloat(document.getElementById('bctr-price').value) || 2;
@@ -15199,7 +15195,7 @@ reports.forEach(function(r) {
             dynamicDepts: ["الإدارة الإدارية", "الإدارة الهندسية", "الأمن", "الصيانة", "المخبز", "الضيافة"],
             dynamicTitles: ["مهندس", "فني", "عامل", "سائق", "مشرف", "إداري"],
             dynamicSectors: ["سكن المهندسين", "سكن العاملين", "سكن الإداري"],
-            dynamicVisitorTypes: ["زائر رسمي", "زائر عائلي", "مقاول", "زائر خارجي", "موظف زائر"],
+            dynamicVisitorTypes: ["ضيوف","سيدات","طلبة مدرسة","سائقين","مقدم خدمة بدون اجر","مقدم خدمة باجر","امن ليلي"],
             contractorSectors: ["قطاع 22", "الخيام", "سكن المقاولين"],
             contractorRooms: [],
             bakeryContractorsNames: []
@@ -15292,10 +15288,7 @@ reports.forEach(function(r) {
         supabaseConnected = true;
         syncLog('✅ تم الاتصال بـ Supabase');
         updateSupabaseStatus('connected');
-        setTimeout(async function() {
-          if (_lsGet('_pendingChanges') === 'true') await pushToSupabase();
-          pullFromSupabase();
-        }, 1000);
+        setTimeout(function() { pullFromSupabase(); }, 1000);
         updateLastSyncTime();
         startPresence();
         document.getElementById('cloud-status').textContent = '☁️ متصل';
