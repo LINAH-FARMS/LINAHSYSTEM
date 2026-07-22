@@ -1,4 +1,4 @@
-import requests, json, sys, os, re
+import requests, json, sys, os, re, argparse
 from datetime import datetime, timedelta
 sys.stdout.reconfigure(encoding='utf-8')
 from openpyxl import Workbook
@@ -88,8 +88,17 @@ def filt(arr, entity):
 for ent in ['employees','hospitalities','maintenanceRecords','bakeryProductions','bakeryContractorSupplies','septicRecords','teaSugarDisbursements']:
     if data.get(ent): data[ent] = filt(data[ent], ent)
 
-end = last_completed_friday()
-start = end - timedelta(days=6)
+parser = argparse.ArgumentParser()
+parser.add_argument('--from', dest='from_date')
+parser.add_argument('--to', dest='to_date')
+args = parser.parse_args()
+
+if args.from_date and args.to_date:
+    start = datetime.strptime(args.from_date, '%Y-%m-%d')
+    end = datetime.strptime(args.to_date, '%Y-%m-%d')
+else:
+    end = last_completed_friday()
+    start = end - timedelta(days=6)
 print(f'[الفترة] {fmt(start)} إلى {fmt(end)}')
 
 emps = data.get('employees', [])
