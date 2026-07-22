@@ -14080,6 +14080,8 @@ reports.forEach(function(r) {
         let name = document.getElementById('bctr-name').value;
         if (!name) return alert('⚠️ اختر اسم المقاول من القائمة.');
         if (name === '[object Object]') { alert('⚠️ اسم المقاول غير صالح. الرجاء اختيار اسم من القائمة.'); return; }
+        var fixedNames = ["محمد شعبان","ممدوح بكر","عاطف عبد المغيث","مصطفى على","اسامه سمير","فارس محمد"];
+        if (fixedNames.indexOf(name) === -1) return alert('⚠️ اسم المقاول "' + name + '" غير معروف. الاختيار من القائمة فقط.');
         let count = parseInt(document.getElementById('bctr-count').value) || 0;
         if (count < 1) return alert('⚠️ أدخل عدد الأرغفة.');
         let price = parseFloat(document.getElementById('bctr-price').value) || 2;
@@ -14288,13 +14290,14 @@ reports.forEach(function(r) {
       let total = (parseInt(c.count)||0) * (parseFloat(c.price)||0);
       let isCurrentlyPaid = (parseFloat(c.paid)||0) >= total;
       if (isCurrentlyPaid) {
-        if (!confirm(`داخل الفرن ${c.name} المحصلة ${c.date} فرق رغيف المنتج`)) return;
+        if (!confirm(`هل تريد إلغاء تحصيل ${c.name} ليوم ${c.date}؟`)) return;
         c.paid = 0;
       } else {
-        if (!confirm(`المحصلة المزرعة ${c.name} دقيق ${c.date} كجم أرغفة دقيق`)) return;
+        if (!confirm(`تأكيد تحصيل ${c.name} ليوم ${c.date} بقيمة ${total.toFixed(2)} ج.م؟`)) return;
         c.paid = total;
       }
       syncStorage(); renderBakeryContractorSupplies(); updateBakeryStats(); updateBreadSupplyStats();
+      pushToSupabase();
     }
     var _selectedContractors = [];
 
@@ -15289,7 +15292,10 @@ reports.forEach(function(r) {
         supabaseConnected = true;
         syncLog('✅ تم الاتصال بـ Supabase');
         updateSupabaseStatus('connected');
-        setTimeout(function() { pullFromSupabase(); }, 1000);
+        setTimeout(async function() {
+          if (_lsGet('_pendingChanges') === 'true') await pushToSupabase();
+          pullFromSupabase();
+        }, 1000);
         updateLastSyncTime();
         startPresence();
         document.getElementById('cloud-status').textContent = '☁️ متصل';
