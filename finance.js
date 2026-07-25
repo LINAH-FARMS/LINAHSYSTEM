@@ -4,7 +4,7 @@ window.finTransactions = window.finTransactions || []; var finTransactions = win
 window.finBudgets = window.finBudgets || []; var finBudgets = window.finBudgets;
 var finCharts = {};
 
-function finFormatCurrency(v) { return (v||0).toLocaleString(undefined,{maximumFractionDigits:2}) + ' ₪'; }
+function finFormatCurrency(v) { return (v||0).toLocaleString(undefined,{maximumFractionDigits:2}) + ' ج.م'; }
 
 function finInit() {
   // Sync with window-level arrays from index.html
@@ -29,12 +29,12 @@ function finSave() {
     localStorage.setItem('fin_transactions', JSON.stringify(finTransactions));
     localStorage.setItem('fin_budgets', JSON.stringify(finBudgets));
   } catch(e) {
-    /* localStorage full â€” try removing oldest transactions */
+    /* localStorage full — try removing oldest transactions */
     while (finTransactions.length > 500) {
       finTransactions.shift();
       try { localStorage.setItem('fin_transactions', JSON.stringify(finTransactions)); return; } catch(e2) {}
     }
-    alert('âš ï¸ Ù…Ø³Ø§Ø­Ø© Ø§Ù„ØªØ®Ø²ÙŠÙ† Ù…Ù…ØªÙ„ÙŠØ©. ØªÙ… Ø§Ù„Ø§Ø­ØªÙØ§Ø¸ Ø¨Ø£Ø­Ø¯Ø« 500 Ù…Ø¹Ø§Ù…Ù„Ø© ÙÙ‚Ø·.');
+    alert('⚠️ مساحة التخزين ممتلية. تم الاحتفاظ بأحدث 500 معاملة فقط.');
   }
   if (typeof syncStorage === 'function') syncStorage();
 }
@@ -97,18 +97,18 @@ function finExcelDate(serial) {
 }
 
 function finClearAll() {
-  if (!confirm('âš ï¸ Ø³ÙŠØªÙ… Ù…Ø³Ø­ Ø¬Ù…ÙŠØ¹ Ø§Ù„Ù…Ø¹Ø§Ù…Ù„Ø§Øª ÙˆØ§Ù„Ù…ÙŠØ²Ø§Ù†ÙŠØ§Øª Ø§Ù„Ù…Ø§Ù„ÙŠØ©.\nÙ‡Ù„ Ø£Ù†Øª Ù…ØªØ£ÙƒØ¯ØŸ')) return;
-  if (!confirm('ØªØ£ÙƒÙŠØ¯ Ø£Ø®ÙŠØ±: Ù…Ø³Ø­ ÙƒÙ„ Ø§Ù„Ø¨ÙŠØ§Ù†Ø§Øª Ø§Ù„Ù…Ø§Ù„ÙŠØ©ØŸ')) return;
+  if (!confirm('⚠️ سيتم مسح جميع المعاملات والميزانيات المالية.\nهل أنت متأكد؟')) return;
+  if (!confirm('تأكيد أخير: مسح كل البيانات المالية؟')) return;
   finTransactions = [];
   finBudgets = [];
   finSave();
   finPopulateYearSelect();
   finRenderAll();
-  alert('âœ… ØªÙ… Ù…Ø³Ø­ ÙƒÙ„ Ø§Ù„Ø¨ÙŠØ§Ù†Ø§Øª Ø§Ù„Ù…Ø§Ù„ÙŠØ©.');
+  alert('✅ تم مسح كل البيانات المالية.');
 }
 
 function finImportReport(evt) {
-  if (typeof XLSX === 'undefined') { alert('âš ï¸ Ù…ÙƒØªØ¨Ø© XLSX ØºÙŠØ± Ù…ØªØ§Ø­Ø©. ØªØ£ÙƒØ¯ Ù…Ù† ØªØ­Ù…ÙŠÙ„ Ø§Ù„ØµÙØ­Ø© ÙƒØ§Ù…Ù„Ø©.'); return; }
+  if (typeof XLSX === 'undefined') { alert('⚠️ مكتبة XLSX غير متاحة. تأكد من تحميل الصفحة كاملة.'); return; }
   var files = evt.target.files;
   if (!files || !files.length) return;
   var fileArr = Array.from(files);
@@ -130,7 +130,7 @@ function finImportReport(evt) {
         finSave();
         finPopulateYearSelect();
         finRenderAll();
-        var msg = 'âœ… ØªÙ… Ø§Ø³ØªÙŠØ±Ø§Ø¯ ' + totalFiles + ' Ù…Ù„ÙØ§Øª\nðŸ“¦ ' + totalImported + ' Ù…Ø¹Ø§Ù…Ù„Ø©\nðŸ“Š ' + totalBudget + ' Ø´ÙŠØª Ù…ÙŠØ²Ø§Ù†ÙŠØ©\n\n--- ØªÙØ§ØµÙŠÙ„ ---\n' + debugLog.join('\n');
+        var msg = '✅ تم استيراد ' + totalFiles + ' ملفات\n📦 ' + totalImported + ' معاملة\n📊 ' + totalBudget + ' شيت ميزانية\n\n--- تفاصيل ---\n' + debugLog.join('\n');
         alert(msg);
       }
     };
@@ -148,7 +148,7 @@ function finProcessWorkbook(workbook, fileName) {
     workbook.SheetNames.forEach(function(sheetName) {
         var sheet = workbook.Sheets[sheetName];
 
-        /* â”€â”€ first pass: detect if budget sheet by reading raw with header:1 â”€â”€ */
+        /* ── first pass: detect if budget sheet by reading raw with header:1 ── */
         var rawArr = XLSX.utils.sheet_to_json(sheet, { header: 1 });
         if (!rawArr.length) return;
         /* find the header row (first row with "Overhead" and "Budget") */
@@ -160,12 +160,12 @@ function finProcessWorkbook(workbook, fileName) {
           if (hasOH && hasBG) { headerRowIdx = ri; break; }
         }
 
-        /* â”€â”€ Budget sheet (Sheet2 style) â”€â”€ */
+        /* ── Budget sheet (Sheet2 style) ── */
         if (headerRowIdx >= 0) {
           var headerCells = rawArr[headerRowIdx] || [];
           var monthMapShort = {'jan':1,'feb':2,'mar':3,'apr':4,'may':5,'jun':6,'jul':7,'aug':8,'sep':9,'oct':10,'nov':11,'dec':12};
           var monthMapFull = {'january':1,'february':2,'march':3,'april':4,'june':6,'july':7,'august':8,'september':9,'october':10,'november':11,'december':12};
-          var monthMapAr = {'ÙŠÙ†Ø§ÙŠØ±':1,'ÙØ¨Ø±Ø§ÙŠØ±':2,'Ù…Ø§Ø±Ø³':3,'Ø£Ø¨Ø±ÙŠÙ„':4,'Ù…Ø§ÙŠÙˆ':5,'ÙŠÙˆÙ†ÙŠÙˆ':6,'ÙŠÙˆÙ„ÙŠÙˆ':7,'Ø£ØºØ³Ø·Ø³':8,'Ø³Ø¨ØªÙ…Ø¨Ø±':9,'Ø£ÙƒØªÙˆØ¨Ø±':10,'Ù†ÙˆÙÙ…Ø¨Ø±':11,'Ø¯ÙŠØ³Ù…Ø¨Ø±':12};
+          var monthMapAr = {'يناير':1,'فبراير':2,'مارس':3,'أبريل':4,'مايو':5,'يونيو':6,'يوليو':7,'أغسطس':8,'سبتمبر':9,'أكتوبر':10,'نوفمبر':11,'ديسمبر':12};
           var detectedMonth = 0;
 
           /* 1st: detect from sheet name */
@@ -261,7 +261,7 @@ function finProcessWorkbook(workbook, fileName) {
           budgetInfo = { month: detectedMonth, year: detectedYear, sheet: sheetName };
         }
 
-        /* â”€â”€ Transactions sheet (Ø§Ù„Ù…ØµØ±ÙˆÙØ§Øª) â”€â”€ AGGREGATE by task+item+month â”€â”€ */
+        /* ── Transactions sheet (المصروفات) ── AGGREGATE by task+item+month ── */
         var json = XLSX.utils.sheet_to_json(sheet);
         if (!json.length) return;
         var firstRow = json[0];
@@ -269,7 +269,7 @@ function finProcessWorkbook(workbook, fileName) {
         if (_dbgKeys.length === 0) _dbgKeys = keys.slice(0, 20);
         var trimmedKeys = keys.map(function(k) { return k.trim(); });
         var hasTaskCol = trimmedKeys.some(function(k) { return k === 'Task'; });
-        var hasValueCol = trimmedKeys.some(function(k) { return k === 'Ø§Ù„Ù‚ÙŠÙ…Ø©' || k === 'Value'; });
+        var hasValueCol = trimmedKeys.some(function(k) { return k === 'القيمة' || k === 'Value'; });
         if (hasTaskCol && hasValueCol) {
           /* first pass: collect all rows into a temp map, aggregated by task+item+month */
           var aggMap = {};
@@ -279,11 +279,11 @@ function finProcessWorkbook(workbook, fileName) {
             for (var origK in row) {
               var tk = origK.trim();
               if (tk === 'Task') taskVal = row[origK];
-              if (tk === 'Ø§Ù„ØªØ§Ø±ÙŠØ®' || tk === 'Date') dateVal = row[origK];
-              if (tk === 'Ø§Ø³Ù… Ø§Ù„ØµÙ€Ù€Ù€Ù†Ù' || tk === 'Ø§Ø³Ù… Ø§Ù„ØµÙ†Ù') itemName = row[origK];
-              if (tk === 'ÙƒÙ…ÙŠØ© Ø§Ù„ØµØ±Ù' || tk === 'Ø§Ù„ÙƒÙ…ÙŠØ©' || tk === 'Qty') qty = parseFloat(row[origK]) || 0;
-              if (tk === 'Ø§Ù„Ø³Ø¹Ø±' || tk === 'Price') price = parseFloat(row[origK]) || 0;
-              if (tk === 'Ø§Ù„Ù‚ÙŠÙ…Ø©' || tk === 'Value') value = parseFloat(row[origK]) || 0;
+              if (tk === 'التاريخ' || tk === 'Date') dateVal = row[origK];
+              if (tk === 'اسم الصـــنف' || tk === 'اسم الصنف') itemName = row[origK];
+              if (tk === 'كمية الصرف' || tk === 'الكمية' || tk === 'Qty') qty = parseFloat(row[origK]) || 0;
+              if (tk === 'السعر' || tk === 'Price') price = parseFloat(row[origK]) || 0;
+              if (tk === 'القيمة' || tk === 'Value') value = parseFloat(row[origK]) || 0;
               if (tk === 'Cost center Description' || tk === 'Cost Center Description') costCenterDesc = row[origK];
               if (tk === 'Task Description') taskDesc = row[origK];
             }
@@ -294,7 +294,7 @@ function finProcessWorkbook(workbook, fileName) {
             var txYear = finYearFromExcelDate(parsed);
             if (isNaN(value) || value === 0) value = qty * price;
             if (!value || value === 0) return;
-            itemName = String(itemName || '').trim() || 'ØºÙŠØ± Ù…Ø­Ø¯Ø¯';
+            itemName = String(itemName || '').trim() || 'غير محدد';
             var key = overheadCode + '|' + itemName + '|' + txYear + '|' + txMonth;
             if (!aggMap[key]) aggMap[key] = { task: overheadCode, taskDesc: String(taskDesc || '').trim(), itemName: itemName, year: txYear, month: txMonth, totalQty: 0, totalValue: 0, count: 0, costCenterDesc: String(costCenterDesc || '').trim() };
             aggMap[key].totalQty += qty;
@@ -356,11 +356,11 @@ function finFiltered(month, year) {
 function finGroupByTask(txList) {
   var groups = {};
   txList.forEach(function(t) {
-    var code = t.task || 'ØºÙŠØ± Ù…Ø­Ø¯Ø¯';
+    var code = t.task || 'غير محدد';
     if (!groups[code]) groups[code] = { code: code, name: t.taskDesc || code, total: 0, count: 0, items: {} };
     groups[code].total += t.value || 0;
     groups[code].count++;
-    var itemName = t.itemName || 'ØºÙŠØ± Ù…Ø­Ø¯Ø¯';
+    var itemName = t.itemName || 'غير محدد';
     if (!groups[code].items[itemName]) groups[code].items[itemName] = { name: itemName, total: 0, count: 0 };
     groups[code].items[itemName].total += t.value || 0;
     groups[code].items[itemName].count++;
@@ -394,12 +394,12 @@ function finRenderStats(data) {
   var txTotal = 0;
   data.transactions.forEach(function(t) { txTotal += t.value || 0; });
   el.innerHTML =
-    '<div class="stat-card"><h3>Ø§Ù„Ù…ÙŠØ²Ø§Ù†ÙŠØ©</h3><div class="value" style="font-size:22px;color:#1b5e20;">' + totalBudget.toLocaleString() + '</div></div>' +
-    '<div class="stat-card blue"><h3>Ø§Ù„ÙØ¹Ù„ÙŠ</h3><div class="value" style="font-size:22px;color:#1565c0;">' + totalActual.toLocaleString() + '</div></div>' +
-    '<div class="stat-card ' + (variance >= 0 ? '' : 'orange') + '"><h3>Ø§Ù„Ø§Ù†Ø­Ø±Ø§Ù</h3><div class="value" style="font-size:22px;color:' + (variance >= 0 ? '#2e7d32' : '#e65100') + ';">' + Math.abs(variance).toLocaleString() + (variance >= 0 ? ' âœ…' : ' âš ï¸') + '</div></div>' +
-    '<div class="stat-card"><h3>Ù†Ø³Ø¨Ø© Ø§Ù„ØªÙ†ÙÙŠØ°</h3><div class="value" style="font-size:22px;color:' + (pct <= 100 ? '#2e7d32' : '#d32f2f') + ';">' + pct + '%</div></div>' +
-    '<div class="stat-card"><h3>Ø¹Ø¯Ø¯ Ø§Ù„Ù…Ø¹Ø§Ù…Ù„Ø§Øª</h3><div class="value" style="font-size:22px;">' + txCount.toLocaleString() + '</div></div>' +
-    '<div class="stat-card"><h3>Ø¥Ø¬Ù…Ø§Ù„ÙŠ Ø§Ù„ØµØ±Ù Ø§Ù„ÙØ¹Ù„ÙŠ</h3><div class="value" style="font-size:22px;color:#1565c0;">' + txTotal.toLocaleString(undefined,{maximumFractionDigits:0}) + '</div></div>';
+    '<div class="stat-card"><h3>الميزانية</h3><div class="value" style="font-size:22px;color:#1b5e20;">' + totalBudget.toLocaleString() + '</div></div>' +
+    '<div class="stat-card blue"><h3>الفعلي</h3><div class="value" style="font-size:22px;color:#1565c0;">' + totalActual.toLocaleString() + '</div></div>' +
+    '<div class="stat-card ' + (variance >= 0 ? '' : 'orange') + '"><h3>الانحراف</h3><div class="value" style="font-size:22px;color:' + (variance >= 0 ? '#2e7d32' : '#e65100') + ';">' + Math.abs(variance).toLocaleString() + (variance >= 0 ? ' ✅' : ' ⚠️') + '</div></div>' +
+    '<div class="stat-card"><h3>نسبة التنفيذ</h3><div class="value" style="font-size:22px;color:' + (pct <= 100 ? '#2e7d32' : '#d32f2f') + ';">' + pct + '%</div></div>' +
+    '<div class="stat-card"><h3>عدد المعاملات</h3><div class="value" style="font-size:22px;">' + txCount.toLocaleString() + '</div></div>' +
+    '<div class="stat-card"><h3>إجمالي الصرف الفعلي</h3><div class="value" style="font-size:22px;color:#1565c0;">' + txTotal.toLocaleString(undefined,{maximumFractionDigits:0}) + '</div></div>';
 }
 
 function finRenderBudgetTable(data) {
@@ -422,9 +422,9 @@ function finRenderBudgetTable(data) {
   var rows = Object.values(merged).sort(function(a, b) { return (b.actual || 0) - (a.actual || 0); });
   rows.forEach(function(r) { r.variance = r.budget - r.actual; });
   tbody.innerHTML = '';
-  if (rows.length === 0) { tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:30px;color:#888;">Ù„Ø§ ØªÙˆØ¬Ø¯ Ø¨ÙŠØ§Ù†Ø§Øª. Ù‚Ù… Ø¨Ø§Ø³ØªÙŠØ±Ø§Ø¯ ØªÙ‚Ø±ÙŠØ± Ø´Ù‡Ø±ÙŠ Ø£ÙˆÙ„Ø§Ù‹.</td></tr>'; return; }
+  if (rows.length === 0) { tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:30px;color:#888;">لا توجد بيانات. قم باستيراد تقرير شهري أولاً.</td></tr>'; return; }
   rows.forEach(function(r) {
-    var pct = r.budget ? Math.round((r.actual / r.budget) * 100) : (r.actual > 0 ? 'âˆž' : 0);
+    var pct = r.budget ? Math.round((r.actual / r.budget) * 100) : (r.actual > 0 ? '∞' : 0);
     var barColor = pct <= 80 ? '#2e7d32' : pct <= 100 ? '#f57c00' : '#d32f2f';
     var ytdPct = r.ytdBudget ? Math.round((r.ytdActual / r.ytdBudget) * 100) : 0;
     var tr = document.createElement('tr');
@@ -439,7 +439,7 @@ function finRenderBudgetTable(data) {
       '<td style="text-align:center;"><div style="display:flex;align-items:center;gap:6px;justify-content:center;"><div style="width:60px;height:8px;background:#e0e0e0;border-radius:4px;overflow:hidden;"><div style="width:' + Math.min(pct, 150) + '%;height:100%;background:' + barColor + ';border-radius:4px;"></div></div><span style="font-weight:700;color:' + barColor + ';">' + pct + '%</span></div></td>' +
       '<td style="text-align:center;">' + (r.ytdBudget ? r.ytdBudget.toLocaleString() : '-') + '</td>' +
       '<td style="text-align:center;font-weight:700;">' + (r.ytdActual ? r.ytdActual.toLocaleString() : '-') + '</td>' +
-      '<td style="text-align:center;"><button class="btn" style="padding:2px 8px;font-size:11px;background:#1565c0;color:#fff;">ðŸ“‹</button></td>';
+      '<td style="text-align:center;"><button class="btn" style="padding:2px 8px;font-size:11px;background:#1565c0;color:#fff;">📋</button></td>';
     tbody.appendChild(tr);
   });
 }
@@ -456,7 +456,7 @@ function finRenderCharts(data, month, year) {
   data.budgets.forEach(function(b) { budgetMap[b.code] = (budgetMap[b.code] || 0) + b.budget; });
   if (ctxMonthly) {
     if (month == 0) {
-      var monthLabels = ['ÙŠÙ†Ø§ÙŠØ±','ÙØ¨Ø±Ø§ÙŠØ±','Ù…Ø§Ø±Ø³','Ø£Ø¨Ø±ÙŠÙ„','Ù…Ø§ÙŠÙˆ','ÙŠÙˆÙ†ÙŠÙˆ','ÙŠÙˆÙ„ÙŠÙˆ','Ø£ØºØ³Ø·Ø³','Ø³Ø¨ØªÙ…Ø¨Ø±','Ø£ÙƒØªÙˆØ¨Ø±','Ù†ÙˆÙÙ…Ø¨Ø±','Ø¯ÙŠØ³Ù…Ø¨Ø±'];
+      var monthLabels = ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
       var budgetByMonth = new Array(12).fill(0);
       var actualByMonth = new Array(12).fill(0);
       data.budgets.forEach(function(b) {
@@ -470,8 +470,8 @@ function finRenderCharts(data, month, year) {
         data: {
           labels: monthLabels,
           datasets: [
-            { label: 'Ø§Ù„Ù…ÙŠØ²Ø§Ù†ÙŠØ©', data: budgetByMonth, backgroundColor: 'rgba(46,125,50,0.3)', borderColor: '#2e7d32', borderWidth: 2 },
-            { label: 'Ø§Ù„ÙØ¹Ù„ÙŠ', data: actualByMonth, backgroundColor: 'rgba(21,101,192,0.5)', borderColor: '#1565c0', borderWidth: 2 }
+            { label: 'الميزانية', data: budgetByMonth, backgroundColor: 'rgba(46,125,50,0.3)', borderColor: '#2e7d32', borderWidth: 2 },
+            { label: 'الفعلي', data: actualByMonth, backgroundColor: 'rgba(21,101,192,0.5)', borderColor: '#1565c0', borderWidth: 2 }
           ]
         },
         options: { responsive: true, plugins: { legend: { position: 'top' } }, scales: { y: { beginAtZero: true } } }
@@ -484,8 +484,8 @@ function finRenderCharts(data, month, year) {
         data: {
           labels: codes.map(function(c) { return txGroups[c].name || c; }),
           datasets: [
-            { label: 'Ø§Ù„Ù…ÙŠØ²Ø§Ù†ÙŠØ©', data: codes.map(function(c) { return budgetMap[c] || 0; }), backgroundColor: 'rgba(46,125,50,0.3)', borderColor: '#2e7d32', borderWidth: 2 },
-            { label: 'Ø§Ù„ÙØ¹Ù„ÙŠ', data: codes.map(function(c) { return txGroups[c].total; }), backgroundColor: 'rgba(21,101,192,0.5)', borderColor: '#1565c0', borderWidth: 2 }
+            { label: 'الميزانية', data: codes.map(function(c) { return budgetMap[c] || 0; }), backgroundColor: 'rgba(46,125,50,0.3)', borderColor: '#2e7d32', borderWidth: 2 },
+            { label: 'الفعلي', data: codes.map(function(c) { return txGroups[c].total; }), backgroundColor: 'rgba(21,101,192,0.5)', borderColor: '#1565c0', borderWidth: 2 }
           ]
         },
         options: { responsive: true, indexAxis: 'y', plugins: { legend: { position: 'top' } }, scales: { x: { beginAtZero: true } } }
@@ -513,7 +513,7 @@ function finRenderCharts(data, month, year) {
       data: {
         labels: varCodes.map(function(c) { return pieData2[c].name || c; }),
         datasets: [{
-          label: 'Ù†Ø³Ø¨Ø© Ø§Ù„ØªÙ†ÙÙŠØ° %',
+          label: 'نسبة التنفيذ %',
           data: varCodes.map(function(c) { return budgetMap[c] ? Math.round((pieData2[c].total / budgetMap[c]) * 100) : 0; }),
           backgroundColor: varCodes.map(function(c) {
             var p = budgetMap[c] ? (pieData2[c].total / budgetMap[c]) * 100 : 0;
@@ -601,7 +601,7 @@ function finRunCompare() {
   var fy = parseInt(fyEl.value);
   var tm = parseInt(tmEl.value);
   var ty = parseInt(tyEl.value);
-  var monthNames = ['','ÙŠÙ†Ø§ÙŠØ±','ÙØ¨Ø±Ø§ÙŠØ±','Ù…Ø§Ø±Ø³','Ø£Ø¨Ø±ÙŠÙ„','Ù…Ø§ÙŠÙˆ','ÙŠÙˆÙ†ÙŠÙˆ','ÙŠÙˆÙ„ÙŠÙˆ','Ø£ØºØ³Ø·Ø³','Ø³Ø¨ØªÙ…Ø¨Ø±','Ø£ÙƒØªÙˆØ¨Ø±','Ù†ÙˆÙÙ…Ø¨Ø±','Ø¯ÙŠØ³Ù…Ø¨Ø±'];
+  var monthNames = ['','يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
   var fromData = finFiltered(fm, fy);
   var toData = finFiltered(tm, ty);
   var fromGroups = finGroupByTask(fromData.transactions);
@@ -610,7 +610,7 @@ function finRunCompare() {
   Object.keys(fromGroups).forEach(function(c) { allCodes.add(c); });
   Object.keys(toGroups).forEach(function(c) { allCodes.add(c); });
   var html = '<table style="width:100%;font-size:12px;border-collapse:collapse;">';
-  html += '<tr style="background:#6a1b9a;color:white;"><th>Ø§Ù„Ø¨Ù†Ø¯</th><th>' + monthNames[fm] + ' ' + fy + '</th><th>' + monthNames[tm] + ' ' + ty + '</th><th>Ø§Ù„ØªØºÙŠØ±</th><th>Ø§Ù„Ù†Ø³Ø¨Ø©</th></tr>';
+  html += '<tr style="background:#6a1b9a;color:white;"><th>البند</th><th>' + monthNames[fm] + ' ' + fy + '</th><th>' + monthNames[tm] + ' ' + ty + '</th><th>التغير</th><th>النسبة</th></tr>';
   var totalFrom = 0, totalTo = 0;
   var codes = Array.from(allCodes).sort();
   codes.forEach(function(code) {
@@ -619,11 +619,11 @@ function finRunCompare() {
     totalFrom += fromVal;
     totalTo += toVal;
     var change = toVal - fromVal;
-    var pct = fromVal ? Math.round((change / fromVal) * 100) : (toVal > 0 ? 'âˆž' : 0);
+    var pct = fromVal ? Math.round((change / fromVal) * 100) : (toVal > 0 ? '∞' : 0);
     var name = (fromGroups[code] || toGroups[code] || {}).name || code;
     html += '<tr style="border-bottom:1px solid #eee;"><td style="font-weight:600;">' + name + '</td><td style="text-align:center;">' + fromVal.toLocaleString(undefined, { maximumFractionDigits: 0 }) + '</td><td style="text-align:center;font-weight:700;color:#1565c0;">' + toVal.toLocaleString(undefined, { maximumFractionDigits: 0 }) + '</td><td style="text-align:center;color:' + (change <= 0 ? '#2e7d32' : '#d32f2f') + ';">' + (change >= 0 ? '+' : '') + change.toLocaleString(undefined, { maximumFractionDigits: 0 }) + '</td><td style="text-align:center;font-weight:700;color:' + (change <= 0 ? '#2e7d32' : '#d32f2f') + ';">' + (typeof pct === 'number' ? (pct >= 0 ? '+' : '') + pct + '%' : pct) + '</td></tr>';
   });
-  html += '<tr style="background:#f5f5f5;font-weight:700;"><td>Ø§Ù„Ø¥Ø¬Ù…Ø§Ù„ÙŠ</td><td style="text-align:center;">' + totalFrom.toLocaleString() + '</td><td style="text-align:center;color:#1565c0;">' + totalTo.toLocaleString() + '</td><td style="text-align:center;color:' + (totalTo - totalFrom <= 0 ? '#2e7d32' : '#d32f2f') + ';">' + (totalTo - totalFrom >= 0 ? '+' : '') + (totalTo - totalFrom).toLocaleString() + '</td><td style="text-align:center;">' + (totalFrom ? Math.round(((totalTo - totalFrom) / totalFrom) * 100) + '%' : '-') + '</td></tr>';
+  html += '<tr style="background:#f5f5f5;font-weight:700;"><td>الإجمالي</td><td style="text-align:center;">' + totalFrom.toLocaleString() + '</td><td style="text-align:center;color:#1565c0;">' + totalTo.toLocaleString() + '</td><td style="text-align:center;color:' + (totalTo - totalFrom <= 0 ? '#2e7d32' : '#d32f2f') + ';">' + (totalTo - totalFrom >= 0 ? '+' : '') + (totalTo - totalFrom).toLocaleString() + '</td><td style="text-align:center;">' + (totalFrom ? Math.round(((totalTo - totalFrom) / totalFrom) * 100) + '%' : '-') + '</td></tr>';
   html += '</table>';
   var cmpRes = document.getElementById('fin-compare-result');
   if (cmpRes) cmpRes.innerHTML = html;
@@ -643,7 +643,7 @@ function finRunPredict() {
   var results = [];
   var allCodes = new Set();
   finTransactions.forEach(function(t) { if (t.task) allCodes.add(t.task); });
-  var monthNames = ['','ÙŠÙ†Ø§ÙŠØ±','ÙØ¨Ø±Ø§ÙŠØ±','Ù…Ø§Ø±Ø³','Ø£Ø¨Ø±ÙŠÙ„','Ù…Ø§ÙŠÙˆ','ÙŠÙˆÙ†ÙŠÙˆ','ÙŠÙˆÙ„ÙŠÙˆ','Ø£ØºØ³Ø·Ø³','Ø³Ø¨ØªÙ…Ø¨Ø±','Ø£ÙƒØªÙˆØ¨Ø±','Ù†ÙˆÙÙ…Ø¨Ø±','Ø¯ÙŠØ³Ù…Ø¨Ø±'];
+  var monthNames = ['','يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
   allCodes.forEach(function(code) {
     var monthlyTotals = {};
     var txByCode = finTransactions.filter(function(t) { return t.task === code; });
@@ -687,9 +687,9 @@ function finRunPredict() {
   results.sort(function(a, b) { return b.combined - a.combined; });
   var totalPred = 0;
   results.forEach(function(r) { totalPred += r.combined; });
-  var html = '<div style="background:#fff;padding:12px;border-radius:8px;margin-bottom:10px;"><b style="font-size:16px;color:#e65100;">ðŸ”® ØªÙˆÙ‚Ø¹Ø§Øª ' + monthNames[targetMonth] + ' ' + targetYear + '</b><br><span style="font-size:12px;color:#888;">Ø¨Ù†Ø§Ø¡Ù‹ Ø¹Ù„Ù‰ ' + finTransactions.length + ' Ù…Ø¹Ø§Ù…Ù„Ø© Ø³Ø§Ø¨Ù‚Ø© â€” 3 Ù…Ø¹Ø§ÙŠÙŠØ±: Ù…ØªÙˆØ³Ø· Ø­Ø³Ø§Ø¨ÙŠ + Ø§ØªØ¬Ø§Ù‡ (Regression) + Ù…ÙˆØ³Ù…ÙŠØ©</span></div>';
+  var html = '<div style="background:#fff;padding:12px;border-radius:8px;margin-bottom:10px;"><b style="font-size:16px;color:#e65100;">🔮 توقعات ' + monthNames[targetMonth] + ' ' + targetYear + '</b><br><span style="font-size:12px;color:#888;">بناءً على ' + finTransactions.length + ' معاملة سابقة — 3 معايير: متوسط حسابي + اتجاه (Regression) + موسمية</span></div>';
   html += '<table style="width:100%;font-size:12px;border-collapse:collapse;">';
-  html += '<tr style="background:#e65100;color:white;"><th>Ø§Ù„Ø¨Ù†Ø¯</th><th>Ø§Ù„Ù…ØªÙˆØ³Ø·</th><th>Ø§Ù„Ø§ØªØ¬Ø§Ù‡</th><th>Ø§Ù„Ù…ÙˆØ³Ù…ÙŠØ©</th><th style="background:#bf360c;">Ø§Ù„ØªÙˆÙ‚Ø¹ Ø§Ù„Ù…Ø¯Ù…Ø¬</th><th>Ù†Ù‚Ø§Ø· Ø§Ù„Ø¨ÙŠØ§Ù†Ø§Øª</th></tr>';
+  html += '<tr style="background:#e65100;color:white;"><th>البند</th><th>المتوسط</th><th>الاتجاه</th><th>الموسمية</th><th style="background:#bf360c;">التوقع المدمج</th><th>نقاط البيانات</th></tr>';
   results.forEach(function(r) {
     html += '<tr style="border-bottom:1px solid #eee;">';
     html += '<td style="font-weight:600;">' + r.name + '</td>';
@@ -700,14 +700,14 @@ function finRunPredict() {
     html += '<td style="text-align:center;color:#888;">' + r.dataPoints + '</td>';
     html += '</tr>';
   });
-  html += '<tr style="background:#fff3e0;font-weight:700;"><td>Ø§Ù„Ø¥Ø¬Ù…Ø§Ù„ÙŠ Ø§Ù„Ù…ØªÙˆÙ‚Ø¹</td><td></td><td></td><td></td><td style="text-align:center;color:#e65100;font-size:16px;">' + Math.round(totalPred).toLocaleString() + '</td><td></td></tr>';
+  html += '<tr style="background:#fff3e0;font-weight:700;"><td>الإجمالي المتوقع</td><td></td><td></td><td></td><td style="text-align:center;color:#e65100;font-size:16px;">' + Math.round(totalPred).toLocaleString() + '</td><td></td></tr>';
   html += '</table>';
   var predRes = document.getElementById('fin-predict-result');
   if (predRes) predRes.innerHTML = html;
 }
 
 function finExportChoice() {
-  var choice = prompt('Ø§Ø®ØªØ± Ù†ÙˆØ¹ Ø§Ù„ØªØµØ¯ÙŠØ±:\n1 = Excel\n2 = PDF\nØ§ÙƒØªØ¨ 1 Ø£Ùˆ 2:');
+  var choice = prompt('اختر نوع التصدير:\n1 = Excel\n2 = PDF\nاكتب 1 أو 2:');
   if (choice === '1') finExportExcel();
   else if (choice === '2') finExportPDF();
 }
@@ -749,15 +749,15 @@ function finRunYearlyBudget() {
     totalCurrentBudget += currentBudget;
   });
   results.sort(function(a, b) { return b.newBudget - a.newBudget; });
-  var html = '<div style="background:#fff;padding:12px;border-radius:8px;margin-bottom:10px;"><b style="font-size:16px;color:#0d47a1;">ðŸ“ Ù…ÙŠØ²Ø§Ù†ÙŠØ© ' + toYear + '</b><br><span style="font-size:12px;color:#888;">Ø¨Ù†Ø§Ø¡Ù‹ Ø¹Ù„Ù‰ Ø¨ÙŠØ§Ù†Ø§Øª ' + fromYear + ' + Ù†Ø³Ø¨Ø© Ø²ÙŠØ§Ø¯Ø© ' + pctIncrease + '% â€” Ø¹Ø¯Ø¯ Ø§Ù„Ø¨Ù†ÙˆØ¯: ' + results.length + '</span></div>';
+  var html = '<div style="background:#fff;padding:12px;border-radius:8px;margin-bottom:10px;"><b style="font-size:16px;color:#0d47a1;">📐 ميزانية ' + toYear + '</b><br><span style="font-size:12px;color:#888;">بناءً على بيانات ' + fromYear + ' + نسبة زيادة ' + pctIncrease + '% — عدد البنود: ' + results.length + '</span></div>';
   if (results.length === 0) {
-    html += '<div style="text-align:center;padding:20px;color:#888;">Ù„Ø§ ØªÙˆØ¬Ø¯ Ø¨ÙŠØ§Ù†Ø§Øª Ù„Ù„Ø³Ù†Ø© ' + fromYear + '. Ù‚Ù… Ø¨Ø§Ø³ØªÙŠØ±Ø§Ø¯ ØªÙ‚Ø§Ø±ÙŠØ± Ø£ÙˆÙ„Ø§Ù‹.</div>';
+    html += '<div style="text-align:center;padding:20px;color:#888;">لا توجد بيانات للسنة ' + fromYear + '. قم باستيراد تقارير أولاً.</div>';
     var yrRes = document.getElementById('fin-yearly-result');
     if (yrRes) yrRes.innerHTML = html;
     return;
   }
   html += '<table style="width:100%;font-size:12px;border-collapse:collapse;">';
-  html += '<tr style="background:#0d47a1;color:white;"><th>Ø§Ù„ÙƒÙˆØ¯</th><th>Ø§Ù„Ø¨Ù†Ø¯</th><th>ÙØ¹Ù„ÙŠ ' + fromYear + '</th><th>Ù…ÙŠØ²Ø§Ù†ÙŠØ© ' + fromYear + '</th><th>Ø§Ù„Ø£Ø³Ø§Ø³</th><th>Ù†Ø³Ø¨Ø© Ø§Ù„Ø²ÙŠØ§Ø¯Ø©</th><th style="background:#1565c0;">Ù…ÙŠØ²Ø§Ù†ÙŠØ© ' + toYear + '</th></tr>';
+  html += '<tr style="background:#0d47a1;color:white;"><th>الكود</th><th>البند</th><th>فعلي ' + fromYear + '</th><th>ميزانية ' + fromYear + '</th><th>الأساس</th><th>نسبة الزيادة</th><th style="background:#1565c0;">ميزانية ' + toYear + '</th></tr>';
   results.forEach(function(r) {
     html += '<tr style="border-bottom:1px solid #eee;">';
     html += '<td style="font-weight:700;">' + r.code + '</td>';
@@ -769,7 +769,7 @@ function finRunYearlyBudget() {
     html += '<td style="text-align:center;font-weight:700;color:#0d47a1;background:#e3f2fd;">' + r.newBudget.toLocaleString() + '</td>';
     html += '</tr>';
   });
-  html += '<tr style="background:#e3f2fd;font-weight:700;"><td>Ø§Ù„Ø¥Ø¬Ù…Ø§Ù„ÙŠ</td><td></td><td style="text-align:center;">' + totalCurrent.toLocaleString() + '</td><td style="text-align:center;">' + totalCurrentBudget.toLocaleString() + '</td><td style="text-align:center;">' + totalCurrent.toLocaleString() + '</td><td></td><td style="text-align:center;color:#0d47a1;font-size:16px;">' + totalNew.toLocaleString() + '</td></tr>';
+  html += '<tr style="background:#e3f2fd;font-weight:700;"><td>الإجمالي</td><td></td><td style="text-align:center;">' + totalCurrent.toLocaleString() + '</td><td style="text-align:center;">' + totalCurrentBudget.toLocaleString() + '</td><td style="text-align:center;">' + totalCurrent.toLocaleString() + '</td><td></td><td style="text-align:center;color:#0d47a1;font-size:16px;">' + totalNew.toLocaleString() + '</td></tr>';
   html += '</table>';
   var yrRes2 = document.getElementById('fin-yearly-result');
   if (yrRes2) yrRes2.innerHTML = html;
@@ -797,7 +797,7 @@ function finRunOverview() {
   var ovYearEl = document.getElementById('fin-ov-year');
   if (!ovYearEl) return;
   var year = parseInt(ovYearEl.value) || new Date().getFullYear();
-  var monthNames = ['','ÙŠÙ†Ø§ÙŠØ±','ÙØ¨Ø±Ø§ÙŠØ±','Ù…Ø§Ø±Ø³','Ø£Ø¨Ø±ÙŠÙ„','Ù…Ø§ÙŠÙˆ','ÙŠÙˆÙ†ÙŠÙˆ','ÙŠÙˆÙ„ÙŠÙˆ','Ø£ØºØ³Ø·Ø³','Ø³Ø¨ØªÙ…Ø¨Ø±','Ø£ÙƒØªÙˆØ¨Ø±','Ù†ÙˆÙÙ…Ø¨Ø±','Ø¯ÙŠØ³Ù…Ø¨Ø±'];
+  var monthNames = ['','يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
   var monthsData = [];
   var totalBudget = 0, totalActual = 0;
   for (var m = 1; m <= 12; m++) {
@@ -812,15 +812,15 @@ function finRunOverview() {
   var importedMonths = monthsData.filter(function(m) { return m.budget > 0 || m.actual > 0; });
   var avgMonthly = importedMonths.length > 0 ? Math.round(totalActual / importedMonths.length) : 0;
   var projected = avgMonthly * 12;
-  var html = '<div style="background:#fff;padding:12px;border-radius:8px;margin-bottom:10px;"><b style="font-size:16px;color:#2e7d32;">ðŸ“‹ Ù…Ù„Ø®Øµ Ø´Ø§Ù…Ù„ â€” ' + year + '</b><br><span style="font-size:12px;color:#888;">Ø£Ø´Ù‡Ø± Ù…Ø³Ø¬Ù„Ø©: ' + importedMonths.length + '/12 â€” Ø¥Ø¬Ù…Ø§Ù„ÙŠ Ø§Ù„Ù…Ø¹Ø§Ù…Ù„Ø§Øª: ' + finTransactions.length + '</span></div>';
+  var html = '<div style="background:#fff;padding:12px;border-radius:8px;margin-bottom:10px;"><b style="font-size:16px;color:#2e7d32;">📋 ملخص شامل — ' + year + '</b><br><span style="font-size:12px;color:#888;">أشهر مسجلة: ' + importedMonths.length + '/12 — إجمالي المعاملات: ' + finTransactions.length + '</span></div>';
   html += '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:12px;">';
-  html += '<div style="background:#e8f5e9;padding:10px;border-radius:8px;text-align:center;"><div style="font-size:11px;color:#666;">Ø¥Ø¬Ù…Ø§Ù„ÙŠ Ø§Ù„Ù…ÙŠØ²Ø§Ù†ÙŠØ©</div><div style="font-size:18px;font-weight:700;color:#2e7d32;">' + Math.round(totalBudget).toLocaleString() + '</div></div>';
-  html += '<div style="background:#e3f2fd;padding:10px;border-radius:8px;text-align:center;"><div style="font-size:11px;color:#666;">Ø¥Ø¬Ù…Ø§Ù„ÙŠ Ø§Ù„ÙØ¹Ù„ÙŠ</div><div style="font-size:18px;font-weight:700;color:#1565c0;">' + Math.round(totalActual).toLocaleString() + '</div></div>';
-  html += '<div style="background:#fff3e0;padding:10px;border-radius:8px;text-align:center;"><div style="font-size:11px;color:#666;">Ù…ØªÙˆØ³Ø· Ø´Ù‡Ø±ÙŠ</div><div style="font-size:18px;font-weight:700;color:#e65100;">' + avgMonthly.toLocaleString() + '</div></div>';
-  html += '<div style="background:#f3e5f5;padding:10px;border-radius:8px;text-align:center;"><div style="font-size:11px;color:#666;">Ø§Ù„Ù…ØªÙˆÙ‚Ø¹ Ù„Ù„Ø³Ù†Ø©</div><div style="font-size:18px;font-weight:700;color:#6a1b9a;">' + projected.toLocaleString() + '</div></div>';
+  html += '<div style="background:#e8f5e9;padding:10px;border-radius:8px;text-align:center;"><div style="font-size:11px;color:#666;">إجمالي الميزانية</div><div style="font-size:18px;font-weight:700;color:#2e7d32;">' + Math.round(totalBudget).toLocaleString() + '</div></div>';
+  html += '<div style="background:#e3f2fd;padding:10px;border-radius:8px;text-align:center;"><div style="font-size:11px;color:#666;">إجمالي الفعلي</div><div style="font-size:18px;font-weight:700;color:#1565c0;">' + Math.round(totalActual).toLocaleString() + '</div></div>';
+  html += '<div style="background:#fff3e0;padding:10px;border-radius:8px;text-align:center;"><div style="font-size:11px;color:#666;">متوسط شهري</div><div style="font-size:18px;font-weight:700;color:#e65100;">' + avgMonthly.toLocaleString() + '</div></div>';
+  html += '<div style="background:#f3e5f5;padding:10px;border-radius:8px;text-align:center;"><div style="font-size:11px;color:#666;">المتوقع للسنة</div><div style="font-size:18px;font-weight:700;color:#6a1b9a;">' + projected.toLocaleString() + '</div></div>';
   html += '</div>';
   html += '<table style="width:100%;font-size:12px;border-collapse:collapse;">';
-  html += '<tr style="background:#2e7d32;color:white;"><th>Ø§Ù„Ø´Ù‡Ø±</th><th>Ø§Ù„Ù…ÙŠØ²Ø§Ù†ÙŠØ©</th><th>Ø§Ù„ÙØ¹Ù„ÙŠ</th><th>Ø§Ù„Ø§Ù†Ø­Ø±Ø§Ù</th><th>Ù†Ø³Ø¨Ø© Ø§Ù„ØªÙ†ÙÙŠØ°</th><th>Ø¹Ø¯Ø¯ Ø§Ù„Ù…Ø¹Ø§Ù…Ù„Ø§Øª</th></tr>';
+  html += '<tr style="background:#2e7d32;color:white;"><th>الشهر</th><th>الميزانية</th><th>الفعلي</th><th>الانحراف</th><th>نسبة التنفيذ</th><th>عدد المعاملات</th></tr>';
   monthsData.forEach(function(m) {
     var pct = m.budget ? Math.round((m.actual / m.budget) * 100) : (m.actual > 0 ? '-' : 0);
     var rowBg = m.budget > 0 || m.actual > 0 ? '' : 'background:#f5f5f5;';
@@ -834,19 +834,19 @@ function finRunOverview() {
     html += '<td style="text-align:center;color:#888;">' + m.txCount + '</td>';
     html += '</tr>';
   });
-  html += '<tr style="background:#e8f5e9;font-weight:700;"><td>Ø§Ù„Ø¥Ø¬Ù…Ø§Ù„ÙŠ</td><td style="text-align:center;">' + Math.round(totalBudget).toLocaleString() + '</td><td style="text-align:center;color:#1565c0;">' + Math.round(totalActual).toLocaleString() + '</td><td style="text-align:center;color:' + (totalBudget - totalActual >= 0 ? '#2e7d32' : '#d32f2f') + ';">' + (totalBudget - totalActual >= 0 ? '+' : '') + Math.round(totalBudget - totalActual).toLocaleString() + '</td><td style="text-align:center;">' + (totalBudget ? Math.round((totalActual / totalBudget) * 100) + '%' : '-') + '</td><td style="text-align:center;">' + importedMonths.reduce(function(s, m) { return s + m.txCount; }, 0) + '</td></tr>';
+  html += '<tr style="background:#e8f5e9;font-weight:700;"><td>الإجمالي</td><td style="text-align:center;">' + Math.round(totalBudget).toLocaleString() + '</td><td style="text-align:center;color:#1565c0;">' + Math.round(totalActual).toLocaleString() + '</td><td style="text-align:center;color:' + (totalBudget - totalActual >= 0 ? '#2e7d32' : '#d32f2f') + ';">' + (totalBudget - totalActual >= 0 ? '+' : '') + Math.round(totalBudget - totalActual).toLocaleString() + '</td><td style="text-align:center;">' + (totalBudget ? Math.round((totalActual / totalBudget) * 100) + '%' : '-') + '</td><td style="text-align:center;">' + importedMonths.reduce(function(s, m) { return s + m.txCount; }, 0) + '</td></tr>';
   html += '</table>';
   var ovRes = document.getElementById('fin-overview-result');
   if (ovRes) ovRes.innerHTML = html;
 }
 
 function finExportExcel() {
-  if (typeof XLSX === 'undefined') { alert('âš ï¸ Ù…ÙƒØªØ¨Ø© XLSX ØºÙŠØ± Ù…ØªØ§Ø­Ø©. ØªØ£ÙƒØ¯ Ù…Ù† ØªØ­Ù…ÙŠÙ„ Ø§Ù„ØµÙØ­Ø© ÙƒØ§Ù…Ù„Ø©.'); return; }
+  if (typeof XLSX === 'undefined') { alert('⚠️ مكتبة XLSX غير متاحة. تأكد من تحميل الصفحة كاملة.'); return; }
   var year = document.getElementById('fin-year-select')?.value || new Date().getFullYear();
   var month = parseInt(document.getElementById('fin-month-select')?.value || 0);
   var data = finFiltered(month, year);
   var groups = finGroupByTask(data.transactions);
-  var monthNames = ['','ÙŠÙ†Ø§ÙŠØ±','ÙØ¨Ø±Ø§ÙŠØ±','Ù…Ø§Ø±Ø³','Ø£Ø¨Ø±ÙŠÙ„','Ù…Ø§ÙŠÙˆ','ÙŠÙˆÙ†ÙŠÙˆ','ÙŠÙˆÙ„ÙŠÙˆ','Ø£ØºØ³Ø·Ø³','Ø³Ø¨ØªÙ…Ø¨Ø±','Ø£ÙƒØªÙˆØ¨Ø±','Ù†ÙˆÙÙ…Ø¨Ø±','Ø¯ÙŠØ³Ù…Ø¨Ø±'];
+  var monthNames = ['','يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
   var budgetMap = {};
   data.budgets.forEach(function(b) { budgetMap[b.code] = b; });
   var rows = [];
@@ -854,17 +854,17 @@ function finExportExcel() {
     var g = groups[code];
     var b = budgetMap[code] || {};
     rows.push({
-      'Ø§Ù„ÙƒÙˆØ¯': code, 'Ø§Ù„Ø¨Ù†Ø¯': g.name,
-      'Ø§Ù„Ù…ÙŠØ²Ø§Ù†ÙŠØ©': b.budget || 0, 'Ø§Ù„ÙØ¹Ù„ÙŠ': Math.round(g.actual || g.total),
-      'Ø§Ù„Ø§Ù†Ø­Ø±Ø§Ù': (b.budget || 0) - Math.round(g.actual || g.total),
-      'Ù†Ø³Ø¨Ø© Ø§Ù„ØªÙ†ÙÙŠØ°': b.budget ? Math.round((g.total / b.budget) * 100) + '%' : '-',
-      'Ù…ÙŠØ²Ø§Ù†ÙŠØ© YTD': b.ytdBudget || 0, 'ÙØ¹Ù„ÙŠ YTD': b.ytdActual || 0
+      'الكود': code, 'البند': g.name,
+      'الميزانية': b.budget || 0, 'الفعلي': Math.round(g.actual || g.total),
+      'الانحراف': (b.budget || 0) - Math.round(g.actual || g.total),
+      'نسبة التنفيذ': b.budget ? Math.round((g.total / b.budget) * 100) + '%' : '-',
+      'ميزانية YTD': b.ytdBudget || 0, 'فعلي YTD': b.ytdActual || 0
     });
   }
   var ws = XLSX.utils.json_to_sheet(rows);
   var wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, 'Ø§Ù„Ù…ÙŠØ²Ø§Ù†ÙŠØ©');
-  XLSX.writeFile(wb, 'ØªÙ‚Ø±ÙŠØ±_Ø§Ù„Ù…ÙŠØ²Ø§Ù†ÙŠØ©_' + year + '.xlsx');
+  XLSX.utils.book_append_sheet(wb, ws, 'الميزانية');
+  XLSX.writeFile(wb, 'تقرير_الميزانية_' + year + '.xlsx');
 }
 
 function finExportPDF() {
@@ -874,8 +874,8 @@ function finExportPDF() {
   var groups = finGroupByTask(data.transactions);
   var budgetMap = {};
   data.budgets.forEach(function(b) { budgetMap[b.code] = b; });
-  var html = '<div style="font-family:Cairo,sans-serif;padding:20px;direction:rtl;"><h2 style="text-align:center;color:#1b5e20;">ØªÙ‚Ø±ÙŠØ± Ø§Ù„Ù…Ø±ÙƒØ² Ø§Ù„Ù…Ø§Ù„ÙŠ â€” ' + year + '</h2>';
-  html += '<table style="width:100%;border-collapse:collapse;font-size:11px;"><thead><tr style="background:#1b5e20;color:white;"><th>Ø§Ù„ÙƒÙˆØ¯</th><th>Ø§Ù„Ø¨Ù†Ø¯</th><th>Ø§Ù„Ù…ÙŠØ²Ø§Ù†ÙŠØ©</th><th>Ø§Ù„ÙØ¹Ù„ÙŠ</th><th>Ø§Ù„Ø§Ù†Ø­Ø±Ø§Ù</th><th>Ù†Ø³Ø¨Ø© Ø§Ù„ØªÙ†ÙÙŠØ°</th><th>Ù…ÙŠØ²Ø§Ù†ÙŠØ© YTD</th><th>ÙØ¹Ù„ÙŠ YTD</th></tr></thead><tbody>';
+  var html = '<div style="font-family:Cairo,sans-serif;padding:20px;direction:rtl;"><h2 style="text-align:center;color:#1b5e20;">تقرير المركز المالي — ' + year + '</h2>';
+  html += '<table style="width:100%;border-collapse:collapse;font-size:11px;"><thead><tr style="background:#1b5e20;color:white;"><th>الكود</th><th>البند</th><th>الميزانية</th><th>الفعلي</th><th>الانحراف</th><th>نسبة التنفيذ</th><th>ميزانية YTD</th><th>فعلي YTD</th></tr></thead><tbody>';
   for (var code in groups) {
     var g = groups[code];
     var b = budgetMap[code] || {};
@@ -885,7 +885,7 @@ function finExportPDF() {
   html += '</tbody></table></div>';
   if (typeof html2pdf !== 'undefined') {
     try {
-      html2pdf().set({ margin: 1, filename: 'ØªÙ‚Ø±ÙŠØ±_Ø§Ù„Ù…ÙŠØ²Ø§Ù†ÙŠØ©_' + year + '.pdf', html2canvas: { scale: 2 }, jsPDF: { unit: 'cm', format: 'a4', orientation: 'landscape' } }).from(html).save();
+      html2pdf().set({ margin: 1, filename: 'تقرير_الميزانية_' + year + '.pdf', html2canvas: { scale: 2 }, jsPDF: { unit: 'cm', format: 'a4', orientation: 'landscape' } }).from(html).save();
     } catch(e) { console.error('PDF export error:', e); }
   } else {
     console.warn('html2pdf library not loaded');
@@ -903,12 +903,12 @@ function finShowDeptConsumption() {
   if (!sel) return;
   var tasks = {};
   finTransactions.forEach(function(t) {
-    var code = t.task || 'ØºÙŠØ± Ù…Ø­Ø¯Ø¯';
+    var code = t.task || 'غير محدد';
     if (!tasks[code]) tasks[code] = t.taskDesc || code;
   });
-  sel.innerHTML = '<option value="">Ø§Ù„ÙƒÙ„</option>';
+  sel.innerHTML = '<option value="">الكل</option>';
   Object.keys(tasks).sort().forEach(function(code) {
-    sel.innerHTML += '<option value="' + code + '">' + code + ' â€” ' + tasks[code] + '</option>';
+    sel.innerHTML += '<option value="' + code + '">' + code + ' — ' + tasks[code] + '</option>';
   });
   var years = finTransactions.map(function(t) { return t.year || 0; }).filter(Boolean);
   if (years.length) {
@@ -921,7 +921,7 @@ function finShowDeptConsumption() {
   finRenderDeptConsumption();
 }
 
-var _monthNames = ['','ÙŠÙ†Ø§ÙŠØ±','ÙØ¨Ø±Ø§ÙŠØ±','Ù…Ø§Ø±Ø³','Ø£Ø¨Ø±ÙŠÙ„','Ù…Ø§ÙŠÙˆ','ÙŠÙˆÙ†ÙŠÙˆ','ÙŠÙˆÙ„ÙŠÙˆ','Ø£ØºØ³Ø·Ø³','Ø³Ø¨ØªÙ…Ø¨Ø±','Ø£ÙƒØªÙˆØ¨Ø±','Ù†ÙˆÙÙ…Ø¨Ø±','Ø¯ÙŠØ³Ù…Ø¨Ø±'];
+var _monthNames = ['','يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
 
 function finRenderDeptConsumption() {
   var el = document.getElementById('fin-dept-result');
@@ -939,10 +939,10 @@ function finRenderDeptConsumption() {
     if (toYear && t.year && t.year > toYear) return false;
     return true;
   });
-  if (!filtered.length) { el.innerHTML = '<div style="text-align:center;padding:20px;color:#888;">Ù„Ø§ ØªÙˆØ¬Ø¯ Ø¨ÙŠØ§Ù†Ø§Øª ÙÙŠ Ù‡Ø°Ù‡ Ø§Ù„ÙØªØ±Ø©</div>'; return; }
+  if (!filtered.length) { el.innerHTML = '<div style="text-align:center;padding:20px;color:#888;">لا توجد بيانات في هذه الفترة</div>'; return; }
   var items = {};
   filtered.forEach(function(t) {
-    var name = t.itemName || 'ØºÙŠØ± Ù…Ø­Ø¯Ø¯';
+    var name = t.itemName || 'غير محدد';
     var dept = t.costCenterDesc || t.taskDesc || t.task || '';
     if (!items[name]) items[name] = { name: name, total: 0, count: 0, qty: 0, dept: dept, months: {} };
     items[name].total += t.value || 0;
@@ -958,27 +958,27 @@ function finRenderDeptConsumption() {
   var grandTotal = rows.reduce(function(s, r) { return s + r.total; }, 0);
   var grandQty = rows.reduce(function(s, r) { return s + r.qty; }, 0);
   var html = '<div style="background:#e0f2f1;border-radius:8px;padding:10px;margin-bottom:12px;font-size:13px;">';
-  html += '<b>Ø¥Ø¬Ù…Ø§Ù„ÙŠ Ø§Ù„Ø§Ø³ØªÙ‡Ù„Ø§Ùƒ:</b> <span style="color:#00695c;font-weight:700;font-size:16px;">' + grandTotal.toLocaleString(undefined, {maximumFractionDigits: 0}) + ' Ø¬.Ù…</span>';
-  html += ' | <b>Ø¥Ø¬Ù…Ø§Ù„ÙŠ Ø§Ù„ÙƒÙ…ÙŠØ©:</b> ' + grandQty.toLocaleString(undefined, {maximumFractionDigits: 0});
-  html += ' | <b>Ø¹Ø¯Ø¯ Ø§Ù„Ø¨Ù†Ø¯Ø§Øª:</b> ' + rows.length;
-  html += ' | <b>Ø¹Ø¯Ø¯ Ø§Ù„Ù…Ø¹Ø§Ù…Ù„Ø§Øª:</b> ' + filtered.length;
+  html += '<b>إجمالي الاستهلاك:</b> <span style="color:#00695c;font-weight:700;font-size:16px;">' + grandTotal.toLocaleString(undefined, {maximumFractionDigits: 0}) + ' ج.م</span>';
+  html += ' | <b>إجمالي الكمية:</b> ' + grandQty.toLocaleString(undefined, {maximumFractionDigits: 0});
+  html += ' | <b>عدد البندات:</b> ' + rows.length;
+  html += ' | <b>عدد المعاملات:</b> ' + filtered.length;
   html += '</div>';
   html += '<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:13px;">';
-  html += '<thead><tr style="background:#00695c;color:white;"><th style="padding:8px;">#</th><th style="padding:8px;text-align:right;">Ø§Ù„ØµÙ†Ù</th><th style="padding:8px;">Ø§Ù„ÙƒÙ…ÙŠØ©</th><th style="padding:8px;">Ø¹Ø¯Ø¯ Ù…Ø±Ø§Øª Ø§Ù„ØµØ±Ù</th><th style="padding:8px;">Ø¥Ø¬Ù…Ø§Ù„ÙŠ Ø§Ù„Ù‚ÙŠÙ…Ø©</th><th style="padding:8px;">Ù…Ø±ÙƒØ² Ø§Ù„ØªÙƒÙ„ÙØ© / Ø´Ù‡ÙˆØ± Ø§Ù„ØµØ±Ù</th></tr></thead><tbody>';
+  html += '<thead><tr style="background:#00695c;color:white;"><th style="padding:8px;">#</th><th style="padding:8px;text-align:right;">الصنف</th><th style="padding:8px;">الكمية</th><th style="padding:8px;">عدد مرات الصرف</th><th style="padding:8px;">إجمالي القيمة</th><th style="padding:8px;">مركز التكلفة / شهور الصرف</th></tr></thead><tbody>';
   rows.forEach(function(r, i) {
     var pct = grandTotal > 0 ? Math.round(r.total / grandTotal * 100) : 0;
     var monthLabels = Object.keys(r.months).sort().map(function(mk) {
       var parts = mk.split('-');
       var mName = _monthNames[parseInt(parts[1])] || parts[1];
       return mName + ' ' + parts[0] + ': ' + r.months[mk].toLocaleString(undefined, {maximumFractionDigits: 0});
-    }).join('ØŒ ');
+    }).join('، ');
     if (!monthLabels) monthLabels = '-';
     html += '<tr style="border-bottom:1px solid #eee;">';
     html += '<td style="padding:6px;color:#999;font-size:12px;">' + (i + 1) + '</td>';
     html += '<td style="padding:8px;font-weight:600;">' + r.name + '</td>';
     html += '<td style="padding:8px;text-align:center;">' + r.qty.toLocaleString(undefined, {maximumFractionDigits: 0}) + '</td>';
     html += '<td style="padding:8px;text-align:center;">' + r.count + '</td>';
-    html += '<td style="padding:8px;text-align:center;font-weight:700;color:#00695c;">' + r.total.toLocaleString(undefined, {maximumFractionDigits: 0}) + ' Ø¬.Ù…</td>';
+    html += '<td style="padding:8px;text-align:center;font-weight:700;color:#00695c;">' + r.total.toLocaleString(undefined, {maximumFractionDigits: 0}) + ' ج.م</td>';
     html += '<td style="padding:8px;color:#555;font-size:12px;"><span style="font-weight:600;color:#333;">' + r.dept + '</span><br><span style="color:#888;">' + monthLabels + '</span></td>';
     html += '</tr>';
   });
