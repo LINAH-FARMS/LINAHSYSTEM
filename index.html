@@ -7057,21 +7057,7 @@ var _breadSuggestionIdCounter = 0;
     function getPresentCountOnDate(targetDateStr) {
       var stat = dailyStats.find(function(s) { return s.date === targetDateStr; });
       if (stat) return (stat.permP || 0) + (stat.casP || 0);
-      var totalEmps = employees.length;
-      var onVacation = employees.filter(function(e) {
-        var empVacations = vacations.filter(function(v) {
-          return v.code === e.code || v.name === e.name;
-        });
-        for (var i = 0; i < empVacations.length; i++) {
-          var v = empVacations[i];
-          var vStart = v.start || '';
-          var vEnd = v.end || '';
-          if (vStart && vEnd && targetDateStr >= vStart && targetDateStr <= vEnd) return true;
-          if (vStart && !vEnd && targetDateStr >= vStart) return true;
-        }
-        return false;
-      });
-      return totalEmps - onVacation.length;
+      return employees.filter(function(e) { return e.status === 'P'; }).length;
     }
 
     function openBreadPlanReport(selectedDate) {
