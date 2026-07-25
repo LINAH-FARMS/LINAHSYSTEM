@@ -848,47 +848,68 @@ function finExportExcel() {
   var data = finFiltered(month, year);
   var groups = finGroupByTask(data.transactions);
   var monthNames = ['','يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
-  var budgetMap = {};
-  data.budgets.forEach(function(b) { budgetMap[b.code] = b; });
+  /* aggregate budgets by code (multiple months → one row per code) */
+  var budgetAgg = {};
+  data.budgets.forEach(function(b) {
+    if (!budgetAgg[b.code]) budgetAgg[b.code] = { code: b.code, name: b.name, budget: 0, actual: 0, ytdBudget: 0, ytdActual: 0 };
+    budgetAgg[b.code].budget += b.budget || 0;
+    budgetAgg[b.code].actual += b.actual || 0;
+    budgetAgg[b.code].ytdBudget += b.ytdBudget || 0;
+    budgetAgg[b.code].ytdActual += b.ytdActual || 0;
+  });
 
   /* ── Sheet 1: Executive Summary ── */
-  var totalBudget = 0, totalActual = 0, totalItems = 0;
-  data.budgets.forEach(function(b) { totalBudget += b.budget; totalActual += b.actual; });
+  var totalBudget = 0, totalActualBg = 0;
+  data.budgets.forEach(function(b) { totalBudget += b.budget; totalActualBg += b.actual; });
+  var totalActualTx = 0;
+  data.transactions.forEach(function(t) { totalActualTx += t.value || 0; });
   var summaryRows = [];
-  summaryRows.push({ 'البيان': 'تقرير الميزانية — ' + year, 'القيمة': '' });
-  summaryRows.push({ 'البيان': 'إجمالي الميزانية', 'القيمة': totalBudget.toLocaleString() + ' ج.م' });
-  summaryRows.push({ 'البيان': 'إجمالي الفعلي', 'القيمة': totalActual.toLocaleString() + ' ج.م' });
-  summaryRows.push({ 'البيان': 'الانحراف', 'القيمة': (totalBudget - totalActual).toLocaleString() + ' ج.م' });
-  summaryRows.push({ 'البيان': 'نسبة التنفيذ', 'القيمة': totalBudget ? Math.round((totalActual/totalBudget)*100) + '%' : '-' });
-  summaryRows.push({ 'البيان': 'عدد الأقسام', 'القيمة': Object.keys(groups).length });
-  var allItems = {};
-  data.transactions.forEach(function(t) { allItems[t.task + '|' + t.itemName] = true; });
-  summaryRows.push({ 'البيان': 'إجمالي الأصناف', 'القيمة': Object.keys(allItems).length });
-  summaryRows.push({ 'البيان': 'إجمالي المعاملات', 'القيمة': data.transactions.length });
-  summaryRows.push({ 'البيان': 'تاريخ التقرير', 'القيمة': new Date().toLocaleDateString('ar-EG') });
+  summaryRows.push({ 'البيان': 'تقرير الميزانية — ' + year, 'القيمة': '', 'ملاحظات': '' });
+  summaryRows.push({ 'البيان': '', 'القيمة': '', 'ملاحظات': '' });
+  summaryRows.push({ 'البيان': 'إجمالي الميزانية', 'القيمة': totalBudget.toLocaleString(), 'ملاحظات': 'من بنود الميزانية' });
+  summaryRows.push({ 'البيان': 'إجمالي الفعلي (معاملات)', 'القيمة': Math.round(totalActualTx).toLocaleString(), 'ملاحظات': 'مجمّع من معاملات الصرف' });
+  summaryRows.push({ 'البيان': 'الانحراف', 'القيمة': Math.round(totalBudget - totalActualTx).toLocaleString(), 'ملاحظات': totalBudget >= totalActualTx ? 'تحت الميزانية' : 'تجاوز' });
+  summaryRows.push({ 'البيان': 'نسبة التنفيذ', 'القيمة': totalBudget ? Math.round((totalActualTx/totalBudget)*100) + '%' : '-', 'ملاحظات': '' });
+  summaryRows.push({ 'البيان': '', 'القيمة': '', 'ملاحظات': '' });
+  summaryRows.push({ 'البيان': 'عدد الأقسام', 'القيمة': Object.keys(groups).length, 'ملاحظات': '' });
+  var allItemsSet = {};
+  data.transactions.forEach(function(t) { allItemsSet[t.task + '|' + t.itemName] = true; });
+  summaryRows.push({ 'البيان': 'إجمالي الأصناف', 'القيمة': Object.keys(allItemsSet).length, 'ملاحظات': '' });
+  summaryRows.push({ 'البيان': 'إجمالي المعاملات', 'القيمة': data.transactions.length, 'ملاحظات': '' });
+  summaryRows.push({ 'البيان': 'تاريخ التقرير', 'القيمة': new Date().toLocaleDateString('ar-EG'), 'ملاحظات': '' });
   var ws1 = XLSX.utils.json_to_sheet(summaryRows);
-  XLSX.utils.sheet_add_aoa(ws1, [['تقرير الميزانية الاحترافي', '']], { origin: 'A1' });
+  ws1['!cols'] = [{wch:30},{wch:20},{wch:25}];
 
   /* ── Sheet 2: By Category ── */
   var catRows = [];
   for (var code in groups) {
     var g = groups[code];
-    var b = budgetMap[code] || {};
+    var b = budgetAgg[code] || {};
     var itemCount = Object.keys(g.items).length;
+    var bVal = b.budget || 0;
+    var aVal = Math.round(g.total);
     catRows.push({
       'الكود': code, 'القسم': g.name,
-      'الميزانية': b.budget || 0,
-      'الفعلي': Math.round(g.total),
-      'الانحراف': (b.budget || 0) - Math.round(g.total),
-      'نسبة التنفيذ': b.budget ? Math.round((g.total/b.budget)*100) + '%' : '-',
+      'الميزانية': bVal,
+      'الفعلي (معاملات)': aVal,
+      'الانحراف': bVal - aVal,
+      'نسبة التنفيذ': bVal ? Math.round((aVal/bVal)*100) + '%' : (aVal > 0 ? '∞' : '0%'),
       'عدد الأصناف': itemCount,
       'عدد المعاملات': g.count,
       'ميزانية YTD': b.ytdBudget || 0,
       'فعلي YTD': b.ytdActual || 0
     });
   }
-  catRows.sort(function(a,b) { return (b.الفعلي||0) - (a.الفعلي||0); });
+  /* also add codes that have budget but no transactions */
+  for (var bgCode in budgetAgg) {
+    if (!groups[bgCode]) {
+      var b2 = budgetAgg[bgCode];
+      catRows.push({ 'الكود': bgCode, 'القسم': b2.name, 'الميزانية': b2.budget, 'الفعلي (معاملات)': 0, 'الانحراف': b2.budget, 'نسبة التنفيذ': '0%', 'عدد الأصناف': 0, 'عدد المعاملات': 0, 'ميزانية YTD': b2.ytdBudget, 'فعلي YTD': b2.ytdActual });
+    }
+  }
+  catRows.sort(function(a,b) { return (b['الفعلي (معاملات)']||0) - (a['الفعلي (معاملات)']||0); });
   var ws2 = XLSX.utils.json_to_sheet(catRows);
+  ws2['!cols'] = [{wch:10},{wch:28},{wch:14},{wch:16},{wch:14},{wch:12},{wch:10},{wch:10},{wch:14},{wch:14}];
 
   /* ── Sheet 3: Items per Category ── */
   var itemRows = [];
@@ -906,6 +927,7 @@ function finExportExcel() {
   }
   itemRows.sort(function(a,b) { return (b.الإجمالي||0) - (a.الإجمالي||0); });
   var ws3 = XLSX.utils.json_to_sheet(itemRows);
+  ws3['!cols'] = [{wch:10},{wch:25},{wch:35},{wch:14},{wch:12}];
 
   /* ── Sheet 4: Monthly Breakdown ── */
   var monthlyData = {};
@@ -927,6 +949,9 @@ function finExportExcel() {
   }
   monthlyRows.sort(function(a,b) { var ta=0,tb=0; for(var mi=1;mi<=12;mi++){ta+=a[monthNames[mi]]||0;tb+=b[monthNames[mi]]||0;} return tb-ta; });
   var ws4 = XLSX.utils.json_to_sheet(monthlyRows);
+  var ws4cols = [{wch:10},{wch:25}];
+  for (var ci = 1; ci <= 12; ci++) ws4cols.push({wch:13});
+  ws4['!cols'] = ws4cols;
 
   /* ── Assemble workbook ── */
   var wb = XLSX.utils.book_new();
@@ -934,12 +959,7 @@ function finExportExcel() {
   XLSX.utils.book_append_sheet(wb, ws2, 'الأقسام');
   XLSX.utils.book_append_sheet(wb, ws3, 'الأصناف');
   XLSX.utils.book_append_sheet(wb, ws4, 'شهري');
-  /* column widths */
-  ws1['!cols'] = [{wch:30},{wch:25}];
-  ws2['!cols'] = [{wch:10},{wch:25},{wch:15},{wch:15},{wch:15},{wch:12},{wch:12},{wch:15},{wch:15}];
-  ws3['!cols'] = [{wch:10},{wch:25},{wch:30},{wch:15},{wch:12}];
-  ws4['!cols'] = [{wch:10},{wch:25},{wch:12},{wch:12},{wch:12},{wch:12},{wch:12},{wch:12},{wch:12},{wch:12},{wch:12},{wch:12},{wch:12},{wch:12}];
-  XLSX.writeFile(wb, 'تقرير_الميزانية_احترافي_' + year + '.xlsx');
+  XLSX.writeFile(wb, 'تقرير_الميزانية_' + year + (month ? '_' + monthNames[month] : '') + '.xlsx');
 }
 
 function finExportPDF() {
@@ -1000,149 +1020,169 @@ function finExportPDF() {
 }
 
 function finExportProfessional() {
+  if (typeof XLSX === 'undefined') { alert('⚠️ مكتبة XLSX غير متاحة'); return; }
   var year = document.getElementById('fin-year-select')?.value || new Date().getFullYear();
   var monthNames = ['','يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
-  /* gather full-year data */
-  var allData = finFiltered(0, year);
-  var allGroups = finGroupByTask(allData.transactions);
-  var allBudgetMap = {};
-  allData.budgets.forEach(function(b) { allBudgetMap[b.code] = b; });
-  var totalBudget = 0, totalActual = 0;
-  allData.budgets.forEach(function(b) { totalBudget += b.budget; totalActual += b.actual; });
-  /* monthly per section */
-  var monthlySections = {};
+  /* gather full-year data (month=0 = all months) */
+  var allTx = finTransactions.filter(function(t) { return Number(t.year) === Number(year); });
+  var allBg = finBudgets.filter(function(b) { return Number(b.year) === Number(year); });
+  /* aggregate budgets by code across all months */
+  var budgetAgg = {};
+  allBg.forEach(function(b) {
+    if (!budgetAgg[b.code]) budgetAgg[b.code] = { code: b.code, name: b.name, budget: 0, actual: 0, ytdBudget: 0, ytdActual: 0 };
+    budgetAgg[b.code].budget += b.budget || 0;
+    budgetAgg[b.code].actual += b.actual || 0;
+    budgetAgg[b.code].ytdBudget += b.ytdBudget || 0;
+    budgetAgg[b.code].ytdActual += b.ytdActual || 0;
+  });
+  /* group transactions by task */
+  var groups = finGroupByTask(allTx);
+  /* merge: for each code from transactions OR budgets */
+  var mergedCodes = {};
+  Object.keys(groups).forEach(function(c) { mergedCodes[c] = true; });
+  Object.keys(budgetAgg).forEach(function(c) { mergedCodes[c] = true; });
+  var codes = Object.keys(mergedCodes).sort();
+  /* totals */
+  var totalBudget = 0, totalActualTx = 0, totalActualBg = 0;
+  codes.forEach(function(code) {
+    var g = groups[code];
+    var b = budgetAgg[code];
+    if (b) { totalBudget += b.budget; totalActualBg += b.actual; }
+    if (g) totalActualTx += g.total;
+  });
+  /* ── Sheet 1: Executive Summary ── */
+  var s1 = [];
+  s1.push({ 'البيان': 'تقرير الميزانية السنوي — ' + year, 'القيمة': '', 'ملاحظات': '' });
+  s1.push({ 'البيان': '', 'القيمة': '', 'ملاحظات': '' });
+  s1.push({ 'البيان': 'إجمالي الميزانية (حسب البنود)', 'القيمة': totalBudget.toLocaleString() + ' ج.م', 'ملاحظات': '' });
+  s1.push({ 'البيان': 'إجمالي الفعلي (حسب المعاملات)', 'القيمة': Math.round(totalActualTx).toLocaleString() + ' ج.م', 'ملاحظات': 'مجمّع من معاملات الصرف الفعلية' });
+  s1.push({ 'البيان': 'الانحراف', 'القيمة': Math.round(totalBudget - totalActualTx).toLocaleString() + ' ج.م', 'ملاحظات': totalBudget >= totalActualTx ? '✅ تحت الميزانية' : '⚠️ تجاوز' });
+  s1.push({ 'البيان': 'نسبة التنفيذ', 'القيمة': totalBudget ? Math.round((totalActualTx/totalBudget)*100) + '%' : '-', 'ملاحظات': '' });
+  s1.push({ 'البيان': '', 'القيمة': '', 'ملاحظات': '' });
+  s1.push({ 'البيان': 'عدد الأقسام', 'القيمة': codes.length, 'ملاحظات': '' });
+  s1.push({ 'البيان': 'عدد الأصناف المميزة', 'القيمة': function(){var s=new Set();allTx.forEach(function(t){s.add(t.task+'|'+t.itemName);});return s.size;}(), 'ملاحظات': '' });
+  s1.push({ 'البيان': 'إجمالي المعاملات', 'القيمة': allTx.length, 'ملاحظات': '' });
+  s1.push({ 'البيان': 'عدد شهور الميزانية', 'القيمة': function(){var m=new Set();allBg.forEach(function(b){if(b.budget)m.add(b.month);});return m.size;}(), 'ملاحظات': '' });
+  s1.push({ 'البيان': 'تاريخ التقرير', 'القيمة': new Date().toLocaleDateString('ar-EG'), 'ملاحظات': '' });
+  var ws1 = XLSX.utils.json_to_sheet(s1);
+  ws1['!cols'] = [{wch:35},{wch:25},{wch:30}];
+
+  /* ── Sheet 2: Sections (الأقسام) with items count ── */
+  var s2 = [];
+  codes.forEach(function(code) {
+    var g = groups[code];
+    var b = budgetAgg[code];
+    var budgetVal = b ? b.budget : 0;
+    var actualVal = g ? Math.round(g.total) : 0;
+    var variance = budgetVal - actualVal;
+    var pct = budgetVal ? Math.round((actualVal/budgetVal)*100) : (actualVal > 0 ? null : 0);
+    var itemCount = g ? Object.keys(g.items).length : 0;
+    var txCount = g ? g.count : 0;
+    var ytdB = b ? b.ytdBudget : 0;
+    var ytdA = b ? b.ytdActual : 0;
+    s2.push({
+      'الكود': code,
+      'القسم': (g ? g.name : (b ? b.name : code)),
+      'الميزانية': budgetVal,
+      'الفعلي (معاملات)': actualVal,
+      'الانحراف': variance,
+      'نسبة التنفيذ': pct !== null ? pct + '%' : '∞',
+      'عدد الأصناف': itemCount,
+      'عدد المعاملات': txCount,
+      'ميزانية YTD': ytdB,
+      'فعلي YTD': ytdA
+    });
+  });
+  s2.sort(function(a,b) { return (b['الفعلي (معاملات)']||0) - (a['الفعلي (معاملات)']||0); });
+  var ws2 = XLSX.utils.json_to_sheet(s2);
+  ws2['!cols'] = [{wch:10},{wch:30},{wch:15},{wch:15},{wch:15},{wch:12},{wch:10},{wch:10},{wch:15},{wch:15}];
+
+  /* ── Sheet 3: Monthly per section (actual from transactions) ── */
+  var monthlyTx = {};
   for (var m = 1; m <= 12; m++) {
     var md = finFiltered(m, year);
     var mg = finGroupByTask(md.transactions);
     for (var mc in mg) {
-      if (!monthlySections[mc]) monthlySections[mc] = {};
-      monthlySections[mc][m] = Math.round(mg[mc].total);
+      if (!monthlyTx[mc]) monthlyTx[mc] = {};
+      monthlyTx[mc][m] = Math.round(mg[mc].total);
     }
   }
-  var itemCountTotal = 0, txCountTotal = 0;
-  var html = '<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8"><title>تقرير الميزانية السنوي — ' + year + '</title>';
-  html += '<style>';
-  html += 'body{font-family:"Cairo",sans-serif;margin:0;padding:20px;color:#222;background:#fff;}';
-  html += '.cover{text-align:center;padding:60px 20px 40px;border-bottom:3px solid #1b5e20;margin-bottom:30px;}';
-  html += '.cover h1{font-size:28px;color:#1b5e20;margin:0 0 8px;}';
-  html += '.cover h2{font-size:16px;color:#666;font-weight:400;margin:0 0 4px;}';
-  html += '.cover .date{font-size:12px;color:#999;}';
-  html += '.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:30px;}';
-  html += '.kpi-card{background:#f9f9f9;border-radius:10px;padding:14px;text-align:center;border:1px solid #e0e0e0;}';
-  html += '.kpi-card .label{font-size:11px;color:#888;margin-bottom:4px;}';
-  html += '.kpi-card .value{font-size:22px;font-weight:700;}';
-  html += '.section{margin-bottom:30px;}';
-  html += '.section h3{font-size:18px;color:#1b5e20;border-bottom:2px solid #1b5e20;padding-bottom:6px;margin-bottom:12px;}';
-  html += 'table{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:10px;}';
-  html += 'th{background:#1b5e20;color:#fff;padding:8px 6px;font-size:11px;}';
-  html += 'td{padding:6px;border-bottom:1px solid #e0e0e0;}';
-  html += 'tr:hover{background:#f5f5f5;}';
-  html += '.total-row{background:#e8f5e9;font-weight:700;}';
-  html += '.green{color:#2e7d32;}.blue{color:#1565c0;}.orange{color:#e65100;}.red{color:#d32f2f;}';
-  html += '.item-list{margin:4px 0;font-size:10px;color:#555;}';
-  html += '.footer{text-align:center;font-size:10px;color:#aaa;margin-top:40px;border-top:1px solid #eee;padding-top:12px;}';
-  html += '@media print{body{padding:10px;}.no-print{display:none;}}';
-  html += '</style></head><body>';
-
-  /* ── Cover ── */
-  html += '<div class="cover">';
-  html += '<h1>📊 التقرير السنوي للميزانية</h1>';
-  html += '<h2>' + year + '</h2>';
-  html += '<div class="date">تاريخ التقرير: ' + new Date().toLocaleDateString('ar-EG') + '</div>';
-  html += '</div>';
-
-  /* ── KPI Cards ── */
-  html += '<div class="kpi-grid">';
-  html += '<div class="kpi-card"><div class="label">إجمالي الميزانية</div><div class="value" style="color:#2e7d32;">' + totalBudget.toLocaleString() + '</div></div>';
-  html += '<div class="kpi-card"><div class="label">إجمالي الفعلي</div><div class="value" style="color:#1565c0;">' + totalActual.toLocaleString() + '</div></div>';
-  html += '<div class="kpi-card"><div class="label">الانحراف</div><div class="value" style="color:' + (totalBudget-totalActual>=0?'#2e7d32':'#d32f2f') + ';">' + (totalBudget-totalActual).toLocaleString() + '</div></div>';
-  html += '<div class="kpi-card"><div class="label">نسبة التنفيذ</div><div class="value" style="color:#6a1b9a;">' + (totalBudget?Math.round((totalActual/totalBudget)*100):0) + '%</div></div>';
-  html += '<div class="kpi-card"><div class="label">عدد الأقسام</div><div class="value" style="color:#00695c;">' + Object.keys(allGroups).length + '</div></div>';
-  html += '<div class="kpi-card"><div class="label">عدد المعاملات</div><div class="value" style="color:#37474f;">' + allData.transactions.length + '</div></div>';
-  html += '</div>';
-
-  /* ── Section Details ── */
-  html += '<div class="section"><h3>📂 تفاصيل الأقسام</h3>';
-  html += '<table><thead><tr><th>الكود</th><th>القسم</th><th>الميزانية</th><th>الفعلي</th><th>الانحراف</th><th>%</th><th>عدد الأصناف</th><th>المعاملات</th><th>الأصناف</th></tr></thead><tbody>';
-  var sortedCodes = Object.keys(allGroups).sort(function(a,b){return (allBudgetMap[b]?.budget||0)-(allBudgetMap[a]?.budget||0);});
-  sortedCodes.forEach(function(code) {
-    var g = allGroups[code];
-    var b = allBudgetMap[code] || {};
-    var pct = b.budget ? Math.round((g.total / b.budget) * 100) : '-';
-    var itemCount = Object.keys(g.items).length;
-    itemCountTotal += itemCount; txCountTotal += g.count;
-    var itemNames = Object.keys(g.items).sort(function(a,b){return (g.items[b].total||0)-(g.items[a].total||0);}).slice(0,8);
-    var itemsStr = itemNames.map(function(n){return n + ' (' + Math.round(g.items[n].total).toLocaleString() + ')';}).join('، ');
-    if (Object.keys(g.items).length > 8) itemsStr += '…';
-    html += '<tr><td style="font-weight:700;">' + code + '</td><td>' + g.name + '</td>';
-    html += '<td style="text-align:center;">' + (b.budget ? b.budget.toLocaleString() : '-') + '</td>';
-    html += '<td style="text-align:center;font-weight:700;color:#1565c0;">' + Math.round(g.total).toLocaleString() + '</td>';
-    html += '<td style="text-align:center;color:' + ((b.budget||0)-Math.round(g.total)>=0?'#2e7d32':'#d32f2f') + ';">' + ((b.budget||0)-Math.round(g.total)).toLocaleString() + '</td>';
-    html += '<td style="text-align:center;font-weight:700;">' + pct + '%</td>';
-    html += '<td style="text-align:center;">' + itemCount + '</td>';
-    html += '<td style="text-align:center;">' + g.count + '</td>';
-    html += '<td style="font-size:10px;color:#555;max-width:200px;">' + itemsStr + '</td></tr>';
-  });
-  html += '<tr class="total-row"><td>الإجمالي</td><td></td><td style="text-align:center;">' + totalBudget.toLocaleString() + '</td><td style="text-align:center;color:#1565c0;">' + totalActual.toLocaleString() + '</td><td style="text-align:center;color:' + (totalBudget-totalActual>=0?'#2e7d32':'#d32f2f') + ';">' + (totalBudget-totalActual).toLocaleString() + '</td><td style="text-align:center;">' + (totalBudget?Math.round((totalActual/totalBudget)*100):0) + '%</td><td style="text-align:center;">' + itemCountTotal + '</td><td style="text-align:center;">' + txCountTotal + '</td><td></td></tr>';
-  html += '</tbody></table></div>';
-
-  /* ── Monthly Breakdown ── */
-  html += '<div class="section"><h3>📅 التوزيع الشهري حسب القسم</h3>';
-  html += '<table><thead><tr><th>القسم</th>';
-  for (var mi = 1; mi <= 12; mi++) html += '<th style="text-align:center;font-size:10px;">' + monthNames[mi] + '</th>';
-  html += '<th style="text-align:center;">الإجمالي</th></tr></thead><tbody>';
-  var sortedMonthly = Object.keys(monthlySections).sort(function(a,b){
-    var ta=0,tb=0;
-    for(var mm=1;mm<=12;mm++){ta+=monthlySections[a][mm]||0;tb+=monthlySections[b][mm]||0;}
-    return tb-ta;
-  });
+  var allSec = Object.keys(monthlyTx).sort();
+  var s3 = [];
   var monthTotals = {};
-  sortedMonthly.forEach(function(code) {
+  allSec.forEach(function(code) {
+    var row = { 'القسم': groups[code]?.name || budgetAgg[code]?.name || code };
     var secTotal = 0;
-    html += '<tr><td style="font-weight:600;">' + (allGroups[code]?.name || code) + '</td>';
-    for (var mm = 1; mm <= 12; mm++) {
-      var v = monthlySections[code][mm] || 0;
+    for (var mi = 1; mi <= 12; mi++) {
+      var v = monthlyTx[code][mi] || 0;
+      row[monthNames[mi]] = v;
       secTotal += v;
-      if (!monthTotals[mm]) monthTotals[mm] = 0;
-      monthTotals[mm] += v;
-      html += '<td style="text-align:center;' + (v?'font-weight:700;color:#1565c0;':'color:#ccc;') + '">' + (v?v.toLocaleString():'-') + '</td>';
+      if (!monthTotals[mi]) monthTotals[mi] = 0;
+      monthTotals[mi] += v;
     }
-    html += '<td style="text-align:center;font-weight:700;color:#1b5e20;">' + secTotal.toLocaleString() + '</td></tr>';
+    row['الإجمالي'] = secTotal;
+    s3.push(row);
   });
-  html += '<tr class="total-row"><td>الإجمالي</td>';
-  var grandMonthly = 0;
-  for (var mm2 = 1; mm2 <= 12; mm2++) {
-    var mv = monthTotals[mm2] || 0;
-    grandMonthly += mv;
-    html += '<td style="text-align:center;">' + mv.toLocaleString() + '</td>';
-  }
-  html += '<td style="text-align:center;font-size:14px;">' + grandMonthly.toLocaleString() + '</td></tr>';
-  html += '</tbody></table></div>';
+  s3.sort(function(a,b) { return (b['الإجمالي']||0)-(a['الإجمالي']||0); });
+  /* add total row */
+  var totalRow = { 'القسم': 'الإجمالي' };
+  var grandTotal = 0;
+  for (var mi2 = 1; mi2 <= 12; mi2++) { totalRow[monthNames[mi2]] = monthTotals[mi2] || 0; grandTotal += monthTotals[mi2] || 0; }
+  totalRow['الإجمالي'] = grandTotal;
+  s3.push(totalRow);
+  var ws3 = XLSX.utils.json_to_sheet(s3);
+  var ws3cols = [{wch:30}];
+  for (var ci = 1; ci <= 12; ci++) ws3cols.push({wch:13});
+  ws3cols.push({wch:13});
+  ws3['!cols'] = ws3cols;
 
-  /* ── All Items per Section ── */
-  html += '<div class="section"><h3>📦 جميع الأصناف حسب القسم</h3>';
-  html += '<table><thead><tr><th>القسم</th><th>الصنف</th><th>الإجمالي (ج.م)</th><th>عدد المرات</th></tr></thead><tbody>';
-  sortedCodes.forEach(function(code) {
-    var g = allGroups[code];
+  /* ── Sheet 4: All items per section ── */
+  var s4 = [];
+  codes.forEach(function(code) {
+    var g = groups[code];
+    if (!g) return;
+    var name = g.name;
     var sortedItems = Object.keys(g.items).sort(function(a,b){return (g.items[b].total||0)-(g.items[a].total||0);});
-    var first = true;
     sortedItems.forEach(function(iname) {
       var it = g.items[iname];
-      html += '<tr><td' + (first?' style="font-weight:700;"':'') + '>' + (first?g.name:'') + '</td>';
-      html += '<td>' + iname + '</td>';
-      html += '<td style="text-align:center;font-weight:700;color:#1565c0;">' + Math.round(it.total).toLocaleString() + '</td>';
-      html += '<td style="text-align:center;">' + it.count + '</td></tr>';
-      first = false;
+      s4.push({ 'القسم': name, 'الكود': code, 'الصنف': iname, 'الإجمالي (ج.م)': Math.round(it.total), 'عدد مرات الصرف': it.count });
     });
   });
-  html += '</tbody></table></div>';
+  var ws4 = XLSX.utils.json_to_sheet(s4);
+  ws4['!cols'] = [{wch:30},{wch:10},{wch:35},{wch:15},{wch:12}];
 
-  html += '<div class="footer">تقرير الميزانية السنوي — ' + year + ' | تم الإنشاء: ' + new Date().toLocaleString('ar-EG') + '</div>';
-  html += '<div class="no-print" style="text-align:center;margin-top:12px;"><button onclick="window.print()" style="padding:10px 30px;font-size:14px;background:#1b5e20;color:#fff;border:none;border-radius:6px;cursor:pointer;">🖨️ طباعة / حفظ PDF</button></div>';
-  html += '</body></html>';
-  var win = window.open('', '_blank');
-  if (win) { win.document.write(html); win.document.close(); }
-  else { alert('⚠️ الرجاء السماح للنوافذ المنبثقة'); }
+  /* ── Sheet 5: Budget vs Actual comparison per item ── */
+  /* group budget actual by code+name to compare with tx items */
+  var s5 = [];
+  codes.forEach(function(code) {
+    var g = groups[code];
+    var b = budgetAgg[code];
+    var name = (g ? g.name : (b ? b.name : code));
+    var bVal = b ? b.budget : 0;
+    var aVal = g ? Math.round(g.total) : 0;
+    var diff = bVal - aVal;
+    var pct = bVal ? Math.round((aVal/bVal)*100) : (aVal > 0 ? null : 0);
+    s5.push({
+      'الكود': code,
+      'القسم': name,
+      'الميزانية': bVal,
+      'الفعلي من المعاملات': aVal,
+      'الفرق': diff,
+      'نسبة التنفيذ': pct !== null ? pct + '%' : '∞',
+      'حالة': diff >= 0 ? 'ضمن الميزانية' : 'تجاوز'
+    });
+  });
+  var ws5 = XLSX.utils.json_to_sheet(s5);
+  ws5['!cols'] = [{wch:10},{wch:30},{wch:15},{wch:18},{wch:12},{wch:12},{wch:15}];
+
+  /* ── Assemble ── */
+  var wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws1, 'ملخص تنفيذي');
+  XLSX.utils.book_append_sheet(wb, ws2, 'الأقسام');
+  XLSX.utils.book_append_sheet(wb, ws3, 'توزيع شهري');
+  XLSX.utils.book_append_sheet(wb, ws4, 'الأصناف');
+  XLSX.utils.book_append_sheet(wb, ws5, 'مقارنة ميزانية');
+  XLSX.writeFile(wb, 'تقرير_ميزانية_سنوي_شامل_' + year + '.xlsx');
 }
 
 setTimeout(finInit, 200);
