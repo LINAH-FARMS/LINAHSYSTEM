@@ -1,4 +1,4 @@
-?// Auto-associate labels with inputs to fix accessibility warnings
+// Auto-associate labels with inputs to fix accessibility warnings
 (function(){
   let c = 0;
   document.querySelectorAll('label:not([for])').forEach(function(lbl){

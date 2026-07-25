@@ -1,4 +1,4 @@
-?    // تحميل جميع البيانات من IndexedDB (غير متزامن) - بديل عن localStorage
+    // تحميل جميع البيانات من IndexedDB (غير متزامن) - بديل عن localStorage
      (function _initIDB() {
        _migrateAllToIDB().then(function() {
          // Auto-pull from IndexedDB ONLY as a fallback when localStorage is blocked

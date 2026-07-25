@@ -1,4 +1,4 @@
-?    // Check server on load and migrate data
+    // Check server on load and migrate data
     (function() {
       var el = document.getElementById('server-status');
       if (el) {
