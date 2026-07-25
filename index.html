@@ -7106,6 +7106,7 @@ var _breadSuggestionIdCounter = 0;
         '<div style="font-weight:700;color:#1b5e20;margin-bottom:8px;font-size:14px;">🍞 خبز العمال والضيوف</div>' +
         '<div style="font-size:13px;">' +
         '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:white;border-radius:8px;margin-bottom:6px;border-right:4px solid #2e7d32;"><span>👤 عمال (الحضور: ' + pCount + ')</span><input type="number" id="bp-workers" min="0" value="' + pCount + '" style="width:70px;padding:4px 6px;border:1px solid #a5d6a7;border-radius:4px;font-size:13px;font-family:Cairo,sans-serif;text-align:center;" oninput="updateBreadPlanTotal()"></div>' +
+        '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:white;border-radius:8px;margin-bottom:6px;border-right:4px solid #558b2f;"><span>🧑‍🌾 عمال الأرض</span><input type="number" id="bp-ground" min="0" value="40" style="width:70px;padding:4px 6px;border:1px solid #aed581;border-radius:4px;font-size:13px;font-family:Cairo,sans-serif;text-align:center;" oninput="updateBreadPlanTotal()"></div>' +
         '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:white;border-radius:8px;margin-bottom:6px;border-right:4px solid #e91e63;"><span>👩 سيدات</span><input type="number" id="bp-women" min="0" value="55" style="width:70px;padding:4px 6px;border:1px solid #f48fb1;border-radius:4px;font-size:13px;font-family:Cairo,sans-serif;text-align:center;" oninput="updateBreadPlanTotal()"></div>' +
         '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:white;border-radius:8px;margin-bottom:6px;border-right:4px solid #1565c0;"><span>🎒 طلبة (الحضور: ' + studentCount + ')</span><input type="number" id="bp-students" min="0" value="' + studentCount + '" style="width:70px;padding:4px 6px;border:1px solid #90caf9;border-radius:4px;font-size:13px;font-family:Cairo,sans-serif;text-align:center;" oninput="updateBreadPlanTotal()"></div>' +
         '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:white;border-radius:8px;margin-bottom:6px;border-right:4px solid #78909c;"><span>🚗 ضيوف آخرين (الحضور: ' + otherGuestsCount + ')</span><input type="number" id="bp-other" min="0" value="' + otherGuestsCount + '" style="width:70px;padding:4px 6px;border:1px solid #b0bec5;border-radius:4px;font-size:13px;font-family:Cairo,sans-serif;text-align:center;" oninput="updateBreadPlanTotal()"></div>' +
@@ -7125,6 +7126,7 @@ var _breadSuggestionIdCounter = 0;
         '<div style="font-weight:700;color:#e65100;margin-bottom:8px;font-size:14px;">بيانات نسخ الإجمالي</div>' +
         '<div style="font-size:13px;display:grid;grid-template-columns:1fr auto;gap:4px 12px;">' +
         '<span>رغيف:</span><b id="bp-loaves-workers">' + workerLoaves + '</b>' +
+        '<span>عمال الأرض:</span><b id="bp-loaves-ground">40</b>' +
         '<span>انسخ:</span><b id="bp-loaves-women">' + womenLoaves + '</b>' +
         '<span>العدد:</span><b id="bp-loaves-students">' + studentLoaves + '</b>' +
         '<span>يدوياً تم:</span><b id="bp-loaves-other">' + otherLoaves + '</b>' +
@@ -7187,10 +7189,12 @@ var _breadSuggestionIdCounter = 0;
     }
     function updateBreadPlanTotal() {
       var workers = parseInt(document.getElementById('bp-workers').value) || 0;
+      var ground = parseInt(document.getElementById('bp-ground').value) || 0;
       var women = parseInt(document.getElementById('bp-women').value) || 0;
       var students = parseInt(document.getElementById('bp-students').value) || 0;
       var other = parseInt(document.getElementById('bp-other').value) || 0;
       var workerLoaves = workers * 6;
+      var groundLoaves = ground;
       var womenLoaves = women * 2;
       var studentLoaves = students * 2;
       var otherLoaves = other * 6;
@@ -7200,8 +7204,9 @@ var _breadSuggestionIdCounter = 0;
       var nightSecurity = parseInt(document.getElementById('bp-night').value) || 0;
       var nightLoaves = nightSecurity * 2;
       var returnFromVacation = 30;
-      var total = workerLoaves + womenLoaves + studentLoaves + otherLoaves + returnFromVacation + ctrTotal + nightLoaves;
+      var total = workerLoaves + groundLoaves + womenLoaves + studentLoaves + otherLoaves + returnFromVacation + ctrTotal + nightLoaves;
       var ew = document.getElementById('bp-loaves-workers');
+      var eg = document.getElementById('bp-loaves-ground');
       var ewo = document.getElementById('bp-loaves-women');
       var es = document.getElementById('bp-loaves-students');
       var eo = document.getElementById('bp-loaves-other');
@@ -7209,6 +7214,7 @@ var _breadSuggestionIdCounter = 0;
       var ec = document.getElementById('bp-loaves-ctr');
       var et = document.getElementById('bread-plan-total-display');
       if (ew) ew.textContent = workerLoaves;
+      if (eg) eg.textContent = groundLoaves;
       if (ewo) ewo.textContent = womenLoaves;
       if (es) es.textContent = studentLoaves;
       if (eo) eo.textContent = otherLoaves;
@@ -7241,17 +7247,19 @@ var _breadSuggestionIdCounter = 0;
         else otherGuestsCount += g;
       });
       var bpWorkers = parseInt(document.getElementById('bp-workers').value) || pCount;
+      var bpGround = parseInt(document.getElementById('bp-ground').value) || 40;
       var bpWomen = parseInt(document.getElementById('bp-women').value) || womenCount;
       var bpStudents = parseInt(document.getElementById('bp-students').value) || studentCount;
       var bpOther = parseInt(document.getElementById('bp-other').value) || otherGuestsCount;
       var workerLoaves = bpWorkers * 6;
+      var groundLoaves = bpGround;
       var womenLoaves = bpWomen * 2;
       var studentLoaves = bpStudents * 2;
       var otherLoaves = bpOther * 6;
       var nightSecurity = parseInt(document.getElementById('bp-night').value) || 0;
       var nightLoaves = nightSecurity * 2;
       var returnFromVacation = 30;
-      var totalLoaves = workerLoaves + womenLoaves + studentLoaves + otherLoaves + returnFromVacation;
+      var totalLoaves = workerLoaves + groundLoaves + womenLoaves + studentLoaves + otherLoaves + returnFromVacation;
       var ctrInputs = document.querySelectorAll('#bread-plan-ctr-tbody tr');
       var contractorsData = [];
       var ctrLoaves = 0;
@@ -7267,7 +7275,7 @@ var _breadSuggestionIdCounter = 0;
           }
         }
       });
-      var farmLoaves = workerLoaves + womenLoaves + studentLoaves + otherLoaves;
+      var farmLoaves = workerLoaves + groundLoaves + womenLoaves + studentLoaves + otherLoaves;
       var totalLoaves = farmLoaves + returnFromVacation + nightLoaves + ctrLoaves;
       var logoSrc = '';
       var logoEl = document.querySelector('img[alt="Logo"]');
@@ -7291,6 +7299,7 @@ var _breadSuggestionIdCounter = 0;
         '<div class="rp-section"><h3 style="color:#1b5e20;font-size:14px;margin:0 0 6px;">تفصيل التوزيع على الفئات</h3>' +
         '<table class="rp-table"><tr><th>الفئة</th><th>عدد الأرغفة</th></tr>' +
         '<tr><td>العمال (' + bpWorkers + ' × 6)</td><td style="text-align:center;">' + workerLoaves + '</td></tr>' +
+        '<tr><td>عمال الأرض</td><td style="text-align:center;">' + groundLoaves + '</td></tr>' +
         '<tr><td>السيدات (' + bpWomen + ' × 2)</td><td style="text-align:center;">' + womenLoaves + '</td></tr>' +
         '<tr><td>الطالبات (' + bpStudents + ' × 2)</td><td style="text-align:center;">' + studentLoaves + '</td></tr>' +
         '<tr><td>ضيوف آخرون (' + bpOther + ' × 6)</td><td style="text-align:center;">' + otherLoaves + '</td></tr>' +
