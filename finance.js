@@ -707,9 +707,10 @@ function finRunPredict() {
 }
 
 function finExportChoice() {
-  var choice = prompt('اختر نوع التصدير:\n1 = Excel\n2 = PDF\nاكتب 1 أو 2:');
+  var choice = prompt('اختر نوع التصدير:\n1 = Excel احترافي\n2 = PDF\n3 = تقرير مفصل شامل\nاكتب 1 أو 2 أو 3:');
   if (choice === '1') finExportExcel();
   else if (choice === '2') finExportPDF();
+  else if (choice === '3') finExportProfessional();
 }
 
 function finShowYearlyBudget() {
@@ -841,7 +842,7 @@ function finRunOverview() {
 }
 
 function finExportExcel() {
-  if (typeof XLSX === 'undefined') { alert('⚠️ مكتبة XLSX غير متاحة. تأكد من تحميل الصفحة كاملة.'); return; }
+  if (typeof XLSX === 'undefined') { alert('⚠️ مكتبة XLSX غير متاحة'); return; }
   var year = document.getElementById('fin-year-select')?.value || new Date().getFullYear();
   var month = parseInt(document.getElementById('fin-month-select')?.value || 0);
   var data = finFiltered(month, year);
@@ -849,22 +850,96 @@ function finExportExcel() {
   var monthNames = ['','يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
   var budgetMap = {};
   data.budgets.forEach(function(b) { budgetMap[b.code] = b; });
-  var rows = [];
+
+  /* ── Sheet 1: Executive Summary ── */
+  var totalBudget = 0, totalActual = 0, totalItems = 0;
+  data.budgets.forEach(function(b) { totalBudget += b.budget; totalActual += b.actual; });
+  var summaryRows = [];
+  summaryRows.push({ 'البيان': 'تقرير الميزانية — ' + year, 'القيمة': '' });
+  summaryRows.push({ 'البيان': 'إجمالي الميزانية', 'القيمة': totalBudget.toLocaleString() + ' ج.م' });
+  summaryRows.push({ 'البيان': 'إجمالي الفعلي', 'القيمة': totalActual.toLocaleString() + ' ج.م' });
+  summaryRows.push({ 'البيان': 'الانحراف', 'القيمة': (totalBudget - totalActual).toLocaleString() + ' ج.م' });
+  summaryRows.push({ 'البيان': 'نسبة التنفيذ', 'القيمة': totalBudget ? Math.round((totalActual/totalBudget)*100) + '%' : '-' });
+  summaryRows.push({ 'البيان': 'عدد الأقسام', 'القيمة': Object.keys(groups).length });
+  var allItems = {};
+  data.transactions.forEach(function(t) { allItems[t.task + '|' + t.itemName] = true; });
+  summaryRows.push({ 'البيان': 'إجمالي الأصناف', 'القيمة': Object.keys(allItems).length });
+  summaryRows.push({ 'البيان': 'إجمالي المعاملات', 'القيمة': data.transactions.length });
+  summaryRows.push({ 'البيان': 'تاريخ التقرير', 'القيمة': new Date().toLocaleDateString('ar-EG') });
+  var ws1 = XLSX.utils.json_to_sheet(summaryRows);
+  XLSX.utils.sheet_add_aoa(ws1, [['تقرير الميزانية الاحترافي', '']], { origin: 'A1' });
+
+  /* ── Sheet 2: By Category ── */
+  var catRows = [];
   for (var code in groups) {
     var g = groups[code];
     var b = budgetMap[code] || {};
-    rows.push({
-      'الكود': code, 'البند': g.name,
-      'الميزانية': b.budget || 0, 'الفعلي': Math.round(g.actual || g.total),
-      'الانحراف': (b.budget || 0) - Math.round(g.actual || g.total),
-      'نسبة التنفيذ': b.budget ? Math.round((g.total / b.budget) * 100) + '%' : '-',
-      'ميزانية YTD': b.ytdBudget || 0, 'فعلي YTD': b.ytdActual || 0
+    var itemCount = Object.keys(g.items).length;
+    catRows.push({
+      'الكود': code, 'القسم': g.name,
+      'الميزانية': b.budget || 0,
+      'الفعلي': Math.round(g.total),
+      'الانحراف': (b.budget || 0) - Math.round(g.total),
+      'نسبة التنفيذ': b.budget ? Math.round((g.total/b.budget)*100) + '%' : '-',
+      'عدد الأصناف': itemCount,
+      'عدد المعاملات': g.count,
+      'ميزانية YTD': b.ytdBudget || 0,
+      'فعلي YTD': b.ytdActual || 0
     });
   }
-  var ws = XLSX.utils.json_to_sheet(rows);
+  catRows.sort(function(a,b) { return (b.الفعلي||0) - (a.الفعلي||0); });
+  var ws2 = XLSX.utils.json_to_sheet(catRows);
+
+  /* ── Sheet 3: Items per Category ── */
+  var itemRows = [];
+  for (var code2 in groups) {
+    var g2 = groups[code2];
+    for (var iname in g2.items) {
+      var it = g2.items[iname];
+      itemRows.push({
+        'الكود': code2, 'القسم': g2.name,
+        'الصنف': iname,
+        'الإجمالي': Math.round(it.total),
+        'عدد المرات': it.count
+      });
+    }
+  }
+  itemRows.sort(function(a,b) { return (b.الإجمالي||0) - (a.الإجمالي||0); });
+  var ws3 = XLSX.utils.json_to_sheet(itemRows);
+
+  /* ── Sheet 4: Monthly Breakdown ── */
+  var monthlyData = {};
+  for (var m = 1; m <= 12; m++) {
+    var md = finFiltered(m, year);
+    var mg = finGroupByTask(md.transactions);
+    for (var mc in mg) {
+      if (!monthlyData[mc]) monthlyData[mc] = { code: mc, name: mg[mc].name, months: {} };
+      monthlyData[mc].months[m] = Math.round(mg[mc].total);
+    }
+  }
+  var monthlyRows = [];
+  for (var mc2 in monthlyData) {
+    var row = { 'الكود': mc2, 'القسم': monthlyData[mc2].name };
+    for (var m2 = 1; m2 <= 12; m2++) {
+      row[monthNames[m2]] = monthlyData[mc2].months[m2] || 0;
+    }
+    monthlyRows.push(row);
+  }
+  monthlyRows.sort(function(a,b) { var ta=0,tb=0; for(var mi=1;mi<=12;mi++){ta+=a[monthNames[mi]]||0;tb+=b[monthNames[mi]]||0;} return tb-ta; });
+  var ws4 = XLSX.utils.json_to_sheet(monthlyRows);
+
+  /* ── Assemble workbook ── */
   var wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, 'الميزانية');
-  XLSX.writeFile(wb, 'تقرير_الميزانية_' + year + '.xlsx');
+  XLSX.utils.book_append_sheet(wb, ws1, 'ملخص تنفيذي');
+  XLSX.utils.book_append_sheet(wb, ws2, 'الأقسام');
+  XLSX.utils.book_append_sheet(wb, ws3, 'الأصناف');
+  XLSX.utils.book_append_sheet(wb, ws4, 'شهري');
+  /* column widths */
+  ws1['!cols'] = [{wch:30},{wch:25}];
+  ws2['!cols'] = [{wch:10},{wch:25},{wch:15},{wch:15},{wch:15},{wch:12},{wch:12},{wch:15},{wch:15}];
+  ws3['!cols'] = [{wch:10},{wch:25},{wch:30},{wch:15},{wch:12}];
+  ws4['!cols'] = [{wch:10},{wch:25},{wch:12},{wch:12},{wch:12},{wch:12},{wch:12},{wch:12},{wch:12},{wch:12},{wch:12},{wch:12},{wch:12},{wch:12}];
+  XLSX.writeFile(wb, 'تقرير_الميزانية_احترافي_' + year + '.xlsx');
 }
 
 function finExportPDF() {
@@ -874,22 +949,200 @@ function finExportPDF() {
   var groups = finGroupByTask(data.transactions);
   var budgetMap = {};
   data.budgets.forEach(function(b) { budgetMap[b.code] = b; });
-  var html = '<div style="font-family:Cairo,sans-serif;padding:20px;direction:rtl;"><h2 style="text-align:center;color:#1b5e20;">تقرير المركز المالي — ' + year + '</h2>';
-  html += '<table style="width:100%;border-collapse:collapse;font-size:11px;"><thead><tr style="background:#1b5e20;color:white;"><th>الكود</th><th>البند</th><th>الميزانية</th><th>الفعلي</th><th>الانحراف</th><th>نسبة التنفيذ</th><th>ميزانية YTD</th><th>فعلي YTD</th></tr></thead><tbody>';
-  for (var code in groups) {
+  var totalBudget = 0, totalActual = 0;
+  data.budgets.forEach(function(b) { totalBudget += b.budget; totalActual += b.actual; });
+  var monthNames = ['','يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
+  var html = '<div style="font-family:Cairo,sans-serif;padding:20px;direction:rtl;">';
+  html += '<h1 style="text-align:center;color:#1b5e20;margin-bottom:4px;">📊 تقرير المركز المالي</h1>';
+  html += '<h3 style="text-align:center;color:#555;margin-top:0;font-weight:400;">' + year + (month ? ' — ' + monthNames[month] : '') + '</h3>';
+  html += '<hr style="border:1px solid #1b5e20;">';
+  /* summary cards */
+  html += '<div style="display:flex;gap:10px;justify-content:center;margin:16px 0;flex-wrap:wrap;">';
+  html += '<div style="background:#e8f5e9;padding:12px 20px;border-radius:10px;text-align:center;min-width:120px;"><div style="font-size:11px;color:#666;">الميزانية</div><div style="font-size:20px;font-weight:700;color:#2e7d32;">' + totalBudget.toLocaleString() + '</div></div>';
+  html += '<div style="background:#e3f2fd;padding:12px 20px;border-radius:10px;text-align:center;min-width:120px;"><div style="font-size:11px;color:#666;">الفعلي</div><div style="font-size:20px;font-weight:700;color:#1565c0;">' + totalActual.toLocaleString() + '</div></div>';
+  html += '<div style="background:#fff3e0;padding:12px 20px;border-radius:10px;text-align:center;min-width:120px;"><div style="font-size:11px;color:#666;">الانحراف</div><div style="font-size:20px;font-weight:700;color:' + (totalBudget-totalActual>=0?'#2e7d32':'#d32f2f') + ';">' + (totalBudget-totalActual).toLocaleString() + '</div></div>';
+  html += '<div style="background:#f3e5f5;padding:12px 20px;border-radius:10px;text-align:center;min-width:120px;"><div style="font-size:11px;color:#666;">نسبة التنفيذ</div><div style="font-size:20px;font-weight:700;color:#6a1b9a;">' + (totalBudget?Math.round((totalActual/totalBudget)*100):0) + '%</div></div>';
+  html += '<div style="background:#e0f2f1;padding:12px 20px;border-radius:10px;text-align:center;min-width:120px;"><div style="font-size:11px;color:#666;">الأقسام</div><div style="font-size:20px;font-weight:700;color:#00695c;">' + Object.keys(groups).length + '</div></div>';
+  html += '</div>';
+  /* main table */
+  html += '<table style="width:100%;border-collapse:collapse;font-size:11px;margin-top:12px;">';
+  html += '<thead><tr style="background:#1b5e20;color:white;"><th>الكود</th><th>القسم</th><th>الميزانية</th><th>الفعلي</th><th>الانحراف</th><th>نسبة التنفيذ</th><th>عدد الأصناف</th><th>عدد المعاملات</th></tr></thead><tbody>';
+  var grandItems = 0, grandCount = 0;
+  var sortedCodes = Object.keys(groups).sort(function(a,b){return (budgetMap[b]?.budget||0)-(budgetMap[a]?.budget||0);});
+  sortedCodes.forEach(function(code) {
     var g = groups[code];
     var b = budgetMap[code] || {};
     var pct = b.budget ? Math.round((g.total / b.budget) * 100) : '-';
-    html += '<tr style="border-bottom:1px solid #ddd;"><td>' + code + '</td><td>' + g.name + '</td><td style="text-align:center;">' + (b.budget || '-').toLocaleString() + '</td><td style="text-align:center;font-weight:700;">' + Math.round(g.total).toLocaleString() + '</td><td style="text-align:center;">' + ((b.budget || 0) - Math.round(g.total)).toLocaleString() + '</td><td style="text-align:center;">' + pct + '%</td><td style="text-align:center;">' + (b.ytdBudget || '-').toLocaleString() + '</td><td style="text-align:center;">' + (b.ytdActual || '-').toLocaleString() + '</td></tr>';
-  }
-  html += '</tbody></table></div>';
+    var itemCount = Object.keys(g.items).length;
+    grandItems += itemCount; grandCount += g.count;
+    html += '<tr style="border-bottom:1px solid #ddd;">';
+    html += '<td style="font-weight:700;padding:6px;">' + code + '</td>';
+    html += '<td style="padding:6px;">' + g.name + '</td>';
+    html += '<td style="text-align:center;padding:6px;">' + (b.budget ? b.budget.toLocaleString() : '-') + '</td>';
+    html += '<td style="text-align:center;padding:6px;font-weight:700;color:#1565c0;">' + Math.round(g.total).toLocaleString() + '</td>';
+    html += '<td style="text-align:center;padding:6px;color:' + ((b.budget||0)-Math.round(g.total) >=0 ? '#2e7d32' : '#d32f2f') + ';">' + ((b.budget||0)-Math.round(g.total)).toLocaleString() + '</td>';
+    html += '<td style="text-align:center;padding:6px;font-weight:700;">' + pct + '%</td>';
+    html += '<td style="text-align:center;padding:6px;">' + itemCount + '</td>';
+    html += '<td style="text-align:center;padding:6px;">' + g.count + '</td>';
+    html += '</tr>';
+  });
+  html += '<tr style="background:#e8f5e9;font-weight:700;"><td style="padding:6px;">الإجمالي</td><td style="padding:6px;"></td><td style="text-align:center;padding:6px;">' + totalBudget.toLocaleString() + '</td><td style="text-align:center;padding:6px;color:#1565c0;">' + totalActual.toLocaleString() + '</td><td style="text-align:center;padding:6px;color:' + (totalBudget-totalActual>=0?'#2e7d32':'#d32f2f') + ';">' + (totalBudget-totalActual).toLocaleString() + '</td><td style="text-align:center;padding:6px;">' + (totalBudget?Math.round((totalActual/totalBudget)*100):0) + '%</td><td style="text-align:center;padding:6px;">' + grandItems + '</td><td style="text-align:center;padding:6px;">' + grandCount + '</td></tr>';
+  html += '</tbody></table>';
+  html += '<div style="text-align:center;margin-top:20px;font-size:10px;color:#999;">تم التصدير في ' + new Date().toLocaleDateString('ar-EG') + '</div>';
+  html += '</div>';
   if (typeof html2pdf !== 'undefined') {
     try {
-      html2pdf().set({ margin: 1, filename: 'تقرير_الميزانية_' + year + '.pdf', html2canvas: { scale: 2 }, jsPDF: { unit: 'cm', format: 'a4', orientation: 'landscape' } }).from(html).save();
+      html2pdf().set({ margin: 0.8, filename: 'تقرير_الميزانية_' + year + '.pdf', html2canvas: { scale: 2 }, jsPDF: { unit: 'cm', format: 'a4', orientation: 'landscape' } }).from(html).save();
     } catch(e) { console.error('PDF export error:', e); }
   } else {
     console.warn('html2pdf library not loaded');
   }
+}
+
+function finExportProfessional() {
+  var year = document.getElementById('fin-year-select')?.value || new Date().getFullYear();
+  var monthNames = ['','يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
+  /* gather full-year data */
+  var allData = finFiltered(0, year);
+  var allGroups = finGroupByTask(allData.transactions);
+  var allBudgetMap = {};
+  allData.budgets.forEach(function(b) { allBudgetMap[b.code] = b; });
+  var totalBudget = 0, totalActual = 0;
+  allData.budgets.forEach(function(b) { totalBudget += b.budget; totalActual += b.actual; });
+  /* monthly per section */
+  var monthlySections = {};
+  for (var m = 1; m <= 12; m++) {
+    var md = finFiltered(m, year);
+    var mg = finGroupByTask(md.transactions);
+    for (var mc in mg) {
+      if (!monthlySections[mc]) monthlySections[mc] = {};
+      monthlySections[mc][m] = Math.round(mg[mc].total);
+    }
+  }
+  var itemCountTotal = 0, txCountTotal = 0;
+  var html = '<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8"><title>تقرير الميزانية السنوي — ' + year + '</title>';
+  html += '<style>';
+  html += 'body{font-family:"Cairo",sans-serif;margin:0;padding:20px;color:#222;background:#fff;}';
+  html += '.cover{text-align:center;padding:60px 20px 40px;border-bottom:3px solid #1b5e20;margin-bottom:30px;}';
+  html += '.cover h1{font-size:28px;color:#1b5e20;margin:0 0 8px;}';
+  html += '.cover h2{font-size:16px;color:#666;font-weight:400;margin:0 0 4px;}';
+  html += '.cover .date{font-size:12px;color:#999;}';
+  html += '.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:30px;}';
+  html += '.kpi-card{background:#f9f9f9;border-radius:10px;padding:14px;text-align:center;border:1px solid #e0e0e0;}';
+  html += '.kpi-card .label{font-size:11px;color:#888;margin-bottom:4px;}';
+  html += '.kpi-card .value{font-size:22px;font-weight:700;}';
+  html += '.section{margin-bottom:30px;}';
+  html += '.section h3{font-size:18px;color:#1b5e20;border-bottom:2px solid #1b5e20;padding-bottom:6px;margin-bottom:12px;}';
+  html += 'table{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:10px;}';
+  html += 'th{background:#1b5e20;color:#fff;padding:8px 6px;font-size:11px;}';
+  html += 'td{padding:6px;border-bottom:1px solid #e0e0e0;}';
+  html += 'tr:hover{background:#f5f5f5;}';
+  html += '.total-row{background:#e8f5e9;font-weight:700;}';
+  html += '.green{color:#2e7d32;}.blue{color:#1565c0;}.orange{color:#e65100;}.red{color:#d32f2f;}';
+  html += '.item-list{margin:4px 0;font-size:10px;color:#555;}';
+  html += '.footer{text-align:center;font-size:10px;color:#aaa;margin-top:40px;border-top:1px solid #eee;padding-top:12px;}';
+  html += '@media print{body{padding:10px;}.no-print{display:none;}}';
+  html += '</style></head><body>';
+
+  /* ── Cover ── */
+  html += '<div class="cover">';
+  html += '<h1>📊 التقرير السنوي للميزانية</h1>';
+  html += '<h2>' + year + '</h2>';
+  html += '<div class="date">تاريخ التقرير: ' + new Date().toLocaleDateString('ar-EG') + '</div>';
+  html += '</div>';
+
+  /* ── KPI Cards ── */
+  html += '<div class="kpi-grid">';
+  html += '<div class="kpi-card"><div class="label">إجمالي الميزانية</div><div class="value" style="color:#2e7d32;">' + totalBudget.toLocaleString() + '</div></div>';
+  html += '<div class="kpi-card"><div class="label">إجمالي الفعلي</div><div class="value" style="color:#1565c0;">' + totalActual.toLocaleString() + '</div></div>';
+  html += '<div class="kpi-card"><div class="label">الانحراف</div><div class="value" style="color:' + (totalBudget-totalActual>=0?'#2e7d32':'#d32f2f') + ';">' + (totalBudget-totalActual).toLocaleString() + '</div></div>';
+  html += '<div class="kpi-card"><div class="label">نسبة التنفيذ</div><div class="value" style="color:#6a1b9a;">' + (totalBudget?Math.round((totalActual/totalBudget)*100):0) + '%</div></div>';
+  html += '<div class="kpi-card"><div class="label">عدد الأقسام</div><div class="value" style="color:#00695c;">' + Object.keys(allGroups).length + '</div></div>';
+  html += '<div class="kpi-card"><div class="label">عدد المعاملات</div><div class="value" style="color:#37474f;">' + allData.transactions.length + '</div></div>';
+  html += '</div>';
+
+  /* ── Section Details ── */
+  html += '<div class="section"><h3>📂 تفاصيل الأقسام</h3>';
+  html += '<table><thead><tr><th>الكود</th><th>القسم</th><th>الميزانية</th><th>الفعلي</th><th>الانحراف</th><th>%</th><th>عدد الأصناف</th><th>المعاملات</th><th>الأصناف</th></tr></thead><tbody>';
+  var sortedCodes = Object.keys(allGroups).sort(function(a,b){return (allBudgetMap[b]?.budget||0)-(allBudgetMap[a]?.budget||0);});
+  sortedCodes.forEach(function(code) {
+    var g = allGroups[code];
+    var b = allBudgetMap[code] || {};
+    var pct = b.budget ? Math.round((g.total / b.budget) * 100) : '-';
+    var itemCount = Object.keys(g.items).length;
+    itemCountTotal += itemCount; txCountTotal += g.count;
+    var itemNames = Object.keys(g.items).sort(function(a,b){return (g.items[b].total||0)-(g.items[a].total||0);}).slice(0,8);
+    var itemsStr = itemNames.map(function(n){return n + ' (' + Math.round(g.items[n].total).toLocaleString() + ')';}).join('، ');
+    if (Object.keys(g.items).length > 8) itemsStr += '…';
+    html += '<tr><td style="font-weight:700;">' + code + '</td><td>' + g.name + '</td>';
+    html += '<td style="text-align:center;">' + (b.budget ? b.budget.toLocaleString() : '-') + '</td>';
+    html += '<td style="text-align:center;font-weight:700;color:#1565c0;">' + Math.round(g.total).toLocaleString() + '</td>';
+    html += '<td style="text-align:center;color:' + ((b.budget||0)-Math.round(g.total)>=0?'#2e7d32':'#d32f2f') + ';">' + ((b.budget||0)-Math.round(g.total)).toLocaleString() + '</td>';
+    html += '<td style="text-align:center;font-weight:700;">' + pct + '%</td>';
+    html += '<td style="text-align:center;">' + itemCount + '</td>';
+    html += '<td style="text-align:center;">' + g.count + '</td>';
+    html += '<td style="font-size:10px;color:#555;max-width:200px;">' + itemsStr + '</td></tr>';
+  });
+  html += '<tr class="total-row"><td>الإجمالي</td><td></td><td style="text-align:center;">' + totalBudget.toLocaleString() + '</td><td style="text-align:center;color:#1565c0;">' + totalActual.toLocaleString() + '</td><td style="text-align:center;color:' + (totalBudget-totalActual>=0?'#2e7d32':'#d32f2f') + ';">' + (totalBudget-totalActual).toLocaleString() + '</td><td style="text-align:center;">' + (totalBudget?Math.round((totalActual/totalBudget)*100):0) + '%</td><td style="text-align:center;">' + itemCountTotal + '</td><td style="text-align:center;">' + txCountTotal + '</td><td></td></tr>';
+  html += '</tbody></table></div>';
+
+  /* ── Monthly Breakdown ── */
+  html += '<div class="section"><h3>📅 التوزيع الشهري حسب القسم</h3>';
+  html += '<table><thead><tr><th>القسم</th>';
+  for (var mi = 1; mi <= 12; mi++) html += '<th style="text-align:center;font-size:10px;">' + monthNames[mi] + '</th>';
+  html += '<th style="text-align:center;">الإجمالي</th></tr></thead><tbody>';
+  var sortedMonthly = Object.keys(monthlySections).sort(function(a,b){
+    var ta=0,tb=0;
+    for(var mm=1;mm<=12;mm++){ta+=monthlySections[a][mm]||0;tb+=monthlySections[b][mm]||0;}
+    return tb-ta;
+  });
+  var monthTotals = {};
+  sortedMonthly.forEach(function(code) {
+    var secTotal = 0;
+    html += '<tr><td style="font-weight:600;">' + (allGroups[code]?.name || code) + '</td>';
+    for (var mm = 1; mm <= 12; mm++) {
+      var v = monthlySections[code][mm] || 0;
+      secTotal += v;
+      if (!monthTotals[mm]) monthTotals[mm] = 0;
+      monthTotals[mm] += v;
+      html += '<td style="text-align:center;' + (v?'font-weight:700;color:#1565c0;':'color:#ccc;') + '">' + (v?v.toLocaleString():'-') + '</td>';
+    }
+    html += '<td style="text-align:center;font-weight:700;color:#1b5e20;">' + secTotal.toLocaleString() + '</td></tr>';
+  });
+  html += '<tr class="total-row"><td>الإجمالي</td>';
+  var grandMonthly = 0;
+  for (var mm2 = 1; mm2 <= 12; mm2++) {
+    var mv = monthTotals[mm2] || 0;
+    grandMonthly += mv;
+    html += '<td style="text-align:center;">' + mv.toLocaleString() + '</td>';
+  }
+  html += '<td style="text-align:center;font-size:14px;">' + grandMonthly.toLocaleString() + '</td></tr>';
+  html += '</tbody></table></div>';
+
+  /* ── All Items per Section ── */
+  html += '<div class="section"><h3>📦 جميع الأصناف حسب القسم</h3>';
+  html += '<table><thead><tr><th>القسم</th><th>الصنف</th><th>الإجمالي (ج.م)</th><th>عدد المرات</th></tr></thead><tbody>';
+  sortedCodes.forEach(function(code) {
+    var g = allGroups[code];
+    var sortedItems = Object.keys(g.items).sort(function(a,b){return (g.items[b].total||0)-(g.items[a].total||0);});
+    var first = true;
+    sortedItems.forEach(function(iname) {
+      var it = g.items[iname];
+      html += '<tr><td' + (first?' style="font-weight:700;"':'') + '>' + (first?g.name:'') + '</td>';
+      html += '<td>' + iname + '</td>';
+      html += '<td style="text-align:center;font-weight:700;color:#1565c0;">' + Math.round(it.total).toLocaleString() + '</td>';
+      html += '<td style="text-align:center;">' + it.count + '</td></tr>';
+      first = false;
+    });
+  });
+  html += '</tbody></table></div>';
+
+  html += '<div class="footer">تقرير الميزانية السنوي — ' + year + ' | تم الإنشاء: ' + new Date().toLocaleString('ar-EG') + '</div>';
+  html += '<div class="no-print" style="text-align:center;margin-top:12px;"><button onclick="window.print()" style="padding:10px 30px;font-size:14px;background:#1b5e20;color:#fff;border:none;border-radius:6px;cursor:pointer;">🖨️ طباعة / حفظ PDF</button></div>';
+  html += '</body></html>';
+  var win = window.open('', '_blank');
+  if (win) { win.document.write(html); win.document.close(); }
+  else { alert('⚠️ الرجاء السماح للنوافذ المنبثقة'); }
 }
 
 setTimeout(finInit, 200);
