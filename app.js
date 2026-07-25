@@ -13408,5 +13408,9 @@ function updateDashClock() {
     });
 
     // Initialize the dashboard on page load
-    switchTab('tab-dashboard');
+    if (document.getElementById('tab-dashboard')) {
+      switchTab('tab-dashboard');
+    } else {
+      document.addEventListener('DOMContentLoaded', function() { switchTab('tab-dashboard'); });
+    }
 
