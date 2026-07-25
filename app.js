@@ -1352,27 +1352,6 @@
     }
 
     function _strArr(arr) { return (typeof window._strArr === 'function') ? window._strArr(arr) : []; }
-    // _strArr is now defined in core.js
-          if (vals.length > 0) {
-            var joined = vals.filter(function(v) { return typeof v === 'string'; }).join('');
-            if (joined.trim() && joined.trim().length > 1) return joined.trim();
-          }
-          return '';
-        }
-        return '';
-      }).filter(function(s) {
-        if (!s || !s.trim()) return false;
-        if (s.indexOf('?') !== -1) return false;
-        if (s.indexOf('[object') !== -1) return false;
-        if (s.trim().length < 1) return false;
-        return true;
-      }).filter(function(s) {
-        var k = s.trim().toLowerCase();
-        if (seen[k]) return false;
-        seen[k] = true;
-        return true;
-      });
-    }
     function autoDiscoverDynamicData() {
       var changed = false;
       // Discover rooms from roomsCapacity

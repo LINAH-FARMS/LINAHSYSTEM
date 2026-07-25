@@ -138,7 +138,6 @@
       });
       _lsSet('dyn_sectors', JSON.stringify(dynamicSectors));
     })();
-    autoDiscoverDynamicData();
     // evalTemplates now stores KPI objects: [{ name, max }, ...]
     function _cleanHallucination(str) {
       if (typeof str !== 'string') return str;
