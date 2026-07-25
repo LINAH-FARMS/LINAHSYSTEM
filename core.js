@@ -4,7 +4,7 @@
     var _idbSaveTimer = null;
     function _checkLocalStorage() { try { var _t = '_test_' + Date.now(); localStorage.setItem(_t, '1'); localStorage.removeItem(_t); _localStorageBlocked = false; } catch(e) { _localStorageBlocked = true; } }
     function _idbScheduleSave() { if (_idbSaveTimer) clearTimeout(_idbSaveTimer); _idbSaveTimer = setTimeout(function() { _idbSaveTimer = null; _flushIDBCache(); }, 2000); }
-    function _flushIDBCache() { if (!window.indexedDB) return; _openIDB().then(function(db) { try { var tx = db.transaction('allData', 'readwrite'); var store = tx.objectStore('allData'); for (var _k in _idbCache) { try { store.put({ key: _k, value: _idbCache[_k] }); } catch(_ee) {} } } catch(_e) {} }).catch(function() {}); }
+    function _flushIDBCache() { if (!window.indexedDB || typeof _openIDB !== 'function') return; _openIDB().then(function(db) { try { var tx = db.transaction('allData', 'readwrite'); var store = tx.objectStore('allData'); for (var _k in _idbCache) { try { store.put({ key: _k, value: _idbCache[_k] }); } catch(_ee) {} } } catch(_e) {} }).catch(function() {}); }
     function _lsGet(key) { if (_idbCache.hasOwnProperty(key)) return _idbCache[key]; try { return localStorage.getItem(key); } catch(e) { _localStorageBlocked = true; return _memoryStorage[key] || null; } }
     function _lsSet(key, val) { _idbCache[key] = val; try { localStorage.setItem(key, val); } catch(e) { _localStorageBlocked = true; _memoryStorage[key] = val; } _idbScheduleSave(); }
     function _lsRemove(key) { delete _idbCache[key]; try { localStorage.removeItem(key); } catch(e) { _localStorageBlocked = true; delete _memoryStorage[key]; } _idbScheduleSave(); }

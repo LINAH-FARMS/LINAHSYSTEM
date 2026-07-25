@@ -49,8 +49,8 @@
     normalizeMealLogDates();
 
     setInterval(() => {
-      const now = new Date();
-      document.getElementById('live-clock').innerText = "Ø§Ù„Ø³Ø§Ø¹Ø©: " + now.toLocaleString('ar-EG');
+      var lc = document.getElementById('live-clock');
+      if (lc) lc.innerText = "Ø§Ù„Ø³Ø§Ø¹Ø©: " + new Date().toLocaleString('ar-EG');
     }, 1000);
 
     function sortEmployeesAlphabetically() {
@@ -2817,8 +2817,9 @@ var _breadSuggestionIdCounter = 0;
       let occupiedBeds = employees.filter(e => (e.status === 'P' || e.status === 'V') && e.room).length;
       let inp = document.getElementById('stat-total-beds-input');
       if (inp) { inp.value = totalBeds; inp.style.borderColor = manualTotalBeds > 0 ? '#e65100' : '#e0e0e0'; }
-      document.getElementById('stat-occupied-beds').innerText = occupiedBeds;
-      document.getElementById('stat-vacant-beds').innerText = Math.max(0, totalBeds - occupiedBeds);
+      var _el;
+      _el = document.getElementById('stat-occupied-beds'); if (_el) _el.innerText = occupiedBeds;
+      _el = document.getElementById('stat-vacant-beds'); if (_el) _el.innerText = Math.max(0, totalBeds - occupiedBeds);
     }
 
     function updateManualTotalBeds(val) {
@@ -3121,15 +3122,16 @@ var _breadSuggestionIdCounter = 0;
     /* ===== Attendance Report (P/V over time) ===== */
     var _attendanceChart = null;
     function calculateSystemStats() {
-      document.getElementById('stat-total-emp').innerText = employees.length;
-      document.getElementById('stat-p-emp').innerText = employees.filter(e => e.status === 'P').length;
-      document.getElementById('stat-v-emp').innerText = employees.filter(e => e.status === 'V').length;
-      document.getElementById('stat-total-vouchers').innerText = inventoryVouchers.length;
+      var el;
+      el = document.getElementById('stat-total-emp'); if (el) el.innerText = employees.length;
+      el = document.getElementById('stat-p-emp'); if (el) el.innerText = employees.filter(e => e.status === 'P').length;
+      el = document.getElementById('stat-v-emp'); if (el) el.innerText = employees.filter(e => e.status === 'V').length;
+      el = document.getElementById('stat-total-vouchers'); if (el) el.innerText = inventoryVouchers.length;
       
       let itemsDisbursed = 0;
       inventoryVouchers.forEach(v => itemsDisbursed += (parseInt(v.qty) || 0));
-      document.getElementById('stat-total-items-disbursed').innerText = itemsDisbursed;
-      document.getElementById('stat-registered-items').innerText = inventoryItems.length;
+      el = document.getElementById('stat-total-items-disbursed'); if (el) el.innerText = itemsDisbursed;
+      el = document.getElementById('stat-registered-items'); if (el) el.innerText = inventoryItems.length;
 
       updateHousingStats();
 
