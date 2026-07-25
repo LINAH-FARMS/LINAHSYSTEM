@@ -10292,20 +10292,21 @@ function toggleEmployeeStatus(empId) {
     }
 
     // --- Ø¥Ù†ØªØ§Ø¬ Ù…ÙƒØ±Ø± ---
+    
     function addPeriodicMaintenance() {
       let name = document.getElementById('pm-name').value.trim();
       let freq = document.getElementById('pm-freq').value;
       let startDate = document.getElementById('pm-start').value;
       let lastDone = document.getElementById('pm-last-done').value;
-      if(!name || !freq || !startDate) return alert("Ø­Ø°Ù ØªÙˆØ±ÙŠØ¯Ø§Øª Ù…Ù‚Ø§ÙˆÙ„ÙŠÙ† Ù…ÙƒØ±Ø±Ø© (ØªÙ… Ø­Ø°Ù Ø¬Ù…ÙŠØ¹ Ø§Ù„Ø¨ÙŠØ§Ù†Ø§Øª Ø§Ù„Ù…ÙƒØ±Ø±Ø©)");
+      if(!name || !freq || !startDate) return alert('يرجى أكمال جميع الحقول المطلوبة (الاسم - التكرار - تاريخ البداية)');
 
       let nextDue = new Date(lastDone || startDate);
       switch(freq) {
-        case 'Ø¨Ù†Ø¬Ø§Ø­': nextDue.setMonth(nextDue.getMonth() + 1); break;
-        case 'Ù†ÙˆØ¹': nextDue.setDate(nextDue.getDate() + 7); break;
-        case 'Ø§Ù„Ø¹Ø·Ù„': nextDue.setFullYear(nextDue.getFullYear() + 1); break;
-        case 'ÙˆØµÙ Ø§Ø®ØªØ±': nextDue.setMonth(nextDue.getMonth() + 3); break;
-        case 'Ù†ÙˆØ¹ Ø§Ù„ØµÙŠØ§Ù†Ø©': nextDue.setMonth(nextDue.getMonth() + 6); break;
+        case 'شهري': nextDue.setMonth(nextDue.getMonth() + 1); break;
+        case 'أسبوعي': nextDue.setDate(nextDue.getDate() + 7); break;
+        case 'سنوي': nextDue.setFullYear(nextDue.getFullYear() + 1); break;
+        case 'ربع سنوي': nextDue.setMonth(nextDue.getMonth() + 3); break;
+        case 'نصف سنوي': nextDue.setMonth(nextDue.getMonth() + 6); break;
       }
 
       periodicMaintenance.push({
@@ -10315,9 +10316,9 @@ function toggleEmployeeStatus(empId) {
         status: 'active'
       });
       syncStorage(); renderPeriodicMaintenance();
-      logAction('Ø£Ùˆ', 'Ø§Ù„ØªÙØ§ØµÙŠÙ„ Ù…Ø·Ù„ÙˆØ¨', name, 'Ø§Ø³Ù…: ' + freq + ' | Ø§Ù„ÙÙ†ÙŠ: ' + startDate);
+      logAction('إضافة', 'مهمة دورية', name, 'النوع: ' + freq + ' | البداية: ' + startDate);
       document.getElementById('pm-last-done').value = '';
-      alert("ØªÙ… ØªØ³Ø¬ÙŠÙ„ Ù…Ù‡Ù…Ø© Ø§Ù„ØµÙŠØ§Ù†Ø© Ø§Ù„Ø¯ÙˆØ±ÙŠØ©");
+      alert('تم إضافة مهمة دورية جديدة');
     }
 
     function renderPeriodicMaintenance() {
