@@ -954,6 +954,13 @@ function finExportExcel() {
   ws4['!cols'] = ws4cols;
 
   /* ── Assemble workbook ── */
+  // Apply styling if ExcelStyle is available
+  if (typeof ExcelStyle !== 'undefined') {
+    try { ExcelStyle.styleHeaderRow(ws1, 0, 3); ExcelStyle.autoColWidth(ws1); } catch(_){}
+    try { ExcelStyle.styleHeaderRow(ws2, 0, 10); ExcelStyle.addFilter(ws2, 0, 10); ExcelStyle.autoColWidth(ws2); } catch(_){}
+    try { ExcelStyle.styleHeaderRow(ws3, 0, 5); ExcelStyle.addFilter(ws3, 0, 5); ExcelStyle.autoColWidth(ws3); } catch(_){}
+    try { ExcelStyle.styleHeaderRow(ws4, 0, 14); ExcelStyle.addFilter(ws4, 0, 14); ExcelStyle.autoColWidth(ws4); } catch(_){}
+  }
   var wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws1, 'ملخص تنفيذي');
   XLSX.utils.book_append_sheet(wb, ws2, 'الأقسام');
@@ -1175,6 +1182,14 @@ function finExportProfessional() {
   var ws5 = XLSX.utils.json_to_sheet(s5);
   ws5['!cols'] = [{wch:10},{wch:30},{wch:15},{wch:18},{wch:12},{wch:12},{wch:15}];
 
+  /* ── Apply styling if available ── */
+  if (typeof ExcelStyle !== 'undefined') {
+    try { ExcelStyle.styleHeaderRow(ws1, 0, 3); ExcelStyle.autoColWidth(ws1); } catch(_){}
+    try { ExcelStyle.styleHeaderRow(ws2, 0, 10); ExcelStyle.addFilter(ws2, 0, 10); ExcelStyle.autoColWidth(ws2); } catch(_){}
+    try { ExcelStyle.styleHeaderRow(ws3, 0, 14); ExcelStyle.addFilter(ws3, 0, 14); ExcelStyle.autoColWidth(ws3); } catch(_){}
+    try { ExcelStyle.styleHeaderRow(ws4, 0, 5); ExcelStyle.addFilter(ws4, 0, 5); ExcelStyle.autoColWidth(ws4); } catch(_){}
+    try { ExcelStyle.styleHeaderRow(ws5, 0, 7); ExcelStyle.addFilter(ws5, 0, 7); ExcelStyle.autoColWidth(ws5); } catch(_){}
+  }
   /* ── Assemble ── */
   var wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws1, 'ملخص تنفيذي');

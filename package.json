@@ -1,0 +1,35 @@
+{
+  "name": "linah-farms-system",
+  "version": "1.0.0",
+  "description": "لينة فارمز — نظام إداري متكامل",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder"
+  },
+  "build": {
+    "appId": "com.linahfarms.system",
+    "productName": "لينة فارمز",
+    "files": [
+      "*.html",
+      "*.js",
+      "*.css",
+      "*.png",
+      "*.json"
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "LOGO.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "language": "Arabic"
+    }
+  },
+  "devDependencies": {
+    "electron": "^33.0.0",
+    "electron-builder": "^25.0.0"
+  }
+}
