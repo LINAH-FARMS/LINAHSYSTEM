@@ -1351,7 +1351,6 @@
       }
     }
 
-    function _strArr(arr) { return (typeof window._strArr === 'function') ? window._strArr(arr) : []; }
     function autoDiscoverDynamicData() {
       var changed = false;
       // Discover rooms from roomsCapacity
