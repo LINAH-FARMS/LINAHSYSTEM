@@ -2759,7 +2759,7 @@
       </div>
       <div class="table-container">
           <table>
-            <thead><tr><th>التاريخ</th><th>الوجبة</th><th>الشيف</th><th>عدد الوجبات</th><th>الوزن المُعَد (كجم)</th><th>المتوقع (كجم)</th><th>هدر المهندسين</th><th>هدر العمال</th><th>هدر الضيوف</th><th>إجمالي الهدر (كجم)</th><th>هدر/فرد (كجم)</th><th>%</th><th>التكلفة (ج.م)</th><th style="width:80px;">الإجراءات</th></tr></thead>
+            <thead><tr><th>التاريخ</th><th>الوجبة</th><th>الشيف</th><th>عدد الوجبات</th><th>المتوقع (كجم)</th><th>هدر المهندسين</th><th>هدر العمال</th><th>هدر الضيوف</th><th>إجمالي الهدر (كجم)</th><th>هدر/فرد (كجم)</th><th style="width:80px;">الإجراءات</th></tr></thead>
           <tbody id="mw-table-body"></tbody>
         </table>
       </div>
@@ -11792,20 +11792,15 @@ function renderTeaSugarTable() {
       var tbody = document.getElementById('mw-table-body');
       if (!tbody) return;
       var filtered = getFilteredMealWaste();
-      if (!filtered.length) { tbody.innerHTML = '<tr><td colspan="14" style="text-align:center;color:#999;padding:20px;">لا توجد سجلات هدر</td></tr>'; return; }
+      if (!filtered.length) { tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;color:#999;padding:20px;">لا توجد سجلات هدر</td></tr>'; return; }
       tbody.innerHTML = '';
       filtered.forEach(function(w) {
         var realIdx = mealWaste.indexOf(w);
-        var pw = getPreparedWeight(w);
         var total = (w.wasteEng||0) + (w.wasteWrk||0) + (w.wasteGuests||0) + (w.prepWaste||0);
-        var pct = pw > 0 ? (Math.min(total / pw, 1) * 100).toFixed(1) : 0;
         var avgEng = (w.engAte||0) > 0 ? ((w.wasteEng||0) / (w.engAte||1)) : 0;
         var avgWrk = (w.wrkAte||0) > 0 ? ((w.wasteWrk||0) / (w.wrkAte||1)) : 0;
         var avgGuests = (w.guests||0) > 0 ? ((w.wasteGuests||0) / (w.guests||1)) : 0;
         var people = (w.engAte||0) + (w.engTakeaway||0) + (w.wrkAte||0) + (w.wrkTakeaway||0) + (w.guests||0);
-        var costPP = people > 0 ? ((w.cost||0) / people) : 0;
-        var wasteRatio = pw > 0 ? Math.min(((w.wasteEng||0)+(w.wasteWrk||0)+(w.wasteGuests||0)) / pw, 1) : 0;
-        var wasteCost = wasteRatio * (w.cost||0);
         var logEntry = mealLogs.find(function(l) { return normalizeDateStr(l.date) === normalizeDateStr(w.date); });
         var empCount = 0;
         if (logEntry) {
@@ -11822,15 +11817,12 @@ function renderTeaSugarTable() {
           '<td>' + (w.meal||'') + '</td>' +
           '<td>' + (w.chef||'') + '</td>' +
           '<td><b>' + (empCount > 0 ? empCount : '—') + '</b></td>' +
-          '<td>' + (pw > 0 ? pw.toFixed(1) + ' كجم' : '—') + '</td>' +
           '<td style="color:#1565c0;">' + expectedKg + '</td>' +
           '<td style="color:#d32f2f;font-weight:700;">' + (w.wasteEng||0) + ' كجم' + (avgEng > 0 ? '<br><span style="font-size:10px;font-weight:400;color:#999;">' + avgEng.toFixed(2) + ' كجم/مهندس</span>' : '') + '</td>' +
           '<td style="color:#e65100;font-weight:700;">' + (w.wasteWrk||0) + ' كجم' + (avgWrk > 0 ? '<br><span style="font-size:10px;font-weight:400;color:#999;">' + avgWrk.toFixed(2) + ' كجم/عامل</span>' : '') + '</td>' +
           '<td style="color:#795548;font-weight:700;">' + (w.wasteGuests||0) + ' كجم' + (avgGuests > 0 ? '<br><span style="font-size:10px;font-weight:400;color:#999;">' + avgGuests.toFixed(2) + ' كجم/ضيف</span>' : '') + '</td>' +
           '<td><b>' + total.toFixed(1) + ' كجم</b></td>' +
           '<td>' + wastePerEmp + '</td>' +
-          '<td style="color:' + (pct > 5 ? '#d32f2f' : '#2e7d32') + ';font-weight:700;">' + pct + '%</td>' +
-          '<td>' + costPP.toFixed(0) + ' جنيه<br><span style="font-size:9px;color:#b71c1c;">هدر: ' + wasteCost.toFixed(0) + ' ج</span></td>' +
           '<td class="no-print"><button class="btn btn-warning" style="padding:1px 5px;font-size:10px;" onclick="editMealWaste(' + realIdx + ')">تعديل</button> <button class="btn btn-danger" style="padding:1px 5px;font-size:10px;" onclick="deleteMealWaste(' + realIdx + ')">حذف</button></td>' +
         '</tr>';
       });
@@ -11840,24 +11832,21 @@ function renderTeaSugarTable() {
       if (!canvas) return;
       if (_mwChart) { _mwChart.destroy(); _mwChart = null; }
       var ctx = canvas.getContext('2d');
-      var totals = { totalPrepared: 0, wasteEng: 0, wasteWrk: 0, wasteGuests: 0, prepWaste: 0 };
+      var totals = { totalPrepared: 0, wasteEng: 0, wasteWrk: 0 };
       data.forEach(function(w) {
         totals.totalPrepared += getPreparedWeight(w);
         totals.wasteEng += w.wasteEng || 0;
         totals.wasteWrk += w.wasteWrk || 0;
-        totals.wasteGuests += w.wasteGuests || 0;
-        totals.prepWaste += w.prepWaste || 0;
       });
       var target = Math.round(totals.totalPrepared * 0.05);
-      var totalWaste = totals.wasteEng + totals.wasteWrk + totals.wasteGuests + totals.prepWaste;
       _mwChart = new Chart(ctx, {
         type: 'bar',
         data: {
-          labels: ['إجمالي المُعَد', 'هدر مهندسين', 'هدر عمال', 'هدر ضيوف', 'هدر تحضير', 'هدف 5%'],
+          labels: ['هدر مهندسين', 'هدر عمال', 'هدف 5%'],
           datasets: [{
             label: 'الكمية (كجم)',
-            data: [totals.totalPrepared, totals.wasteEng, totals.wasteWrk, totals.wasteGuests, totals.prepWaste, target],
-            backgroundColor: ['#1565c0', '#d32f2f', '#e65100', '#8d6e63', '#795548', '#388e3c'],
+            data: [totals.wasteEng, totals.wasteWrk, target],
+            backgroundColor: ['#d32f2f', '#e65100', '#388e3c'],
             borderRadius: 4
           }]
         },
@@ -11868,7 +11857,7 @@ function renderTeaSugarTable() {
             legend: { display: false },
             tooltip: {
               callbacks: {
-                label: function(c) { return c.raw + ' كجم' + (c.dataIndex === 5 ? ' (' + (totals.totalPrepared > 0 ? (Math.min(target/totals.totalPrepared,1)*100).toFixed(1) + '% من المُعَد)' : '0%)') : ''); }
+                label: function(c) { return c.raw + ' كجم' + (c.dataIndex === 2 ? ' (' + (totals.totalPrepared > 0 ? (Math.min(target/totals.totalPrepared,1)*100).toFixed(1) + '% من المُعَد)' : '0%)') : ''); }
               }
             }
           }
