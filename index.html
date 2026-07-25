@@ -17700,12 +17700,6 @@ function updateDashClock() {
       }
       var emp = employees.find(function(e) { return (e.id || e.code) == empId; });
       if (!emp) return;
-      var dd = (emp.dept||'').replace(/\s+/g,'').replace(/[بيانات]/g,'?').replace(/[بيانات]/g,'?').replace(/[مهندس]/g,'?').toLowerCase();
-      if (!emp.dept || (dd.indexOf('الإشراف') === -1 && dd.indexOf('على') === -1)) {
-        container.innerHTML = '<div style="color:#d32f2f;font-size:13px;">لم يتم العثور على قالب تقييم لهذا القسم</div>';
-        titleInput.value = '';
-        return;
-      }
       var title = emp.title || '';
       titleInput.value = title;
       var tasks = evalTemplates[title] || generateDefaultTasks(title);
@@ -17727,7 +17721,7 @@ function updateDashClock() {
       var emp = employees.find(function(e) { return (e.id || e.code) == empId; });
       if (!emp) return alert('مع فرق العمل');
       var dd2 = (emp.dept||'').replace(/\s+/g,'').replace(/[يى]/g,'ي').replace(/[ةه]/g,'ة').replace(/[إأآ]/g,'ا').toLowerCase();
-      if (dd2.indexOf('شئون') === -1 && dd2.indexOf('شؤون') === -1) return alert('هذا الموظف ليس من قسم الشئون الإدارية');
+      if (dd2.indexOf('الشئون') === -1 && dd2.indexOf('اداري') === -1) return alert('هذا الموظف ليس من قسم الشئون الإدارية');
       var month = document.getElementById('eval-month').value;
       var year = document.getElementById('eval-year').value;
       if (!year || year < 2020) return alert('من فضلك أدخل سنة صحيحة');
