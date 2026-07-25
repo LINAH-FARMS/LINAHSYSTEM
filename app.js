@@ -1646,7 +1646,7 @@
       // Strip trailing time
       ds = ds.replace(/\s*\d{1,2}:\d{2}(:\d{2})?\s*$/, '');
       // Arabic month names: 15 ÙŠÙˆÙ„ÙŠÙˆ 2026
-      var arMonths = {ÙŠÙ†Ø§ÙŠØ±:1,ÙØ¨Ø±Ø§ÙŠØ±:2,Ù…Ø§Ø±Ø³:3,Ø§Ø¨Ø±ÙŠÙ„:4,Ø£Ø¨Ø±ÙŠÙ„:4,Ù…Ø§ÙŠÙˆ:5,ÙŠÙˆÙ†ÙŠÙˆ:6,ÙŠÙˆÙ„ÙŠÙˆ:7,Ø£ØºØ³Ø·Ø³:8,Ø§ØºØ³Ø·Ø³:8,Ø³Ø¨ØªÙ…Ø¨Ø±:9,Ø£ÙƒØªÙˆØ¨Ø±:10,Ø§ÙƒØªÙˆØ¨Ø±:10,Ù†ÙˆÙÙ…Ø¨Ø±:11,Ù†ÙˆÙÙ…Ø¨Ø±:11,Ø¯ÙŠØ³Ù…Ø¨Ø±:12};
+      var arMonths = {'ÙŠÙ†Ø§ÙŠØ±':1,'ÙØ¨Ø±Ø§ÙŠØ±':2,'Ù…Ø§Ø±Ø³':3,'Ø§Ø¨Ø±ÙŠÙ„':4,'Ø£Ø¨Ø±ÙŠÙ„':4,'Ù…Ø§ÙŠÙˆ':5,'ÙŠÙˆÙ†ÙŠÙˆ':6,'ÙŠÙˆÙ„ÙŠÙˆ':7,'Ø£ØºØ³Ø·Ø³':8,'Ø§ØºØ³Ø·Ø³':8,'Ø³Ø¨ØªÙ…Ø¨Ø±':9,'Ø£ÙƒØªÙˆØ¨Ø±':10,'Ø§ÙƒØªÙˆØ¨Ø±':10,'Ù†ÙˆÙÙ…Ø¨Ø±':11,'Ù†ÙˆÙÙ…Ø¨Ø±':11,'Ø¯ÙŠØ³Ù…Ø¨Ø±':12};
       var mMatch = ds.match(/(\d{1,2})\s+([\u0600-\u06FF]+)\s+(\d{4})/);
       if (mMatch && arMonths[mMatch[2]]) {
         var _d = ('0'+mMatch[1]).slice(-2), _m = ('0'+arMonths[mMatch[2]]).slice(-2);
@@ -1876,12 +1876,6 @@
       var sel = document.getElementById('login-user');
       if (!sel) return;
       sel.innerHTML = appUsers.map(function(u) { return '<option value="' + u.name + '">' + u.name + '</option>'; }).join('');
-    }
-
-    function hashPass(p) {
-      var h = 0;
-      for (var i = 0; i < p.length; i++) { var c = p.charCodeAt(i); h = ((h << 5) - h) + c; h |= 0; }
-      return 'h' + Math.abs(h).toString(36);
     }
 
     function doLogin() {

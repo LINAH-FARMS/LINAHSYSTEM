@@ -32,6 +32,11 @@
         return '';
       }).filter(function(s) { return s && s.length > 0; });
     }
+    function hashPass(p) {
+      var h = 0;
+      for (var i = 0; i < p.length; i++) { var c = p.charCodeAt(i); h = ((h << 5) - h) + c; h |= 0; }
+      return 'h' + Math.abs(h).toString(36);
+    }
   (function(){
     var v='3.1';
     var s=_lsGet('_codeVersion');
