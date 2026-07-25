@@ -1138,11 +1138,11 @@
   </div>
       <div class="dash-chart-panel">
         <div class="dash-chart-title">ðŸ  Ø¥Ø´ØºØ§Ù„ Ø§Ù„Ø³ÙƒÙ† Ø¨Ø§Ù„Ù…Ø¨Ø§Ù†ÙŠ <span class="badge-count" id="dash-housing-badge">0</span></div>
-        <div id="dash-hbars"></div>
+    <div id="dash-hbars"></div>
       </div>
       <div class="dash-chart-panel">
         <div class="dash-chart-title">ðŸ¢ ØªÙˆØ²ÙŠØ¹ Ø§Ù„Ø¥Ø¯Ø§Ø±Ø§Øª <span class="badge-count" id="dash-dept-badge">0</span></div>
-        <div id="dash-dept-bars"></div>
+    <div id="dash-dept-bars"></div>
       </div>
     </div>
 
@@ -1159,7 +1159,7 @@
       </div>
       <div class="dash-chart-panel">
         <div class="dash-chart-title">ðŸž Ø¥Ù†ØªØ§Ø¬ Ø§Ù„Ø®Ø¨Ø² ÙˆØ§Ù„ÙˆØ¬Ø¨Ø§Øª <span class="badge-count" id="dash-bakery-meals-badge">0</span></div>
-        <div id="dash-bakery-meals-content">
+    <div id="dash-bakery-meals-content">
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
             <div style="background:#fff3e0;padding:12px;border-radius:8px;text-align:center;">
               <div style="font-size:11px;color:#888;">ðŸž Ø®Ø¨Ø² Ø§Ù„ÙŠÙˆÙ…</div>
@@ -1186,11 +1186,11 @@
       </div>
       <div class="dash-chart-panel">
         <div class="dash-chart-title">ðŸ¢ ØªÙˆØ²ÙŠØ¹ Ø§Ù„Ù…Ø­Ø§ÙØ¸Ø§Øª</div>
-        <div id="dash-gov-bars" style="max-height:180px;overflow-y:auto;"></div>
+    <div id="dash-gov-bars" style="max-height:180px;overflow-y:auto;"></div>
       </div>
       <div class="dash-chart-panel">
         <div class="dash-chart-title">ðŸµ Ù…Ø®Ø²ÙˆÙ† Ø§Ù„ØªÙ…ÙˆÙŠÙ† <span class="badge-count" id="dash-ts-stock-badge">0</span></div>
-        <div id="dash-ts-stock-content" style="font-size:12px;"></div>
+    <div id="dash-ts-stock-content" style="font-size:12px;"></div>
       </div>
     </div>
 
@@ -1678,7 +1678,7 @@
         <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;text-align:center;font-size:11px;color:#888;margin-bottom:4px;">
           <div>Ø£Ø­Ø¯</div><div>Ø¥Ø«Ù†ÙŠÙ†</div><div>Ø«Ù„Ø§Ø«Ø§Ø¡</div><div>Ø£Ø±Ø¨Ø¹Ø§Ø¡</div><div>Ø®Ù…ÙŠØ³</div><div>Ø¬Ù…Ø¹Ø©</div><div>Ø³Ø¨Øª</div>
         </div>
-        <div id="ov-calendar-grid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;"></div>
+    <div id="ov-calendar-grid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;"></div>
       </div>
     </div>
   </div>
@@ -1795,8 +1795,8 @@
           <input type="number" id="maint-material-qty" placeholder="Ø§Ù„ÙƒÙ…ÙŠØ©" min="1" value="1" style="width:70px;padding:6px;border:2px solid #e0e0e0;border-radius:6px;font-size:12px;">
           <button type="button" class="btn" style="padding:4px 10px;font-size:12px;background:#1565c0;color:white;display:none;" id="btn-add-maint-mat" onclick="addMaintMaterial()">âž• Ø¥Ø¶Ø§ÙØ©</button>
         </div>
-        <div id="maint-material-results" style="margin-top:4px;max-height:150px;overflow-y:auto;border:1px solid #e0e0e0;border-radius:6px;display:none;"></div>
-        <div id="maint-materials-list" style="margin-top:6px;display:flex;gap:4px;flex-wrap:wrap;"></div>
+    <div id="maint-material-results" style="margin-top:4px;max-height:150px;overflow-y:auto;border:1px solid #e0e0e0;border-radius:6px;display:none;"></div>
+    <div id="maint-materials-list" style="margin-top:6px;display:flex;gap:4px;flex-wrap:wrap;"></div>
       </div>
       <div class="form-group" style="grid-column:1/-1;">
         <label>Ù…Ù„Ø§Ø­Ø¸Ø§Øª</label>
@@ -1849,6 +1849,7 @@
       <button class="btn btn-excel" onclick="document.getElementById('septic-excel-file').click()" style="background-color:#0d47a1;">ðŸ“¥ Ø§Ø³ØªÙŠØ±Ø§Ø¯ Ø´ÙŠØª (Excel)</button>
       <input type="file" id="septic-excel-file" style="display:none;" accept=".xlsx, .xls" onchange="importSepticFromExcel(event)">
       <button class="btn btn-secondary" onclick="showPrintChoice('table-septic')">ðŸ–¨ï¸ Ø·Ø¨Ø§Ø¹Ø©</button>
+      <button class="btn btn-primary" style="background:#00695c;" onclick="showSepticStats()">عرض إحصا¦يات البيارات</button>
     </div>
 
     <div class="table-container">
@@ -1866,6 +1867,15 @@
         </thead>
         <tbody id="septic-table-body"></tbody>
       </table>
+    </div>
+    <div id="septic-stats-section" style="display:none;margin-top:20px;">
+      <div style="background:#fff;border-radius:14px;padding:16px;box-shadow:0 2px 12px rgba(0,0,0,0.06);border:1px solid #f0f0f0;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+          <div style="font-weight:700;font-size:16px;color:#00695c;">إحصا¦يات البيارات</div>
+          <button class="btn" style="background:#999;color:#fff;font-size:12px;" onclick="document.getElementById('septic-stats-section').style.display='none'">✕ إغلاق</button>
+        </div>
+    <div id="septic-stats-result"></div>
+      </div>
     </div>
   </div>
 
@@ -1886,7 +1896,7 @@
           <input type="text" id="new-sector" placeholder="Ø§Ø³Ù… Ø§Ù„Ù…Ø¨Ù†Ù‰" style="flex:1;min-width:100px;padding:6px 10px;border:2px solid #e0e0e0;border-radius:6px;font-size:13px;">
           <button class="btn btn-primary" onclick="addDynamicSector()" id="btn-sector" style="padding:6px 12px;font-size:13px;">âž• Ø¥Ø¶Ø§ÙØ©</button>
         </div>
-        <div id="sector-list" style="margin-top:8px;font-size:12px;"></div>
+    <div id="sector-list" style="margin-top:8px;font-size:12px;"></div>
       </div>
 
       <!-- Ø§Ù„ØºØ±Ù -->
@@ -1896,7 +1906,7 @@
           <input type="text" id="new-room" placeholder="Ø±Ù‚Ù…/Ø§Ø³Ù… Ø§Ù„ØºØ±ÙØ©" style="flex:1;min-width:100px;padding:6px 10px;border:2px solid #e0e0e0;border-radius:6px;font-size:13px;">
           <button class="btn btn-primary" onclick="addDynamicRoom()" id="btn-room" style="padding:6px 12px;font-size:13px;">âž• Ø¥Ø¶Ø§ÙØ©</button>
         </div>
-        <div id="room-list" style="margin-top:8px;font-size:12px;"></div>
+    <div id="room-list" style="margin-top:8px;font-size:12px;"></div>
       </div>
 
       <!-- Ø§Ù„Ø¨ÙŠØ§Ø±Ø§Øª -->
@@ -1906,7 +1916,7 @@
           <input type="text" id="new-septic" placeholder="Ø§Ø³Ù… Ø§Ù„Ø¨ÙŠØ§Ø±Ø©" style="flex:1;min-width:100px;padding:6px 10px;border:2px solid #e0e0e0;border-radius:6px;font-size:13px;">
           <button class="btn btn-primary" onclick="addDynamicSeptic()" id="btn-septic" style="padding:6px 12px;font-size:13px;">âž• Ø¥Ø¶Ø§ÙØ©</button>
         </div>
-        <div id="septic-list" style="margin-top:8px;font-size:12px;"></div>
+    <div id="septic-list" style="margin-top:8px;font-size:12px;"></div>
       </div>
 
       <!-- Ø§Ù„Ø¥Ø¯Ø§Ø±Ø§Øª -->
@@ -1916,7 +1926,7 @@
           <input type="text" id="new-dept" placeholder="Ø§Ø³Ù… Ø§Ù„Ø¥Ø¯Ø§Ø±Ø©" style="flex:1;min-width:100px;padding:6px 10px;border:2px solid #e0e0e0;border-radius:6px;font-size:13px;">
           <button class="btn btn-primary" onclick="addDynamicDept()" id="btn-dept" style="padding:6px 12px;font-size:13px;">âž• Ø¥Ø¶Ø§ÙØ©</button>
         </div>
-        <div id="dept-list" style="margin-top:8px;font-size:12px;"></div>
+    <div id="dept-list" style="margin-top:8px;font-size:12px;"></div>
       </div>
 
       <!-- Ø§Ù„Ù…Ø³Ù…ÙŠØ§Øª Ø§Ù„ÙˆØ¸ÙŠÙÙŠØ© -->
@@ -1926,7 +1936,7 @@
           <input type="text" id="new-title" placeholder="Ø§Ù„Ù…Ø³Ù…Ù‰ Ø§Ù„ÙˆØ¸ÙŠÙÙŠ" style="flex:1;min-width:100px;padding:6px 10px;border:2px solid #e0e0e0;border-radius:6px;font-size:13px;">
           <button class="btn btn-primary" onclick="addDynamicTitle()" id="btn-title" style="padding:6px 12px;font-size:13px;">âž• Ø¥Ø¶Ø§ÙØ©</button>
         </div>
-        <div id="title-list" style="margin-top:8px;font-size:12px;"></div>
+    <div id="title-list" style="margin-top:8px;font-size:12px;"></div>
       </div>
 
       <!-- ØªØµÙ†ÙŠÙ Ø§Ù„Ø²ÙˆØ§Ø± -->
@@ -1936,7 +1946,7 @@
           <input type="text" id="new-visitor-type" placeholder="ØªØµÙ†ÙŠÙ Ø§Ù„Ø²Ø§Ø¦Ø±" style="flex:1;min-width:100px;padding:6px 10px;border:2px solid #e0e0e0;border-radius:6px;font-size:13px;">
           <button class="btn btn-primary" onclick="addDynamicVisitorType()" id="btn-visitor-type" style="padding:6px 12px;font-size:13px;">âž• Ø¥Ø¶Ø§ÙØ©</button>
         </div>
-        <div id="visitor-type-list" style="margin-top:8px;font-size:12px;"></div>
+    <div id="visitor-type-list" style="margin-top:8px;font-size:12px;"></div>
       </div>
 
       <!-- Ù…Ù‚Ø§ÙˆÙ„ÙŠ Ø§Ù„Ø®Ø¨Ø² -->
@@ -1946,7 +1956,7 @@
           <input type="text" id="new-bakery-ctr" placeholder="Ø§Ø³Ù… Ø§Ù„Ù…Ù‚Ø§ÙˆÙ„" style="flex:1;min-width:100px;padding:6px 10px;border:2px solid #e0e0e0;border-radius:6px;font-size:13px;">
           <button class="btn btn-primary" onclick="addBakeryContractorName()" id="btn-bakery-ctr" style="padding:6px 12px;font-size:13px;">âž• Ø¥Ø¶Ø§ÙØ©</button>
         </div>
-        <div id="bakery-ctr-list" style="margin-top:8px;font-size:12px;"></div>
+    <div id="bakery-ctr-list" style="margin-top:8px;font-size:12px;"></div>
         <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;">
           <button class="btn btn-warning" onclick="fixBakeryContractors()" style="padding:4px 10px;font-size:11px;">ðŸ”§ Ø¥ØµÙ„Ø§Ø­ ÙˆØ¥Ø¹Ø§Ø¯Ø© ØªØ¹ÙŠÙŠÙ†</button>
           <button class="btn btn-primary" onclick="syncBakeryContractorsToSupabase()" style="padding:4px 10px;font-size:11px;">ðŸ“¤ Ù…Ø²Ø§Ù…Ù†Ø© Ù…Ø¹ Supabase</button>
@@ -1963,7 +1973,7 @@
           <input type="text" id="new-dept-title" placeholder="Ù…Ø³Ù…Ù‰ ÙˆØ¸ÙŠÙÙŠ" style="flex:1;min-width:100px;padding:6px 10px;border:2px solid #e0e0e0;border-radius:6px;font-size:13px;">
           <button class="btn btn-primary" onclick="addDeptTitle()" style="padding:6px 12px;font-size:13px;">âž• Ø¥Ø¶Ø§ÙØ©</button>
         </div>
-        <div id="dept-title-list" style="margin-top:8px;font-size:12px;max-height:200px;overflow-y:auto;"></div>
+    <div id="dept-title-list" style="margin-top:8px;font-size:12px;max-height:200px;overflow-y:auto;"></div>
       </div>
 
       <!-- Ø³ÙƒÙ† Ø§Ù„Ù…Ù‚Ø§ÙˆÙ„ÙŠÙ† -->
@@ -1973,7 +1983,7 @@
           <input type="text" id="new-ctr-sector" placeholder="Ø§Ø³Ù… Ø§Ù„Ù…Ø¨Ù†Ù‰ (Ù‚Ø·Ø§Ø¹ 22, Ø®ÙŠÙ…Ø©...)" style="flex:1;min-width:100px;padding:6px 10px;border:2px solid #e0e0e0;border-radius:6px;font-size:13px;">
           <button class="btn btn-primary" onclick="addContractorSector()" style="padding:6px 12px;font-size:13px;">âž• Ø¥Ø¶Ø§ÙØ© Ù…Ø¨Ù†Ù‰</button>
         </div>
-        <div id="ctr-sector-list" style="margin-top:8px;font-size:12px;"></div>
+    <div id="ctr-sector-list" style="margin-top:8px;font-size:12px;"></div>
       </div>
 
       <!-- Ø³Ø¹Ø© ØºØ±Ù Ø§Ù„Ù…Ù‚Ø§ÙˆÙ„ÙŠÙ† -->
@@ -1987,7 +1997,7 @@
           <input type="number" id="ctr-room-beds" placeholder="Ø§Ù„Ø³Ø¹Ø©" min="1" value="4" style="width:70px;padding:6px;border:2px solid #e0e0e0;border-radius:6px;font-size:12px;">
           <button class="btn btn-primary" onclick="addContractorRoom()" style="padding:6px 12px;font-size:13px;">âž• Ø¥Ø¶Ø§ÙØ©</button>
         </div>
-        <div id="ctr-rooms-list" style="margin-top:8px;font-size:12px;max-height:200px;overflow:auto;"></div>
+    <div id="ctr-rooms-list" style="margin-top:8px;font-size:12px;max-height:200px;overflow:auto;"></div>
       </div>
 
       <!-- Ø§Ù„Ø¹Ù‡Ø¯ -->
@@ -1998,7 +2008,7 @@
           <span style="font-size:12px;color:#888;" id="asset-emp-display">Ù„Ù… ÙŠØªÙ… Ø§Ù„Ø§Ø®ØªÙŠØ§Ø±</span>
           <input type="hidden" id="asset-emp-id">
         </div>
-        <div id="asset-edit-area" style="display:none;border:1px solid #e0e0e0;border-radius:8px;padding:12px;background:#fafafa;margin-bottom:10px;">
+    <div id="asset-edit-area" style="display:none;border:1px solid #e0e0e0;border-radius:8px;padding:12px;background:#fafafa;margin-bottom:10px;">
           <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px;margin-bottom:10px;" id="asset-defaults-container"></div>
           <div id="asset-extra-container"></div>
           <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;">
@@ -2069,7 +2079,7 @@
 
       <div class="flex-card">
         <h4>ðŸ“Œ ÙƒØ´Ù Ø§Ù„Ø¥Ø¯Ø§Ø±Ø§Øª ÙˆØ§Ù„Ù…Ø¨Ø§Ù†ÙŠ</h4>
-        <div id="dynamic-results" style="padding: 10px; font-weight: 600; color: var(--primary); font-size:13px; line-height: 1.8;"></div>
+    <div id="dynamic-results" style="padding: 10px; font-weight: 600; color: var(--primary); font-size:13px; line-height: 1.8;"></div>
       </div>
     </div>
   </div>
@@ -2707,9 +2717,9 @@
         </div>
       </div>
       <div id="meal-survey-body" style="padding:0 20px;max-height:0;transition:max-height 0.4s ease,padding 0.3s ease,opacity 0.3s ease;opacity:0;overflow:hidden;">
-        <div id="survey-meals" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:15px;margin-top:15px;"></div>
-        <div id="survey-stats" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;"></div>
-        <div id="survey-comment-area" style="display:none;margin-top:12px;">
+    <div id="survey-meals" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:15px;margin-top:15px;"></div>
+    <div id="survey-stats" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;"></div>
+    <div id="survey-comment-area" style="display:none;margin-top:12px;">
           <label style="font-weight:700;font-size:13px;color:#c62828;">ØªÙØ§ØµÙŠÙ„ Ù‡Ø¯Ø± Ø§Ù„ÙˆØ¬Ø¨Ø§Øª:</label>
           <div style="display:flex;gap:8px;margin-top:4px;">
             <input type="text" id="survey-comment-input" placeholder="Ø§ÙƒØªØ¨ ØªØ¹Ù„ÙŠÙ‚Ø§Ù‹..." style="flex:1;padding:8px 12px;border:2px solid #ffcc80;border-radius:8px;font-size:14px;">
@@ -2726,7 +2736,7 @@
             <input type="date" id="sv-log-to" onchange="renderSurveyLog()" style="padding:3px 6px;font-size:11px;border:1px solid #ccc;border-radius:4px;">
           </div>
         </div>
-        <div id="sv-log-body-wrap" style="overflow-x:auto;transition:max-height 0.3s ease,opacity 0.3s ease;max-height:0;opacity:0;">
+    <div id="sv-log-body-wrap" style="overflow-x:auto;transition:max-height 0.3s ease,opacity 0.3s ease;max-height:0;opacity:0;">
           <table style="width:100%;border-collapse:collapse;font-size:12px;">
             <thead><tr style="background:#fff3e0;"><th style="padding:6px;border:1px solid #ffe0b2;">Ø§Ù„ØªØ§Ø±ÙŠØ®</th><th style="padding:6px;border:1px solid #ffe0b2;">Ø§Ù„ÙˆØ¬Ø¨Ø©</th><th style="padding:6px;border:1px solid #ffe0b2;">Ø§Ù„Ù…ÙˆØ¸Ù</th><th style="padding:6px;border:1px solid #ffe0b2;">Ø§Ù„ØªÙ‚ÙŠÙŠÙ…</th><th style="padding:6px;border:1px solid #ffe0b2;">Ø§Ù„ØªØ¹Ù„ÙŠÙ‚</th><th style="padding:6px;border:1px solid #ffe0b2;">Ø¥Ø¬Ø±Ø§Ø¡Ø§Øª</th></tr></thead>
             <tbody id="sv-log-body"></tbody>
@@ -2820,7 +2830,7 @@
           <option value="Ø¹Ø´Ø§Ø¡">ðŸŒ™ Ø¹Ø´Ø§Ø¡</option>
         </select>
         <input type="text" id="mw-chef" placeholder="Ù…Ø«Ù„Ø§Ù‹: Ø¹Ù„ÙŠ Ø­Ø³Ù†">
-        <div id="mw-meal-ref" style="grid-column:1/-1;background:#e3f2fd;border-radius:8px;padding:8px 12px;font-size:13px;display:flex;gap:12px;flex-wrap:wrap;align-items:center;">
+    <div id="mw-meal-ref" style="grid-column:1/-1;background:#e3f2fd;border-radius:8px;padding:8px 12px;font-size:13px;display:flex;gap:12px;flex-wrap:wrap;align-items:center;">
           <span>ðŸ‘¥ Ø¹Ø¯Ø¯ Ø§Ù„Ù…ÙˆØ¸ÙÙŠÙ†: <strong id="mw-emp-count">â€”</strong></span>
           <span>ðŸ½ï¸ Ø§Ù„ÙˆØ²Ù† Ø§Ù„Ù…ØªÙˆÙ‚Ø¹: <strong id="mw-expected-wt">â€”</strong></span>
         </div>
@@ -2917,7 +2927,7 @@
         <span class="close-btn" onclick="closeModal('modal-recipe-manager')">&times;</span>
       </div>
       <div style="padding:15px;">
-        <div id="recipe-manager-list" style="max-height:240px;overflow-y:auto;margin-bottom:12px;"></div>
+    <div id="recipe-manager-list" style="max-height:240px;overflow-y:auto;margin-bottom:12px;"></div>
         <div style="border:1px dashed #b39ddb;border-radius:10px;padding:12px;background:#faf5ff;">
           <div style="font-weight:700;color:#6a1b9a;margin-bottom:8px;font-size:14px;">âž• Ø¥Ø¶Ø§ÙØ© / ØªØ¹Ø¯ÙŠÙ„ ÙˆØµÙØ©</div>
           <input type="hidden" id="rm-edit-idx" value="-1">
@@ -2954,7 +2964,7 @@
           <button class="btn" onclick="exportCompareHTML()" style="padding:4px 14px;font-size:12px;background:#1565c0;color:#fff;border:none;border-radius:5px;">ðŸ“„ HTML</button>
           <button class="btn" onclick="exportCompareReport()" style="padding:4px 14px;font-size:12px;background:#e65100;color:#fff;border:none;border-radius:5px;">ðŸ“¤ Excel</button>
         </div>
-        <div id="compare-recipes-table-wrap"></div>
+    <div id="compare-recipes-table-wrap"></div>
       </div>
     </div>
   </div>
@@ -3289,7 +3299,7 @@
       <input type="hidden" id="eval-emp-id">
       <div style="width:100%;">
         <div style="font-weight:700;color:#880e4f;margin-bottom:8px;font-size:14px;">ðŸ‘¥ Ù…ÙˆØ¸ÙÙŠ Ø§Ù„Ø´Ø¦ÙˆÙ† Ø§Ù„Ø¥Ø¯Ø§Ø±ÙŠØ© â€” Ø§Ø®ØªØ± Ù…ÙˆØ¸Ù Ù„Ù„ØªÙ‚ÙŠÙŠÙ…:</div>
-        <div id="eval-employees-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:6px;max-height:260px;overflow-y:auto;padding:4px;"></div>
+    <div id="eval-employees-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:6px;max-height:260px;overflow-y:auto;padding:4px;"></div>
       </div>
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;width:100%;margin-top:8px;">
         <div class="form-group" style="margin:0;">
@@ -3313,7 +3323,7 @@
 
       <div style="width:100%;">
         <div style="font-weight:700;color:#880e4f;margin-bottom:8px;font-size:14px;">ðŸ“Š Ù…Ø¤Ø´Ø±Ø§Øª Ø§Ù„Ø£Ø¯Ø§Ø¡ (KPIs):</div>
-        <div id="eval-tasks-container" style="display:flex;flex-direction:column;gap:6px;">
+    <div id="eval-tasks-container" style="display:flex;flex-direction:column;gap:6px;">
           <div style="color:#888;font-size:13px;">Ø§Ø®ØªØ± Ø§Ù„Ù…ÙˆØ¸Ù Ø£ÙˆÙ„Ø§Ù‹ Ù„Ø¹Ø±Ø¶ Ù…Ø¤Ø´Ø±Ø§Øª Ø£Ø¯Ø§Ø¦Ù‡</div>
         </div>
       </div>
@@ -3714,7 +3724,7 @@
           <div class="form-group"><label style="font-size:12px;font-weight:600;">Ù…Ù† Ø³Ù†Ø©</label><input type="number" id="fin-dept-from" min="2020" max="2030" style="padding:6px 10px;border:1px solid #ccc;border-radius:6px;font-size:13px;width:90px;" onchange="finRenderDeptConsumption()"></div>
           <div class="form-group"><label style="font-size:12px;font-weight:600;">Ù„Ø³Ù†Ø©</label><input type="number" id="fin-dept-to" min="2020" max="2030" style="padding:6px 10px;border:1px solid #ccc;border-radius:6px;font-size:13px;width:90px;" onchange="finRenderDeptConsumption()"></div>
         </div>
-        <div id="fin-dept-result"></div>
+    <div id="fin-dept-result"></div>
       </div>
     </div>
   </div>
@@ -11946,7 +11956,70 @@ function renderTeaSugarTable() {
 
     function deleteSeptic(idx) { if (!requireAdmin()) return;       _logDeletion('septicRecords', (septicRecords[idx].date||'') + '|' + (septicRecords[idx].name||septicRecords[idx].sector||'') + '|' + (septicRecords[idx].trips||septicRecords[idx].quantity||'')); septicRecords.splice(idx,1); syncStorage(); renderSepticTable(); }
 
-    function exportToSQLite() {
+    
+    function showSepticStats() {
+      var section = document.getElementById('septic-stats-section');
+      if (!section) return;
+      var visible = section.style.display !== 'none';
+      section.style.display = visible ? 'none' : 'block';
+      if (visible) return;
+      section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      var result = document.getElementById('septic-stats-result');
+      if (!result) return;
+      if (!septicRecords || septicRecords.length === 0) {
+        result.innerHTML = '<div style="text-align:center;padding:20px;color:#888;">' + 'لا يوجد بيارات بعد' + '</div>';
+        return;
+      }
+      var stats = {};
+      var totalTrips = 0, totalQty = 0, totalRecords = 0;
+      septicRecords.forEach(function(s) {
+        var name = s.name || 'غير محدد';
+        if (!stats[name]) stats[name] = { name: name, trips: 0, qty: 0, count: 0, firstDate: s.date || '', lastDate: s.date || '' };
+        stats[name].trips += s.trips || 0;
+        stats[name].qty += s.quantity || 0;
+        stats[name].count++;
+        totalTrips += s.trips || 0;
+        totalQty += s.quantity || 0;
+        totalRecords++;
+        if (s.date && (!stats[name].firstDate || s.date < stats[name].firstDate)) stats[name].firstDate = s.date;
+        if (s.date && (!stats[name].lastDate || s.date > stats[name].lastDate)) stats[name].lastDate = s.date;
+      });
+      var sorted = Object.values(stats).sort(function(a, b) { return b.trips - a.trips; });
+      var maxTrips = sorted.length ? sorted[0].trips : 1;
+      var monthNames = ['', 'يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
+      var html = '<div style="background:#e0f2f1;border-radius:8px;padding:10px;margin-bottom:12px;font-size:13px;">';
+      html += '<b>إجمالي البيارات:</b> ' + sorted.length;
+      html += ' | <b>إجمالي النقلات:</b> ' + totalTrips.toLocaleString();
+      html += ' | <b>إجمالي الكمية:</b> ' + totalQty.toLocaleString(undefined, {maximumFractionDigits: 1}) + ' م3';
+      html += ' | <b>عدد العمليات:</b> ' + totalRecords;
+      html += '</div>';
+      html += '<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:13px;">';
+      html += '<thead><tr style="background:#00695c;color:white;">';
+      html += '<th style="padding:8px;">#</th><th style="padding:8px;text-align:right;">اسم البيارة</th>';
+      html += '<th style="padding:8px;">عدد النقلات</th>';
+      html += '<th style="padding:8px;">الكمية (م3)</th>';
+      html += '<th style="padding:8px;">عدد المرات</th>';
+      html += '<th style="padding:8px;">من تاريخ</th>';
+      html += '<th style="padding:8px;">مخطط النقلات (رسم)</th>';
+      html += '</tr></thead><tbody>';
+      sorted.forEach(function(s, i) {
+        var barPct = Math.round(s.trips / maxTrips * 100);
+        html += '<tr style="border-bottom:1px solid #eee;">';
+        html += '<td style="padding:6px;color:#999;font-size:12px;">' + (i + 1) + '</td>';
+        html += '<td style="padding:8px;font-weight:600;">' + s.name + '</td>';
+        html += '<td style="padding:8px;text-align:center;font-weight:700;color:#d32f2f;">' + s.trips + '</td>';
+        html += '<td style="padding:8px;text-align:center;">' + s.qty.toLocaleString(undefined, {maximumFractionDigits: 1}) + '</td>';
+        html += '<td style="padding:8px;text-align:center;">' + s.count + '</td>';
+        html += '<td style="padding:8px;color:#555;font-size:12px;">' + (s.firstDate || '-') + ' إلى ' + (s.lastDate || '-') + '</td>';
+        html += '<td style="padding:8px;"><div style="background:#e0e0e0;border-radius:4px;height:20px;overflow:hidden;">';
+        html += '<div style="width:' + barPct + '%;height:100%;background:' + (barPct > 70 ? '#d32f2f' : barPct > 40 ? '#f57c00' : '#388e3c') + ';border-radius:4px;display:flex;align-items:center;justify-content:center;color:white;font-size:10px;font-weight:700;min-width:30px;">' + s.trips + '</div>';
+        html += '</div></td>';
+        html += '</tr>';
+      });
+      html += '</tbody></table></div>';
+      result.innerHTML = html;
+    }
+function exportToSQLite() {
       exportBackupSystem();
       setTimeout(function() {
         alert("âœ… ØªÙ… ØªØ­Ù…ÙŠÙ„ Ù…Ù„Ù JSON.\n\nØ§Ù„Ø¢Ù† Ø´ØºÙ‘Ù„ ÙÙŠ PowerShell:\n\ncd " + String.fromCharCode(92) + "Users" + String.fromCharCode(92) + "Salem Magdy" + String.fromCharCode(92) + "Desktop" + String.fromCharCode(92) + "LINAHSYSTEM\npython linah_data.py import <Ø§Ø³Ù…_Ø§Ù„Ù…Ù„Ù.json>\n\nÙˆØ³ÙŠØ¨ Ø§Ù„Ù…Ù„Ù JSON Ø¹Ù„Ù‰ Ø³Ø·Ø­ Ø§Ù„Ù…ÙƒØªØ¨ Ø¹Ø´Ø§Ù† Ø§Ù„Ø³ÙƒØ±Ø¨Øª ÙŠÙ„Ø§Ù‚ÙŠÙ‡.");
