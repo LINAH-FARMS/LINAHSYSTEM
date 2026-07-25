@@ -11838,15 +11838,14 @@ function renderTeaSugarTable() {
         totals.wasteEng += w.wasteEng || 0;
         totals.wasteWrk += w.wasteWrk || 0;
       });
-      var target = Math.round(totals.totalPrepared * 0.05);
       _mwChart = new Chart(ctx, {
         type: 'bar',
         data: {
-          labels: ['هدر مهندسين', 'هدر عمال', 'هدف 5%'],
+          labels: ['هدر مهندسين', 'هدر عمال'],
           datasets: [{
             label: 'الكمية (كجم)',
-            data: [totals.wasteEng, totals.wasteWrk, target],
-            backgroundColor: ['#d32f2f', '#e65100', '#388e3c'],
+            data: [totals.wasteEng, totals.wasteWrk],
+            backgroundColor: ['#d32f2f', '#e65100'],
             borderRadius: 4
           }]
         },
@@ -11854,12 +11853,7 @@ function renderTeaSugarTable() {
           responsive: true, maintainAspectRatio: false,
           scales: { y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.05)' } } },
           plugins: {
-            legend: { display: false },
-            tooltip: {
-              callbacks: {
-                label: function(c) { return c.raw + ' كجم' + (c.dataIndex === 2 ? ' (' + (totals.totalPrepared > 0 ? (Math.min(target/totals.totalPrepared,1)*100).toFixed(1) + '% من المُعَد)' : '0%)') : ''); }
-              }
-            }
+            legend: { display: false }
           }
         }
       });
