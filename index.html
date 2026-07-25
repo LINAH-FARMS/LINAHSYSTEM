@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8">
@@ -6453,7 +6453,8 @@
         {id:'rpt-tea', label:'شاي وسكر', def:true},
         {id:'rpt-pm', label:'الصيانة الدورية', def:true},
         {id:'rpt-contractors', label:'المقاولين', def:true},
-        {id:'rpt-excluded', label:'المستبعدين', def:true}
+        {id:'rpt-excluded', label:'المستبعدين', def:true},
+        {id:'rpt-daily-stats', label:'إحصائيات يومية', def:true}
       ];
       var checksHtml = sections.map(function(s) {
         return '<label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;padding:4px 0;"><input type="checkbox" id="' + s.id + '" ' + (s.def ? 'checked' : '') + ' style="width:16px;height:16px;cursor:pointer;"> ' + s.label + '</label>';
@@ -6510,7 +6511,7 @@
       }
       if (!dateInput) { alert('أدخل تاريخ صرف الخبز'); return; }
       var opts = {};
-      ['rpt-workforce','rpt-housing','rpt-meals','rpt-guests','rpt-vacations','rpt-maintenance','rpt-septic','rpt-bakery-prod','rpt-bakery-supply','rpt-inventory','rpt-tea','rpt-pm','rpt-contractors','rpt-excluded'].forEach(function(id) {
+      ['rpt-workforce','rpt-housing','rpt-meals','rpt-guests','rpt-vacations','rpt-maintenance','rpt-septic','rpt-bakery-prod','rpt-bakery-supply','rpt-inventory','rpt-tea','rpt-pm','rpt-contractors','rpt-excluded','rpt-daily-stats'].forEach(function(id) {
         var el = document.getElementById(id);
         opts[id] = el ? el.checked : false;
       });
@@ -6615,6 +6616,13 @@
       }
       if (opts['rpt-excluded']) {
         sectionsHtml += '<div class="rp-section">' + sec('المستبعدين', excludedEmployees.length + ' موظف') + '</div>';
+      }
+      if (opts['rpt-daily-stats']) {
+        var ds = computeDailyStatsForRange(dateInput, dateInput);
+        if (ds.length > 0) {
+          var d = ds[0];
+          sectionsHtml += '<div class="rp-section">' + sec('إحصائيات يومية', 'الإجمالي ' + d.total + ' | دائم حاضر ' + d.permP + ' | دائم إجازة ' + d.permV + ' | كاجول حاضر ' + d.casP + ' | كاجول إجازة ' + (d.casV || 0) + ' | ضيوف ' + d.hospGuests) + '</div>';
+        }
       }
       if (!sectionsHtml) sectionsHtml = '<div style="text-align:center;padding:30px;color:#888;">بيانات الصيانة مهمة بيانات مفتوحة البيارات</div>';
       var fullHtml = '<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8"><title>عملية إنتاج - الخبز رغيف</title>' +
@@ -6786,6 +6794,13 @@
       }
       if (opts['rpt-excluded']) {
         sectionsHtml += '<div class="rp-section">' + sec('المستبعدين', excludedEmployees.length + ' موظف') + '</div>';
+      }
+      if (opts['rpt-daily-stats']) {
+        var dsData = computeDailyStatsForRange(fromDate, toDate);
+        var sumTot = 0, sumPP = 0, sumPV = 0, sumCP = 0, sumCV = 0, sumGH = 0;
+        dsData.forEach(function(d) { sumTot += d.total; sumPP += d.permP; sumPV += d.permV; sumCP += d.casP; sumCV += (d.casV || 0); sumGH += d.hospGuests; });
+        var n = dsData.length;
+        sectionsHtml += '<div class="rp-section">' + sec('إحصائيات يومية', 'المعدل — الإجمالي ' + Math.round(sumTot/n) + ' | دائم حاضر ' + Math.round(sumPP/n) + ' | دائم إجازة ' + Math.round(sumPV/n) + ' | كاجول حاضر ' + Math.round(sumCP/n) + ' | كاجول إجازة ' + Math.round(sumCV/n) + ' | ضيوف ' + Math.round(sumGH/n) + ' (×' + n + ' يوم)') + '</div>';
       }
       if (!sectionsHtml) sectionsHtml = '<div style="text-align:center;padding:30px;color:#888;">بيانات الصيانة مهمة بيانات مفتوحة رغيف</div>';
       var fullHtml = '<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8"><title>التقرير الأسبوعي</title>' +
@@ -7289,13 +7304,14 @@ var _breadSuggestionIdCounter = 0;
       var permP = perm.filter(function(e) { return e.status === 'P'; }).length;
       var permV = perm.filter(function(e) { return e.status === 'V'; }).length;
       var casP = casual.filter(function(e) { return e.status === 'P'; }).length;
+      var casV = casual.filter(function(e) { return e.status !== 'P'; }).length;
       var hospTotal = calcGuestsForDate(today);
       var p = function(n) { return total > 0 ? Math.round(n / total * 100) : 0; };
       var snap = {
         date: today,
         total: total,
         permP: permP, permV: permV, permPPct: p(permP), permVPct: p(permV),
-        casP: casP, casPPct: p(casP),
+        casP: casP, casV: casV, casPPct: p(casP),
         hospGuests: hospTotal
       };
       var existing = dailyStats.findIndex(function(s) { return s.date === today; });
@@ -7335,7 +7351,7 @@ var _breadSuggestionIdCounter = 0;
           });
         });
         var total = active.length;
-        var permP = 0, permV = 0, casP = 0;
+        var permP = 0, permV = 0, casP = 0, casV = 0;
         active.forEach(function(e) {
           var onVac = vacations.some(function(v) {
             var vStart = (v.start || v.startDate || v.dateFrom || '').split('T')[0];
@@ -7347,11 +7363,11 @@ var _breadSuggestionIdCounter = 0;
           });
           var isPresent = e.status !== 'V' && !onVac;
           if ((e.contract || 'دائم') === 'دائم') { if (isPresent) permP++; else permV++; }
-          else if (isPresent) casP++;
+          else { if (isPresent) casP++; else casV++; }
         });
         var hospGuests = calcGuestsForDate(dateStr);
         var p = function(n) { return total > 0 ? Math.round(n / total * 100) : 0; };
-        results.push({ date: dateStr, total: total, permP: permP, permV: permV, permPPct: p(permP), permVPct: p(permV), casP: casP, casPPct: p(casP), hospGuests: hospGuests });
+        results.push({ date: dateStr, total: total, permP: permP, permV: permV, permPPct: p(permP), permVPct: p(permV), casP: casP, casV: casV, casPPct: p(casP), hospGuests: hospGuests });
         d.setDate(d.getDate() + 1);
       }
       return results;
@@ -7366,31 +7382,33 @@ var _breadSuggestionIdCounter = 0;
       var toDate = toEl ? toEl.value : '';
       if (!fromDate || !toDate) { tbody.innerHTML = ''; return; }
       var data = computeDailyStatsForRange(fromDate, toDate);
-      if (!data.length) { tbody.innerHTML = '<tr><td colspan="6" style="padding:15px;color:#888;">No data in selected range</td></tr>'; return; }
-      var cols = ['Date', 'Total', 'Perm Present', 'Perm Leave', 'Casual Present', 'Guests'];
+      if (!data.length) { tbody.innerHTML = '<tr><td colspan="7" style="padding:15px;color:#888;">لا توجد بيانات في النطاق المحدد</td></tr>'; return; }
+      var cols = ['التاريخ', 'الإجمالي', 'دائم حاضر', 'دائم إجازة', 'كاجول حاضر', 'كاجول إجازة', 'ضيوف'];
       thead.innerHTML = '<tr>' + cols.map(function(c, i) {
         var bg = i === 0 ? '#263238' : (i <= 1 ? '#1b5e20' : '#37474f');
         return '<th style="padding:6px;background:' + bg + ';color:white;border:1px solid #ddd;font-size:11px;white-space:nowrap;">' + c + '</th>';
       }).join('') + '</tr>';
       tbody.innerHTML = '';
       data.reverse();
-      var sumTotal = 0, sumPP = 0, sumPV = 0, sumCP = 0, sumGuests = 0;
+      var sumTotal = 0, sumPP = 0, sumPV = 0, sumCP = 0, sumCV = 0, sumGuests = 0;
       data.forEach(function(s) {
         var row = '<td style="padding:5px;border:1px solid #ddd;font-weight:700;font-family:monospace;">' + s.date + '</td>';
         row += '<td style="padding:5px;border:1px solid #ddd;font-weight:700;">' + s.total + '</td>';
         row += '<td style="padding:5px;border:1px solid #ddd;">' + s.permP + ' <span style="color:#888;font-size:10px;">(' + s.permPPct + '%)</span></td>';
         row += '<td style="padding:5px;border:1px solid #ddd;">' + s.permV + ' <span style="color:#888;font-size:10px;">(' + s.permVPct + '%)</span></td>';
         row += '<td style="padding:5px;border:1px solid #ddd;">' + s.casP + ' <span style="color:#888;font-size:10px;">(' + s.casPPct + '%)</span></td>';
+        row += '<td style="padding:5px;border:1px solid #ddd;">' + (s.casV || 0) + '</td>';
         row += '<td style="padding:5px;border:1px solid #ddd;">' + s.hospGuests + '</td>';
         tbody.innerHTML += '<tr>' + row + '</tr>';
-        sumTotal += s.total; sumPP += s.permP; sumPV += s.permV; sumCP += s.casP; sumGuests += s.hospGuests;
+        sumTotal += s.total; sumPP += s.permP; sumPV += s.permV; sumCP += s.casP; sumCV += (s.casV || 0); sumGuests += s.hospGuests;
       });
       if (data.length > 1) {
-        var avgRow = '<td style="padding:5px;border:2px solid #1b5e20;font-weight:900;background:#e8f5e9;">AVG (' + data.length + ')</td>';
+        var avgRow = '<td style="padding:5px;border:2px solid #1b5e20;font-weight:900;background:#e8f5e9;">معدل (' + data.length + ')</td>';
         avgRow += '<td style="padding:5px;border:2px solid #1b5e20;font-weight:900;background:#e8f5e9;">' + Math.round(sumTotal / data.length) + '</td>';
         avgRow += '<td style="padding:5px;border:2px solid #1b5e20;background:#e8f5e9;">' + Math.round(sumPP / data.length) + '</td>';
         avgRow += '<td style="padding:5px;border:2px solid #1b5e20;background:#e8f5e9;">' + Math.round(sumPV / data.length) + '</td>';
         avgRow += '<td style="padding:5px;border:2px solid #1b5e20;background:#e8f5e9;">' + Math.round(sumCP / data.length) + '</td>';
+        avgRow += '<td style="padding:5px;border:2px solid #1b5e20;background:#e8f5e9;">' + Math.round(sumCV / data.length) + '</td>';
         avgRow += '<td style="padding:5px;border:2px solid #1b5e20;background:#e8f5e9;">' + Math.round(sumGuests / data.length) + '</td>';
         tbody.innerHTML += '<tr>' + avgRow + '</tr>';
       }
@@ -7405,7 +7423,7 @@ var _breadSuggestionIdCounter = 0;
       if (!data.length) return alert('No data in range');
       data.reverse();
       var xlData = data.map(function(s) {
-        return { 'Date': s.date, 'Total': s.total, 'Perm Present': s.permP, 'Perm Present %': s.permPPct + '%', 'Perm Leave': s.permV, 'Perm Leave %': s.permVPct + '%', 'Casual Present': s.casP, 'Casual Present %': s.casPPct + '%', 'Guests': s.hospGuests };
+        return { 'Date': s.date, 'Total': s.total, 'Perm Present': s.permP, 'Perm Present %': s.permPPct + '%', 'Perm Leave': s.permV, 'Perm Leave %': s.permVPct + '%', 'Casual Present': s.casP, 'Casual Present %': s.casPPct + '%', 'Casual Leave': (s.casV || 0), 'Guests': s.hospGuests };
       });
       var ws = XLSX.utils.json_to_sheet(xlData); var wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, 'Daily Stats');
@@ -11813,6 +11831,22 @@ function renderTeaSugarTable() {
       alert("تم تسجيل عملية الكسح بنجاح.");
     }
 
+    function editSeptic(idx) {
+      let s = septicRecords[idx];
+      if(!s) return;
+      if (!requireAdmin()) return;
+      let nameEl = document.getElementById('septic-name-select');
+      if(nameEl) nameEl.value = s.name;
+      document.getElementById('septic-trips').value = s.trips;
+      document.getElementById('septic-quantity').value = s.quantity || 0;
+      document.getElementById('septic-supervisor').value = s.supervisor || '';
+      document.getElementById('septic-date').value = s.date || '';
+      septicRecords.splice(idx, 1);
+      syncStorage();
+      renderSepticTable();
+      alert("تم تحميل بيانات البيارة في نموذج الإضافة للتعديل. قم بالتعديل ثم إعادة الإعتماد.");
+    }
+
     function renderSepticTable() {
       let tbody = document.getElementById('septic-table-body');
       if(!tbody) return; tbody.innerHTML = '';
@@ -11830,7 +11864,7 @@ function renderTeaSugarTable() {
           <td><span style="color:var(--primary); font-weight:700;">${s.quantity ? s.quantity + ' م³' : (s.trips * 5) + ' م³'}</span></td>
           <td>${s.supervisor}</td>
           <td>${s.date}</td>
-          <td class="no-print"><button class="btn btn-danger" style="padding:2px 6px; font-size:11px;" onclick="deleteSeptic(${realIdx})">حذف</button></td>
+          <td class="no-print"><button class="btn btn-primary" style="padding:2px 6px; font-size:11px;margin-left:3px;" onclick="editSeptic(${realIdx})">تعديل</button><button class="btn btn-danger" style="padding:2px 6px; font-size:11px;" onclick="deleteSeptic(${realIdx})">حذف</button></td>
         `;
         tbody.appendChild(tr);
       });
@@ -13520,6 +13554,8 @@ reports.forEach(function(r) {
                 imported++;
               }
             } else if (section === 'septic') {
+              var sk = (e.date||'') + '|' + (e.septicName||'') + '|' + (e.septicTrips||0);
+              if (_isDeleted('septicRecords', sk)) { imported++; return; }
               var exists = septicRecords.some(function(d) { return d.date === e.date && d.name === e.septicName && d.createdAt === e.createdAt; });
               if (!exists) {
                 septicRecords.push(_ts({
