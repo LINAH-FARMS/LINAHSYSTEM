@@ -6102,9 +6102,7 @@
       }
       
       if (inUseCount > 0) {
-        if (!confirm('تحذير: ' + inUseMsg + '
-
-هل تريد الاستمرار في الحذف؟')) return;
+        if (!confirm('تحذير: ' + inUseMsg + '\n\nهل تريد الاستمرار في الحذف؟')) return;
       }
       
       let key = (typeof item === 'string') ? item : (item.name || item.label || item.id || JSON.stringify(item));
