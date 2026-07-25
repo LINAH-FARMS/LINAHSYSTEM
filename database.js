@@ -1,23 +1,23 @@
-﻿    // Check server on load and migrate data
+?    // Check server on load and migrate data
     (function() {
       var el = document.getElementById('server-status');
       if (el) {
-        el.innerHTML = 'ØªÙ… Ø­ÙØ¸ Ø§Ù„Ø¨ÙŠØ§Ù†Ø§Øª Ø¨Ù†Ø¬Ø§Ø­ - Ø¬Ø§Ø±Ù Ø§Ù„ØªØ­Ø¯ÙŠØ«';
+        el.innerHTML = 'تم حفظ البيانات بنجاح - جارٍ التحديث';
         el.style.color = '#f44336';
       }
     })();
 
-    // ØªÙ…Øª Ø¥Ø²Ø§Ù„Ø© Ø§Ù„Ø¨ÙŠØ§Ù†Ø§Øª Ø§Ù„Ø£ÙˆÙ„ÙŠØ© - Ø³ÙŠØªÙ… Ø§Ù„ØªØ­Ù…ÙŠÙ„ Ù…Ù† Ø§Ù„ØªØ®Ø²ÙŠÙ† Ø§Ù„Ù…Ø­Ù„ÙŠ
+    // تمت إزالة البيانات الأولية - سيتم التحميل من التخزين المحلي
 
     function _safeJsonParse(val, fallback) { 
       try { var r = JSON.parse(val); return (r !== null && r !== undefined) ? r : fallback; } catch(e) { return fallback; } 
     }
 
-    // ====== IndexedDB for All Data (â•ªÂ¿â•ªÂ»â”˜Ã¨â”˜Ã¤ localStorage) ======
+    // ====== IndexedDB for All Data (╪¿╪»┘è┘ä localStorage) ======
     var _idbReady = false;
     function _openIDB() {
       return new Promise(function(resolve, reject) {
-        if (!window.indexedDB) { reject(new Error('IndexedDB Ø¹Ù…Ù„ÙŠØ© Ø§Ù„Ø³Ø­Ø§Ø¨Ø©')); return; }
+        if (!window.indexedDB) { reject(new Error('IndexedDB عملية السحابة')); return; }
         var req = indexedDB.open('LinahSystemDB', 2);
         req.onupgradeneeded = function(e) {
           var db = e.target.result;
@@ -63,7 +63,7 @@
       });
     }
     var finTransactions = []; var finBudgets = [];
-    // Ø§Ù„Ø³ÙŠØ±ÙØ± Ù…ØªØµÙ„ Ø§Ù„Ø³ÙŠØ±ÙØ± ØºÙŠØ±
+    // السيرفر متصل السيرفر غير
     var _ALL_KEYS = [
       'employees','roomsCapacity','vacations','hospitalities','maintenanceRecords','septicRecords',
       'inventoryVouchers','excludedEmployees','periodicMaintenance','teaSugarDisbursements','teaSugarBatches',
@@ -74,7 +74,7 @@
       'dynamicDepts','dynamicTitles','deptTitles','manualTotalBeds','syncDeletions','appUsers',
       'finTransactions','finBudgets','ingredientMaster','mealSurveys'
     ];
-    // Ù…ØªØµÙ„ Ø¨ÙŠØ§Ù†Ø§Øª ØªØ®Ø²ÙŠÙ† Ø¨ÙŠØ§Ù†Ø§Øª IndexedDB Ù…Ø­Ù„ÙŠ Ø§Ù„Ù…ÙˆÙ‚Ø¹
+    // متصل بيانات تخزين بيانات IndexedDB محلي الموقع
     function _scheduleIDBBackup() {
       _idbScheduleSave();
     }
@@ -131,7 +131,7 @@
         });
       }).catch(function() { return false; });
     }
-    // ØªÙ… Ø¨ÙŠØ§Ù†Ø§Øª Ø§ÙƒØªØ´Ø§Ù Ø¨ÙŠØ§Ù†Ø§Øª localStorage Ø¨ÙŠØ§Ù†Ø§Øª IndexedDB
+    // تم بيانات اكتشاف بيانات localStorage بيانات IndexedDB
     function _migrateAllToIDB() {
       if (_lsGet('_idbMigrated_v2')) return Promise.resolve();
       _ALL_KEYS.forEach(function(k) {
@@ -156,7 +156,7 @@
           tx.oncomplete = function() { resolve(); };
           tx.onerror = function() { reject(tx.error); };
         });
-      }).catch(function(err) { console.warn('ÙØ´Ù„ Ø­ÙØ¸ Ù…Ø³ØªÙ†Ø¯Ø§Øª Ø§Ù„Ù…ÙŠØ§Ù‡ ÙÙŠ IDB:', err); });
+      }).catch(function(err) { console.warn('فشل حفظ مستندات المياه في IDB:', err); });
     }
 
     function _loadWaterDocsFromIDB() {
@@ -179,7 +179,7 @@
       var tx = _lsGet('_storageTx');
       if (tx === 'start') {
         _lsRemove('_storageTx');
-        console.warn('Ø­Ø¯Ø« Ø®Ø·Ø£ Ø£Ø«Ù†Ø§Ø¡ ØªØ­Ù…ÙŠÙ„ Ø¨ÙŠØ§Ù†Ø§Øª Ø§Ù„Ù…ÙŠØ§Ù‡ (crash). ÙŠØ±Ø¬Ù‰ Ø¥Ø¹Ø§Ø¯Ø© Ø§Ù„Ù…Ø­Ø§ÙˆÙ„Ø© Ù„Ø§Ø­Ù‚Ø§Ù‹.');
+        console.warn('حدث خطأ أثناء تحميل بيانات المياه (crash). يرجى إعادة المحاولة لاحقاً.');
       }
       if (_lsGet('_corruptionCleaned_v2')) return;
       var keys = ['lineh_employees','employees_db','lineh_rooms_capacity','rooms_db','lineh_vacations','lineh_hospitality','lineh_hospitality_bak','lineh_maintenance','lineh_septic','septic_db','lineh_inventory','excludedEmployees','lineh_periodic_maintenance','lineh_tea_sugar','lineh_tea_sugar_batches','lineh_meal_logs','lineh_inventory_items','lineh_contractors','dyn_sectors','ctr_sectors','ctr_rooms','dyn_rooms','dyn_septics','dyn_depts','dyn_titles','lineh_evaluations','lineh_eval_templates','lineh_users','linah_audit_log','linah_bakery_ingredients','linah_bakery_productions','linah_bakery_ctr_supplies','linah_bakery_invoices','linah_bakery_stock_log','lineh_admin_overtime','lineh_room_assets','lineh_archive_data','lineh_quick_actions','lineh_daily_stats','lineh_water_stations','lineh_water_docs'];
