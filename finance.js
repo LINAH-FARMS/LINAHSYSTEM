@@ -1,4 +1,4 @@
-﻿/* ====== Finance & Budget Module ====== */
+/* ====== Finance & Budget Module ====== */
 // Unified storage
 window.finTransactions = window.finTransactions || []; var finTransactions = window.finTransactions;
 window.finBudgets = window.finBudgets || []; var finBudgets = window.finBudgets;
