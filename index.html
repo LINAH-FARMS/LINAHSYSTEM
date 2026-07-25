@@ -3189,7 +3189,7 @@
           <button class="btn" style="padding:4px 10px;font-size:12px;background:#1565c0;color:white;" onclick="showPrintChoice('table-bakery-production')">🖨️ طباعة</button>
         </div>
         <table id="table-bakery-production">
-          <thead><tr><th style="width:30px;" class="no-print"><input type="checkbox" class="check-all" data-table="table-bakery-production" onchange="toggleAllCheckboxes(this)"></th><th data-sort-key="date">التاريخ</th><th data-sort-key="breadCount">الأرغفة</th><th>دقيق</th><th>خميرة</th><th>ملح</th><th>ردة</th><th>سولار</th><th>أجر التشغيل</th><th>خامات مقاولين</th><th>إجمالي التكلفة</th><th>تكلفة الرغيف</th><th class="no-print">إجراءات</th></tr></thead>
+          <thead><tr><th style="width:30px;" class="no-print"><input type="checkbox" class="check-all" data-table="table-bakery-production" onchange="toggleAllCheckboxes(this)"></th><th data-sort-key="date">التاريخ</th><th data-sort-key="breadCount">الأرغفة</th><th>دقيق</th><th>خميرة</th><th>ملح</th><th>ردة</th><th>سولار</th><th>أجر التشغيل</th><th style="display:none;">خامات مقاولين</th><th>إجمالي التكلفة</th><th>تكلفة الرغيف</th><th class="no-print">إجراءات</th></tr></thead>
           <tbody id="bakery-production-body"></tbody>
         </table>
       </div>
@@ -6590,7 +6590,18 @@
       }
       if (opts['rpt-bakery-prod']) {
         var prodTotal = todayProd.reduce(function(s,p) { return s + (p.breadCount || 0); }, 0);
-        sectionsHtml += '<div class="rp-section">' + sec('إنتاج المخبز', prodTotal + ' رغيف') + '</div>';
+        var prodCost = todayProd.reduce(function(s,p) {
+          var f = getBakedField(p, 'flourUsed', 'flourQty');
+          var y = getBakedField(p, 'yeastUsed', 'yeastQty');
+          var sa = getBakedField(p, 'saltUsed', 'saltQty');
+          var b = getBakedField(p, 'branUsed', 'branQty');
+          var d = getBakedField(p, 'dieselUsed', 'dieselQty');
+          var op = getBakedOpCost(p);
+          var pF = getBakeryIngPrice('ING001'), pY = getBakeryIngPrice('ING002'), pS = getBakeryIngPrice('ING003'), pB = getBakeryIngPrice('ING004'), pD = getBakeryIngPrice('ING007');
+          return s + (f * pF) + (y * pY) + (sa * pS) + (b * pB) + (d * pD) + op;
+        }, 0);
+        var costPerLoaf = prodTotal > 0 ? (prodCost / prodTotal) : 0;
+        sectionsHtml += '<div class="rp-section">' + sec('إنتاج المخبز', prodTotal + ' رغيف | تكلفة ' + prodCost.toFixed(0) + ' ج.م | تكلفة الرغيف ' + costPerLoaf.toFixed(2) + ' ج.م') + '</div>';
       }
       if (opts['rpt-bakery-supply']) {
         var ctrBread = todayCtr.reduce(function(s,c) { return s + (c.count || 0); }, 0);
@@ -6769,7 +6780,18 @@
       }
       if (opts['rpt-bakery-prod']) {
         var prodTotal = allProd.reduce(function(s,p) { return s + (p.breadCount || 0); }, 0);
-        sectionsHtml += '<div class="rp-section">' + sec('إنتاج المخبز', prodTotal + ' رغيف (' + days.length + ' يوم)') + '</div>';
+        var prodCost = allProd.reduce(function(s,p) {
+          var f = getBakedField(p, 'flourUsed', 'flourQty');
+          var y = getBakedField(p, 'yeastUsed', 'yeastQty');
+          var sa = getBakedField(p, 'saltUsed', 'saltQty');
+          var b = getBakedField(p, 'branUsed', 'branQty');
+          var d = getBakedField(p, 'dieselUsed', 'dieselQty');
+          var op = getBakedOpCost(p);
+          var pF = getBakeryIngPrice('ING001'), pY = getBakeryIngPrice('ING002'), pS = getBakeryIngPrice('ING003'), pB = getBakeryIngPrice('ING004'), pD = getBakeryIngPrice('ING007');
+          return s + (f * pF) + (y * pY) + (sa * pS) + (b * pB) + (d * pD) + op;
+        }, 0);
+        var costPerLoaf = prodTotal > 0 ? (prodCost / prodTotal) : 0;
+        sectionsHtml += '<div class="rp-section">' + sec('إنتاج المخبز', prodTotal + ' رغيف | تكلفة ' + prodCost.toFixed(0) + ' ج.م | تكلفة الرغيف ' + costPerLoaf.toFixed(2) + ' ج.م (×' + days.length + ' يوم)') + '</div>';
       }
       if (opts['rpt-bakery-supply']) {
         var ctrBread = allCtr.reduce(function(s,c) { return s + (c.count || 0); }, 0);
@@ -13929,7 +13951,7 @@ reports.forEach(function(r) {
           <td style="font-size:11px;">${b}—${pBran}=<b>${costBran.toFixed(2)}</b></td>
           <td style="font-size:11px;">${d}—${pDiesel}=<b>${costDiesel.toFixed(2)}</b></td>
           <td style="font-size:11px;">${op.toFixed(2)}</td>
-          <td style="font-size:11px;color:#e65100;">${cstCtr.toFixed(2)}</td>
+          <td style="display:none;font-size:11px;color:#e65100;">${cstCtr.toFixed(2)}</td>
           <td class="bakery-cost">${cst.toFixed(2)}</td>
           <td style="font-size:11px;color:#666;">${costPerLoaf.toFixed(3)}</td>
           <td class="no-print"><button class="btn btn-warning" style="padding:2px 6px;font-size:11px;" onclick="editBakeryProduction(${realIdx})">✏️</button> <button class="btn btn-danger" style="padding:2px 6px;font-size:11px;" onclick="deleteBakeryProduction(${realIdx})">🗑️</button></td>
