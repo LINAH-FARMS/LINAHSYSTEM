@@ -12,6 +12,26 @@
     _checkLocalStorage();
     window.onerror = function(msg, src, line, col, err) { try { console.error('خطأ عام غير متوقع:', msg, '|', (src||'').split('/').pop(), (line||'') + ':' + (col||''), err); } catch(_e) {} return false; };
     function _safe(fn) { try { if (typeof fn === 'function') fn(); } catch(e) { console.error('render error in ' + (fn && fn.name ? fn.name : 'fn') + ':', e); } }
+    function _strArr(arr) {
+      if (!Array.isArray(arr)) return [];
+      var seen = {};
+      return arr.map(function(x) {
+        if (typeof x === 'string') return x;
+        if (typeof x === 'number') return String(x);
+        if (x && typeof x === 'object') {
+          if (typeof x.name === 'string') return x.name;
+          if (typeof x.title === 'string') return x.title;
+          if (typeof x.label === 'string') return x.label;
+          var vals = Object.values(x);
+          for (var vi = 0; vi < vals.length; vi++) {
+            var vx = vals[vi];
+            if (typeof vx === 'string' && vx.length > 0) { if (!seen[vx]) { seen[vx] = true; return vx; } }
+            if (typeof vx === 'number') { var sv = String(vx); if (!seen[sv]) { seen[sv] = true; return sv; } }
+          }
+        }
+        return '';
+      }).filter(function(s) { return s && s.length > 0; });
+    }
   (function(){
     var v='3.1';
     var s=_lsGet('_codeVersion');

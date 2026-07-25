@@ -1351,17 +1351,8 @@
       }
     }
 
-    function _strArr(arr) {
-      if (!Array.isArray(arr)) return [];
-      var seen = {};
-      return arr.map(function(x) {
-        if (typeof x === 'string') return x;
-        if (typeof x === 'number') return String(x);
-        if (x && typeof x === 'object') {
-          if (typeof x.name === 'string') return x.name;
-          if (typeof x.title === 'string') return x.title;
-          if (typeof x.label === 'string') return x.label;
-          var vals = Object.values(x);
+    function _strArr(arr) { return (typeof window._strArr === 'function') ? window._strArr(arr) : []; }
+    // _strArr is now defined in core.js
           if (vals.length > 0) {
             var joined = vals.filter(function(v) { return typeof v === 'string'; }).join('');
             if (joined.trim() && joined.trim().length > 1) return joined.trim();
@@ -13446,3 +13437,4 @@ function updateDashClock() {
 
     // Initialize the dashboard on page load
     switchTab('tab-dashboard');
+
