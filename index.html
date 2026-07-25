@@ -7,10 +7,14 @@
   <script>
     var _memoryStorage = {};
     var _localStorageBlocked = false;
+    var _idbCache = {};
+    var _idbSaveTimer = null;
     function _checkLocalStorage() { try { var _t = '_test_' + Date.now(); localStorage.setItem(_t, '1'); localStorage.removeItem(_t); _localStorageBlocked = false; } catch(e) { _localStorageBlocked = true; } }
-    function _lsGet(key) { try { return localStorage.getItem(key); } catch(e) { _localStorageBlocked = true; return _memoryStorage[key] || null; } }
-    function _lsSet(key, val) { try { localStorage.setItem(key, val); } catch(e) { _localStorageBlocked = true; _memoryStorage[key] = val; } }
-    function _lsRemove(key) { try { localStorage.removeItem(key); } catch(e) { _localStorageBlocked = true; delete _memoryStorage[key]; } }
+    function _idbScheduleSave() { if (_idbSaveTimer) clearTimeout(_idbSaveTimer); _idbSaveTimer = setTimeout(function() { _idbSaveTimer = null; _flushIDBCache(); }, 2000); }
+    function _flushIDBCache() { if (!window.indexedDB) return; _openIDB().then(function(db) { try { var tx = db.transaction('allData', 'readwrite'); var store = tx.objectStore('allData'); for (var _k in _idbCache) { try { store.put({ key: _k, value: _idbCache[_k] }); } catch(_ee) {} } } catch(_e) {} }).catch(function() {}); }
+    function _lsGet(key) { if (_idbCache.hasOwnProperty(key)) return _idbCache[key]; try { return localStorage.getItem(key); } catch(e) { _localStorageBlocked = true; return _memoryStorage[key] || null; } }
+    function _lsSet(key, val) { _idbCache[key] = val; try { localStorage.setItem(key, val); } catch(e) { _localStorageBlocked = true; _memoryStorage[key] = val; } _idbScheduleSave(); }
+    function _lsRemove(key) { delete _idbCache[key]; try { localStorage.removeItem(key); } catch(e) { _localStorageBlocked = true; delete _memoryStorage[key]; } _idbScheduleSave(); }
     function _lsGetKey(index) { try { return localStorage.key(index); } catch(e) { _localStorageBlocked = true; var keys = Object.keys(_memoryStorage); return keys[index] || null; } }
     _checkLocalStorage();
     window.onerror = function(msg, src, line, col, err) { try { console.error('خطأ عام غير متوقع:', msg, '|', (src||'').split('/').pop(), (line||'') + ':' + (col||''), err); } catch(_e) {} return false; };
@@ -3808,44 +3812,25 @@
       'finTransactions','finBudgets','ingredientMaster','mealSurveys'
     ];
     // متصل بيانات تخزين بيانات IndexedDB محلي الموقع
-    var _idbBackupTimer = null;
     function _scheduleIDBBackup() {
-      if (_idbBackupTimer) return;
-      _idbBackupTimer = setTimeout(function() {
-        _idbBackupTimer = null;
-        _idbSaveAll();
-      }, 30000);
+      _idbScheduleSave();
     }
     function _idbSaveAll() {
       if (!window.indexedDB) return Promise.resolve();
-      var data = {};
-      _ALL_KEYS.forEach(function(k) {
-        try {
-          var v = typeof getEntityVar === 'function' ? getEntityVar(k) : null;
-          if (v !== undefined && v !== null) data[k] = v;
-        } catch(e) {}
-      });
-      return _openIDB().then(function(db) {
-        return new Promise(function(resolve, reject) {
-          var tx = db.transaction('allData', 'readwrite');
-          var store = tx.objectStore('allData');
-          store.put({ key: '__ALL__', value: data });
-          tx.oncomplete = function() { resolve(); };
-          tx.onerror = function() { reject(tx.error); };
-        });
-      }).catch(function(err) { console.warn('فشل حفظ جميع البيانات في IDB:', err); });
+      _idbScheduleSave();
+      return Promise.resolve();
     }
-    // يعتمد بيانات على بيانات IndexedDB
     function _idbLoadAll() {
       if (!window.indexedDB) return Promise.resolve(false);
       return _openIDB().then(function(db) {
         return new Promise(function(resolve, reject) {
           var tx = db.transaction('allData', 'readonly');
           var store = tx.objectStore('allData');
+          /* try __ALL__ first (old format), then per-key */
           var req = store.get('__ALL__');
           req.onsuccess = function() {
             var data = req.result ? req.result.value : null;
-            if (data && typeof data === 'object') {
+            if (data && typeof data === 'object' && !Array.isArray(data)) {
               _ALL_KEYS.forEach(function(k) {
                 if (data[k] !== undefined) {
                   var v = null; try { v = typeof getEntityVar === 'function' ? getEntityVar(k) : null; } catch(e) {}
@@ -3856,7 +3841,27 @@
               });
               resolve(true);
             } else {
-              resolve(false);
+              /* fallback: load from per-key cache into global vars */
+              var allReq = store.getAll();
+              allReq.onsuccess = function() {
+                (allReq.result || []).forEach(function(item) {
+                  if (item && item.key && item.key !== '__ALL__') {
+                    var mappedKey = null;
+                    for (var ki = 0; ki < _ALL_KEYS.length; ki++) {
+                      var lsk = typeof getLSKey === 'function' ? getLSKey(_ALL_KEYS[ki]) : _ALL_KEYS[ki];
+                      if (lsk === item.key || _ALL_KEYS[ki] === item.key) { mappedKey = _ALL_KEYS[ki]; break; }
+                    }
+                    if (mappedKey) {
+                      var v2 = null; try { v2 = typeof getEntityVar === 'function' ? getEntityVar(mappedKey) : null; } catch(e) {}
+                      if (v2 === null || v2 === undefined || (Array.isArray(v2) && v2.length === 0)) {
+                        if (typeof setEntityVar === 'function') setEntityVar(mappedKey, item.value);
+                      }
+                    }
+                  }
+                });
+                resolve(true);
+              };
+              allReq.onerror = function() { resolve(false); };
             }
           };
           req.onerror = function() { resolve(false); };
@@ -3866,26 +3871,15 @@
     // تم بيانات اكتشاف بيانات localStorage بيانات IndexedDB
     function _migrateAllToIDB() {
       if (_lsGet('_idbMigrated_v2')) return Promise.resolve();
-      var data = {};
       _ALL_KEYS.forEach(function(k) {
         try {
           var v = typeof getEntityVar === 'function' ? getEntityVar(k) : null;
-          if (v !== undefined && v !== null) data[k] = v;
+          if (v !== undefined && v !== null) _idbCache[k] = v;
         } catch(e) {}
       });
-      return _openIDB().then(function(db) {
-        return new Promise(function(resolve, reject) {
-          var tx = db.transaction('allData', 'readwrite');
-          var store = tx.objectStore('allData');
-          store.put({ key: '__ALL__', value: data });
-          tx.oncomplete = function() {
-            _lsSet('_idbMigrated_v2', '1');
-            console.log('? بيانات حفظ بيانات غير مكتملة IndexedDB');
-            resolve();
-          };
-          tx.onerror = function() { reject(tx.error); };
-        });
-      }).catch(function(err) { console.warn('بيانات قد تكون:', err); });
+      _idbScheduleSave();
+      _lsSet('_idbMigrated_v2', '1');
+      return Promise.resolve();
     }
 
     // ===== IndexedDB functions for waterDocs (large base64 files) =====
@@ -3941,6 +3935,28 @@
         } catch(e) {}
       });
       _lsSet('_corruptionCleaned_v2', '1');
+    })();
+
+    /* Load IndexedDB data into memory cache before init */
+    (function _loadIDBCache() {
+      if (!window.indexedDB) return;
+      var _req = indexedDB.open('LinahSystemDB', 2);
+      _req.onsuccess = function(_e) {
+        var _db = _e.target.result;
+        try {
+          var _tx = _db.transaction('allData', 'readonly');
+          var _store = _tx.objectStore('allData');
+          var _allReq = _store.getAll();
+          _allReq.onsuccess = function() {
+            var _items = _allReq.result || [];
+            _items.forEach(function(_item) {
+              if (_item && _item.key && _item.value !== undefined && _item.key !== '__ALL__') {
+                _idbCache[_item.key] = _item.value;
+              }
+            });
+          };
+        } catch(_ee) {}
+      };
     })();
 
     let employees = _safeJsonParse(_lsGet('lineh_employees'), _safeJsonParse(_lsGet('employees_db'), (typeof SEED_EMPLOYEES !== 'undefined' && SEED_EMPLOYEES.length > 0 ? SEED_EMPLOYEES : [])));
