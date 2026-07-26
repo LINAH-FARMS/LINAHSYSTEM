@@ -1636,7 +1636,8 @@
         <option value="الدورة الأولى (1-7)">الدورة الأولى (1-7)</option>
         <option value="الدورة الثانية (15-21)">الدورة الثانية (15-21)</option>
       </select>
-      <button class="btn btn-sm" style="padding:4px 12px;background:#e0e0e0;" onclick="document.getElementById('ts-month-filter').value='';document.getElementById('ts-period-filter').value='';renderTeaSugarTable()">مسح التصفية</button>
+      <input type="text" id="search-ts" class="search-input" placeholder="ابحث في الجدول باسم الموظف..." oninput="renderTeaSugarTable()" style="padding:6px;border:1px solid #ccc;border-radius:6px;font-size:13px;font-family:Cairo,sans-serif;width:200px;">
+      <button class="btn btn-sm" style="padding:4px 12px;background:#e0e0e0;" onclick="document.getElementById('ts-month-filter').value='';document.getElementById('ts-period-filter').value='';document.getElementById('search-ts').value='';renderTeaSugarTable()">مسح التصفية</button>
     </div>
 
     <div class="control-panel no-print" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;align-items:flex-end;">
@@ -1654,10 +1655,6 @@
       <div class="form-group">
         <label style="font-weight:600;">الموظف المستلم</label>
         <input type="text" id="ts-emp-search" class="search-input" placeholder="اكتب اسم الموظف..." style="width:100%;">
-      </div>
-      <div class="form-group">
-        <label style="font-weight:600;">فلترة الجدول</label>
-        <input type="text" id="search-ts" class="search-input" placeholder="ابحث في الجدول باسم الموظف..." oninput="renderTeaSugarTable()" style="width:100%;">
       </div>
       <div class="form-group">
         <label style="font-weight:600;">الدورة</label>
