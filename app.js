@@ -463,7 +463,7 @@
       // ====== GOVERNORATE DISTRIBUTION ======
       if (g('dash-gov-bars')) {
         let govMap = {};
-        employees.forEach(e => { let g = e.gov || 'محدد الدورة'; govMap[g] = (govMap[g] || 0) + 1; });
+        employees.forEach(e => { let g = e.gov || '—'; govMap[g] = (govMap[g] || 0) + 1; });
         let sorted = Object.entries(govMap).sort((a,b) => b[1] - a[1]);
         let maxGov = sorted.length > 0 ? sorted[0][1] : 1;
         let govColors = ['#2e7d32','#1565c0','#e65100','#6a1b9a','#00695c','#c62828','#f57f17','#283593','#00838f','#4e342e'];
