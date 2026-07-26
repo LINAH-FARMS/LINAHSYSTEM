@@ -1361,7 +1361,7 @@
           // Remove control chars, zero-width chars, and garbled replacement chars
           s = s.replace(/[\u0000-\u001F\u007F-\u009F\u200B-\u200F\u2028-\u202E\uFEFF\u00AD\u061C\u2060-\u2069]/g, '').replace(/[\uFFFD?]/g, '').trim();
           return s;
-        }).filter(function(s) { return s; });
+        }).filter(function(s) { return s && s.length >= 2; });
       }
       dynamicSectors = cleanGarbled(dynamicSectors);
       dynamicRooms = cleanGarbled(dynamicRooms);
@@ -1386,7 +1386,7 @@
       function sanitizeStr(s) {
         if (typeof s !== 'string') return '';
         s = s.trim().replace(/[\u0000-\u001F\u007F-\u009F\u200B-\u200F\u2028-\u202E\uFEFF\u00AD\u061C\u2060-\u2069\uFFFD]/g, '').replace(/[?]/g, '').trim();
-        return s;
+        return (s && s.length >= 2) ? s : '';
       }
       var sectorSet = {};
       dynamicSectors.forEach(function(s) { sectorSet[s] = true; });
@@ -1433,7 +1433,7 @@
           var s = (typeof x === 'string') ? x : (x ? String(x.name || x.title || x.label || x) : '');
           s = (s || '').trim();
           s = s.replace(/[\u0000-\u001F\u007F-\u009F\u200B-\u200F\u2028-\u202E\uFEFF\u00AD\u061C\u2060-\u2069\uFFFD]/g, '').replace(/[?]/g, '').trim();
-          if (!s) { changed = true; return; }
+          if (!s || s.length < 2) { changed = true; return; }
           if (s.normalize) s = s.normalize('NFC');
           var k = s.toLowerCase();
           if (seen[k]) { changed = true; return; }

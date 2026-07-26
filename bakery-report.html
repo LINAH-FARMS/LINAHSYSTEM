@@ -156,7 +156,7 @@ var ctrCount = 0;
 function _sanitize(n) {
   if (typeof n !== 'string') n = n && n.name ? String(n.name) : String(n || '');
   var s = n.trim().replace(/[\u0000-\u001F\u007F-\u009F\u200B-\u200F\u2028-\u202E\uFEFF\u00AD\u061C\u2060-\u2069\uFFFD]/g, '').replace(/[?]/g, '').trim();
-  return (s && s !== '[object Object]') ? s : '';
+  return (s && s !== '[object Object]' && s.length >= 2) ? s : '';
 }
 function _loadBctr() {
   try { var raw = JSON.parse(localStorage.getItem('linah_bakery_contractors_names') || '[]'); if (Array.isArray(raw)) return raw.map(_sanitize).filter(function(s){return s;}); } catch(e){}
