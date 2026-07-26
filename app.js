@@ -9099,6 +9099,8 @@ reports.forEach(function(r) {
             if (!e.date) return;
             var section = e.section || '';
             if (section === 'tea') {
+              var delKey = (e.date||'') + '|' + (e.period||'') + '|' + (e.empCode||'') + '|' + (e.teaPacks||0) + '|' + (e.sugar||0);
+              if (_isDeleted('teaSugarDisbursements', delKey)) return;
               var exists = teaSugarDisbursements.some(function(d) { return d.date === e.date && d.empCode === e.empCode && d.period === e.period && d.createdAt === e.createdAt; });
               if (!exists) {
                 var emp = employees.find(function(x) { return x.code == e.empCode || x.id == e.empId || (e.empName && x.name === e.empName); });
@@ -10812,8 +10814,6 @@ reports.forEach(function(r) {
             _pendingDeletions = _pendingDeletions.concat(_remoteDels);
             syncDeletions = _pendingDeletions;
             _applyDeletions();
-            syncDeletions = [];
-            _lsRemove('lineh_sync_deletions');
           }
           // Filter excluded employees from the loaded data
           var _exclMap2 = {};
@@ -11449,6 +11449,7 @@ var reportsTab = document.getElementById('tab-reports');
         if (data.bakeryContractorSupplies) bakeryContractorSupplies = data.bakeryContractorSupplies;
         if (data.bakeryInvoices) bakeryInvoices = data.bakeryInvoices;
         if (typeof data.manualTotalBeds === 'number') manualTotalBeds = data.manualTotalBeds;
+        _applyDeletions();
         // نعرف إيه اللي بيانات اتشال عشان ما
         if (excludedEmployees.length > 0) {
           var exclMap = {};
