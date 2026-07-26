@@ -7008,7 +7008,7 @@ function renderTeaSugarTable() {
       var chef = document.getElementById('mw-chef').value.trim();
       if (!chef) return alert('الرجاء إدخال اسم الشيف');
       var ingredients = getIngredientsFromForm();
-      if (!ingredients.length) return alert('الرجاء إضافة مواد للزيارة قبل الحفظ.');
+      if (!ingredients.length) return alert('الرجاء إضافة المواد المستخدمة (المقادير) قبل الحفظ.');
       var totalPrepared = 0;
       var wasteEng = parseFloat(document.getElementById('mw-waste-eng').value) || 0;
       var wasteWrk = parseFloat(document.getElementById('mw-waste-wrk').value) || 0;
