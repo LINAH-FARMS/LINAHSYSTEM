@@ -1631,7 +1631,12 @@
     <div style="display:flex;gap:10px;align-items:center;margin-bottom:10px;flex-wrap:wrap;">
       <label style="font-weight:600;font-size:13px;">ملخص الشاي والسكر:</label>
       <input type="month" id="ts-month-filter" style="padding:6px;border:1px solid #ccc;border-radius:6px;font-size:13px;font-family:Cairo,sans-serif;" onchange="renderTeaSugarTable()">
-      <button class="btn btn-sm" style="padding:4px 12px;background:#e0e0e0;" onclick="document.getElementById('ts-month-filter').value='';renderTeaSugarTable()">مسح التصفية</button>
+      <select id="ts-period-filter" onchange="renderTeaSugarTable()" style="padding:5px;border:1px solid #ccc;border-radius:6px;font-size:12px;font-family:Cairo,sans-serif;">
+        <option value="">الكل</option>
+        <option value="الدورة الأولى (1-7)">الدورة الأولى (1-7)</option>
+        <option value="الدورة الثانية (15-21)">الدورة الثانية (15-21)</option>
+      </select>
+      <button class="btn btn-sm" style="padding:4px 12px;background:#e0e0e0;" onclick="document.getElementById('ts-month-filter').value='';document.getElementById('ts-period-filter').value='';renderTeaSugarTable()">مسح التصفية</button>
     </div>
 
     <div class="control-panel no-print" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;align-items:flex-end;">

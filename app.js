@@ -6144,9 +6144,11 @@ function renderTeaSugarTable() {
   if(!tbody) return;
   tbody.innerHTML = '';
   var monthFilter = document.getElementById('ts-month-filter')?.value || '';
+  var periodFilter = document.getElementById('ts-period-filter')?.value || '';
   let q = document.getElementById('search-ts')?.value.toLowerCase() || '';
   let filtered = [...teaSugarDisbursements];
   if (monthFilter) filtered = filtered.filter(function(ts) { return _tsMonthKey(ts.date) === monthFilter; });
+  if (periodFilter) filtered = filtered.filter(function(ts) { return ts.period === periodFilter; });
   if (q) filtered = filtered.filter(function(ts) { return (ts.empName||'').toLowerCase().includes(q) || (ts.empCode||'').toLowerCase().includes(q); });
   let st = sortState['table-tea-sugar'];
   if (!st || !st.key) filtered = sortNewestFirst(filtered, 'date');
