@@ -137,8 +137,19 @@ var invItems = [];
 try { var iv = localStorage.getItem('lineh_inventory_items'); if (iv) invItems = JSON.parse(iv); } catch(e){}
 if (!Array.isArray(invItems)) invItems = [];
 
+function _sanitizeStr(s) {
+  if (typeof s !== 'string') return '';
+  s = s.trim().replace(/[\u0000-\u001F\u007F-\u009F\u200B-\u200F\u2028-\u202E\uFEFF\u00AD\u061C\u2060-\u2069]/g, '').trim();
+  return (s && s.indexOf('?') === -1 && s.indexOf('�') === -1) ? s : '';
+}
+function _cleanArr(arr) {
+  return (arr || []).map(function(x) {
+    if (typeof x !== 'string') return '';
+    return _sanitizeStr(x);
+  }).filter(function(s) { return s; });
+}
 var septicNames = [];
-try { var sn = localStorage.getItem('dyn_septics'); if (sn) { septicNames = JSON.parse(sn); if (!Array.isArray(septicNames)) septicNames = []; } } catch(e){}
+try { var sn = localStorage.getItem('dyn_septics'); if (sn) { septicNames = _cleanArr(JSON.parse(sn)); } } catch(e){}
 
 // Fetch reference data from Supabase for mobile users
 (function(){
@@ -166,15 +177,15 @@ try { var sn = localStorage.getItem('dyn_septics'); if (sn) { septicNames = JSON
         if (!Array.isArray(raw) && raw && typeof raw === 'object') { raw = Object.values(raw); }
         if (Array.isArray(raw)) {
           septicNames = raw.map(function(s){
-            if (typeof s === 'string') return s;
+            if (typeof s === 'string') return _sanitizeStr(s);
             if (s && typeof s === 'object') {
-              if (s.name && typeof s.name === 'string') return s.name;
-              if (s.title && typeof s.title === 'string') return s.title;
+              if (s.name && typeof s.name === 'string') return _sanitizeStr(s.name);
+              if (s.title && typeof s.title === 'string') return _sanitizeStr(s.title);
               var vals = Object.values(s).filter(function(v){ return typeof v === 'string' && v.length > 1; });
-              if (vals.length) return vals[0];
+              if (vals.length) return _sanitizeStr(vals[0]);
             }
             return '';
-          }).filter(function(s){ return s && s.trim(); });
+          }).filter(function(s){ return s; });
           cnt = septicNames.length;
         }
       }
