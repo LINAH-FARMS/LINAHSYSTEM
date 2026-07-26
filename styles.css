@@ -270,6 +270,8 @@
       border-radius: var(--radius);
       box-shadow: var(--shadow);
       overflow-x: auto;
+      overflow-y: auto;
+      max-height: 400px;
       margin-bottom: 20px;
     }
 
