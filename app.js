@@ -1353,6 +1353,13 @@
 
     function autoDiscoverDynamicData() {
       var changed = false;
+      // Clean garbled entries from dynamic arrays
+      function cleanGarbled(arr) { return arr.filter(function(x) { return typeof x === 'string' && x.trim().length > 0 && x.indexOf('?') === -1 && x.indexOf('�') === -1; }); }
+      dynamicSectors = cleanGarbled(dynamicSectors);
+      dynamicRooms = cleanGarbled(dynamicRooms);
+      dynamicSeptics = cleanGarbled(dynamicSeptics);
+      dynamicDepts = cleanGarbled(dynamicDepts);
+      dynamicTitles = cleanGarbled(dynamicTitles);
       // Discover rooms from roomsCapacity
       var roomSet = {};
       dynamicRooms.forEach(function(r) { roomSet[r] = true; });
@@ -1391,6 +1398,10 @@
         _lsSet('dyn_rooms', JSON.stringify(_strArr(dynamicRooms)));
         _lsSet('dyn_septics', JSON.stringify(_strArr(dynamicSeptics)));
         _lsSet('linah_bakery_contractors_names', JSON.stringify(_strArr(bakeryContractorsNames)));
+      } else {
+        _lsSet('dyn_sectors', JSON.stringify(_strArr(dynamicSectors)));
+        _lsSet('dyn_rooms', JSON.stringify(_strArr(dynamicRooms)));
+        _lsSet('dyn_septics', JSON.stringify(_strArr(dynamicSeptics)));
       }
     }
 
