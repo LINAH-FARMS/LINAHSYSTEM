@@ -6342,6 +6342,9 @@ function renderTeaSugarTable() {
       var today = new Date().toISOString().split('T')[0];
       var monthKey = today.slice(0, 7);
 
+      var dup = teaSugarDisbursements.some(function(d) { return (d.empCode||d.empId) == empId && d.period === period && _tsMonthKey(d.date) === monthKey; });
+      if (dup) return alert('⚠️ هذا الموظف استلم مقررات الشاي/السكر بالفعل لهذه الدورة في هذا الشهر');
+
       // Check remaining balance for THIS month
       let stats = getTeaSugarPeriodStats(period, monthKey);
       if (stats.totalTeaGiven <= 0) return alert('⚠️ لم يتم تسجيل دفعة تموين لـ ' + _tsMonthName(monthKey) + '. سجّل دفعة أولاً.');
@@ -9102,7 +9105,10 @@ reports.forEach(function(r) {
               var delKey = (e.date||'') + '|' + (e.period||'') + '|' + (e.empCode||'') + '|' + (e.teaPacks||0) + '|' + (e.sugar||0);
               if (_isDeleted('teaSugarDisbursements', delKey)) return;
               var exists = teaSugarDisbursements.some(function(d) { return d.date === e.date && d.empCode === e.empCode && d.period === e.period && d.createdAt === e.createdAt; });
-              if (!exists) {
+              var dupKey = (e.date||'') + '|' + (e.period||'') + '|' + (e.empCode||'');
+              var monthKey = (e.date||'').slice(0, 7);
+              var dupExists = teaSugarDisbursements.some(function(d) { return (d.empCode||d.empId) == e.empCode && d.period === e.period && _tsMonthKey(d.date) === monthKey; });
+              if (exists || dupExists) return;
                 var emp = employees.find(function(x) { return x.code == e.empCode || x.id == e.empId || (e.empName && x.name === e.empName); });
                 teaSugarDisbursements.push(_ts({
                   id: 'ts_' + Date.now() + '_' + Math.random().toString(36).slice(2,6),

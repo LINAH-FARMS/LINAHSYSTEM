@@ -367,6 +367,9 @@ function saveTeaData() {
   var sugar = parseFloat(document.getElementById('dd-sugar').value) || 0;
   if (!empId) { showMsg('اختر موظفاً أولاً.', true); return; }
   if (!teaPacks && !sugar) { showMsg('ادخل كمية الشاي أو السكر.', true); return; }
+  var monthKey = date.slice(0, 7);
+  var dup = dailyData.some(function(d) { return d.empCode === code && d.period === period && (d.teaPacks||d.sugar) && d.date.slice(0, 7) === monthKey; });
+  if (dup) { showMsg('⚠️ هذا الموظف استلم بالفعل مقررات الشاي/السكر لهذه الدورة في هذا الشهر', true); return; }
   var entry = { date: date, empId: empId, empCode: code, empName: name, period: period, teaPacks: teaPacks, sugar: sugar, section: 'tea', createdAt: new Date().toISOString() };
   _saveDailyEntry(entry, '✅ تم حفظ بيانات الشاي ' + date);
   resetTeaFields();
@@ -416,7 +419,12 @@ function saveDailyData(){
   var septicTrips = parseInt(document.getElementById('dd-septic-trips').value) || 0;
   var septicSupervisor = document.getElementById('dd-septic-supervisor').value.trim();
   if (!teaPacks && !sugar && !maintTask && !septicName) { showMsg('ادخل بيانات على الأقل في قسم واحد.', true); return; }
-  var entry = { date: date, empId: empId, empCode: code, empName: name, period: period, teaPacks: teaPacks, sugar: sugar, maintCat: maintCat, maintTask: maintTask, maintTech: maintTech, maintStatus: maintStatus, maintNotes: maintNotes, maintMats: JSON.parse(JSON.stringify(ddMaintMaterials)), septicName: septicName, septicTrips: septicTrips, septicSupervisor: septicSupervisor, createdAt: new Date().toISOString() };
+  if (teaPacks || sugar) {
+    var monthKey = date.slice(0, 7);
+    var dup = dailyData.some(function(d) { return d.empCode === code && d.period === period && (d.teaPacks||d.sugar) && d.date.slice(0, 7) === monthKey; });
+    if (dup) { showMsg('⚠️ هذا الموظف استلم بالفعل مقررات الشاي/السكر لهذه الدورة في هذا الشهر', true); return; }
+  }
+  var entry = { date: date, empId: empId, empCode: code, empName: name, period: period, teaPacks: teaPacks, sugar: sugar, section: (teaPacks||sugar) ? 'tea' : '', maintCat: maintCat, maintTask: maintTask, maintTech: maintTech, maintStatus: maintStatus, maintNotes: maintNotes, maintMats: JSON.parse(JSON.stringify(ddMaintMaterials)), septicName: septicName, septicTrips: septicTrips, septicSupervisor: septicSupervisor, createdAt: new Date().toISOString() };
   _saveDailyEntry(entry, '✅ تم حفظ بيانات اليوم ' + date);
   resetForm();
 }
