@@ -1363,6 +1363,16 @@
           changed = true;
         }
       });
+      // Discover sectors/buildings from roomsCapacity
+      var sectorSet = {};
+      dynamicSectors.forEach(function(s) { sectorSet[s] = true; });
+      roomsCapacity.forEach(function(r) {
+        if (r.sector && !sectorSet[r.sector.trim()]) {
+          dynamicSectors.push(r.sector.trim());
+          sectorSet[r.sector.trim()] = true;
+          changed = true;
+        }
+      });
       // Discover septic names from septicRecords
       var septicSet = {};
       dynamicSeptics.forEach(function(s) { septicSet[s] = true; });
@@ -1377,6 +1387,7 @@
       // Discover bakery contractor names from supplies — disabled per user request, only 6 fixed names
 
       if (changed) {
+        _lsSet('dyn_sectors', JSON.stringify(_strArr(dynamicSectors)));
         _lsSet('dyn_rooms', JSON.stringify(_strArr(dynamicRooms)));
         _lsSet('dyn_septics', JSON.stringify(_strArr(dynamicSeptics)));
         _lsSet('linah_bakery_contractors_names', JSON.stringify(_strArr(bakeryContractorsNames)));
