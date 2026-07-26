@@ -29,11 +29,11 @@ function exportComprehensiveReport() {
   var dateStr = new Date().toLocaleDateString('ar-EG');
 
   // ── Sheet 1: Executive Summary ──
-  var totalEmp = (window.employees || []).length;
-  var permP = (window.employees || []).filter(function(e) { return e.status === 'P' && (e.contract || 'دائم') === 'دائم'; }).length;
-  var permV = (window.employees || []).filter(function(e) { return e.status === 'V' && (e.contract || 'دائم') === 'دائم'; }).length;
-  var casP = (window.employees || []).filter(function(e) { return e.status === 'P' && (e.contract || 'دائم') === 'كاجول'; }).length;
-  var casV = (window.employees || []).filter(function(e) { return e.status === 'V' && (e.contract || 'دائم') === 'كاجول'; }).length;
+  var totalEmp = (typeof employees !== 'undefined' ? employees : []).length;
+  var permP = (typeof employees !== 'undefined' ? employees : []).filter(function(e) { return e.status === 'P' && (e.contract || 'دائم') === 'دائم'; }).length;
+  var permV = (typeof employees !== 'undefined' ? employees : []).filter(function(e) { return e.status === 'V' && (e.contract || 'دائم') === 'دائم'; }).length;
+  var casP = (typeof employees !== 'undefined' ? employees : []).filter(function(e) { return e.status === 'P' && (e.contract || 'دائم') === 'كاجول'; }).length;
+  var casV = (typeof employees !== 'undefined' ? employees : []).filter(function(e) { return e.status === 'V' && (e.contract || 'دائم') === 'كاجول'; }).length;
 
   var summaryData = [
     ['لينه فارمز - تقرير شامل', '', '', ''],
@@ -51,7 +51,7 @@ function exportComprehensiveReport() {
 
   // Housing stats
   var sectors = {};
-  (window.roomsCapacity || []).forEach(function(r) {
+  (typeof roomsCapacity !== 'undefined' ? roomsCapacity : []).forEach(function(r) {
     var sec = r.sector || 'عام';
     if (!sectors[sec]) sectors[sec] = { sector: sec, rooms: 0, beds: 0, residents: 0 };
     sectors[sec].rooms++;
@@ -70,7 +70,7 @@ function exportComprehensiveReport() {
 
   // Meals stats
   var today = new Date().toISOString().split('T')[0];
-  var todayMeals = (window.mealLog || []).filter(function(m) { return (m.date || '').startsWith(today); });
+  var todayMeals = (typeof mealLogs !== 'undefined' ? mealLogs : []).filter(function(m) { return (m.date || '').startsWith(today); });
   var mealCounts = {};
   todayMeals.forEach(function(m) {
     (m.meals || []).forEach(function(ml) { mealCounts[ml] = (mealCounts[ml] || 0) + Number(m.count || 1); });
@@ -91,7 +91,7 @@ function exportComprehensiveReport() {
   // ── Sheet 2: Employees ──
   var empData = [];
   empData.push(['كود', 'الاسم', 'القسم', 'الوظيفة', 'الحالة', 'نوع العقد', 'رقم الموبايل', 'تاريخ التعيين', 'المحافظة', 'المبنى', 'الغرفة']);
-  (window.employees || []).sort(function(a, b) { return (a.name || '').localeCompare(b.name || '', 'ar'); }).forEach(function(e) {
+  (typeof employees !== 'undefined' ? employees : []).sort(function(a, b) { return (a.name || '').localeCompare(b.name || '', 'ar'); }).forEach(function(e) {
     empData.push([
       e.code || '', __stripEmoji(e.name), __stripEmoji(e.dept || ''), __stripEmoji(e.title || ''),
       e.status === 'P' ? 'موجود' : 'إجازة', e.contract || 'دائم',
@@ -105,7 +105,7 @@ function exportComprehensiveReport() {
   // ── Sheet 3: Housing ──
   var houseData = [];
   houseData.push(['القطاع', 'الغرفة', 'عدد الأسرّة', 'المقيمين', 'نسبة الإشغال']);
-  (window.roomsCapacity || []).forEach(function(r) {
+  (typeof roomsCapacity !== 'undefined' ? roomsCapacity : []).forEach(function(r) {
     var residents = 0;
     if (r.users) residents = typeof r.users === 'string' ? r.users.split(',').filter(Boolean).length : (r.users.length || 0);
     var pct = Number(r.beds) ? Math.round((residents / Number(r.beds)) * 100) : 0;
@@ -117,11 +117,11 @@ function exportComprehensiveReport() {
   // ── Sheet 4: Meals ──
   var mealData = [];
   mealData.push(['التاريخ', 'الاسم', 'الوجبات', 'عدد الأفراد', 'ملاحظات']);
-  (window.mealLog || []).slice().reverse().forEach(function(m) {
+  (typeof mealLogs !== 'undefined' ? mealLogs : []).slice().reverse().forEach(function(m) {
     var meals = Array.isArray(m.meals) ? m.meals.join(' - ') : (m.meals || '');
     var eName = '';
     if (m.id) {
-      var found = (window.employees || []).find(function(emp) { return emp.code === m.id || emp.id === m.id; });
+      var found = (typeof employees !== 'undefined' ? employees : []).find(function(emp) { return emp.code === m.id || emp.id === m.id; });
       if (found) eName = __stripEmoji(found.name);
     }
     mealData.push([m.date || '', eName || m.name || '', meals, Number(m.count) || 1, m.notes || '']);
@@ -132,7 +132,7 @@ function exportComprehensiveReport() {
   // ── Sheet 5: Inventory ──
   var invData = [];
   invData.push(['الكود', 'الصنف', 'الكمية', 'الوحدة', 'الحد الأدنى', 'القسم']);
-  (window.inventoryItems || []).forEach(function(item) {
+  (typeof inventoryItems !== 'undefined' ? inventoryItems : []).forEach(function(item) {
     invData.push([item.code || '', item.name || '', Number(item.qty) || 0, item.unit || '', Number(item.min) || 0, item.dept || '']);
   });
   var ws5 = ExcelStyle.makeSheet(invData, { headerRow: 0, filter: true, freeze: 1 });
@@ -141,7 +141,7 @@ function exportComprehensiveReport() {
   // ── Sheet 6: Hospitality (Active) ──
   var hospData = [];
   hospData.push(['الاسم', 'النوع', 'اللقب', 'عدد الضيوف', 'تاريخ الوصول', 'تاريخ المغادرة']);
-  (window.hospitalities || []).filter(function(h) {
+  (typeof hospitalities !== 'undefined' ? hospitalities : []).filter(function(h) {
     return h.arrival && h.arrival <= today && (h.departure || '2099-12-31') >= today;
   }).forEach(function(h) {
     hospData.push([__stripEmoji(h.name), h.type || '', __stripEmoji(h.title || ''), Number(h.guests) || 1, h.arrival || '', h.departure || '']);
@@ -154,12 +154,12 @@ function exportComprehensiveReport() {
   // ── Sheet 7: Vacations ──
   var vacData = [];
   vacData.push(['الموظف', 'نوع الإجازة', 'من', 'إلى', 'ملاحظات']);
-  (window.vacations || []).filter(function(v) {
+  (typeof vacations !== 'undefined' ? vacations : []).filter(function(v) {
     return !v.endDate || v.endDate >= today;
   }).forEach(function(v) {
     var eName = '';
     if (v.empId) {
-      var found = (window.employees || []).find(function(emp) { return emp.code === v.empId || emp.id === v.empId; });
+      var found = (typeof employees !== 'undefined' ? employees : []).find(function(emp) { return emp.code === v.empId || emp.id === v.empId; });
       if (found) eName = __stripEmoji(found.name);
     }
     vacData.push([eName || v.empId || '', v.type || '', v.startDate || '', v.endDate || '', v.notes || '']);
