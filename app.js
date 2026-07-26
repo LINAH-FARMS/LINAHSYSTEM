@@ -537,6 +537,71 @@
         }
         g('dash-ts-stock-content').innerHTML = html;
       }
+      try { renderDashboardSepticChart(); } catch(e) { console.error('septic chart error:', e); }
+    }
+
+    function renderDashboardSepticChart() {
+      var g = function(id) { return document.getElementById(id); };
+      var canvas = g('dash-septic-chart');
+      if (!canvas) return;
+      var fromInput = g('dashSepticFrom'), toInput = g('dashSepticTo');
+      if (fromInput && !fromInput.value) {
+        var d = new Date(); d.setDate(d.getDate() - 30);
+        fromInput.value = d.toISOString().split('T')[0];
+      }
+      if (toInput && !toInput.value) toInput.value = new Date().toISOString().split('T')[0];
+      var from = fromInput ? fromInput.value : '', to = toInput ? toInput.value : '';
+      if (!from || !to) return;
+      var filtered = septicRecords.filter(function(s) {
+        var d = (s.date || '').slice(0, 10);
+        return d >= from && d <= to;
+      });
+      // Aggregate trips by septic name
+      var map = {};
+      filtered.forEach(function(s) {
+        var n = s.name || s.sector || 'غير معروف';
+        map[n] = (map[n] || 0) + (parseInt(s.trips) || 0);
+      });
+      var labels = Object.keys(map).sort();
+      var values = labels.map(function(l) { return map[l]; });
+      var total = values.reduce(function(a, b) { return a + b; }, 0);
+      if (g('dash-septic-badge')) g('dash-septic-badge').innerText = total;
+      if (g('dash-septic-legend')) g('dash-septic-legend').innerHTML = 'إجمالي النقلات: ' + total + ' | الفترة: ' + from + ' → ' + to;
+
+      // Destroy existing Chart.js instance
+      if (canvas.__chart) { try { canvas.__chart.destroy(); } catch(e) {} }
+      if (typeof Chart === 'undefined') return;
+      var ctx = canvas.getContext('2d');
+      var colors = ['#1b5e20','#2e7d32','#388e3c','#43a047','#4caf50','#66bb6a','#81c784','#a5d6a7','#c8e6c9','#e8f5e9','#1b5e20','#2e7d32','#388e3c','#43a047','#4caf50','#66bb6a','#81c784','#a5d6a7','#c8e6c9','#e8f5e9'];
+      canvas.__chart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'عدد النقلات',
+            data: values,
+            backgroundColor: labels.map(function(_, i) { return colors[i % colors.length]; }),
+            borderColor: '#1b5e20',
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              rtl: true,
+              callbacks: {
+                label: function(ctx) { return ctx.parsed.y + ' نقلة'; }
+              }
+            }
+          },
+          scales: {
+            y: { beginAtZero: true, title: { display: true, text: 'عدد النقلات' } },
+            x: { ticks: { maxRotation: 45 } }
+          }
+        }
+      });
     }
 
     function renderQuickActions() {

@@ -290,6 +290,22 @@
         </div>
       </div>
     </div>
+    <div class="dash-chart-row">
+      <div class="dash-chart-panel" style="grid-column:1/-1;">
+        <div class="dash-chart-title">🚛 إحصائيات البيارات <span class="badge-count" id="dash-septic-badge">0</span></div>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:8px 0;">
+          <label style="font-size:12px;font-weight:600;">من:</label>
+          <input type="date" id="dashSepticFrom" style="padding:4px 8px;border:1px solid #ccc;border-radius:6px;font-size:12px;">
+          <label style="font-size:12px;font-weight:600;">إلى:</label>
+          <input type="date" id="dashSepticTo" style="padding:4px 8px;border:1px solid #ccc;border-radius:6px;font-size:12px;">
+          <button class="btn btn-primary" style="padding:4px 12px;font-size:11px;" onclick="renderDashboardSepticChart()">عرض</button>
+        </div>
+        <div style="position:relative;height:250px;">
+          <canvas id="dash-septic-chart"></canvas>
+        </div>
+        <div id="dash-septic-legend" style="font-size:11px;margin-top:6px;"></div>
+      </div>
+    </div>
     <!-- Attendance Report Panel -->
     <!-- Bakery Consumption Panel -->
     <div class="dash-chart-panel" style="grid-column:1/-1;margin-top:10px;">
