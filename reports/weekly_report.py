@@ -142,13 +142,6 @@ except Exception:
     mw_data = []
 mw_data = norm_filter(mw_data, 'date')
 
-ts_periods = set(b.get('period','') for b in ts_batches if b.get('period',''))
-if ts_periods:
-    for t in data.get('teaSugarDisbursements', []):
-        p = t.get('period','')
-        if p in ts_periods and t not in tea_sugar:
-            tea_sugar.append(t)
-
 today_str = datetime.now().strftime('%Y-%m-%d')
 filename = f'C:\\Users\\Salem Magdy\\Desktop\\Lina_Weekly_{today_str}.xlsx'
 
