@@ -5491,6 +5491,29 @@ function toggleEmployeeStatus(empId) {
         html += '</div>';
       }
 
+      // 4. الشاي والسكر
+      var tsDups = [];
+      var tsSeen = {};
+      teaSugarDisbursements.forEach(function(t, i) {
+        var key = (t.empCode||t.empId||'') + '|' + t.period + '|' + _tsMonthKey(t.date);
+        if (tsSeen[key] !== undefined) {
+          tsDups.push({ idx: i, rec: t, origIdx: tsSeen[key] });
+        } else {
+          tsSeen[key] = i;
+        }
+      });
+      if (tsDups.length > 0) {
+        found = true;
+        html += '<div style="margin-bottom:12px;"><strong style="color:#c62828;">🍵 شاي وسكر متكرر (' + tsDups.length + '):</strong>';
+        tsDups.forEach(function(d) {
+          html += '<div style="background:#ffebee;padding:8px;border-radius:6px;margin:4px 0;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;">';
+          html += '<span style="font-size:13px;">🍵 ' + (d.rec.empName||'') + ' | ' + d.rec.period + ' | ' + d.rec.date + '</span>';
+          html += '<button onclick="deleteDupTeaSugar(' + d.idx + ')" style="padding:4px 12px;background:#c62828;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:12px;">حذف التكرار</button>';
+          html += '</div>';
+        });
+        html += '</div>';
+      }
+
       if (!found) {
         html += '<div style="background:#e8f5e9;padding:12px;border-radius:6px;color:#2e7d32;font-weight:600;text-align:center;">✅ لا توجد بيانات مكررة</div>';
       } else {
@@ -5535,6 +5558,16 @@ function toggleEmployeeStatus(empId) {
       scanAndShowDuplicates();
     }
 
+    function deleteDupTeaSugar(idx) {
+      if (!requireAdmin()) return;
+      var rec = teaSugarDisbursements[idx];
+      if (!rec) return;
+      _logDeletion('teaSugarDisbursements', (rec.date||'') + '|' + (rec.period||rec.type||'') + '|' + (rec.empCode||rec.empId||'') + '|' + (rec.teaPacks||rec.quantity||'') + '|' + (rec.sugarKg||''));
+      teaSugarDisbursements.splice(idx, 1);
+      syncStorage(); renderTeaSugarTable(); renderTeaSugarBatchSummary();
+      scanAndShowDuplicates();
+    }
+
     function deleteAllDuplicates() {
       if (!requireAdmin()) return;
       if (!confirm('هل أنت متأكد من حذف جميع البيانات المكررة؟')) return;
@@ -5560,9 +5593,17 @@ function toggleEmployeeStatus(empId) {
         if (ctrSeen[key]) { bakeryContractorSupplies.splice(i, 1); } else { ctrSeen[key] = true; }
       }
 
+      // الشاي والسكر
+      var tsSeen = {};
+      for (var i = teaSugarDisbursements.length - 1; i >= 0; i--) {
+        var key = (teaSugarDisbursements[i].empCode||teaSugarDisbursements[i].empId||'') + '|' + teaSugarDisbursements[i].period + '|' + _tsMonthKey(teaSugarDisbursements[i].date);
+        if (tsSeen[key]) { teaSugarDisbursements.splice(i, 1); } else { tsSeen[key] = true; }
+      }
+
       syncStorage(); renderHospitalityTable(); renderMealLogTable();
       renderBakeryProductions(); updateBakeryProductionIngredientStocks();
       renderBakeryContractorSupplies(); updateBakeryStats(); updateBreadSupplyStats();
+      renderTeaSugarTable(); renderTeaSugarBatchSummary();
       scanAndShowDuplicates();
       alert('تم حفظ البيانات بنجاح ✅');
     }
