@@ -59,11 +59,18 @@
 
     function rebuildAllDropdowns() {
       autoDiscoverDynamicData();
+      // Normalize Arabic variants for dedup (ة/ه, أ/إ/آ/ا, ى/ي)
+      function govNorm(s) { return s.replace(/[ة]/g,'ه').replace(/[أإآ]/g,'ا').replace(/[ى]/g,'ي'); }
       var allGovs = defaultGovs.slice();
+      var govNormSet = {};
+      defaultGovs.forEach(function(g) { govNormSet[govNorm(g)] = true; });
       employees.forEach(emp => {
         if (emp.dept && !dynamicDepts.includes(emp.dept.trim())) dynamicDepts.push(emp.dept.trim());
         if (emp.title && !dynamicTitles.includes(emp.title.trim())) dynamicTitles.push(emp.title.trim());
-        if (emp.gov && !allGovs.includes(emp.gov.trim())) allGovs.push(emp.gov.trim());
+        if (emp.gov) {
+          var ng = govNorm(emp.gov.trim());
+          if (!govNormSet[ng]) { govNormSet[ng] = true; allGovs.push(emp.gov.trim()); }
+        }
       });
       // Remove invalid governorates and sort
       var validGovs = allGovs.filter(function(g) {
@@ -1435,7 +1442,7 @@
           s = s.replace(/[\u0000-\u001F\u007F-\u009F\u200B-\u200F\u2028-\u202E\uFEFF\u00AD\u061C\u2060-\u2069\uFFFD]/g, '').replace(/[?]/g, '').trim();
           if (!s || s.length < 2) { changed = true; return; }
           if (s.normalize) s = s.normalize('NFC');
-          var k = s.toLowerCase();
+          var k = s.replace(/[ة]/g,'ه').replace(/[أإآ]/g,'ا').replace(/[ى]/g,'ي').toLowerCase();
           if (seen[k]) { changed = true; return; }
           seen[k] = true; out.push(s);
         });
