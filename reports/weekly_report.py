@@ -79,13 +79,14 @@ def filt(arr, entity):
         'bakeryProductions': lambda p: f"{p.get('date','')}|{p.get('breadCount','')}",
         'bakeryContractorSupplies': lambda s: f"{s.get('name','')}|{s.get('date','')}|{s.get('count','')}",
         'septicRecords': lambda s: f"{s.get('date','')}|{s.get('name',s.get('sector',''))}|{s.get('trips',s.get('quantity',''))}",
-        'teaSugarDisbursements': lambda t: f"{t.get('date','')}|{t.get('period',t.get('type',''))}|{t.get('empCode','')}|{t.get('teaPacks',t.get('quantity',''))}|{t.get('sugarKg','')}"
+        'teaSugarDisbursements': lambda t: f"{t.get('date','')}|{t.get('period',t.get('type',''))}|{t.get('empCode','')}|{t.get('teaPacks',t.get('quantity',''))}|{t.get('sugarKg','')}",
+        'incident_reports': lambda r: str(r.get('id','')) or r.get('name','')
     }
     fn = key_fns.get(entity)
     if not fn: return arr
     return [x for x in arr if fn(x) not in keys]
 
-for ent in ['employees','hospitalities','maintenanceRecords','bakeryProductions','bakeryContractorSupplies','septicRecords','teaSugarDisbursements']:
+for ent in ['employees','hospitalities','maintenanceRecords','bakeryProductions','bakeryContractorSupplies','septicRecords','teaSugarDisbursements','incident_reports']:
     if data.get(ent): data[ent] = filt(data[ent], ent)
 
 parser = argparse.ArgumentParser()
@@ -110,9 +111,22 @@ ctr_sup = norm_filter(data.get('bakeryContractorSupplies', []), 'date')
 meals = norm_filter(data.get('mealLogs', []), 'date')
 maint = norm_filter(data.get('maintenanceRecords', []), 'date')
 septic = norm_filter(data.get('septicRecords', []), 'date')
-incidents = norm_filter(data.get('incident_reports', []), 'date')
 ts_batches = norm_filter(data.get('teaSugarBatches', []), 'date')
 tea_sugar = norm_filter(data.get('teaSugarDisbursements', []), 'date')
+# Fetch incident reports (stored under a separate sync_data id)
+try:
+    ri = requests.get(f'{SUPABASE_URL}/rest/v1/sync_data?id=eq.incident_reports&select=data', headers={'apikey': SUPABASE_KEY, 'Authorization': f'Bearer {SUPABASE_KEY}'})
+    ri_raw = ri.json()
+    if isinstance(ri_raw, list) and len(ri_raw) > 0:
+        ri_d = ri_raw[0]
+        ri_data = json.loads(ri_d['data']) if isinstance(ri_d.get('data',''), str) else ri_d.get('data', [])
+        if not isinstance(ri_data, list): ri_data = []
+    else:
+        ri_data = []
+except Exception:
+    ri_data = []
+ri_data = filt(ri_data, 'incident_reports')
+incidents = norm_filter(ri_data, 'opened_at')
 # Also include tea sugar by matching period of batches found this week
 # Fetch meal waste entries (stored under a separate sync_data id)
 try:
@@ -212,10 +226,10 @@ if septic:
 
 if incidents:
     ws8 = wb.create_sheet('Incidents')
-    style_sheet(ws8, ['Date', 'Location', 'Category', 'Description', 'Status'], [
-        [i.get('date','')[:10], i.get('location',''), i.get('category',''), i.get('description',''), i.get('status','')]
-        for i in sorted(incidents, key=lambda x: x.get('date',''))
-    ], [14,15,15,40,10], title='Incidents')
+    style_sheet(ws8, ['Date', 'Location', 'Category', 'Description', 'Status', 'Priority', 'Reporter'], [
+        [(i.get('opened_at','') or i.get('date',''))[:10], i.get('location',''), i.get('type', i.get('category', '')), i.get('desc','') or i.get('description',''), i.get('status',''), i.get('priority',''), i.get('name','')]
+        for i in sorted(incidents, key=lambda x: x.get('opened_at','') or x.get('date',''))
+    ], [14,15,15,40,10,12,20], title='Incidents')
 
 if tea_sugar:
     ws9 = wb.create_sheet('TeaSugar')
