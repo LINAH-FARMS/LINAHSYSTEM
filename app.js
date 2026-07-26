@@ -1354,12 +1354,26 @@
     function autoDiscoverDynamicData() {
       var changed = false;
       // Clean garbled entries from dynamic arrays
-      function cleanGarbled(arr) { return arr.filter(function(x) { return typeof x === 'string' && x.trim().length > 0 && x.indexOf('?') === -1 && x.indexOf('�') === -1; }); }
+      function cleanGarbled(arr) {
+        return (arr || []).map(function(x) {
+          if (typeof x !== 'string') return '';
+          var s = x.trim();
+          // Remove control chars, zero-width chars, isolate chars that break Arabic
+          s = s.replace(/[\u0000-\u001F\u007F-\u009F\u200B-\u200F\u2028-\u202E\uFEFF\u00AD\u061C\u2060-\u2069]/g, '').trim();
+          return s;
+        }).filter(function(s) {
+          return s && s.indexOf('?') === -1 && s.indexOf('�') === -1;
+        });
+      }
       dynamicSectors = cleanGarbled(dynamicSectors);
       dynamicRooms = cleanGarbled(dynamicRooms);
       dynamicSeptics = cleanGarbled(dynamicSeptics);
       dynamicDepts = cleanGarbled(dynamicDepts);
       dynamicTitles = cleanGarbled(dynamicTitles);
+      dynamicVisitorTypes = cleanGarbled(dynamicVisitorTypes);
+      // Restore defaults if arrays are empty after cleaning
+      if (!dynamicSectors.length) { dynamicSectors = ["سكن المهندسين", "سكن العاملين", "سكن الإداري"]; changed = true; }
+      if (!dynamicVisitorTypes.length) { dynamicVisitorTypes = ["ضيوف","سيدات","طلبة مدرسة","سائقين","مقدم خدمة بدون اجر","مقدم خدمة باجر","امن ليلي"]; changed = true; }
       // Discover rooms from roomsCapacity
       var roomSet = {};
       dynamicRooms.forEach(function(r) { roomSet[r] = true; });
@@ -1397,11 +1411,13 @@
         _lsSet('dyn_sectors', JSON.stringify(_strArr(dynamicSectors)));
         _lsSet('dyn_rooms', JSON.stringify(_strArr(dynamicRooms)));
         _lsSet('dyn_septics', JSON.stringify(_strArr(dynamicSeptics)));
+        _lsSet('dyn_visitor_types', JSON.stringify(_strArr(dynamicVisitorTypes)));
         _lsSet('linah_bakery_contractors_names', JSON.stringify(_strArr(bakeryContractorsNames)));
       } else {
         _lsSet('dyn_sectors', JSON.stringify(_strArr(dynamicSectors)));
         _lsSet('dyn_rooms', JSON.stringify(_strArr(dynamicRooms)));
         _lsSet('dyn_septics', JSON.stringify(_strArr(dynamicSeptics)));
+        _lsSet('dyn_visitor_types', JSON.stringify(_strArr(dynamicVisitorTypes)));
       }
     }
 
@@ -1412,8 +1428,10 @@
         (arr || []).forEach(function(x) {
           var s = (typeof x === 'string') ? x : (x ? String(x.name || x.title || x.label || x) : '');
           s = (s || '').trim();
+          s = s.replace(/[\u0000-\u001F\u007F-\u009F\u200B-\u200F\u2028-\u202E\uFEFF\u00AD\u061C\u2060-\u2069]/g, '').trim();
           if (!s) { changed = true; return; }
-          if (s.indexOf('?') !== -1) { changed = true; return; }
+          if (s.indexOf('?') !== -1 || s.indexOf('�') !== -1) { changed = true; return; }
+          if (s.normalize) s = s.normalize('NFC');
           var k = s.toLowerCase();
           if (seen[k]) { changed = true; return; }
           seen[k] = true; out.push(s);
