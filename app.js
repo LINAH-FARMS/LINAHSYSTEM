@@ -1385,12 +1385,20 @@
         }
       });
       // Discover sectors/buildings from roomsCapacity
+      function sanitizeStr(s) {
+        if (typeof s !== 'string') return '';
+        s = s.trim();
+        s = s.replace(/[\u0000-\u001F\u007F-\u009F\u200B-\u200F\u2028-\u202E\uFEFF\u00AD\u061C\u2060-\u2069]/g, '').trim();
+        if (!s || s.indexOf('?') !== -1 || s.indexOf('�') !== -1) return '';
+        return s;
+      }
       var sectorSet = {};
       dynamicSectors.forEach(function(s) { sectorSet[s] = true; });
       roomsCapacity.forEach(function(r) {
-        if (r.sector && !sectorSet[r.sector.trim()]) {
-          dynamicSectors.push(r.sector.trim());
-          sectorSet[r.sector.trim()] = true;
+        var sec = sanitizeStr(r.sector);
+        if (sec && !sectorSet[sec]) {
+          dynamicSectors.push(sec);
+          sectorSet[sec] = true;
           changed = true;
         }
       });

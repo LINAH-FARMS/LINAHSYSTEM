@@ -128,14 +128,22 @@
     });
     // Auto-discover: sectors from roomsCapacity, rooms from roomsCapacity, septics from septicRecords
     (function() {
+      function _sanitize(s) {
+        if (typeof s !== 'string') return '';
+        s = s.trim().replace(/[\u0000-\u001F\u007F-\u009F\u200B-\u200F\u2028-\u202E\uFEFF\u00AD\u061C\u2060-\u2069]/g, '').trim();
+        return (s && s.indexOf('?') === -1 && s.indexOf('�') === -1) ? s : '';
+      }
       var sectorSet = {};
       dynamicSectors.forEach(function(s) { sectorSet[s] = true; });
       roomsCapacity.forEach(function(r) {
-        if (r.sector && !sectorSet[r.sector]) {
-          dynamicSectors.push(r.sector);
-          sectorSet[r.sector] = true;
+        var sec = _sanitize(r.sector);
+        if (sec && !sectorSet[sec]) {
+          dynamicSectors.push(sec);
+          sectorSet[sec] = true;
         }
       });
+      // Clean existing entries
+      dynamicSectors = dynamicSectors.filter(function(s) { return _sanitize(s); });
       _lsSet('dyn_sectors', JSON.stringify(dynamicSectors));
     })();
     // evalTemplates now stores KPI objects: [{ name, max }, ...]
