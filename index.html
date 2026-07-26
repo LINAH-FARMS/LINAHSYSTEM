@@ -1676,6 +1676,7 @@
       <button class="btn btn-excel" onclick="document.getElementById('ts-excel-file').click()" style="background-color:#1565c0;">📥 استيراد شيت (Excel)</button>
       <input type="file" id="ts-excel-file" style="display:none;" accept=".xlsx, .xls" onchange="importTeaSugarFromExcel(event)">
       <button class="btn btn-excel" onclick="exportTeaSugarToExcel()" style="background-color:#1565c0;">تصدير Excel</button>
+      <button class="btn btn-excel" onclick="exportSelectedToExcel()" style="background-color:#e65100;">📤 تصدير المحدد</button>
       <button class="btn btn-secondary" onclick="showPrintChoice('table-tea-sugar')">🖨️ طباعة</button>
     </div>
     <div class="table-container">
