@@ -163,6 +163,32 @@ style_sheet(ws, ['Item', 'Count'], [
     ['Meal Waste', len(mw_data)]
 ], [28, 12], title=f'Weekly Report {fmt(start)} to {fmt(end)}')
 
+# Daily Statistics sheet
+daily_stats = data.get('dailyStats', [])
+daily_stats = norm_filter(daily_stats, 'date')
+if daily_stats:
+    ws_ds = wb.create_sheet('DailyStats')
+    ds_rows = [[
+        norm_date(s.get('date','')),
+        s.get('total',0),
+        s.get('permP',0), f"{s.get('permPPct',0)}%",
+        s.get('permV',0), f"{s.get('permVPct',0)}%",
+        s.get('casP',0), f"{s.get('casPPct',0)}%",
+        s.get('hospGuests',0)
+    ] for s in sorted(daily_stats, key=lambda x: norm_date(x.get('date','')))]
+    style_sheet(ws_ds, ['Date', 'Total', 'Perm Present', 'Perm Present %', 'Perm Leave', 'Perm Leave %',
+                         'Casual Present', 'Casual Present %', 'Guests'],
+                ds_rows, [14,10,12,12,12,12,12,12,10], title='Daily Statistics')
+    if len(ds_rows) > 1:
+        data_end = 3 + len(ds_rows)
+        avg = lambda idx: round(sum(r[idx] for r in ds_rows) / len(ds_rows))
+        ws_ds.cell(row=data_end, column=1, value='معدل').font = Font(bold=True, size=11, color='1B5E20')
+        ws_ds.cell(row=data_end, column=2, value=avg(1))
+        ws_ds.cell(row=data_end, column=3, value=avg(2))
+        ws_ds.cell(row=data_end, column=5, value=avg(4))
+        ws_ds.cell(row=data_end, column=7, value=avg(6))
+        ws_ds.cell(row=data_end, column=9, value=avg(8))
+
 if prods:
     ws2 = wb.create_sheet('Bakery')
     style_sheet(ws2, ['Date', 'Bread', 'Flour', 'Bran', 'Salt', 'Yeast', 'Diesel'], [
