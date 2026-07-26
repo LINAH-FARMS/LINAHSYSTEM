@@ -1358,12 +1358,10 @@
         return (arr || []).map(function(x) {
           if (typeof x !== 'string') return '';
           var s = x.trim();
-          // Remove control chars, zero-width chars, isolate chars that break Arabic
-          s = s.replace(/[\u0000-\u001F\u007F-\u009F\u200B-\u200F\u2028-\u202E\uFEFF\u00AD\u061C\u2060-\u2069]/g, '').trim();
+          // Remove control chars, zero-width chars, and garbled replacement chars
+          s = s.replace(/[\u0000-\u001F\u007F-\u009F\u200B-\u200F\u2028-\u202E\uFEFF\u00AD\u061C\u2060-\u2069]/g, '').replace(/[\uFFFD?]/g, '').trim();
           return s;
-        }).filter(function(s) {
-          return s && s.indexOf('?') === -1 && s.indexOf('�') === -1;
-        });
+        }).filter(function(s) { return s; });
       }
       dynamicSectors = cleanGarbled(dynamicSectors);
       dynamicRooms = cleanGarbled(dynamicRooms);
@@ -1387,9 +1385,7 @@
       // Discover sectors/buildings from roomsCapacity
       function sanitizeStr(s) {
         if (typeof s !== 'string') return '';
-        s = s.trim();
-        s = s.replace(/[\u0000-\u001F\u007F-\u009F\u200B-\u200F\u2028-\u202E\uFEFF\u00AD\u061C\u2060-\u2069]/g, '').trim();
-        if (!s || s.indexOf('?') !== -1 || s.indexOf('�') !== -1) return '';
+        s = s.trim().replace(/[\u0000-\u001F\u007F-\u009F\u200B-\u200F\u2028-\u202E\uFEFF\u00AD\u061C\u2060-\u2069\uFFFD]/g, '').replace(/[?]/g, '').trim();
         return s;
       }
       var sectorSet = {};
@@ -1436,9 +1432,8 @@
         (arr || []).forEach(function(x) {
           var s = (typeof x === 'string') ? x : (x ? String(x.name || x.title || x.label || x) : '');
           s = (s || '').trim();
-          s = s.replace(/[\u0000-\u001F\u007F-\u009F\u200B-\u200F\u2028-\u202E\uFEFF\u00AD\u061C\u2060-\u2069]/g, '').trim();
+          s = s.replace(/[\u0000-\u001F\u007F-\u009F\u200B-\u200F\u2028-\u202E\uFEFF\u00AD\u061C\u2060-\u2069\uFFFD]/g, '').replace(/[?]/g, '').trim();
           if (!s) { changed = true; return; }
-          if (s.indexOf('?') !== -1 || s.indexOf('�') !== -1) { changed = true; return; }
           if (s.normalize) s = s.normalize('NFC');
           var k = s.toLowerCase();
           if (seen[k]) { changed = true; return; }

@@ -130,8 +130,8 @@
     (function() {
       function _sanitize(s) {
         if (typeof s !== 'string') return '';
-        s = s.trim().replace(/[\u0000-\u001F\u007F-\u009F\u200B-\u200F\u2028-\u202E\uFEFF\u00AD\u061C\u2060-\u2069]/g, '').trim();
-        return (s && s.indexOf('?') === -1 && s.indexOf('�') === -1) ? s : '';
+        s = s.trim().replace(/[\u0000-\u001F\u007F-\u009F\u200B-\u200F\u2028-\u202E\uFEFF\u00AD\u061C\u2060-\u2069\uFFFD]/g, '').replace(/[?]/g, '').trim();
+        return s;
       }
       var sectorSet = {};
       dynamicSectors.forEach(function(s) { sectorSet[s] = true; });
