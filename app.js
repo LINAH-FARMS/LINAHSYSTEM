@@ -9165,7 +9165,6 @@ reports.forEach(function(r) {
                   createdAt: e.createdAt
                 }));
                 imported++;
-              }
             } else if (section === 'maint') {
               var exists = maintenanceRecords.some(function(d) { return d.date === e.date && d.task === e.maintTask && d.tech === e.maintTech && d.createdAt === e.createdAt; });
               if (!exists) {
