@@ -11066,6 +11066,11 @@ reports.forEach(function(r) {
             } catch(e) {}
           });
           if (Array.isArray(bakeryContractorSupplies)) bakeryContractorSupplies = bakeryContractorSupplies.map(function(r) { if (typeof r === 'object' && r && (typeof r.name !== 'string' || r.name === '[object Object]' || !r.name.trim())) r.name = 'غير معروف'; return r; });
+          // Restrict dynamicSectors after pull to only sectors in roomsCapacity
+          var _vSec = {};
+          roomsCapacity.forEach(function(_r) { if (_r.sector) _vSec[_r.sector] = true; });
+          dynamicSectors = dynamicSectors.filter(function(_s) { return _vSec[_s]; });
+          if (!dynamicSectors.length) dynamicSectors = ["سكن المهندسين (السكن الجديد)","سكن الموظفين (السكن الإداري)","سكن العاملين (السكن الإداري)","سكن العاملين الجديد 2025 (C)","سكن العاملين الجديد 2025 (D)","سكن العاملين الجديد 2025 (E)","سكن العاملين الجديد 2025 (F)","سكن العاملين (سكن الجيزوارين)","سكن العاملين (سكن النخالين)","سكن القطاعات","سكن فاليو الجديد","سكن الكرفان"];
           syncLog('تم سحب ' + Object.keys(mergedData).length + ' عنصر من Supabase');
           _pulledAt['_lastPull'] = new Date().toISOString();
           _lsSet('_pulledAt', JSON.stringify(_pulledAt));
