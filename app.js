@@ -3975,6 +3975,11 @@ function toggleEmployeeStatus(empId) {
           if (!_lsGet('_roomsRebuiltWarned')) { console.warn('تم إعادة بناء ' + arr.length + ' غرفة/مبنى من بيانات العاملين (roomsCapacity كان فاضي)'); _lsSet('_roomsRebuiltWarned', '1'); }
           syncStorage();
         }
+        // Filter dynamicSectors to only include sectors that exist in roomsCapacity
+        var valid = {};
+        roomsCapacity.forEach(function(r) { if (r.sector) valid[r.sector] = true; });
+        dynamicSectors = dynamicSectors.filter(function(s) { return valid[s]; });
+        if (!dynamicSectors.length) dynamicSectors = ["سكن المهندسين (السكن الجديد)","سكن الموظفين (السكن الإداري)","سكن العاملين (السكن الإداري)","سكن العاملين الجديد 2025 (C)","سكن العاملين الجديد 2025 (D)","سكن العاملين الجديد 2025 (E)","سكن العاملين الجديد 2025 (F)","سكن العاملين (سكن الجيزوارين)","سكن العاملين (سكن النخالين)","سكن القطاعات","سكن فاليو الجديد","سكن الكرفان"];
         return arr.length;
       } catch(_e) { console.error('rebuildRoomsFromEmployees error:', _e); return 0; }
     }
