@@ -71,7 +71,7 @@
     let bakeryStockLog = _safeJsonParse(_lsGet('linah_bakery_stock_log'), []);
     let adminOvertime = _safeJsonParse(_lsGet('lineh_admin_overtime'), []);
 
-    let dynamicSectors = _strArr(_safeJsonParse(_lsGet('dyn_sectors'), ["القطاع الشمالي","القطاع الجنوبي","القطاع الشرقي","القطاع الغربي","الإدارة","الصيانة"]));
+    let dynamicSectors = _strArr(_safeJsonParse(_lsGet('dyn_sectors'), []));
     let contractorSectors = _strArr(_safeJsonParse(_lsGet('ctr_sectors'), ["قطاع 22","قطاع 3","فاليو","خيمة"]));
     var contractorRooms = _safeJsonParse(_lsGet('ctr_rooms'), []);
     if (contractorRooms.length === 0) {
@@ -133,17 +133,16 @@
         s = s.trim().replace(/[\u0000-\u001F\u007F-\u009F\u200B-\u200F\u2028-\u202E\uFEFF\u00AD\u061C\u2060-\u2069\uFFFD]/g, '').replace(/[?]/g, '').trim();
         return (s && s.length >= 2) ? s : '';
       }
-      var sectorSet = {};
-      dynamicSectors.forEach(function(s) { sectorSet[s] = true; });
+      // Build sectors ONLY from roomsCapacity
+      var validSet = {};
       roomsCapacity.forEach(function(r) {
         var sec = _sanitize(r.sector);
-        if (sec && !sectorSet[sec]) {
-          dynamicSectors.push(sec);
-          sectorSet[sec] = true;
-        }
+        if (sec) validSet[sec] = true;
       });
-      // Clean existing entries
-      dynamicSectors = dynamicSectors.filter(function(s) { return _sanitize(s); });
+      dynamicSectors = Object.keys(validSet).sort();
+      // Ensure the 12 known buildings are present as fallback
+      var knownBuildings = ["سكن المهندسين (السكن الجديد)","سكن الموظفين (السكن الإداري)","سكن العاملين (السكن الإداري)","سكن العاملين الجديد 2025 (C)","سكن العاملين الجديد 2025 (D)","سكن العاملين الجديد 2025 (E)","سكن العاملين الجديد 2025 (F)","سكن العاملين (سكن الجيزوارين)","سكن العاملين (سكن النخالين)","سكن القطاعات","سكن فاليو الجديد","سكن الكرفان"];
+      if (!dynamicSectors.length) dynamicSectors = knownBuildings.slice();
       _lsSet('dyn_sectors', JSON.stringify(dynamicSectors));
     })();
     // evalTemplates now stores KPI objects: [{ name, max }, ...]
