@@ -538,6 +538,7 @@
         g('dash-ts-stock-content').innerHTML = html;
       }
       try { renderDashboardSepticChart(); } catch(e) { console.error('septic chart error:', e); }
+      try { renderDashboardMaintChart(); } catch(e) { console.error('maint chart error:', e); }
     }
 
     function renderDashboardSepticChart() {
@@ -598,6 +599,60 @@
           },
           scales: {
             y: { beginAtZero: true, title: { display: true, text: 'عدد النقلات' } },
+            x: { ticks: { maxRotation: 45 } }
+          }
+        }
+      });
+    }
+
+    function renderDashboardMaintChart() {
+      var g = function(id) { return document.getElementById(id); };
+      var canvas = g('dash-maint-chart');
+      if (!canvas) return;
+      var fromInput = g('dashMaintFrom'), toInput = g('dashMaintTo');
+      if (fromInput && !fromInput.value) { var d = new Date(); d.setDate(d.getDate() - 30); fromInput.value = d.toISOString().split('T')[0]; }
+      if (toInput && !toInput.value) toInput.value = new Date().toISOString().split('T')[0];
+      var from = fromInput ? fromInput.value : '', to = toInput ? toInput.value : '';
+      if (!from || !to) return;
+      var filtered = maintenanceRecords.filter(function(m) {
+        var d = (m.date || '').slice(0, 10);
+        return d >= from && d <= to;
+      });
+      var catMap = {};
+      filtered.forEach(function(m) { var c = m.category || 'غير مصنف'; catMap[c] = (catMap[c] || 0) + 1; });
+      var labels = Object.keys(catMap).sort();
+      var values = labels.map(function(l) { return catMap[l]; });
+      var total = values.reduce(function(a,b) { return a+b; }, 0);
+      if (g('dash-maint-badge')) g('dash-maint-badge').innerText = total;
+      if (g('dash-maint-stats')) {
+        g('dash-maint-stats').innerHTML = labels.map(function(l, i) {
+          return '<span style="background:#e3f2fd;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;">' + l + ': ' + values[i] + '</span>';
+        }).join(' ') + ' | <span style="font-weight:700;">الإجمالي: ' + total + '</span>';
+      }
+      if (g('dash-maint-legend')) g('dash-maint-legend').innerHTML = 'الفترة: ' + from + ' → ' + to;
+      if (canvas.__chart) { try { canvas.__chart.destroy(); } catch(e) {} }
+      if (typeof Chart === 'undefined') return;
+      var ctx = canvas.getContext('2d');
+      var colors = ['#1565c0','#1976d2','#1e88e5','#2196f3','#42a5f5','#64b5f6','#90caf9','#bbdefb','#1565c0','#1976d2','#1e88e5','#2196f3','#42a5f5','#64b5f6'];
+      canvas.__chart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'عدد المهام',
+            data: values,
+            backgroundColor: labels.map(function(_, i) { return colors[i % colors.length]; }),
+            borderColor: '#1565c0', borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: { rtl: true, callbacks: { label: function(ctx) { return ctx.parsed.y + ' مهمة'; } } }
+          },
+          scales: {
+            y: { beginAtZero: true, title: { display: true, text: 'عدد المهام' } },
             x: { ticks: { maxRotation: 45 } }
           }
         }
@@ -6646,7 +6701,7 @@ function renderTeaSugarTable() {
       var s = getTodayMealStats();
       var bf = hour >= 11 ? s.pCount : 0;
       var lh = hour >= 15 ? s.pCount : 0;
-      var dn = hour >= 21 ? s.pCount : 0;
+      var dn = hour >= 20 ? s.pCount : 0;
       if (bf === 0 && lh === 0 && dn === 0) return;
       var existingIdx = mealLogs.findIndex(function(l) { return normalizeDateStr(l.date) === today; });
       if (existingIdx >= 0) {

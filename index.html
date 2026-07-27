@@ -306,6 +306,23 @@
         <div id="dash-septic-legend" style="font-size:11px;margin-top:6px;"></div>
       </div>
     </div>
+    <div class="dash-chart-row">
+      <div class="dash-chart-panel" style="grid-column:1/-1;">
+        <div class="dash-chart-title">🔧 إحصائيات الصيانة <span class="badge-count" id="dash-maint-badge">0</span></div>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:8px 0;">
+          <label style="font-size:12px;font-weight:600;">من:</label>
+          <input type="date" id="dashMaintFrom" style="padding:4px 8px;border:1px solid #ccc;border-radius:6px;font-size:12px;">
+          <label style="font-size:12px;font-weight:600;">إلى:</label>
+          <input type="date" id="dashMaintTo" style="padding:4px 8px;border:1px solid #ccc;border-radius:6px;font-size:12px;">
+          <button class="btn btn-primary" style="padding:4px 12px;font-size:11px;" onclick="renderDashboardMaintChart()">عرض</button>
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;" id="dash-maint-stats"></div>
+        <div style="position:relative;height:250px;">
+          <canvas id="dash-maint-chart"></canvas>
+        </div>
+        <div id="dash-maint-legend" style="font-size:11px;margin-top:6px;"></div>
+      </div>
+    </div>
     <!-- Attendance Report Panel -->
     <!-- Bakery Consumption Panel -->
     <div class="dash-chart-panel" style="grid-column:1/-1;margin-top:10px;">
