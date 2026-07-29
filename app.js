@@ -10934,44 +10934,83 @@ reports.forEach(function(r) {
       try {
         var ts = new Date().toISOString();
         var allData = getAllDataForSync();
+        // Load last push snapshot to detect changes
+        var _snap = {};
+        try { _snap = JSON.parse(_lsGet('_lastPushSnapshot') || '{}'); } catch(e) { _snap = {}; }
+        var changed = [], total = 0;
+        Object.keys(allData).forEach(function(ak) {
+          if (ak === 'incident_reports') return; // handled separately
+          var _curr = JSON.stringify(allData[ak]);
+          total += _curr.length;
+          if (_curr !== _snap[ak]) changed.push(ak);
+        });
+        // Always push if no snapshot exists (first sync) or if deletions pending
+        var hasDeletions = syncDeletions.length > 0;
+        var doFullPush = Object.keys(_snap).length === 0;
+        // Build merge from remote only when needed
         var currentAlldata = {};
-        try {
-          var adResp = await fetch(_sbEndpoint + '?id=eq.alldata&select=data', { method: 'GET', headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } });
-          if (adResp.ok) { var adRows = await adResp.json(); if (adRows && adRows[0] && adRows[0].data) { currentAlldata = typeof adRows[0].data === 'string' ? JSON.parse(adRows[0].data) : adRows[0].data; } }
-        } catch(e) {}
         var _delByEntity = {};
         syncDeletions.forEach(function(_d) {
           if (!_delByEntity[_d.entity]) _delByEntity[_d.entity] = {};
           _delByEntity[_d.entity][_d.key] = true;
         });
-        Object.keys(allData).forEach(function(ak) {
-          if (Array.isArray(currentAlldata[ak]) && Array.isArray(allData[ak])) {
-            currentAlldata[ak] = mergeArraysPush(allData[ak], currentAlldata[ak], function(item) { return _getItemKey(item, ak); }, _delByEntity[ak] || {});
-          } else {
-            currentAlldata[ak] = allData[ak];
+        if (doFullPush || hasDeletions) {
+          // Full push: read remote, merge all, send back
+          try {
+            var adResp = await fetch(_sbEndpoint + '?id=eq.alldata&select=data', { method: 'GET', headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } });
+            if (adResp.ok) { var adRows = await adResp.json(); if (adRows && adRows[0] && adRows[0].data) { currentAlldata = typeof adRows[0].data === 'string' ? JSON.parse(adRows[0].data) : adRows[0].data; } }
+          } catch(e) {}
+          Object.keys(allData).forEach(function(ak) {
+            if (Array.isArray(currentAlldata[ak]) && Array.isArray(allData[ak])) {
+              currentAlldata[ak] = mergeArraysPush(allData[ak], currentAlldata[ak], function(item) { return _getItemKey(item, ak); }, _delByEntity[ak] || {});
+            } else {
+              currentAlldata[ak] = allData[ak];
+            }
+          });
+          syncDeletions.forEach(function(_del) {
+            var _arr = currentAlldata[_del.entity];
+            if (Array.isArray(_arr)) {
+              currentAlldata[_del.entity] = _arr.filter(function(_item) { return _getItemKey(_item, _del.entity) !== _del.key; });
+            }
+          });
+          ['bakeryContractorsNames','dynamicVisitorTypes','dynamicSeptics','dynamicDepts','dynamicTitles','dynamicSectors','contractorSectors','bakeryContractorsNames'].forEach(function(k) { if (Array.isArray(currentAlldata[k])) currentAlldata[k] = _strArr(currentAlldata[k]); });
+          if (Array.isArray(currentAlldata.bakeryContractorSupplies)) currentAlldata.bakeryContractorSupplies = currentAlldata.bakeryContractorSupplies.map(function(r) { if (typeof r === 'object' && r && (typeof r.name !== 'string' || r.name === '[object Object]' || !r.name.trim())) r.name = 'غير معروف'; return r; });
+          var resp = await fetch(_sbEndpoint, {
+            method: 'POST',
+            headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/json', 'Prefer': 'resolution=merge-duplicates' },
+            body: JSON.stringify({ id: 'alldata', data: currentAlldata, updated_at: ts, device_id: _deviceId })
+          });
+          if (!resp.ok) throw new Error('HTTP ' + resp.status);
+          syncLog('تم رفع كل البيانات إلى Supabase');
+        } else if (changed.length > 0) {
+          // Incremental push: only changed entities via RPC
+          var _rpcUrl = SUPABASE_URL + '/rest/v1/rpc/sync_upsert_entity';
+          for (var ci = 0; ci < changed.length; ci++) {
+            var _ek = changed[ci];
+            var _edata = allData[_ek];
+            // Normalize string arrays
+            if (['bakeryContractorsNames','dynamicVisitorTypes','dynamicSeptics','dynamicDepts','dynamicTitles','dynamicSectors','contractorSectors','bakeryContractorsNames'].indexOf(_ek) !== -1 && Array.isArray(_edata)) _edata = _strArr(_edata);
+            if (_ek === 'bakeryContractorSupplies' && Array.isArray(_edata)) _edata = _edata.map(function(r) { if (typeof r === 'object' && r && (typeof r.name !== 'string' || r.name === '[object Object]' || !r.name.trim())) r.name = 'غير معروف'; return r; });
+            var _resp = await fetch(_rpcUrl, {
+              method: 'POST',
+              headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/json' },
+              body: JSON.stringify({ p_entity: _ek, p_data: _edata })
+            });
+            if (!_resp.ok) throw new Error('RPC ' + _resp.status + ' for ' + _ek);
           }
-        });
-        // Apply pending deletions to the merged data (handles case where local array is empty but deletions exist)
-        syncDeletions.forEach(function(_del) {
-          var _arr = currentAlldata[_del.entity];
-          if (Array.isArray(_arr)) {
-            currentAlldata[_del.entity] = _arr.filter(function(_item) { return _getItemKey(_item, _del.entity) !== _del.key; });
-          }
-        });
-        ['bakeryContractorsNames','dynamicVisitorTypes','dynamicSeptics','dynamicDepts','dynamicTitles','dynamicSectors','contractorSectors','bakeryContractorsNames'].forEach(function(k) { if (Array.isArray(currentAlldata[k])) currentAlldata[k] = _strArr(currentAlldata[k]); });
-        if (Array.isArray(currentAlldata.bakeryContractorSupplies)) currentAlldata.bakeryContractorSupplies = currentAlldata.bakeryContractorSupplies.map(function(r) { if (typeof r === 'object' && r && (typeof r.name !== 'string' || r.name === '[object Object]' || !r.name.trim())) r.name = 'غير معروف'; return r; });
-        var resp = await fetch(_sbEndpoint, {
-          method: 'POST',
-          headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/json', 'Prefer': 'resolution=merge-duplicates' },
-          body: JSON.stringify({ id: 'alldata', data: currentAlldata, updated_at: ts, device_id: _deviceId })
-        });
-        if (!resp.ok) throw new Error('HTTP ' + resp.status);
+          syncLog('تم رفع ' + changed.length + ' جدول متغير إلى Supabase');
+        } else {
+          syncLog('لا توجد تغييرات للرفع');
+        }
+        // Update snapshot
+        var _newSnap = {};
+        Object.keys(allData).forEach(function(ak) { _newSnap[ak] = JSON.stringify(allData[ak]); });
+        _lsSet('_lastPushSnapshot', JSON.stringify(_newSnap));
         _pulledAt['_lastPush'] = ts;
         _lsSet('_pulledAt', JSON.stringify(_pulledAt));
         deduplicateAfterSync();
         _takeSnapshot();
         syncStorage(true, true);
-        syncLog('تم رفع البيانات إلى Supabase');
         updateLastSyncTime();
         showSyncToast('تم رفع البيانات إلى Supabase بنجاح ✅');
       } catch(e) {
@@ -11077,6 +11116,11 @@ reports.forEach(function(r) {
           _lsSet('_pulledAt', JSON.stringify(_pulledAt));
           _takeSnapshot();
           syncStorage(true, true);
+          // Update push snapshot so next push only sends real changes
+          var _allNow = getAllDataForSync();
+          var _newSnap = {};
+          Object.keys(_allNow).forEach(function(_k) { _newSnap[_k] = JSON.stringify(_allNow[_k]); });
+          _lsSet('_lastPushSnapshot', JSON.stringify(_newSnap));
           renderAll();
           try { importBakeryFormData(); } catch(e) {}
           try { importMealWasteFormData(); } catch(e) {}
