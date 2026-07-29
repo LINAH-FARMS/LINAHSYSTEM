@@ -10969,7 +10969,23 @@ reports.forEach(function(r) {
           if (!_delByEntity[_d.entity]) _delByEntity[_d.entity] = {};
           _delByEntity[_d.entity][_d.key] = true;
         });
-        if (doFullPush || hasDeletions) {
+        // Apply deletions to local arrays before push
+        syncDeletions.forEach(function(_del) {
+          var _target = allData[_del.entity];
+          if (Array.isArray(_target)) {
+            allData[_del.entity] = _target.filter(function(_item) { return _getItemKey(_item, _del.entity) !== _del.key; });
+          }
+        });
+        // Recalculate changed after deletions
+        if (!doFullPush) {
+          changed = [];
+          Object.keys(allData).forEach(function(ak) {
+            if (ak === 'incident_reports') return;
+            var _curr = JSON.stringify(allData[ak]);
+            if (_curr !== _snap[ak]) changed.push(ak);
+          });
+        }
+        if (doFullPush) {
           // Full push: read remote, merge all, send back
           try {
             var adResp = await fetch(_sbEndpoint + '?id=eq.alldata&select=data', { method: 'GET', headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } });
