@@ -4035,11 +4035,27 @@ function toggleEmployeeStatus(empId) {
             userBadges += '<span class="' + _cls + '" onclick="editEmployee(\'' + _u.id + '\')">' + _u.name.split(' ')[0] + ' ' + (_u.name.split(' ')[1] || '') + '</span>';
             if (_u.status === 'V') userBadges += '</span>';
           }
-          card.innerHTML = '<div class="room-header"><span>\u0627\u0644\u063A\u0631\u0641\u0629: ' + room.number + '</span><span class="room-beds">\u0627\u0644\u0625\u0634\u063A\u0627\u0644: ' + roomUsers.length + ' / \u0627\u0644\u0633\u0639\u0629: ' + room.beds + '</span></div><div class="room-users">' + (userBadges || '<span style=\"color:#b0bec5;font-size:12px;font-style:italic;\">\u0644\u0627 \u064A\u0648\u062C\u062F \u0639\u0645\u0627\u0644</span>') + '</div><div style="display:flex;gap:4px;margin-top:6px;"></div>';
+          card.innerHTML = '<div class="room-header"><span>\u0627\u0644\u063A\u0631\u0641\u0629: <span class="room-number-edit" style="cursor:pointer;border-bottom:1px dashed #999;" onclick="editRoomNumber(\'' + sector.replace(/'/g, "\\'") + '\',\'' + room.number.replace(/'/g, "\\'") + '\')" title="اضغط للتعديل">' + room.number + '</span></span><span class="room-beds">\u0627\u0644\u0625\u0634\u063A\u0627\u0644: ' + roomUsers.length + ' / \u0627\u0644\u0633\u0639\u0629: ' + room.beds + '</span></div><div class="room-users">' + (userBadges || '<span style=\"color:#b0bec5;font-size:12px;font-style:italic;\">\u0644\u0627 \u064A\u0648\u062C\u062F \u0639\u0645\u0627\u0644</span>') + '</div><div style="display:flex;gap:4px;margin-top:6px;"></div>';
           roomsContainer.appendChild(card);
         });
         block.appendChild(roomsContainer); layout.appendChild(block);
       });
+    }
+
+    function editRoomNumber(sector, oldNumber) {
+      var newNumber = prompt('أدخل رقم الغرفة الجديد:', oldNumber);
+      if (!newNumber || newNumber.trim() === '' || newNumber === oldNumber) return;
+      newNumber = newNumber.trim();
+      var room = roomsCapacity.find(function(r) { return r.sector === sector && r.number === oldNumber; });
+      if (!room) return alert('لم يتم العثور على الغرفة.');
+      room.number = newNumber;
+      // Update all employees in that room
+      employees.forEach(function(e) {
+        if (e.sector === sector && e.room === oldNumber) e.room = newNumber;
+      });
+      syncStorage();
+      renderHousingLayout();
+      updateHousingStats();
     }
 
     function diagnoseAndFixHousing() {
