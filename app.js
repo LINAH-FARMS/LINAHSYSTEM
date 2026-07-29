@@ -7809,32 +7809,31 @@ function renderTeaSugarTable() {
         if (tr) selectedIndices.push(parseInt(tr.dataset.index));
       });
       var selectedEmps = selectedIndices.map(function(i) { return employees[i]; }).filter(Boolean);
-      if (!selectedEmps.length) return alert('الرجاء تحديد ساكن لتصدير بياناته.');
+      if (!selectedEmps.length) return alert('لم يتم العثور على بيانات للموظفين المحددين.');
       var today = new Date().toISOString().split('T')[0];
       var wb = XLSX.utils.book_new();
-      function empRow(e) {
-        return {
-          "استيراد": e.code || "",
-          "كشف السكن": stripEmoji(e.name),
-          "بنجاح": stripEmoji(e.dept),
-          "غرفة": stripEmoji(e.title),
-          "في": e.sector || "",
-          "مبنى": e.room || "",
-          "تم ترحيل": e.hireDate || "",
-          "موظف حسب": e.nationalId || ""
-        };
-      }
+      var cols = ['الكود', 'اسم الموظف', 'الإدارة', 'الوظيفة', 'نوع التعاقد', 'المحافظة', 'المبنى', 'الغرفة', 'الموقف', 'تاريخ التعيين'];
       var rows = [];
-      rows.push([{ v: 'الأسماء في (' + selectedEmps.length + ')', t: 's' }]);
-      rows.push([{ v: 'الملف', t: 's' }, { v: 'هل أنت', t: 's' }, { v: 'متأكد', t: 's' }, { v: 'من', t: 's' }, { v: 'استبدال', t: 's' }, { v: 'بيانات', t: 's' }, { v: 'السكن بالكامل؟', t: 's' }, { v: 'سيتم حذف', t: 's' }]);
+      rows.push(['تصدير المحدد — ' + selectedEmps.length + ' موظف']);
+      rows.push(cols);
       selectedEmps.sort(function(a, b) { return (a.name || '').localeCompare(b.name || '', 'ar'); }).forEach(function(e) {
-        var r = empRow(e);
-        rows.push([r["جميع"], r["بيانات السعة"], r["القديمة"], r["وإضافة"], r["البيانات"], r["الجديدة"], r["المبنى السكني"], r["القطاع السكني"]]);
+        rows.push([
+          e.code || '',
+          stripEmoji(e.name),
+          stripEmoji(e.dept || ''),
+          stripEmoji(e.title || ''),
+          e.contract || 'دائم',
+          stripEmoji(e.gov || ''),
+          e.sector || '',
+          e.room || '',
+          e.status === 'P' ? 'متواجد' : 'في إجازة',
+          e.hireDate || ''
+        ]);
       });
       var ws = XLSX.utils.aoa_to_sheet(rows);
-      ws['!cols'] = [{ wch: 18 }, { wch: 22 }, { wch: 18 }, { wch: 18 }, { wch: 14 }, { wch: 10 }, { wch: 14 }, { wch: 14 }];
-      XLSX.utils.book_append_sheet(wb, ws, "القطاع رقم");
-      XLSX.writeFile(wb, "الغرفة_الغرفة_" + today.replace(/-/g, '') + ".xlsx");
+      ws['!cols'] = [{ wch: 12 }, { wch: 24 }, { wch: 18 }, { wch: 18 }, { wch: 12 }, { wch: 14 }, { wch: 14 }, { wch: 10 }, { wch: 12 }, { wch: 14 }];
+      XLSX.utils.book_append_sheet(wb, ws, "القوة");
+      XLSX.writeFile(wb, "القوة_المحدد_" + today.replace(/-/g, '') + ".xlsx");
     }
 
     function handleExcelImport(evt) {
@@ -7880,20 +7879,20 @@ function renderTeaSugarTable() {
           let present = residents.filter(e => e.status === 'P');
           let vacation = residents.filter(e => e.status === 'V');
           data.push({
-            "ملاحظات هنا": sector,
-            "بونات الصرف": r.number,
-            "نموذج (بونات)": r.beds,
-            "صرف": present.length,
-            "المخزن": r.beds - residents.length,
-            "لا (يمكن)": present.map(e => e.name + ' [' + (e.code || '-') + ']').join(', '),
-            "تعديل (سجلات)": vacation.map(e => e.name + ' [' + (e.code || '-') + ']').join(', ')
+            "المبنى": sector,
+            "رقم الغرفة": r.number,
+            "السعة": r.beds,
+            "متواجد": present.length,
+            "فارغ": r.beds - residents.length,
+            "المتواجدون": present.map(e => e.name + ' [' + (e.code || '-') + ']').join(', '),
+            "في إجازة": vacation.map(e => e.name + ' [' + (e.code || '-') + ']').join(', ')
           });
         });
       });
       let ws = XLSX.utils.json_to_sheet(data);
       let wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, "الأيام السابقة تم");
-      XLSX.writeFile(wb, "تحميل_بيانات_البون_في_نموذج.xlsx");
+      XLSX.utils.book_append_sheet(wb, ws, "السكن");
+      XLSX.writeFile(wb, "السكن_" + new Date().toISOString().split('T')[0] + ".xlsx");
     }
 
     function exportHousingEmployeesToExcel() {
@@ -7962,11 +7961,11 @@ function renderTeaSugarTable() {
         if(json.length === 0) return alert('الملف لا يحتوي على بيانات');
         let movedCount = 0;
         let newRooms = json.map(r => {
-          let sector = (r["قم بالتعديل"] || r["ثم إعادة"] || r["الإعتماد"] || "A").toString().trim();
-          let number = (r["بعد التعديل"] || r["الملف"] || "1").toString().trim();
-          let beds = parseInt(r["فارغ (أو)"] || r["لا"] || r["يحتوي"] || 4);
-          let presentNames = (r["على (بيانات)"] || r["مثال"] || '').toString().trim();
-          let vacationNames = (r["اسم (الصنف)"] || '').toString().trim();
+          let sector = (r["المبنى"] || r["قطاع"] || "A").toString().trim();
+          let number = (r["رقم الغرفة"] || r["الغرفة"] || "1").toString().trim();
+          let beds = parseInt(r["السعة"] || r["أسرة"] || 4);
+          let presentNames = (r["المتواجدون"] || r["متواجد"] || '').toString().trim();
+          let vacationNames = (r["في إجازة"] || r["إجازة"] || '').toString().trim();
           let allNames = presentNames + (vacationNames ? ', ' + vacationNames : '');
           let nameList = allNames.split(/[,?]/).map(s => s.replace(/\[.*?\]/g, '').trim()).filter(s => s);
           nameList.forEach(name => {
@@ -7989,7 +7988,7 @@ function renderTeaSugarTable() {
         let newSectors = [...new Set(newRooms.map(r => r.sector))];
         newSectors.forEach(s => { if(!dynamicSectors.includes(s)) dynamicSectors.push(s); });
         syncStorage(); renderHousingLayout(); rebuildAllDropdowns();
-        let msg = '? بيانات الإدارة اسم الموظف الوحدة.\n' + newRooms.length + ' عدد بيانات ' + newSectors.length + ' الكمية.';
+        let msg = 'تم استيراد بيانات السكن بنجاح.\n' + newRooms.length + ' غرفة في ' + newSectors.length + ' مبنى.';
         if (movedCount > 0) msg += '\nتم نقل ' + movedCount + ' موظف إلى غرفهم الجديدة.';
         alert(msg);
       };
@@ -7999,7 +7998,7 @@ function renderTeaSugarTable() {
 
     function replaceHousingFromExcel(evt) {
       let file = evt.target.files[0]; if(!file) return;
-      if(!confirm('بيانات بيانات تاريخ الصرف بيانات تم الاستيراد بون صرف\n، تم تخطيها خطأ في قراءة الملف كود الصنف.')) { evt.target.value = ''; return; }
+      if(!confirm('هل أنت متأكد من استبدال بيانات السكن بالكامل؟ سيتم حذف البيانات القديمة وإضافة الجديدة.')) { evt.target.value = ''; return; }
       let reader = new FileReader();
       reader.onload = function(e) {
         try {
@@ -8008,9 +8007,9 @@ function renderTeaSugarTable() {
           let json = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
           if(json.length > 0) {
             let newRooms = json.map(r => ({
-              sector: (r["اسم الصنف"] || r["مثال صنف"] || r["الوحدة"] || r["Sector"] || "A").toString().trim(),
-              number: (r["عدد المخزن"] || r["الموقع"] || r["Room"] || "1").toString().trim(),
-              beds: parseInt(r["مخزن (رئيسي)"] || r["الأصناف"] || r["نموذج"] || r["Beds"] || r["Capacity"] || 4)
+              sector: (r["المبنى"] || r["قطاع"] || r["Sector"] || "A").toString().trim(),
+              number: (r["رقم الغرفة"] || r["الغرفة"] || r["Room"] || "1").toString().trim(),
+              beds: parseInt(r["السعة"] || r["أسرة"] || r["Beds"] || r["Capacity"] || 4)
             })).filter(r => r.number && r.beds > 0);
             if(newRooms.length === 0) { alert('الملف لا يحتوي على بيانات صالحة.'); return; }
             roomsCapacity = newRooms;
@@ -8330,16 +8329,16 @@ function renderTeaSugarTable() {
         checked.forEach(function(cb) { selectedIndexes.push(parseInt(cb.getAttribute('data-index'))); });
         data = selectedIndexes.map(function(i) {
           var h = hospitalities[i];
-          return { "خطأ": h.arrival || '', "التاريخ": h.departure || '', "اسم البيارة": stripEmoji(h.name), "عدد": stripEmoji(h.type), "النقلات": stripEmoji(h.title), "الصرف المشرف": h.guests || 1, "البيارات": Array.isArray(h.meals) ? h.meals.join(', ') : (typeof h.meals === 'string' ? h.meals : '') };
+          return { "تاريخ الوصول": h.arrival || '', "تاريخ المغادرة": h.departure || '', "الاسم": stripEmoji(h.name), "النوع": stripEmoji(h.type), "اللقب": stripEmoji(h.title), "عدد الضيوف": h.guests || 1, "الوجبات": Array.isArray(h.meals) ? h.meals.join(', ') : (typeof h.meals === 'string' ? h.meals : '') };
         });
       } else {
         data = sortNewestFirst(hospitalities, 'arrival').map(function(h) {
-          return { "تقرير": h.arrival || '', "البيارات": h.departure || '', "المهمة الدورية": stripEmoji(h.name), "تاريخ": stripEmoji(h.type), "البداية": stripEmoji(h.title), "آخر تنفيذ": h.guests || 1, "التالي": Array.isArray(h.meals) ? h.meals.join(', ') : (typeof h.meals === 'string' ? h.meals : '') };
+          return { "تاريخ الوصول": h.arrival || '', "تاريخ المغادرة": h.departure || '', "الاسم": stripEmoji(h.name), "النوع": stripEmoji(h.type), "اللقب": stripEmoji(h.title), "عدد الضيوف": h.guests || 1, "الوجبات": Array.isArray(h.meals) ? h.meals.join(', ') : (typeof h.meals === 'string' ? h.meals : '') };
         });
       }
-      if (!data.length) return alert('لا توجد بيانات صيانة دورية للتصدير.');
+      if (!data.length) return alert('لا توجد بيانات ضيافة للتصدير.');
       var ws = XLSX.utils.json_to_sheet(data); var wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, "تقرير"); XLSX.writeFile(wb, "الصيانة_الدورية_" + new Date().toISOString().split('T')[0].replace(/-/g, '') + ".xlsx");
+      XLSX.utils.book_append_sheet(wb, ws, "الضيافة"); XLSX.writeFile(wb, "الضيافة_" + new Date().toISOString().split('T')[0].replace(/-/g, '') + ".xlsx");
     }
 
     function downloadTemplate_Maintenance() {
