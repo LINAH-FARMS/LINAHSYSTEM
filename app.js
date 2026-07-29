@@ -1372,9 +1372,9 @@
       raw.bakeryContractorsNames = bakeryContractorsNames;
       raw.userId = currentUser;
       raw.timestamp = new Date().toISOString();
-      fetch(SB + '/rest/v1/sync_data?id=eq.alldata', {
+      fetch(SUPABASE_URL + '/rest/v1/sync_data?id=eq.alldata', {
         method: 'PUT',
-        headers: { 'apikey': KEY, 'Authorization': 'Bearer ' + KEY, 'Content-Type': 'application/json', 'Prefer': 'resolution=merge-duplicates' },
+        headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/json', 'Prefer': 'resolution=merge-duplicates' },
         body: JSON.stringify({ id: 'alldata', data: raw })
       }).then(function(r) {
         if (r.ok) alert("✅ تم مزامنة قائمة المقاولين مع Supabase بنجاح!");
