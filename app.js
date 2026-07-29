@@ -10812,8 +10812,8 @@ reports.forEach(function(r) {
     // ============================
     //  2.75  SUPABASE REAL-TIME SYNC (الفرن لا)
     // ============================
-    const SUPABASE_URL = 'https://cwqghiqykohefaggedjl.supabase.co';
-    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN3cWdoaXF5a29oZWZhZ2dlZGpsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEwMjUyMjEsImV4cCI6MjA5NjYwMTIyMX0.3a3hRcNdmYQCtjYjBroAT6df1T_7oz-XWUeD3wagYw8';
+    const SUPABASE_URL = 'https://idejmgmftmrniviftcce.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable_AvMTa-zmQ4hgA1hJNpYc3g_gu8rlirz';
     var supabaseConnected = false;
     var _deviceId = _lsGet('lineh_device_id');
     if (!_deviceId) { _deviceId = 'd' + Date.now() + Math.random().toString(36).slice(2,9); _lsSet('lineh_device_id', _deviceId); }
