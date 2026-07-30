@@ -48,32 +48,32 @@ function printBreadStatement() {
   var pageSize = orientation === 'landscape' ? 'A4 landscape' : 'A4 portrait';
   w.document.write('<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8"><title>بيان توريد خبز — LINAHSYSTEM</title>' +
     '<style>' +
-      '@page{size:' + pageSize + ';margin:8mm 10mm;}' +
-      'body{font-family:Cairo,"Traditional Arabic","Segoe UI",sans-serif;padding:0;margin:0;color:#333;}' +
-      '.page{width:100%;max-width:100%;box-sizing:border-box;padding:5px 0;}' +
-      '.logo-section{display:flex;align-items:center;justify-content:space-between;border-bottom:3px double #1b5e20;padding-bottom:6px;margin-bottom:8px;}' +
-      '.logo-section .right{display:flex;align-items:center;gap:8px;}' +
-      '.logo-section .right img{width:40px;height:40px;border-radius:50%;object-fit:cover;border:2px solid #1b5e20;padding:2px;}' +
-      '.logo-section .right .co-name{font-weight:900;color:#1b5e20;font-size:15px;line-height:1.3;}' +
-      '.logo-section .right .co-sub{font-size:10px;color:#888;}' +
-      '.logo-section .badge{background:#1b5e20;color:#fff;padding:3px 14px;border-radius:20px;font-size:11px;font-weight:700;}' +
-      '.title{text-align:center;font-size:20px;font-weight:900;color:#1b5e20;margin:4px 0 8px;letter-spacing:1px;}' +
-      '.meta-row{display:flex;justify-content:space-between;flex-wrap:wrap;gap:4px;margin-bottom:8px;padding:6px 10px;background:#f5f5f5;border-radius:4px;font-size:11px;}' +
+      '@page{size:' + pageSize + ';margin:10mm 12mm;}' +
+      'body{font-family:Cairo,"Traditional Arabic","Segoe UI",sans-serif;padding:0;margin:0;color:#000;}' +
+      '.page{width:100%;max-width:100%;box-sizing:border-box;padding:2px 0;}' +
+      '.logo-section{display:flex;align-items:center;justify-content:space-between;border-bottom:3px double #000;padding-bottom:8px;margin-bottom:10px;}' +
+      '.logo-section .right{display:flex;align-items:center;gap:10px;}' +
+      '.logo-section .right img{width:50px;height:50px;border-radius:50%;object-fit:cover;border:2px solid #000;padding:2px;}' +
+      '.logo-section .right .co-name{font-weight:900;color:#000;font-size:18px;line-height:1.3;}' +
+      '.logo-section .right .co-sub{font-size:13px;color:#000;}' +
+      '.logo-section .badge{background:#000;color:#fff;padding:4px 18px;border-radius:20px;font-size:13px;font-weight:700;}' +
+      '.title{text-align:center;font-size:24px;font-weight:900;color:#000;margin:6px 0 12px;}' +
+      '.meta-row{display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px;margin-bottom:10px;padding:8px 12px;background:#fff;border:2px solid #000;border-radius:6px;font-size:13px;}' +
       '.meta-item{text-align:center;}' +
-      '.meta-label{display:block;color:#888;font-size:10px;}' +
-      '.meta-val{font-weight:700;color:#333;font-size:12px;}' +
-      'table{width:100%;border-collapse:collapse;font-size:10px;margin:6px 0;}' +
-      'thead th{background:#1b5e20;color:#fff;padding:4px 3px;border:1px solid #1b5e20;text-align:center;font-size:10px;}' +
-      'tbody td{padding:3px 3px;border:1px solid #c8e6c9;text-align:right;}' +
-      'tbody tr:nth-child(even){background:#f1f8e9;}' +
+      '.meta-label{display:block;color:#000;font-size:12px;}' +
+      '.meta-val{font-weight:900;color:#000;font-size:14px;}' +
+      'table{width:100%;border-collapse:collapse;font-size:13px;margin:8px 0;}' +
+      'thead th{background:#000;color:#fff;padding:6px 4px;border:2px solid #000;text-align:center;font-size:13px;font-weight:700;}' +
+      'tbody td{padding:5px 4px;border:1px solid #000;text-align:right;}' +
+      'tbody tr:nth-child(even){background:#f5f5f5;}' +
       '.c{text-align:center !important;}' +
-      '.b{font-weight:700;}' +
-      '.totals{margin:8px 0;padding:8px 14px;background:#f5f5f5;border-radius:6px;border:1px solid #e0e0e0;}' +
-      '.total-row{display:flex;justify-content:space-between;padding:2px 0;font-size:11px;}' +
-      '.total-row .num{font-weight:700;}' +
-      '.total-due{font-size:14px;font-weight:900;color:#1b5e20;border-top:2px solid #1b5e20;margin-top:3px;padding-top:5px;}' +
-      '.footer{text-align:center;margin-top:10px;font-size:9px;color:#999;border-top:1px solid #e0e0e0;padding-top:6px;}' +
-      '@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}.page{margin:0;padding:0;box-shadow:none;}}' +
+      '.b{font-weight:900;}' +
+      '.totals{margin:10px 0;padding:10px 16px;background:#fff;border:2px solid #000;border-radius:6px;}' +
+      '.total-row{display:flex;justify-content:space-between;padding:4px 0;font-size:14px;}' +
+      '.total-row .num{font-weight:900;}' +
+      '.total-due{font-size:16px;font-weight:900;color:#000;border-top:3px solid #000;margin-top:5px;padding-top:7px;}' +
+      '.footer{text-align:center;margin-top:12px;font-size:11px;color:#000;border-top:1px solid #000;padding-top:6px;}' +
+      '@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact;color:#000;}.page{margin:0;padding:0;box-shadow:none;}}' +
     '</style></head><body><div class="page">' +
       '<div class="logo-section">' +
         '<div class="right">' +
@@ -96,9 +96,9 @@ function printBreadStatement() {
       '</table>' +
       '<div class="totals">' +
         '<div class="total-row"><span>إجمالي الأرغفة</span><span class="num">' + grandTotalLoaves + ' رغيف</span></div>' +
-        '<div class="total-row"><span>إجمالي قيمة التوريدات</span><span class="num" style="color:#1b5e20;">' + grandTotalRevenue.toFixed(2) + ' ج.م</span></div>' +
-        '<div class="total-row"><span>إجمالي المدفوع</span><span class="num" style="color:#1565c0;">' + grandTotalPaid.toFixed(2) + ' ج.م</span></div>' +
-        '<div class="total-row total-due"><span>إجمالي المتبقي</span><span class="num" style="color:#c62828;">' + grandRem.toFixed(2) + ' ج.م</span></div>' +
+        '<div class="total-row"><span>إجمالي قيمة التوريدات</span><span class="num">' + grandTotalRevenue.toFixed(2) + ' ج.م</span></div>' +
+        '<div class="total-row"><span>إجمالي المدفوع</span><span class="num">' + grandTotalPaid.toFixed(2) + ' ج.م</span></div>' +
+        '<div class="total-row total-due"><span>إجمالي المتبقي</span><span class="num">' + grandRem.toFixed(2) + ' ج.م</span></div>' +
       '</div>' +
       '<div class="footer">بيان توريد خبز — لينه فارمز © ' + new Date().getFullYear() + '</div>' +
     '</div></body></html>');
