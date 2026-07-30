@@ -88,22 +88,7 @@ function unifyContractorNames() {
     if (typeof updateBakeryStats === 'function') updateBakeryStats();
     if (typeof filterContractorCheckboxes === 'function') filterContractorCheckboxes();
   }
-}
-
-function normalizeNameInput() {
-  var el = document.getElementById('bctr-name');
-  if (!el) return;
-  var val = el.value.trim();
-  if (!val) return;
-  var allNames = [];
-  if (typeof bakeryContractorSupplies !== 'undefined') {
-    bakeryContractorSupplies.forEach(function(r) { if (r && r.name) allNames.push(r.name); });
-  }
-  if (typeof bakeryContractorsNames !== 'undefined') {
-    bakeryContractorsNames.forEach(function(n) { if (n) allNames.push(n); });
-  }
-  var best = findBestName(val, allNames);
-  if (best && best !== val) el.value = best;
+  if (typeof populateBakeryDropdowns === 'function') populateBakeryDropdowns();
 }
 
 function runUnify() {
@@ -116,9 +101,4 @@ document.addEventListener('DOMContentLoaded', function() {
   setTimeout(runUnify, 3000);
   setTimeout(runUnify, 7000);
   setTimeout(runUnify, 15000);
-  var input = document.getElementById('bctr-name');
-  if (input) {
-    input.addEventListener('change', normalizeNameInput);
-    input.addEventListener('blur', normalizeNameInput);
-  }
 });
