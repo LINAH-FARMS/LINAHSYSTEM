@@ -99,7 +99,6 @@ function printBreadStatement() {
       '<div class="meta-row">' +
         '<div class="meta-item"><span class="meta-label">تاريخ الطباعة</span><span class="meta-val">' + invDate + '</span></div>' +
         '<div class="meta-item"><span class="meta-label">فترة التوريد</span><span class="meta-val">' + fromDate + ' → ' + toDate + '</span></div>' +
-        '<div class="meta-item"><span class="meta-label">عدد المقاولين</span><span class="meta-val">' + _selectedContractors.length + '</span></div>' +
         '<div class="meta-item"><span class="meta-label">إجمالي الأرغفة</span><span class="meta-val">' + grandTotalLoaves + '</span></div>' +
       '</div>' +
       '<table>' +
