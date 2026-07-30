@@ -651,10 +651,12 @@ function saveVacationData() {
   if (!start || !days) { showMsg('ادخل تاريخ البداية والمدة.', true); return; }
   var dates = calcVacDates(start, days);
   if (!dates) { showMsg('خطأ في حساب تواريخ الإجازة.', true); return; }
+  var emp = employees.find(function(e) { return (e.code || e.id) === code; });
+  var info = emp ? ((emp.title || '') + ' / ' + (emp.dept || '')) : '';
   var vRecord = {
     code: code,
     name: name,
-    info: '',
+    info: info,
     start: start,
     days: days,
     type: vtype,
