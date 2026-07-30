@@ -417,13 +417,11 @@
         let canvas = g('dash-contract-chart'), ctx = canvas.getContext('2d');
         let cx=75, cy=75, r=55, lw=22;
         ctx.clearRect(0,0,150,150);
-        let daim = employees.filter(e => e.contract === 'دائم').length;
+        let daim = employees.filter(e => (e.contract || 'دائم') === 'دائم').length;
         let kagol = employees.filter(e => e.contract === 'كاجول').length;
-        let other = totalEmp - daim - kagol;
         let slices = [];
-        if (daim > 0) slices.push({v:daim, color:'#1565c0', label:'دائم'});
+        slices.push({v:daim, color:'#1565c0', label:'دائم'});
         if (kagol > 0) slices.push({v:kagol, color:'#ff9800', label:'كاجول'});
-        if (other > 0) slices.push({v:other, color:'#78909c', label:'أخرى'});
         ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2); ctx.strokeStyle='#e8e8e8'; ctx.lineWidth=lw; ctx.stroke();
         let start = -Math.PI/2;
         slices.forEach(s => {
