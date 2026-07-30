@@ -66,10 +66,6 @@ textarea{resize:vertical;min-height:60px}
 <div class="sub">شاي · صيانة · بيارات · إجازات</div>
 </div>
 
-<div class="form-group" style="margin-bottom:14px">
-<label>📅 التاريخ</label>
-<input type="date" id="dd-date">
-</div>
 <div class="menu-grid">
 <button class="menu-btn menu-btn-tea" onclick="openModal('tea')"><span class="menu-icon">🍵</span><span class="menu-label">الشاي</span></button>
 <button class="menu-btn menu-btn-maint" onclick="openModal('maint')"><span class="menu-icon">🛠️</span><span class="menu-label">الصيانة</span></button>
@@ -91,6 +87,7 @@ textarea{resize:vertical;min-height:60px}
 
 <div id="modal-tea" class="modal-section section section-tea">
 <div class="section-title">🍵 الشاي</div>
+<div class="form-group"><label>📅 التاريخ</label><input type="date" id="dd-date-tea"></div>
 <div class="form-group">
 <label>الموظف</label>
 <div class="emp-wrapper">
@@ -115,6 +112,7 @@ textarea{resize:vertical;min-height:60px}
 
 <div id="modal-maint" class="modal-section section section-maint">
 <div class="section-title">🛠️ الصيانة</div>
+<div class="form-group"><label>📅 التاريخ</label><input type="date" id="dd-date-maint"></div>
 <div class="form-row">
 <div class="form-group"><label>نوع الصيانة</label><select id="dd-maint-cat"><option>نظافة عامة</option><option>كهرباء</option><option>سباكة</option><option>تكييف</option><option>نجارة</option><option>إنشاءات</option><option>مطعم</option></select></div>
 <div class="form-group"><label>بند الصيانة</label><input type="text" id="dd-maint-task" placeholder="وصف العطل"></div>
@@ -138,6 +136,7 @@ textarea{resize:vertical;min-height:60px}
 
 <div id="modal-septic" class="modal-section section section-septic">
 <div class="section-title">🚽 البيارات</div>
+<div class="form-group"><label>📅 التاريخ</label><input type="date" id="dd-date-septic"></div>
 <div class="form-row">
 <div class="form-group"><label>البيارة</label><input type="text" id="dd-septic-name" list="septic-list" placeholder="اسم البيارة"><datalist id="septic-list"></datalist></div>
 <div class="form-group"><label>عدد النقلات</label><input type="number" id="dd-septic-trips" min="0" value="0"></div>
@@ -148,6 +147,7 @@ textarea{resize:vertical;min-height:60px}
 
 <div id="modal-vacation" class="modal-section section section-vacation">
 <div class="section-title">🏖️ الإجازات</div>
+<div class="form-group"><label>📅 التاريخ</label><input type="date" id="dd-date-vacation"></div>
 <div class="form-group">
 <label>الموظف</label>
 <div class="emp-wrapper">
@@ -377,7 +377,10 @@ vacInp.addEventListener('focus', function(){
 vacInp.addEventListener('blur', function(){ setTimeout(function(){ vacSug.style.display = 'none'; }, 200); });
 
 // ─── Misc ───
-document.getElementById('dd-date').value = new Date().toISOString().split('T')[0];
+document.getElementById('dd-date-tea').value = new Date().toISOString().split('T')[0];
+document.getElementById('dd-date-maint').value = new Date().toISOString().split('T')[0];
+document.getElementById('dd-date-septic').value = new Date().toISOString().split('T')[0];
+document.getElementById('dd-date-vacation').value = new Date().toISOString().split('T')[0];
 var ddMaintMaterials = [];
 var ddMaintMatSelectedCode = '';
 
@@ -559,7 +562,7 @@ function resetVacationFields() {
 }
 
 function saveTeaData() {
-  var date = document.getElementById('dd-date').value;
+  var date = document.getElementById('dd-date-tea').value;
   if (!date) { showMsg('اختر التاريخ أولاً.', true); return; }
   var empId = empHid.value;
   var code = empCode.value.trim();
@@ -578,7 +581,7 @@ function saveTeaData() {
 }
 
 function saveMaintData() {
-  var date = document.getElementById('dd-date').value;
+  var date = document.getElementById('dd-date-maint').value;
   if (!date) { showMsg('اختر التاريخ أولاً.', true); return; }
   var maintCat = document.getElementById('dd-maint-cat').value;
   var maintTask = document.getElementById('dd-maint-task').value.trim();
@@ -592,7 +595,7 @@ function saveMaintData() {
 }
 
 function saveSepticData() {
-  var date = document.getElementById('dd-date').value;
+  var date = document.getElementById('dd-date-septic').value;
   if (!date) { showMsg('اختر التاريخ أولاً.', true); return; }
   var septicName = document.getElementById('dd-septic-name').value.trim();
   var septicTrips = parseInt(document.getElementById('dd-septic-trips').value) || 0;
@@ -638,7 +641,7 @@ function previewVacDates() {
 }
 
 function saveVacationData() {
-  var date = document.getElementById('dd-date').value;
+  var date = document.getElementById('dd-date-vacation').value;
   if (!date) { showMsg('اختر التاريخ أولاً.', true); return; }
   var empId = vacHid.value;
   var code = vacCode.value.trim();
