@@ -37,6 +37,10 @@ function findBestName(name, allNames) {
 
 function unifyContractorNames() {
   if (typeof bakeryContractorSupplies === 'undefined' || !bakeryContractorSupplies) return;
+  if (typeof bakeryContractorsNames !== 'undefined' && bakeryContractorsNames && bakeryContractorsNames.length < 6) {
+    bakeryContractorsNames = ["محمد شعبان","ممدوح بكر","عاطف عبد المغيث","مصطفى على","اسامه سمير","فارس محمد"];
+    _lsSet('linah_bakery_contractors_names', JSON.stringify(bakeryContractorsNames));
+  }
   var allNames = [], nameIdx = {};
   bakeryContractorSupplies.forEach(function(r) {
     if (r && r.name && !nameIdx[r.name]) { nameIdx[r.name] = true; allNames.push(r.name); }
@@ -71,15 +75,6 @@ function unifyContractorNames() {
     });
     var seen = {};
     _selectedContractors = _selectedContractors.filter(function(n) { if (seen[n]) return false; seen[n] = true; return true; });
-  }
-  if (typeof bakeryContractorsNames !== 'undefined' && bakeryContractorsNames) {
-    bakeryContractorsNames.forEach(function(n, i) {
-      var best = findBestName(n, allNames);
-      best = nameMap[normalizeNameFlat(best)] || best;
-      if (best && best !== n) bakeryContractorsNames[i] = best;
-    });
-    var seen = {};
-    bakeryContractorsNames = bakeryContractorsNames.filter(function(n) { if (seen[n]) return false; seen[n] = true; return true; });
   }
   if (changes > 0) {
     syncStorage();
