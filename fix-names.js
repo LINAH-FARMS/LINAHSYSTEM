@@ -12,53 +12,74 @@ function normalizeName(n) {
     .toLowerCase();
 }
 
+function normalizeNameFlat(n) {
+  return normalizeName(n).replace(/\s+/g, '');
+}
+
 function namesMatch(a, b) {
-  return normalizeName(a) === normalizeName(b);
+  if (!a || !b) return false;
+  var na = normalizeName(a), nb = normalizeName(b);
+  if (na === nb) return true;
+  var fa = normalizeNameFlat(a), fb = normalizeNameFlat(b);
+  if (fa === fb) return true;
+  if (fa.indexOf(fb) !== -1 || fb.indexOf(fa) !== -1) return true;
+  return false;
+}
+
+function findBestName(name, allNames) {
+  var best = name;
+  allNames.forEach(function(n) {
+    if (!n) return;
+    if (namesMatch(n, best) && n.length > best.length) best = n;
+  });
+  return best;
 }
 
 function unifyContractorNames() {
   if (typeof bakeryContractorSupplies === 'undefined' || !bakeryContractorSupplies) return;
+  var allNames = [], nameIdx = {};
+  bakeryContractorSupplies.forEach(function(r) {
+    if (r && r.name && !nameIdx[r.name]) { nameIdx[r.name] = true; allNames.push(r.name); }
+  });
+  if (typeof bakeryContractorsNames !== 'undefined' && bakeryContractorsNames) {
+    bakeryContractorsNames.forEach(function(n) {
+      if (n && !nameIdx[n]) { nameIdx[n] = true; allNames.push(n); }
+    });
+  }
+  if (typeof _selectedContractors !== 'undefined' && _selectedContractors) {
+    _selectedContractors.forEach(function(n) {
+      if (n && !nameIdx[n]) { nameIdx[n] = true; allNames.push(n); }
+    });
+  }
   var nameMap = {};
-  var normToBest = {};
+  allNames.forEach(function(n) {
+    var norm = normalizeNameFlat(n);
+    if (!nameMap[norm] || n.length > nameMap[norm].length) nameMap[norm] = n;
+  });
   var changes = 0;
   bakeryContractorSupplies.forEach(function(r) {
     if (!r || !r.name) return;
-    var norm = normalizeName(r.name);
-    if (!normToBest[norm] || r.name.length < normToBest[norm].length) normToBest[norm] = r.name;
-  });
-  bakeryContractorSupplies.forEach(function(r) {
-    if (!r || !r.name) return;
-    var norm = normalizeName(r.name);
-    var best = normToBest[norm];
-    if (best && r.name !== best) {
-      changes++;
-      r.name = best;
-    }
+    var best = findBestName(r.name, allNames);
+    best = nameMap[normalizeNameFlat(best)] || best;
+    if (best && r.name !== best) { changes++; r.name = best; }
   });
   if (typeof _selectedContractors !== 'undefined' && _selectedContractors) {
     _selectedContractors.forEach(function(n, i, arr) {
-      var norm = normalizeName(n);
-      var best = normToBest[norm];
+      var best = findBestName(n, allNames);
+      best = nameMap[normalizeNameFlat(best)] || best;
       if (best && best !== n) arr[i] = best;
     });
     var seen = {};
-    _selectedContractors = _selectedContractors.filter(function(n) {
-      if (seen[n]) return false;
-      seen[n] = true;
-      return true;
-    });
+    _selectedContractors = _selectedContractors.filter(function(n) { if (seen[n]) return false; seen[n] = true; return true; });
   }
   if (typeof bakeryContractorsNames !== 'undefined' && bakeryContractorsNames) {
     bakeryContractorsNames.forEach(function(n, i) {
-      var norm = normalizeName(n);
-      if (normToBest[norm] && normToBest[norm] !== n) bakeryContractorsNames[i] = normToBest[norm];
+      var best = findBestName(n, allNames);
+      best = nameMap[normalizeNameFlat(best)] || best;
+      if (best && best !== n) bakeryContractorsNames[i] = best;
     });
     var seen = {};
-    bakeryContractorsNames = bakeryContractorsNames.filter(function(n) {
-      if (seen[n]) return false;
-      seen[n] = true;
-      return true;
-    });
+    bakeryContractorsNames = bakeryContractorsNames.filter(function(n) { if (seen[n]) return false; seen[n] = true; return true; });
   }
   if (changes > 0) {
     syncStorage();
@@ -74,22 +95,19 @@ function normalizeNameInput() {
   if (!el) return;
   var val = el.value.trim();
   if (!val) return;
-  var best = null;
+  var allNames = [];
   if (typeof bakeryContractorSupplies !== 'undefined') {
-    bakeryContractorSupplies.forEach(function(r) {
-      if (r && r.name && namesMatch(r.name, val) && (!best || r.name.length < best.length)) best = r.name;
-    });
+    bakeryContractorSupplies.forEach(function(r) { if (r && r.name) allNames.push(r.name); });
   }
-  if (!best && typeof bakeryContractorsNames !== 'undefined') {
-    bakeryContractorsNames.forEach(function(n) {
-      if (n && namesMatch(n, val) && (!best || n.length < best.length)) best = n;
-    });
+  if (typeof bakeryContractorsNames !== 'undefined') {
+    bakeryContractorsNames.forEach(function(n) { if (n) allNames.push(n); });
   }
+  var best = findBestName(val, allNames);
   if (best && best !== val) el.value = best;
 }
 
 function runUnify() {
-  if (typeof bakeryContractorSupplies === 'undefined') { setTimeout(runUnify, 1000); return; }
+  if (typeof bakeryContractorSupplies === 'undefined') { setTimeout(runUnify, 500); return; }
   unifyContractorNames();
 }
 
@@ -97,6 +115,7 @@ document.addEventListener('DOMContentLoaded', function() {
   setTimeout(runUnify, 500);
   setTimeout(runUnify, 3000);
   setTimeout(runUnify, 7000);
+  setTimeout(runUnify, 15000);
   var input = document.getElementById('bctr-name');
   if (input) {
     input.addEventListener('change', normalizeNameInput);
