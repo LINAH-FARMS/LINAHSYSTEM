@@ -14,6 +14,18 @@ function printBreadStatement() {
   var isLandscape = confirm('اختر اتجاه الطباعة:\n\nOK ← أفقي (Landscape)\nCancel ← عمودي (Portrait)');
   var orientation = isLandscape ? 'landscape' : 'portrait';
 
+  var rowCount = records.length;
+  var baseFont = 13, tFont = 13, sFont = 11, pFont = 10, rowPad = 5;
+  if (orientation === 'landscape') {
+    if (rowCount > 12) { baseFont = 11; tFont = 11; sFont = 10; pFont = 9; rowPad = 4; }
+    if (rowCount > 20) { baseFont = 9; tFont = 9; sFont = 8; pFont = 7; rowPad = 3; }
+    if (rowCount > 30) { baseFont = 7; tFont = 7; sFont = 6; pFont = 6; rowPad = 2; }
+  } else {
+    if (rowCount > 18) { baseFont = 11; tFont = 11; sFont = 10; pFont = 9; rowPad = 4; }
+    if (rowCount > 28) { baseFont = 9; tFont = 9; sFont = 8; pFont = 7; rowPad = 3; }
+    if (rowCount > 40) { baseFont = 7; tFont = 7; sFont = 6; pFont = 6; rowPad = 2; }
+  }
+
   var logoSrc = '';
   var logoEl = document.querySelector('img[alt="Logo"]');
   if (logoEl) logoSrc = logoEl.src;
@@ -48,31 +60,32 @@ function printBreadStatement() {
   var pageSize = orientation === 'landscape' ? 'A4 landscape' : 'A4 portrait';
   w.document.write('<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8"><title>بيان توريد خبز — LINAHSYSTEM</title>' +
     '<style>' +
-      '@page{size:' + pageSize + ';margin:10mm 12mm;}' +
+      '@page{size:' + pageSize + ';margin:8mm 10mm;}' +
       'body{font-family:Cairo,"Traditional Arabic","Segoe UI",sans-serif;padding:0;margin:0;color:#000;}' +
       '.page{width:100%;max-width:100%;box-sizing:border-box;padding:2px 0;}' +
-      '.logo-section{display:flex;align-items:center;justify-content:space-between;border-bottom:3px double #000;padding-bottom:8px;margin-bottom:10px;}' +
-      '.logo-section .right{display:flex;align-items:center;gap:10px;}' +
-      '.logo-section .right img{width:50px;height:50px;border-radius:50%;object-fit:cover;border:2px solid #000;padding:2px;}' +
-      '.logo-section .right .co-name{font-weight:900;color:#000;font-size:18px;line-height:1.3;}' +
-      '.logo-section .right .co-sub{font-size:13px;color:#000;}' +
-      '.logo-section .badge{background:#000;color:#fff;padding:4px 18px;border-radius:20px;font-size:13px;font-weight:700;}' +
-      '.title{text-align:center;font-size:24px;font-weight:900;color:#000;margin:6px 0 12px;}' +
-      '.meta-row{display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px;margin-bottom:10px;padding:8px 12px;background:#fff;border:2px solid #000;border-radius:6px;font-size:13px;}' +
+      '.logo-section{display:flex;align-items:center;justify-content:space-between;border-bottom:3px double #000;padding-bottom:4px;margin-bottom:6px;}' +
+      '.logo-section .right{display:flex;align-items:center;gap:6px;}' +
+      '.logo-section .right img{width:36px;height:36px;border-radius:50%;object-fit:cover;border:2px solid #000;padding:1px;}' +
+      '.logo-section .right .co-name{font-weight:900;color:#000;font-size:' + sFont + 'px;line-height:1.2;}' +
+      '.logo-section .right .co-sub{font-size:' + pFont + 'px;color:#000;}' +
+      '.logo-section .badge{background:#000;color:#fff;padding:2px 12px;border-radius:16px;font-size:' + pFont + 'px;font-weight:700;}' +
+      '.title{text-align:center;font-size:' + tFont + 'px;font-weight:900;color:#000;margin:3px 0 6px;}' +
+      '.meta-row{display:flex;justify-content:space-between;flex-wrap:wrap;gap:2px;margin-bottom:5px;padding:4px 8px;background:#fff;border:2px solid #000;border-radius:4px;font-size:' + pFont + 'px;}' +
       '.meta-item{text-align:center;}' +
-      '.meta-label{display:block;color:#000;font-size:12px;}' +
-      '.meta-val{font-weight:900;color:#000;font-size:14px;}' +
-      'table{width:100%;border-collapse:collapse;font-size:13px;margin:8px 0;}' +
-      'thead th{background:#000;color:#fff;padding:6px 4px;border:2px solid #000;text-align:center;font-size:13px;font-weight:700;}' +
-      'tbody td{padding:5px 4px;border:1px solid #000;text-align:right;}' +
+      '.meta-label{display:block;color:#000;font-size:' + (pFont-1) + 'px;}' +
+      '.meta-val{font-weight:900;color:#000;font-size:' + baseFont + 'px;}' +
+      'table{width:100%;border-collapse:collapse;font-size:' + baseFont + 'px;margin:4px 0;}' +
+      'thead th{background:#000;color:#fff;padding:3px 2px;border:2px solid #000;text-align:center;font-size:' + baseFont + 'px;font-weight:700;}' +
+      'tbody td{padding:' + rowPad + 'px 2px;border:1px solid #000;text-align:right;}' +
       'tbody tr:nth-child(even){background:#f5f5f5;}' +
       '.c{text-align:center !important;}' +
       '.b{font-weight:900;}' +
-      '.totals{margin:10px 0;padding:10px 16px;background:#fff;border:2px solid #000;border-radius:6px;}' +
-      '.total-row{display:flex;justify-content:space-between;padding:4px 0;font-size:14px;}' +
+      '.totals{margin:4px 0;padding:4px 10px;background:#fff;border:2px solid #000;border-radius:4px;}' +
+      '.total-row{display:flex;justify-content:space-between;padding:1px 0;font-size:' + baseFont + 'px;}' +
       '.total-row .num{font-weight:900;}' +
-      '.total-due{font-size:16px;font-weight:900;color:#000;border-top:3px solid #000;margin-top:5px;padding-top:7px;}' +
-      '.footer{text-align:center;margin-top:12px;font-size:11px;color:#000;border-top:1px solid #000;padding-top:6px;}' +
+      '.total-due{font-size:' + (baseFont+1) + 'px;font-weight:900;color:#000;border-top:2px solid #000;margin-top:2px;padding-top:3px;}' +
+      '.sign-row{text-align:right;margin-top:10px;padding-top:6px;border-top:1px solid #000;font-size:' + baseFont + 'px;font-weight:700;}' +
+      '.footer{text-align:center;font-size:' + (pFont-1) + 'px;color:#000;margin-top:4px;}' +
       '@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact;color:#000;}.page{margin:0;padding:0;box-shadow:none;}}' +
     '</style></head><body><div class="page">' +
       '<div class="logo-section">' +
@@ -91,7 +104,7 @@ function printBreadStatement() {
       '</div>' +
       '<table>' +
         '<thead><tr>' +
-          '<th style="width:20px;">م</th><th>التاريخ</th><th>المقاول</th><th style="width:44px;">عدد الأرغفة</th><th style="width:36px;">السعر</th><th style="width:44px;">الإجمالي</th><th style="width:44px;">المدفوع</th><th style="width:44px;">المتبقي</th><th>المسؤول</th>' +
+          '<th style="width:18px;">م</th><th>التاريخ</th><th>المقاول</th><th style="width:38px;">عدد الأرغفة</th><th style="width:30px;">السعر</th><th style="width:38px;">الإجمالي</th><th style="width:38px;">المدفوع</th><th style="width:38px;">المتبقي</th><th>المسؤول</th>' +
         '</tr></thead><tbody>' + tableRows + '</tbody>' +
       '</table>' +
       '<div class="totals">' +
@@ -100,6 +113,7 @@ function printBreadStatement() {
         '<div class="total-row"><span>إجمالي المدفوع</span><span class="num">' + grandTotalPaid.toFixed(2) + ' ج.م</span></div>' +
         '<div class="total-row total-due"><span>إجمالي المتبقي</span><span class="num">' + grandRem.toFixed(2) + ' ج.م</span></div>' +
       '</div>' +
+      '<div class="sign-row">اعتماد إدارة الشئون الإدارية :  ______________________</div>' +
       '<div class="footer">بيان توريد خبز — لينه فارمز © ' + new Date().getFullYear() + '</div>' +
     '</div></body></html>');
   w.document.close();
