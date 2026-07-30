@@ -75,7 +75,7 @@ function printBreadStatement() {
       '.meta-label{display:block;color:#000;font-size:' + (pFont-1) + 'px;}' +
       '.meta-val{font-weight:900;color:#000;font-size:' + baseFont + 'px;}' +
       'table{width:100%;border-collapse:collapse;font-size:' + baseFont + 'px;margin:4px 0;}' +
-      'thead th{background:#000;color:#fff;padding:3px 2px;border:2px solid #000;text-align:center;font-size:' + baseFont + 'px;font-weight:700;}' +
+      'thead th{background:#6c757d;color:#fff;padding:3px 2px;border:2px solid #6c757d;text-align:center;font-size:' + baseFont + 'px;font-weight:700;}' +
       'tbody td{padding:' + rowPad + 'px 2px;border:1px solid #000;text-align:right;background:#fff;}' +
       '.ctr-name{font-size:' + (baseFont+3) + 'px;font-weight:900;}' +
       '.c{text-align:center !important;}' +
