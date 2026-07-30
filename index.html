@@ -2370,7 +2370,7 @@
           <button class="btn" style="padding:4px 10px;font-size:12px;background:#1565c0;color:white;" onclick="exportBakeryContractorSuppliesToExcel()">📤 تصدير Excel</button>
           <button class="btn" style="padding:4px 10px;font-size:12px;background:#0d47a1;color:white;" onclick="document.getElementById('b-ctr-excel-file').click()">📥 استيراد شيت</button>
           <input type="file" id="b-ctr-excel-file" style="display:none;" accept=".xlsx, .xls" onchange="importBakeryContractorSuppliesFromExcel(event)">
-          <button class="btn" style="padding:4px 10px;font-size:12px;background:#1b5e20;color:white;" onclick="printBreadInvoice()">📄 فاتورة مطبوعة</button>
+          <button class="btn" style="padding:4px 10px;font-size:12px;background:#1b5e20;color:white;" onclick="printBreadStatement()">📄 بيان توريد خبز</button>
           <button class="btn" style="padding:4px 10px;font-size:12px;background:#1565c0;color:white;" onclick="showPrintChoice('table-bakery-ctr-supply')">🖨️ طباعة</button>
           <button class="btn" style="padding:4px 10px;font-size:12px;background:#c62828;color:white;" onclick="exportPdfActiveTab()">تصدير PDF</button>
         </div>
@@ -2885,6 +2885,7 @@
   <script src="app-extra.js"></script>
   <script src="hr_fill.js"></script>
   <script src="stores_import.js"></script>
+  <script src="bread-print.js"></script>
 </body>
 </html>
 <!-- rebuild: 2026-07-25T23:45 -->
