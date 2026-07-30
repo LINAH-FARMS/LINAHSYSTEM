@@ -44,7 +44,7 @@ function printBreadStatement() {
     tableRows += '<tr>' +
       '<td class="c">' + (i + 1) + '</td>' +
       '<td class="c">' + r.date + '</td>' +
-      '<td class="c">' + r.name + '</td>' +
+      '<td class="c b ctr-name">' + r.name + '</td>' +
       '<td class="c b">' + r.count + '</td>' +
       '<td class="c">' + parseFloat(r.price || 0).toFixed(2) + '</td>' +
       '<td class="c b">' + rev.toFixed(2) + '</td>' +
@@ -76,8 +76,8 @@ function printBreadStatement() {
       '.meta-val{font-weight:900;color:#000;font-size:' + baseFont + 'px;}' +
       'table{width:100%;border-collapse:collapse;font-size:' + baseFont + 'px;margin:4px 0;}' +
       'thead th{background:#000;color:#fff;padding:3px 2px;border:2px solid #000;text-align:center;font-size:' + baseFont + 'px;font-weight:700;}' +
-      'tbody td{padding:' + rowPad + 'px 2px;border:1px solid #000;text-align:right;}' +
-      'tbody tr:nth-child(even){background:#f5f5f5;}' +
+      'tbody td{padding:' + rowPad + 'px 2px;border:1px solid #000;text-align:right;background:#fff;}' +
+      '.ctr-name{font-size:' + (baseFont+3) + 'px;font-weight:900;}' +
       '.c{text-align:center !important;}' +
       '.b{font-weight:900;}' +
       '.totals{margin:4px 0;padding:4px 10px;background:#fff;border:2px solid #000;border-radius:4px;}' +
