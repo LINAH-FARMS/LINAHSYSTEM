@@ -14,12 +14,6 @@ function printBreadStatement() {
   var isLandscape = confirm('اختر اتجاه الطباعة:\n\nOK ← أفقي (Landscape)\nCancel ← عمودي (Portrait)');
   var orientation = isLandscape ? 'landscape' : 'portrait';
 
-  var grouped = {};
-  records.forEach(function(r) {
-    if (!grouped[r.name]) grouped[r.name] = [];
-    grouped[r.name].push(r);
-  });
-
   var logoSrc = '';
   var logoEl = document.querySelector('img[alt="Logo"]');
   if (logoEl) logoSrc = logoEl.src;
@@ -27,49 +21,25 @@ function printBreadStatement() {
   var invDate = new Date().toLocaleDateString('ar-EG', { year:'numeric', month:'long', day:'numeric' });
 
   var tableRows = '', grandTotalLoaves = 0, grandTotalRevenue = 0, grandTotalPaid = 0;
-  var ctrNames = Object.keys(grouped);
 
-  ctrNames.forEach(function(ctrName) {
-    var items = grouped[ctrName];
-    var ctrTotalLoaves = 0, ctrTotalRevenue = 0, ctrTotalPaid = 0;
-
-    items.forEach(function(r) {
-      ctrTotalLoaves += r.count || 0;
-      ctrTotalRevenue += (r.count || 0) * (r.price || 0);
-      ctrTotalPaid += parseFloat(r.paid) || 0;
-    });
-
-    grandTotalLoaves += ctrTotalLoaves;
-    grandTotalRevenue += ctrTotalRevenue;
-    grandTotalPaid += ctrTotalPaid;
-
-    tableRows += '<tr class="ctr-group"><td colspan="8" class="ctr-header">' + ctrName + '</td></tr>';
-
-    items.forEach(function(r, i) {
-      var rev = (r.count || 0) * (r.price || 0);
-      var paid = parseFloat(r.paid) || 0;
-      var rem = rev - paid;
-      tableRows += '<tr>' +
-        '<td class="c">' + (i + 1) + '</td>' +
-        '<td class="c">' + r.date + '</td>' +
-        '<td class="c b">' + r.count + '</td>' +
-        '<td class="c">' + parseFloat(r.price || 0).toFixed(2) + '</td>' +
-        '<td class="c b">' + rev.toFixed(2) + '</td>' +
-        '<td class="c">' + paid.toFixed(2) + '</td>' +
-        '<td class="c">' + rem.toFixed(2) + '</td>' +
-        '<td class="c">' + (r.responsible || '—') + '</td>' +
-      '</tr>';
-    });
-
-    var ctrRem = ctrTotalRevenue - ctrTotalPaid;
-    tableRows += '<tr class="ctr-subtotal">' +
-      '<td class="c b" colspan="2">إجمالي ' + ctrName + '</td>' +
-      '<td class="c b">' + ctrTotalLoaves + '</td>' +
-      '<td></td>' +
-      '<td class="c b">' + ctrTotalRevenue.toFixed(2) + '</td>' +
-      '<td class="c b">' + ctrTotalPaid.toFixed(2) + '</td>' +
-      '<td class="c b">' + ctrRem.toFixed(2) + '</td>' +
-      '<td></td></tr>';
+  records.forEach(function(r, i) {
+    var rev = (r.count || 0) * (r.price || 0);
+    var paid = parseFloat(r.paid) || 0;
+    var rem = rev - paid;
+    grandTotalLoaves += r.count || 0;
+    grandTotalRevenue += rev;
+    grandTotalPaid += paid;
+    tableRows += '<tr>' +
+      '<td class="c">' + (i + 1) + '</td>' +
+      '<td class="c">' + r.date + '</td>' +
+      '<td class="c">' + r.name + '</td>' +
+      '<td class="c b">' + r.count + '</td>' +
+      '<td class="c">' + parseFloat(r.price || 0).toFixed(2) + '</td>' +
+      '<td class="c b">' + rev.toFixed(2) + '</td>' +
+      '<td class="c">' + paid.toFixed(2) + '</td>' +
+      '<td class="c">' + rem.toFixed(2) + '</td>' +
+      '<td class="c">' + (r.responsible || '—') + '</td>' +
+    '</tr>';
   });
 
   var grandRem = grandTotalRevenue - grandTotalPaid;
@@ -95,10 +65,7 @@ function printBreadStatement() {
       'table{width:100%;border-collapse:collapse;font-size:10px;margin:6px 0;}' +
       'thead th{background:#1b5e20;color:#fff;padding:4px 3px;border:1px solid #1b5e20;text-align:center;font-size:10px;}' +
       'tbody td{padding:3px 3px;border:1px solid #c8e6c9;text-align:right;}' +
-      'tbody tr:nth-child(even):not(.ctr-group):not(.ctr-subtotal){background:#f1f8e9;}' +
-      '.ctr-group td{padding:0;}' +
-      '.ctr-header{background:#e8f5e9;color:#1b5e20;font-weight:900;font-size:11px;padding:4px 6px !important;border:1px solid #a5d6a7;}' +
-      '.ctr-subtotal td{background:#e8f5e9;font-weight:700;font-size:10px;border-top:2px solid #1b5e20;}' +
+      'tbody tr:nth-child(even){background:#f1f8e9;}' +
       '.c{text-align:center !important;}' +
       '.b{font-weight:700;}' +
       '.totals{margin:8px 0;padding:8px 14px;background:#f5f5f5;border-radius:6px;border:1px solid #e0e0e0;}' +
@@ -119,12 +86,12 @@ function printBreadStatement() {
       '<div class="meta-row">' +
         '<div class="meta-item"><span class="meta-label">تاريخ الطباعة</span><span class="meta-val">' + invDate + '</span></div>' +
         '<div class="meta-item"><span class="meta-label">فترة التوريد</span><span class="meta-val">' + fromDate + ' → ' + toDate + '</span></div>' +
-        '<div class="meta-item"><span class="meta-label">عدد المقاولين</span><span class="meta-val">' + ctrNames.length + '</span></div>' +
+        '<div class="meta-item"><span class="meta-label">عدد المقاولين</span><span class="meta-val">' + _selectedContractors.length + '</span></div>' +
         '<div class="meta-item"><span class="meta-label">إجمالي الأرغفة</span><span class="meta-val">' + grandTotalLoaves + '</span></div>' +
       '</div>' +
       '<table>' +
         '<thead><tr>' +
-          '<th style="width:24px;">م</th><th>التاريخ</th><th style="width:50px;">عدد الأرغفة</th><th style="width:42px;">السعر</th><th style="width:50px;">الإجمالي</th><th style="width:50px;">المدفوع</th><th style="width:50px;">المتبقي</th><th>المسؤول</th>' +
+          '<th style="width:20px;">م</th><th>التاريخ</th><th>المقاول</th><th style="width:44px;">عدد الأرغفة</th><th style="width:36px;">السعر</th><th style="width:44px;">الإجمالي</th><th style="width:44px;">المدفوع</th><th style="width:44px;">المتبقي</th><th>المسؤول</th>' +
         '</tr></thead><tbody>' + tableRows + '</tbody>' +
       '</table>' +
       '<div class="totals">' +
