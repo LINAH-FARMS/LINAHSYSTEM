@@ -2910,6 +2910,12 @@
         var added = [], hasNew = false;
         entries.forEach(function(e) {
           var key = e.code + '_' + e.start + '_' + e.type + '_' + e.days;
+          // تعبئة info لو ناقصة (الوظيفة والإدارة)
+          if (!e.info || e.info === '' || e.info === ' / ') {
+            var emp = employees.find(function(x) { return (x.code || x.id) === e.code; });
+            if (emp) e.info = (emp.title || '') + ' / ' + (emp.dept || '');
+            else e.info = '';
+          }
           if (!existingKeys[key]) { vacations.push(e); existingKeys[key] = true; added.push(e); hasNew = true; }
         });
         if (hasNew) {
