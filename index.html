@@ -66,7 +66,7 @@
       <button onclick="manualPull()" style="background:rgba(33,150,243,0.25);color:white;border:1px solid rgba(33,150,243,0.5);padding:3px 10px;border-radius:50px;font-size:11px;cursor:pointer;font-family:'Cairo',sans-serif;" title="سحب أحدث البيانات من السحابة">🔄 سحب</button>
       <button onclick="manualPush()" style="background:rgba(76,175,80,0.25);color:white;border:1px solid rgba(76,175,80,0.5);padding:3px 10px;border-radius:50px;font-size:11px;cursor:pointer;font-family:'Cairo',sans-serif;" title="دفع كل البيانات إلى السحابة">⚡ مزامنة قوية</button>
       <button onclick="runPythonReport()" style="background:rgba(74,144,226,0.2);color:white;border:1px solid rgba(74,144,226,0.5);padding:3px 10px;border-radius:50px;font-size:11px;cursor:pointer;font-family:'Cairo',sans-serif;" title="تقارير بايثون الأسبوعية">🐍 بايثون</button>
-      <span style="display:inline-flex;align-items:center;gap:4px;"><input type="date" id="custom-report-from" style="padding:2px 4px;border-radius:4px;border:1px solid rgba(255,255,255,0.3);background:rgba(255,255,255,0.1);color:white;font-size:10px;width:110px;"><input type="date" id="custom-report-to" style="padding:2px 4px;border-radius:4px;border:1px solid rgba(255,255,255,0.3);background:rgba(255,255,255,0.1);color:white;font-size:10px;width:110px;"><button onclick="runCustomReport()" style="background:rgba(255,152,0,0.25);color:white;border:1px solid rgba(255,152,0,0.5);padding:3px 10px;border-radius:50px;font-size:11px;cursor:pointer;font-family:'Cairo',sans-serif;" title="تقرير بايثون بمدة مخصصة">📅 تقرير</button></span>
+      <span style="display:inline-flex;align-items:center;gap:4px;"><input type="date" id="custom-report-from" style="padding:2px 4px;border-radius:4px;border:1px solid rgba(255,255,255,0.3);background:rgba(255,255,255,0.1);color:white;font-size:10px;width:110px;"><input type="date" id="custom-report-to" style="padding:2px 4px;border-radius:4px;border:1px solid rgba(255,255,255,0.3);background:rgba(255,255,255,0.1);color:white;font-size:10px;width:110px;"><button onclick="exportWeeklyExcel()" style="background:rgba(255,152,0,0.25);color:white;border:1px solid rgba(255,152,0,0.5);padding:3px 10px;border-radius:50px;font-size:11px;cursor:pointer;font-family:'Cairo',sans-serif;" title="تقرير Excel مباشرة من المتصفح بدون بايثون">📅 تقرير</button></span>
       <span id="presence-users" style="font-size:11px;font-weight:600;display:none;"></span>
       <span id="last-sync-time" style="font-size:10px;color:rgba(255,255,255,0.6);display:none;"></span>
       <span id="backup-status" style="font-size:10px;display:none;"></span>
@@ -2888,6 +2888,7 @@
   <script src="fix-names.js"></script>
   <script src="bread-print.js"></script>
   <script src="item-search.js"></script>
+  <script src="weekly-excel.js"></script>
   <script>
   // سحب الإجازات المسجلة من daily-data.html ودمجها (دوري كل 10 ثوانٍ)
   (function() {
