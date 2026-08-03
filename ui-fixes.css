@@ -1,0 +1,9 @@
+/* ui-fixes.css — إصلاحات واجهة
+   إصلاح: قوائم الاقتراحات داخل لوحات التحكم (مثل بحث صرف المخزن) كانت تُرسم
+   خلف الأقسام التالية لأن backdrop-filter على .control-panel ينشئ stacking context.
+   رفع اللوحة كوحدة واحدة فوق المحتوى التالي يحل المشكلة. */
+
+.control-panel {
+  position: relative;
+  z-index: 5;
+}
