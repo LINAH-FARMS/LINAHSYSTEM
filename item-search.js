@@ -5,9 +5,16 @@
 (function () {
   'use strict';
 
+  function getItems() {
+    try {
+      if (typeof inventoryItems !== 'undefined' && Array.isArray(inventoryItems)) return inventoryItems;
+    } catch (e) {}
+    return window.inventoryItems || [];
+  }
+
   function renderSuggestions(inp, hid, sug, q) {
     sug.innerHTML = '';
-    let list = window.inventoryItems || [];
+    let list = getItems();
     if (q) {
       list = list.filter(function (i) {
         return (i.code || '').toLowerCase().indexOf(q) !== -1 ||
