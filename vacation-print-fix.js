@@ -1,6 +1,10 @@
-// vacation-print-fix.js — في بيان الإجازات المطبوع (📄 طباعة إجازة) يظهر عمود
-// «الرصيد» فارغاً لأن الرصيد يُدخل يدوياً بعد الطباعة بدلاً من تعبئته تلقائياً.
-// الطريقة: إعادة بناء الدالة الأصلية من مصدرها مع تعديل نقطتين فقط —
+// vacation-print-fix.js — تحسينات طباعة بيان الإجازات (📄 طباعة إجازة):
+// 1) عمود «الرصيد» يظهر فارغاً لأن الرصيد يُدخل يدوياً بعد الطباعة.
+// 2) إصلاح خروج المحتوى خارج منطقة الطباعة: كانت .page بعرض 210mm ثابت
+//    فوق هوامش @page (1.5cm/2cm) فيتجاوز عرض الورقة، وmin-height 297mm
+//    مع الهوامش ينتج ورقة ثانية فاضية. الحل: @page بلا هوامش +
+//    box-sizing + عرض كامل في الطباعة.
+// الطريقة: إعادة بناء الدالة الأصلية من مصدرها مع تعديلات نقطية —
 // لا يتم لمس app.js الأصلي.
 
 (function () {
@@ -18,7 +22,19 @@
       /\+ \(r\.balance \|\| '—'\) \+/,
       function () { changed++; return "+ (r.balance || '') +"; }
     );
-    if (changed === 2) {
+    src = src.replace(
+      /'@page\{size:A4 portrait;margin:1\.5cm 2cm;\}'/,
+      function () { changed++; return "'@page{size:A4 portrait;margin:0;}'"; }
+    );
+    src = src.replace(
+      /'\.page\{width:210mm;min-height:297mm;margin:10px auto;background:#fff;padding:20px 25px;box-shadow:0 2px 20px rgba\(0,0,0,0\.1\);page-break-after:always;\}'/,
+      function () { changed++; return "'.page{box-sizing:border-box;width:210mm;min-height:296mm;margin:10px auto;background:#fff;padding:20px 25px;box-shadow:0 2px 20px rgba(0,0,0,0.1);page-break-after:always;}'"; }
+    );
+    src = src.replace(
+      /'@media print\{body\{background:#fff;\}\.page\{margin:0;box-shadow:none;padding:15px 20px;\}\}'/,
+      function () { changed++; return "'@media print{body{background:#fff;}.page{width:100%;margin:0;box-shadow:none;padding:15px 20px;}}'"; }
+    );
+    if (changed === 5) {
       window.printVacationForm = Function('return (' + src + ')')();
     }
   } catch (e) { /* يبقى الشكل الأصلي عند أي خطأ */ }
