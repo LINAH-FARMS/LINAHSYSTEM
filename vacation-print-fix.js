@@ -4,6 +4,11 @@
 //    فوق هوامش @page (1.5cm/2cm) فيتجاوز عرض الورقة، وmin-height 297mm
 //    مع الهوامش ينتج ورقة ثانية فاضية. الحل: @page بلا هوامش +
 //    box-sizing + عرض كامل في الطباعة.
+// 3) إصلاح اختفاء آخر جزء من البيان في الطباعة: min-height 296mm يُجبر
+//    الصفحة على ملء كامل الورقة فيصل المحتوى السفلي (التواقيع/الترويسة)
+//    لمنطقة لا تقدر الطابعة على الطباعة فيها فيُبتَر. الحل: في الطباعة
+//    ارتفاع تلقائي (min-height:0) بحيث لا يتجاوز المحتوى حدود الورقة.
+// 4) إضافة مسافة 2 سم من كل جانب (padding:2cm) قبل الهوامش.
 // الطريقة: إعادة بناء الدالة الأصلية من مصدرها مع تعديلات نقطية —
 // لا يتم لمس app.js الأصلي.
 
@@ -32,7 +37,7 @@
     );
     src = src.replace(
       /'@media print\{body\{background:#fff;\}\.page\{margin:0;box-shadow:none;padding:15px 20px;\}\}'/,
-      function () { changed++; return "'@media print{body{background:#fff;}.page{width:100%;margin:0;box-shadow:none;padding:15px 20px;}}'"; }
+      function () { changed++; return "'@media print{body{background:#fff;}.page{box-sizing:border-box;width:100%;margin:0;box-shadow:none;min-height:0;height:auto;padding:2cm;}}'"; }
     );
     if (changed === 5) {
       window.printVacationForm = Function('return (' + src + ')')();
