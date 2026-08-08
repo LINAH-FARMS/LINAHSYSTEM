@@ -8958,7 +8958,7 @@ function exportContractorsToExcel() {
     }
 
     function exportBackupSystem() {
-      if (!requireAdmin() || (currentUser !== 'خطير جداً' && currentUser !== 'سالم مجدي')) return;
+      if (!requireAdmin() && currentUser !== 'خطير جداً' && currentUser !== 'سالم مجدي') return;
       _dataChangedSinceBackup = false;
       var bakBtn = document.querySelector('button[onclick*="exportBackupSystem"]');
       if (bakBtn) bakBtn.classList.remove('btn-backup-pulse');
@@ -8980,7 +8980,7 @@ function exportContractorsToExcel() {
     }
 
     async function exportFullBackup() {
-      if (!requireAdmin() || (currentUser !== 'خطير جداً' && currentUser !== 'سالم مجدي')) return;
+      if (!requireAdmin() && currentUser !== 'خطير جداً' && currentUser !== 'سالم مجدي') return;
       var data = getAllDataForSync();
       data.currentUser = currentUser;
       data.exported_at = new Date().toISOString();
