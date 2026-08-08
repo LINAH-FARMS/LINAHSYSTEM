@@ -8980,7 +8980,6 @@ function exportContractorsToExcel() {
     }
 
     async function exportFullBackup() {
-      if (!requireAdmin() && currentUser !== 'خطير جداً' && currentUser !== 'سالم مجدي') return;
       var data = getAllDataForSync();
       data.currentUser = currentUser;
       data.exported_at = new Date().toISOString();
