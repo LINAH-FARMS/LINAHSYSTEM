@@ -8958,7 +8958,6 @@ function exportContractorsToExcel() {
     }
 
     function exportBackupSystem() {
-      if (!requireAdmin() && currentUser !== 'خطير جداً' && currentUser !== 'سالم مجدي') return;
       _dataChangedSinceBackup = false;
       var bakBtn = document.querySelector('button[onclick*="exportBackupSystem"]');
       if (bakBtn) bakBtn.classList.remove('btn-backup-pulse');
