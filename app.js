@@ -1971,6 +1971,7 @@
       if (!u) return;
       u.passHash = hashPass(newPass);
       delete u.noPass;
+      _ts(u);
       saveUsers();
       // تحديث قائمة المستخدمين
       renderUsersList();
@@ -1989,6 +1990,7 @@
       if (confirmPass !== newPass) { alert('كلمة المرور غير متطابقة.'); return; }
       u.passHash = hashPass(newPass);
       delete u.noPass;
+      _ts(u);
       saveUsers();
       alert('تم تغيير كلمة المرور بنجاح.');
     }
@@ -2003,6 +2005,7 @@
       var pass = prompt('أدخل كلمة المرور للمستخدم "' + name + '" (اتركها فارغة لبدون كلمة مرور):');
       if (pass === null) return;
       var userObj = { name: name, role: role };
+      _ts(userObj);
       if (pass && pass.length >= 3) { userObj.passHash = hashPass(pass); }
       else if (pass && pass.length > 0 && pass.length < 3) { alert('كلمة المرور يجب ألا تقل عن 3 أحرف.'); return; }
       else { userObj.noPass = true; }
@@ -2019,6 +2022,7 @@
       var u = appUsers.find(function(x) { return x.name === name; });
       if (!u) return;
       u.role = newRole;
+      _ts(u);
       saveUsers();
       renderUsersList();
       populateLoginDropdown();
@@ -4161,6 +4165,7 @@ function toggleEmployeeStatus(empId) {
           fixed.push({ emp: emp, oldSector: emp.sector, oldRoom: emp.room, newSector: newSector, newRoom: newRoom });
           emp.sector = newSector;
           emp.room = newRoom;
+          emp.modifiedAt = new Date().toISOString();
         } else {
           skipped.push(pending[currentIdx]);
         }
@@ -4321,6 +4326,7 @@ function toggleEmployeeStatus(empId) {
         if (!newRoom) { skipped++; errors.push(emp.name + ': لا توجد غرف متاحة في ' + newSector); return; }
         emp.sector = newSector;
         emp.room = newRoom;
+        emp.modifiedAt = new Date().toISOString();
         fixed++;
       });
       if (fixed > 0) syncStorage();
@@ -4677,6 +4683,7 @@ function toggleEmployeeStatus(empId) {
       if (!sector || !room) { alert('تم تغيير اسم الغرفة'); return; }
       emp.sector = sector;
       emp.room = room;
+      emp.modifiedAt = new Date().toISOString();
       syncStorage();
       renderHousingLayout();
       showHousingEmployeeResult();
@@ -5486,6 +5493,7 @@ function toggleEmployeeStatus(empId) {
       v.lastWorkDay = dates.lastWorkDay;
       v.returnDate = dates.returnDate;
       v.notes = notes;
+      _ts(v);
       syncStorage(); renderVacationsTable(); updateEmployeeVacationStatuses(); renderTable(); renderDashboard();
       // حساب تواريخ الإجازة
       document.getElementById('vacation-notes').value = '';
