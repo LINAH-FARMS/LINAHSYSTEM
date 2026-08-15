@@ -350,6 +350,13 @@
         syncLog('التعديلات المحلية أحدث من السحابة (' + new Date(localMs).toLocaleTimeString('ar-EG') + ' > ' + new Date(cloudMs).toLocaleTimeString('ar-EG') + ') — تم الاحتفاظ بالبيانات المحلية');
         showSyncToast('التعديلات المحلية أحدث من السحابة — لم يتم استبدالها');
       } else {
+        // مفاتيح الحذف: أي سجل محذوف محلياً أو من جهاز آخر لا يُرجِع من السحابة
+        const pullDelKeys = {};
+        syncDeletions.forEach(function (d) {
+          if (!d || !d.entity) return;
+          if (!pullDelKeys[d.entity]) pullDelKeys[d.entity] = {};
+          pullDelKeys[d.entity][d.key] = true;
+        });
         Object.keys(remoteData).forEach(function (k) {
           if (k === 'syncDeletions') return;
           if (k === 'waterDocs') return; // تُدمج من صفوفها المنفصلة (حماية)
@@ -358,14 +365,16 @@
           const localVal = getEntityVar(k);
           if (Array.isArray(v) && Array.isArray(localVal)) {
             if (k === 'vacations') {
-              setEntityVar(k, _mergeVacations(localVal, v, TIE_REMOTE, null));
+              setEntityVar(k, _mergeVacations(localVal, v, TIE_REMOTE, pullDelKeys[k] || {}));
             } else {
-              setEntityVar(k, _mergeSyncElements(localVal, v, k, null, TIE_REMOTE));
+              setEntityVar(k, _mergeSyncElements(localVal, v, k, pullDelKeys[k] || {}, TIE_REMOTE));
             }
           } else {
             setEntityVar(k, v);
           }
         });
+        // إعادة تطبيق الحذف بعد الدمج: السجل المحذوف لا يعود أبداً
+        _applyDeletions();
         syncLog('تم سحب ' + Object.keys(remoteData).length + ' عنصر من Supabase');
         try { await pullWaterDocsFromCloud(true); } catch (e) { console.error('pullWaterDocsFromCloud:', e); }
       }
@@ -503,6 +512,12 @@
       const remoteData = typeof bestRow.data === 'string' ? JSON.parse(bestRow.data) : bestRow.data;
 
       // 1) استبدال كل الكيانات في الذاكرة بنسخة السحابة
+      const loadDelKeys = {};
+      syncDeletions.forEach(function (d) {
+        if (!d || !d.entity) return;
+        if (!loadDelKeys[d.entity]) loadDelKeys[d.entity] = {};
+        loadDelKeys[d.entity][d.key] = true;
+      });
       Object.keys(remoteData).forEach(function (k) {
         if (k === 'syncDeletions') return;
         if (k === 'waterDocs') return; // تُدمج من صفوفها المنفصلة ولا تُستبدل أبداً
@@ -510,7 +525,7 @@
           try {
             const lv = getEntityVar('vacations');
             if (Array.isArray(lv) && Array.isArray(remoteData[k])) {
-              setEntityVar('vacations', _mergeVacations(lv, remoteData[k], TIE_REMOTE, null));
+              setEntityVar('vacations', _mergeVacations(lv, remoteData[k], TIE_REMOTE, loadDelKeys[k] || {}));
               return;
             }
           } catch (e) {}
