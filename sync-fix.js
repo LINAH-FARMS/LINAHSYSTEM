@@ -506,6 +506,15 @@
       Object.keys(remoteData).forEach(function (k) {
         if (k === 'syncDeletions') return;
         if (k === 'waterDocs') return; // تُدمج من صفوفها المنفصلة ولا تُستبدل أبداً
+        if (k === 'vacations') {
+          try {
+            const lv = getEntityVar('vacations');
+            if (Array.isArray(lv) && Array.isArray(remoteData[k])) {
+              setEntityVar('vacations', _mergeVacations(lv, remoteData[k], TIE_REMOTE, null));
+              return;
+            }
+          } catch (e) {}
+        }
         try { setEntityVar(k, remoteData[k]); } catch (e) {}
       });
       // 1b) دمج مستندات المياه اتحادياً (لا حذف أبداً إلا بضغطة المستخدم)
