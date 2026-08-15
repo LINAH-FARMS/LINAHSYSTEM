@@ -11197,7 +11197,9 @@ reports.forEach(function(r) {
         });
         // Always push if no snapshot exists (first sync) or if deletions pending
         var hasDeletions = syncDeletions.length > 0;
-        var doFullPush = Object.keys(_snap).length === 0;
+        // دفع كامل دائماً: قراءة السحابة + دمج عنصري (الزيادة التزايدية RPC تستبدل
+        // الكيان كاملاً في السحابة فتطمس تعديلات الأجهزة الأخرى وتُرجع الإجازات المحذوفة)
+        var doFullPush = true;
         // Build merge from remote only when needed
         var currentAlldata = {};
         var _delByEntity = {};
@@ -11229,7 +11231,13 @@ reports.forEach(function(r) {
           } catch(e) {}
           Object.keys(allData).forEach(function(ak) {
             if (Array.isArray(currentAlldata[ak]) && Array.isArray(allData[ak])) {
-              currentAlldata[ak] = mergeArraysPush(allData[ak], currentAlldata[ak], function(item) { return _getItemKey(item, ak); }, _delByEntity[ak] || {});
+              if (ak === 'vacations' && typeof window._mergeVacations === 'function') {
+                // دمج الإجازات بالتتابع الزمني: التعديل يدمج نسخة واحدة فقط
+                // (الأقدم تُحذف عند تداخلها مع الأحدث) والحذف يُحترم عبر delKeys
+                currentAlldata[ak] = window._mergeVacations(allData[ak], currentAlldata[ak], 'local', _delByEntity[ak] || {});
+              } else {
+                currentAlldata[ak] = mergeArraysPush(allData[ak], currentAlldata[ak], function(item) { return _getItemKey(item, ak); }, _delByEntity[ak] || {});
+              }
             } else {
               currentAlldata[ak] = allData[ak];
             }
@@ -11333,7 +11341,12 @@ reports.forEach(function(r) {
               if (typeof _dv !== 'undefined' && _dv !== null) {
                 var _localVal = getEntityVar(_dk);
                 if (Array.isArray(_dv) && Array.isArray(_localVal)) {
-                  setEntityVar(_dk, _dv);
+                  if (_dk === 'vacations' && typeof window._mergeVacations === 'function') {
+                    // دمج بدلاً من الاستبدال: تعديل محلي غير مرفوع بعد لا يضيع
+                    setEntityVar(_dk, window._mergeVacations(_localVal, _dv, 'remote', null));
+                  } else {
+                    setEntityVar(_dk, _dv);
+                  }
                 } else {
                   setEntityVar(_dk, _dv);
                 }
