@@ -253,6 +253,7 @@
       const mergedPayload = {};
       Object.keys(allData).forEach(function (k) {
         if (k === 'incident_reports') return; // تُدار في صفها الخاص
+        if (k === 'waterDocs') return; // تُدار في صفوف منفصلة (حماية من الفقدان)
         const val = allData[k];
         if (Array.isArray(val)) {
           const remoteArr = remote && Array.isArray(remote[k]) ? remote[k] : null;
@@ -272,6 +273,7 @@
         body: JSON.stringify({ id: 'alldata', data: mergedPayload, updated_at: ts, device_id: _deviceId })
       });
       if (!upResp.ok) throw new Error('HTTP ' + upResp.status);
+      try { await pushWaterDocsToCloud(); } catch (e) { console.error('pushWaterDocsToCloud:', e); }
 
       // تحديث snapshot بما تم رفعه فعلاً (المدمج) ليكون المرجع الدقيق
       const newSnap = {};
@@ -350,6 +352,7 @@
       } else {
         Object.keys(remoteData).forEach(function (k) {
           if (k === 'syncDeletions') return;
+          if (k === 'waterDocs') return; // تُدمج من صفوفها المنفصلة (حماية)
           const v = remoteData[k];
           if (typeof v === 'undefined' || v === null) return;
           const localVal = getEntityVar(k);
@@ -364,6 +367,7 @@
           }
         });
         syncLog('تم سحب ' + Object.keys(remoteData).length + ' عنصر من Supabase');
+        try { await pullWaterDocsFromCloud(true); } catch (e) { console.error('pullWaterDocsFromCloud:', e); }
       }
 
       // ----------------- معالجة لاحقة (مثل الأصلية) -----------------
@@ -382,9 +386,10 @@
         dynamicVisitorTypes: ["ضيوف","سيدات","طلبة مدرسة","سائقين","مقدم خدمة بدون اجر","مقدم خدمة باجر","امن ليلي"],
         contractorSectors: ["قطاع 22", "الخيام", "سكن المقاولين"],
         contractorRooms: [],
-        bakeryContractorsNames: []
+        bakeryContractorsNames: [],
+        dynamicStores: []
       };
-      ['dynamicSeptics','dynamicRooms','dynamicDepts','dynamicTitles','dynamicSectors','dynamicVisitorTypes','contractorSectors','contractorRooms','bakeryContractorsNames'].forEach(function (k) {
+      ['dynamicSeptics','dynamicRooms','dynamicDepts','dynamicTitles','dynamicSectors','dynamicVisitorTypes','contractorSectors','contractorRooms','bakeryContractorsNames','dynamicStores'].forEach(function (k) {
         try {
           const arr = getEntityVar(k);
           if (Array.isArray(arr)) {
@@ -500,8 +505,12 @@
       // 1) استبدال كل الكيانات في الذاكرة بنسخة السحابة
       Object.keys(remoteData).forEach(function (k) {
         if (k === 'syncDeletions') return;
+        if (k === 'waterDocs') return; // تُدمج من صفوفها المنفصلة ولا تُستبدل أبداً
         try { setEntityVar(k, remoteData[k]); } catch (e) {}
       });
+      // 1b) دمج مستندات المياه اتحادياً (لا حذف أبداً إلا بضغطة المستخدم)
+      try { await pullWaterDocsFromCloud(true); } catch (e) {}
+      try { await pushWaterDocsToCloud(); } catch (e) {}
       // 2) ضمان وجود مدير النظام دائماً (السحابة حالياً بلا مستخدمين)
       if (Array.isArray(appUsers)) {
         const hasAdmin = appUsers.some(function (u) { return u && u.name === 'مدير النظام'; });
@@ -534,6 +543,94 @@
   // الانتظار حتى يكتمل التحميل والرسم الأول ثم الفتح من السحابة
   window.addEventListener('load', function () {
     setTimeout(autoPullOnLoad, 1500);
+  });
+
+  // ============================================================
+  //  مستندات محطات المياه — مزامنة محمية من الفقدان نهائياً:
+  //  كل مستند في صف مستقل (id=waterdocs:<docId>) حتى لا تتخطى
+  //  حمولة البيانات حد السيرفر، والسحب دمج اتحادي (union):
+  //  أي مستند موجود محلياً أو في السحابة يتم الإبقاء عليه،
+  //  والحذف يتم فقط بضغطة المستخدم على زر الحذف.
+  // ============================================================
+  function _waterDocKey(d) { return (d && d.id) || ((d && d.station) + '|' + (d.fileName || '')); }
+  function _waterDocRowId(d) { return 'waterdocs:' + _waterDocKey(d); }
+
+  window._waterDocDeletes = function () {
+    try { return JSON.parse(_lsGet('lineh_waterdocs_deleted') || '[]'); } catch (e) { return []; }
+  };
+  window._saveWaterDocDeletes = function (arr) {
+    _lsSet('lineh_waterdocs_deleted', JSON.stringify(arr));
+  };
+
+  window.pushWaterDocsToCloud = async function pushWaterDocsToCloud() {
+    if (!supabaseConnected || !Array.isArray(waterDocs) || waterDocs.length === 0) return;
+    for (var wdi = 0; wdi < waterDocs.length; wdi++) {
+      var d = waterDocs[wdi];
+      if (!d) continue;
+      var key = _waterDocKey(d);
+      if (_waterDocDeletes().indexOf(key) !== -1) continue;
+      try {
+        var resp = await fetch(_sbEndpoint, {
+          method: 'POST',
+          headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/json', 'Prefer': 'resolution=merge-duplicates' },
+          body: JSON.stringify({ id: _waterDocRowId(d), data: d, updated_at: new Date().toISOString(), device_id: _deviceId })
+        });
+        if (!resp.ok) syncLog('فشل رفع مستند مياه (' + resp.status + '): ' + (d.fileName || ''));
+      } catch (e) { syncLog('خطأ رفع مستند مياه: ' + e.message); }
+    }
+  };
+
+  window.pullWaterDocsFromCloud = async function pullWaterDocsFromCloud(silent) {
+    if (!supabaseConnected) return;
+    try {
+      const resp = await fetch(_sbEndpoint + '?select=id,data,updated_at&id=like.waterdocs%25', {
+        method: 'GET',
+        headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Range': '0-*' }
+      });
+      if (!resp.ok) { syncLog('فشل سحب مستندات المياه: ' + resp.status); return; }
+      const rows = await resp.json();
+      if (!rows || !Array.isArray(rows)) return;
+      const cloudByKey = {};
+      const delKeys = {};
+      _waterDocDeletes().forEach(function (k) { delKeys[k] = true; });
+      rows.forEach(function (r) {
+        if (!r || !r.data) return;
+        const d = typeof r.data === 'string' ? JSON.parse(r.data) : r.data;
+        if (!d) return;
+        const k = _waterDocKey(d);
+        if (delKeys[k]) return;
+        if (!cloudByKey[k]) cloudByKey[k] = d;
+        else if (Date.parse(d.uploadedAt || 0) > Date.parse(cloudByKey[k].uploadedAt || 0)) cloudByKey[k] = d;
+      });
+      const localByKey = {};
+      (waterDocs || []).forEach(function (d) { if (d) localByKey[_waterDocKey(d)] = d; });
+      let added = 0, kept = 0;
+      const merged = [];
+      Object.keys(localByKey).forEach(function (k) {
+        const l = localByKey[k];
+        const c = cloudByKey[k];
+        if (c && Date.parse(c.uploadedAt || 0) > Date.parse(l.uploadedAt || 0)) { merged.push(Object.assign({}, l, c)); kept++; }
+        else { merged.push(l); }
+      });
+      Object.keys(cloudByKey).forEach(function (k) {
+        if (!localByKey[k]) { merged.push(cloudByKey[k]); added++; }
+      });
+      if (added > 0 || kept > 0) {
+        waterDocs = merged;
+        try { syncStorage(true, true); } catch (e) {}
+        try { _saveWaterDocsToIDB(); } catch (e) {}
+        try { if (typeof renderWaterDocs === 'function') renderWaterDocs(); } catch (e) {}
+        try { if (typeof renderWaterStations === 'function') renderWaterStations(); } catch (e) {}
+        if (!silent) showSyncToast('تم تحديث ' + (added + kept) + ' مستند مياه من السحابة ✅');
+      }
+    } catch (e) { console.error('pullWaterDocsFromCloud:', e); }
+  };
+
+  // السحب يدوي عند فتح التبويب + إعادة الرفع للمستندات المفقودة
+  document.addEventListener('visibilitychange', function () {
+    if (!document.hidden && supabaseConnected) {
+      setTimeout(function () { try { pullWaterDocsFromCloud(true); } catch (e) {} }, 1500);
+    }
   });
 
   // ============================================================

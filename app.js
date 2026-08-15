@@ -253,7 +253,9 @@
       _lsSet('lineh_admin_overtime', JSON.stringify(adminOvertime));
       _lsSet('lineh_room_assets', JSON.stringify(roomAssets));
       _lsSet('lineh_archive_data', JSON.stringify(archiveData));
+      _lsSet('lineh_dynamic_stores', JSON.stringify(_strArr(dynamicStores)));
       _lsSet('lineh_water_stations', JSON.stringify(waterStations));
+      try { _lsSet('lineh_water_docs', JSON.stringify(waterDocs)); _lsSet('lineh_water_docs_mirror', JSON.stringify(waterDocs)); } catch(e) {}
       // waterDocs saved to IndexedDB only (large base64 files)
       _lsSet('lineh_quick_actions', JSON.stringify(quickActions));
       _lsSet('lineh_daily_stats', JSON.stringify(dailyStats));
@@ -1264,7 +1266,7 @@
       try { if(tabId === 'tab-housing') { if(!roomsCapacity.length) rebuildRoomsFromEmployees(); renderHousingLayout(); updateHousingStats(); } } catch(e) { console.error('tab-housing error:', e); }
       try { if(tabId === 'tab-dynamic') { renderDynamicLists(); } } catch(e) { console.error('tab-dynamic error:', e); }
       try { if(tabId === 'tab-excluded') { renderExcludedTable(); } } catch(e) { console.error('tab-excluded error:', e); }
-      try { if(tabId === 'tab-inventory') { renderInventoryItems(); renderArchiveTable(); } } catch(e) { console.error('tab-inventory error:', e); }
+      try { if(tabId === 'tab-inventory') { renderInventoryItems(); switchArchiveTab(_arcTab || 'incoming'); } } catch(e) { console.error('tab-inventory error:', e); }
       try { if(tabId === 'tab-periodic-maint') { renderPeriodicMaintenance(); } } catch(e) { console.error('tab-periodic-maint error:', e); }
       try { if(tabId === 'tab-tea-sugar') { renderTeaSugarTable(); } } catch(e) { console.error('tab-tea-sugar error:', e); }
       try { if(tabId === 'tab-meal-log') { autoLogTodayMeals(); renderMealLogTable(); renderMealSurvey(); if(!document.getElementById('meal-date').value) document.getElementById('meal-date').value = new Date().toISOString().split('T')[0]; populatePlanDishSelects(); var pd = document.getElementById('plan-date'); if(pd && !pd.value){ var tm=new Date();tm.setDate(tm.getDate()+1);pd.value=tm.toISOString().split('T')[0]; } } } catch(e) { console.error('tab-meal-log error:', e); }
@@ -1891,7 +1893,7 @@
             'table-bakery-production': 'renderBakeryProductions',
             'table-bakery-ctr-supply': 'renderBakeryContractorSupplies',
             'table-bakery-invoices': 'renderBakeryInvoices',
-            'table-archive': 'renderArchiveTable'
+            'table-archive': 'renderArchiveIncoming'
           };
           let fn = renderMap[tableId];
           if (fn && window[fn]) window[fn]();
@@ -4949,7 +4951,7 @@ function toggleEmployeeStatus(empId) {
           a.desc = (a.desc || '') + 'تم صرف ' + deduct + ' بتاريخ ' + new Date().toISOString().split('T')[0];
         }
       }
-      if (remaining < qty) { syncStorage(); renderArchiveTable(); }
+      if (remaining < qty) { syncStorage(); switchArchiveTab(_arcTab || 'incoming'); }
       
       document.getElementById('inv-item-name').value = '';
       document.getElementById('inv-item-code').value = '';
@@ -5075,69 +5077,233 @@ function toggleEmployeeStatus(empId) {
     }
 
     var _arcEditIdx = -1;
-    function renderArchiveTable() {
+    var _arcTab = 'incoming';
+    var _arcIssueIdx = -1;
+
+    function cleanArc(s) { return String(s == null ? '' : s).replace(/['"<>]/g, ''); }
+    function arcSetVal(id, val) { var el = document.getElementById(id); if (el) el.textContent = val == null ? '' : String(val); }
+    function arcRemaining(a) { return Math.max(0, (parseInt(a.qty) || 0) - (parseInt(a.issuedQty) || 0)); }
+    function arcIsIssued(a) { return (a.issuedate && a.issuedate.trim()) || (a.issueto && a.issueto.trim()); }
+    function archiveStats() {
+      var stores = _strArr(dynamicStores);
+      var items = 0, qty = 0, avail = 0, outCount = 0, outQty = 0, lastIssue = '';
+      archiveData.forEach(function(a) {
+        if (!a) return;
+        qty += parseInt(a.qty) || 0; items++;
+        avail += arcRemaining(a);
+        if (arcIsIssued(a)) { outCount++; outQty += parseInt(a.issuedQty) || 0; if ((a.issuedate||'') > lastIssue) lastIssue = a.issuedate; }
+      });
+      return { stores: stores.length, items: items, qty: qty, avail: avail, outCount: outCount, outQty: outQty, lastIssue: lastIssue };
+    }
+    function populateArchiveStoreDropdown() {
+      var sel = document.getElementById('arc-location');
+      if (!sel) return;
+      var cur = sel.value;
+      var opts = _strArr(dynamicStores).map(function(s) { return '<option value="' + cleanArc(s) + '">' + s + '</option>'; }).join('');
+      sel.innerHTML = opts ? opts + '<option value="__add__">➕ مخزن جديد...</option>' : '<option value="">— لا توجد مخازن —</option><option value="__add__">➕ إضافة مخزن جديد...</option>';
+      if (cur && cur !== '__add__') sel.value = cur;
+    }
+    function toggleStoreAddInput(show) {
+      var inp = document.getElementById('arc-location-new');
+      if (inp) inp.style.display = show ? 'block' : 'none';
+    }
+    function switchArchiveTab(tab) {
+      _arcTab = tab;
+      ['incoming','outgoing','stock','stores'].forEach(function(t) {
+        var p = document.getElementById('arc-panel-' + t);
+        if (p) p.style.display = t === tab ? 'block' : 'none';
+        var b = document.getElementById('arc-tab-' + t);
+        if (b) b.className = t === tab ? 'btn btn-primary' : 'btn';
+      });
+      if (tab === 'incoming') renderArchiveIncoming();
+      if (tab === 'outgoing') renderArchiveOutgoing();
+      if (tab === 'stock') renderArchiveStock();
+      if (tab === 'stores') renderArchiveStores();
+      populateArchiveStoreDropdown();
+    }
+    function renderArchiveIncoming() {
       var q = (document.getElementById('search-archive').value || '').toLowerCase();
-      var filtered = archiveData.filter(function(a) { return !q || a.item.toLowerCase().includes(q) || a.desc.toLowerCase().includes(q) || a.location.toLowerCase().includes(q) || (a.issueto||'').toLowerCase().includes(q) || (a.issueby||'').toLowerCase().includes(q) || (a.receiver||'').toLowerCase().includes(q); });
+      var filtered = archiveData.filter(function(a) { return !arcIsIssued(a); }).filter(function(a) { return !q || (a.item||'').toLowerCase().includes(q) || (a.desc||'').toLowerCase().includes(q) || (a.location||'').toLowerCase().includes(q); });
       var st = sortState['table-archive'];
       if (st && st.key) filtered = sortData(filtered, st.key, st.dir);
       var tbody = document.getElementById('archive-table-body');
+      var sts = archiveStats();
+      arcSetVal('arc-stat-incoming-items', sts.items);
+      arcSetVal('arc-stat-incoming-qty', sts.qty);
+      arcSetVal('arc-stat-stores-count', sts.stores);
+      arcSetVal('arc-stat-available', sts.avail);
+      if (!tbody) return;
       tbody.innerHTML = filtered.length ? filtered.map(function(a, i) {
         var idx = archiveData.indexOf(a);
-        return '<tr><td>' + a.item + '</td><td>' + a.desc + '</td><td>' + a.qty + '</td><td>' + a.location + '</td><td>' + a.condition + '</td><td>' + a.date + '</td><td>' + (a.issueto || '—') + '</td><td>' + (a.issuedate || '—') + '</td><td>' + (a.issueby || '—') + '</td><td>' + (a.receiver || '—') + '</td><td class="no-print"><button class="btn btn-sm" style="background:#1565c0;color:#fff;padding:2px 6px;font-size:11px;margin-left:4px;" onclick="editArchiveRecord(' + idx + ')">✏️</button><button class="btn btn-danger" style="padding:2px 6px;font-size:11px;" onclick="deleteArchiveRecord(' + idx + ')">🗑️</button></td></tr>';
-      }).join('') : '<tr><td colspan="11" style="text-align:center;color:#999;">لا توجد عهدات مسجلة</td></tr>';
+        return '<tr><td>' + cleanArc(a.item) + '</td><td>' + cleanArc(a.desc) + '</td><td>' + (parseInt(a.qty)||0) + '</td><td>' + cleanArc(a.location) + '</td><td>' + cleanArc(a.condition) + '</td><td>' + cleanArc(a.date) + '</td><td class="no-print"><button class="btn btn-sm" style="background:#2e7d32;color:#fff;padding:2px 8px;font-size:11px;margin-left:4px;" onclick="openArchiveIssue(' + idx + ')">📤 صرف</button><button class="btn btn-sm" style="background:#1565c0;color:#fff;padding:2px 6px;font-size:11px;margin-left:4px;" onclick="editArchiveRecord(' + idx + ')">✏️</button><button class="btn btn-danger" style="padding:2px 6px;font-size:11px;" onclick="deleteArchiveRecord(' + idx + ')">🗑️</button></td></tr>';
+      }).join('') : '<tr><td colspan="7" style="text-align:center;color:#999;">لا توجد عهدات واردة</td></tr>';
+    }
+    function renderArchiveOutgoing() {
+      var q = (document.getElementById('search-archive-out').value || '').toLowerCase();
+      var filtered = archiveData.filter(function(a) { return arcIsIssued(a); }).filter(function(a) { return !q || (a.item||'').toLowerCase().includes(q) || (a.issueto||'').toLowerCase().includes(q) || (a.receiver||'').toLowerCase().includes(q) || (a.issueby||'').toLowerCase().includes(q); });
+      var tbody = document.getElementById('archive-out-body');
+      var sts = archiveStats();
+      arcSetVal('arc-stat-outgoing-count', sts.outCount);
+      arcSetVal('arc-stat-outgoing-qty', sts.outQty);
+      arcSetVal('arc-stat-last-issue', sts.lastIssue || '—');
+      if (!tbody) return;
+      tbody.innerHTML = filtered.length ? filtered.sort(function(a,b){ return (b.issuedate||'').localeCompare(a.issuedate||''); }).map(function(a) {
+        var idx = archiveData.indexOf(a);
+        return '<tr><td>' + cleanArc(a.item) + '</td><td>' + (parseInt(a.issuedQty)||0) + '</td><td>' + cleanArc(a.location) + '</td><td>' + cleanArc(a.issueto) + '</td><td>' + cleanArc(a.issuedate) + '</td><td>' + cleanArc(a.issueby) + '</td><td>' + cleanArc(a.receiver) + '</td><td class="no-print"><button class="btn btn-danger" style="padding:2px 6px;font-size:11px;" onclick="deleteArchiveRecord(' + idx + ')" title="حذف">🗑️</button></td></tr>';
+      }).join('') : '<tr><td colspan="8" style="text-align:center;color:#999;">لا توجد حركات صرف</td></tr>';
+    }
+    function renderArchiveStock() {
+      var tbody = document.getElementById('archive-stock-body');
+      var groups = {};
+      archiveData.forEach(function(a) {
+        if (!a) return;
+        var k = (a.item||'').trim() + '|' + (a.location||'').trim();
+        if (!groups[k]) groups[k] = { item: a.item, location: a.location, inQty: 0, outQty: 0 };
+        groups[k].inQty += parseInt(a.qty) || 0;
+        groups[k].outQty += parseInt(a.issuedQty) || 0;
+      });
+      var rows = Object.keys(groups).map(function(k) { return groups[k]; });
+      var remTotal = 0, low = 0, empty = 0;
+      rows.forEach(function(g) { g.rem = Math.max(0, g.inQty - g.outQty); remTotal += g.rem; if (g.rem <= 0) empty++; else if (g.rem <= 3) low++; });
+      arcSetVal('arc-stat-stock-items', rows.length);
+      arcSetVal('arc-stat-stock-remaining', remTotal);
+      arcSetVal('arc-stat-stock-low', low);
+      arcSetVal('arc-stat-stock-empty', empty);
+      if (!tbody) return;
+      tbody.innerHTML = rows.length ? rows.sort(function(a,b){ return (b.rem - a.rem) || (a.item||'').localeCompare(b.item||''); }).map(function(g) {
+        var badge = g.rem <= 0 ? '<span style="color:#b71c1c;font-weight:700;">نافد</span>' : (g.rem <= 3 ? '<span style="color:#e65100;font-weight:700;">منخفض (باقي ' + g.rem + ')</span>' : '<span style="color:#1b5e20;font-weight:700;">متوفر</span>');
+        return '<tr><td>' + cleanArc(g.item) + '</td><td>' + cleanArc(g.location) + '</td><td>' + g.inQty + '</td><td>' + g.outQty + '</td><td style="font-weight:700;">' + g.rem + '</td><td>' + badge + '</td></tr>';
+      }).join('') : '<tr><td colspan="6" style="text-align:center;color:#999;">لا توجد أصناف في المخازن</td></tr>';
+    }
+    function renderArchiveStores() {
+      var tbody = document.getElementById('archive-stores-body');
+      populateArchiveStoreDropdown();
+      if (!tbody) return;
+      var counts = {}, qtys = {};
+      archiveData.forEach(function(a) {
+        if (!a) return;
+        var loc = (a.location || '').trim();
+        if (!loc) return;
+        counts[loc] = (counts[loc] || 0) + 1;
+        qtys[loc] = (qtys[loc] || 0) + (parseInt(a.qty) || 0);
+      });
+      var stores = _strArr(dynamicStores);
+      tbody.innerHTML = stores.length ? stores.map(function(s) {
+        return '<tr><td>' + cleanArc(s) + '</td><td>' + (counts[s] || 0) + '</td><td>' + (qtys[s] || 0) + '</td><td class="no-print"><button class="btn btn-danger" style="padding:2px 8px;font-size:11px;" onclick="deleteDynamicStore(\'' + cleanArc(s) + '\')">🗑️</button></td></tr>';
+      }).join('') : '<tr><td colspan="4" style="text-align:center;color:#999;">لا توجد مخازن — أضف مخزنك الأول من النموذج أعلاه</td></tr>';
+    }
+    function addDynamicStore() {
+      var name = (document.getElementById('store-new-name').value || '').trim();
+      if (!name) return alert('أدخل اسم المخزن');
+      var cur = _strArr(dynamicStores);
+      if (cur.indexOf(name) !== -1) return alert('هذا المخزن مسجل بالفعل');
+      cur.push(name);
+      dynamicStores = cur;
+      syncStorage();
+      logAction('إضافة', 'مخزن', name, 'إدارة المخازن');
+      document.getElementById('store-new-name').value = '';
+      renderArchiveStores();
+      alert('تم إضافة المخزن بنجاح ✅');
+    }
+    function deleteDynamicStore(name) {
+      if (!requireAdmin()) return;
+      var used = archiveData.some(function(a) { return a && a.location === name; });
+      if (used) return alert('لا يمكن حذف المخزن: توجد عهدات مسجلة فيه (حذف/نقل العهدات أولاً)');
+      if (!confirm('حذف المخزن «' + name + '» نهائياً؟')) return;
+      dynamicStores = _strArr(dynamicStores).filter(function(s) { return s !== name; });
+      _logDeletion('dynamicStores', name);
+      syncStorage();
+      logAction('حذف', 'مخزن', name, 'إدارة المخازن');
+      renderArchiveStores();
+      populateArchiveStoreDropdown();
+    }
+    function openArchiveIssue(idx) {
+      var a = archiveData[idx];
+      if (!a) return;
+      _arcIssueIdx = idx;
+      document.getElementById('arc-issue-info').innerHTML = '📦 <b>' + cleanArc(a.item) + '</b> — المخزن: ' + cleanArc(a.location) + ' | المتاح للصرف: <b>' + arcRemaining(a) + '</b>';
+      document.getElementById('arc-issue-qty').value = arcRemaining(a);
+      document.getElementById('arc-issue-to').value = a.issueto || '';
+      document.getElementById('arc-issue-by').value = a.issueby || '';
+      document.getElementById('arc-issue-receiver').value = a.receiver || '';
+      openModal('modal-archive-issue');
+    }
+    function submitArchiveIssue() {
+      var a = archiveData[_arcIssueIdx];
+      if (!a) return;
+      var qty = parseInt(document.getElementById('arc-issue-qty').value) || 0;
+      var to = document.getElementById('arc-issue-to').value.trim();
+      var by = document.getElementById('arc-issue-by').value.trim();
+      var rc = document.getElementById('arc-issue-receiver').value.trim();
+      var rem = arcRemaining(a);
+      if (qty <= 0 || qty > rem) return alert('كمية الصرف غير صحيحة (المتاح: ' + rem + ')');
+      if (!to) return alert('أدخل جهة الصرف (المنصرف إليه)');
+      a.issueto = to; a.issuedate = new Date().toISOString().split('T')[0]; a.issueby = by; a.receiver = rc;
+      a.issuedQty = (parseInt(a.issuedQty) || 0) + qty;
+      a.modifiedAt = new Date().toISOString();
+      syncStorage();
+      logAction('صرف', 'عهدة', a.item, 'كمية: ' + qty + ' | المخزن: ' + a.location + ' | الوجهة: ' + to);
+      closeModal('modal-archive-issue');
+      switchArchiveTab(_arcTab);
+      alert('تم تسجيل الصرف بنجاح ✅');
     }
     function saveArchiveRecord() {
       var item = document.getElementById('arc-item').value.trim();
       var desc = document.getElementById('arc-desc').value.trim();
       var qty = parseInt(document.getElementById('arc-qty').value) || 1;
-      var location = document.getElementById('arc-location').value.trim();
+      var location = document.getElementById('arc-location').value;
       var condition = document.getElementById('arc-condition').value;
       var date = document.getElementById('arc-date').value || new Date().toISOString().split('T')[0];
-      var issueto = document.getElementById('arc-issueto').value.trim();
-      var issuedate = document.getElementById('arc-issuedate').value;
-      var issueby = document.getElementById('arc-issueby').value.trim();
-      var receiver = document.getElementById('arc-receiver').value.trim();
-      if (!item) return alert('الرجاء إدخال اسم الصنف');
+      if (!item) return alert('الرجاء إدخال اسم العهدة (الصنف)');
+      if (location === '__add__' || !location) {
+        var newName = (document.getElementById('arc-location-new').value || '').trim();
+        if (!newName) return alert('اختر المخزن أو اكتب اسم مخزن جديد');
+        location = newName;
+        var cur = _strArr(dynamicStores);
+        if (cur.indexOf(location) === -1) { cur.push(location); dynamicStores = cur; }
+      }
       if (_arcEditIdx >= 0) {
         var a = archiveData[_arcEditIdx];
-        if (a) { a.item = item; a.desc = desc; a.qty = qty; a.location = location; a.condition = condition; a.date = date; a.issueto = issueto; a.issuedate = issuedate; a.issueby = issueby; a.receiver = receiver; }
+        if (a) { a.item = item; a.desc = desc; a.qty = qty; a.location = location; a.condition = condition; a.date = date; a.modifiedAt = new Date().toISOString(); }
         _arcEditIdx = -1;
         syncStorage();
-        logAction('مستلم', 'كمية', item, 'تم: ' + qty + ' | تسجيل: ' + location);
+        logAction('تعديل', 'عهدة', item, 'تسجيل: ' + location);
       } else {
-        archiveData.push({ item: item, desc: desc, qty: qty, location: location, condition: condition, date: date, issueto: issueto, issuedate: issuedate, issueby: issueby, receiver: receiver });
+        archiveData.push({ item: item, desc: desc, qty: qty, location: location, condition: condition, date: date, modifiedAt: new Date().toISOString() });
         syncStorage();
-        logAction('حركة', 'وبون', item, 'صرف: ' + qty + ' | المخزن: ' + location + ' | للإدارة: ' + condition);
+        logAction('وارد', 'عهدة', item, 'كمية: ' + qty + ' | المخزن: ' + location + ' | الحالة: ' + condition);
       }
-      document.getElementById('arc-item').value = ''; document.getElementById('arc-desc').value = ''; document.getElementById('arc-qty').value = '1'; document.getElementById('arc-location').value = ''; document.getElementById('arc-condition').value = 'المستلمة'; document.getElementById('arc-date').value = ''; document.getElementById('arc-issueto').value = ''; document.getElementById('arc-issuedate').value = ''; document.getElementById('arc-issueby').value = ''; document.getElementById('arc-receiver').value = '';
-      document.getElementById('btn-save-archive').textContent = '➕ إضافة عهدة';
-      renderArchiveTable();
+      document.getElementById('arc-item').value = ''; document.getElementById('arc-desc').value = ''; document.getElementById('arc-qty').value = '1'; document.getElementById('arc-location').value = ''; document.getElementById('arc-condition').value = 'جديدة'; document.getElementById('arc-date').value = ''; document.getElementById('arc-location-new').value = ''; toggleStoreAddInput(false);
+      document.getElementById('btn-save-archive').textContent = '➕ تسجيل وارد جديد';
+      populateArchiveStoreDropdown();
+      switchArchiveTab(_arcTab);
     }
     function editArchiveRecord(idx) {
       var a = archiveData[idx];
       if (!a) return;
+      if (arcIsIssued(a)) return alert('لا يمكن تعديل عهدة تم صرفها');
       _arcEditIdx = idx;
       document.getElementById('arc-item').value = a.item;
       document.getElementById('arc-desc').value = a.desc;
       document.getElementById('arc-qty').value = a.qty;
+      populateArchiveStoreDropdown();
       document.getElementById('arc-location').value = a.location;
+      if (!document.getElementById('arc-location').value) { document.getElementById('arc-location-new').value = a.location || ''; toggleStoreAddInput(true); }
       document.getElementById('arc-condition').value = a.condition;
       document.getElementById('arc-date').value = a.date;
-      document.getElementById('arc-issueto').value = a.issueto || '';
-      document.getElementById('arc-issuedate').value = a.issuedate || '';
-      document.getElementById('arc-issueby').value = a.issueby || '';
-      document.getElementById('arc-receiver').value = a.receiver || '';
-      document.getElementById('btn-save-archive').textContent = '➕ إضافة عهدة';
+      document.getElementById('btn-save-archive').textContent = '💾 حفظ التعديل';
+      switchArchiveTab('incoming');
     }
     function deleteArchiveRecord(idx) {
       if (!requireAdmin()) return;
       var a = archiveData[idx];
       if (!a) return;
-      _logDeletion('archiveData', a.id || a.date);
+      if (!confirm('حذف سجل «' + a.item + '» نهائياً؟')) return;
+      _logDeletion('archiveData', a.id || a.date + '|' + a.item + '|' + a.location);
       archiveData.splice(idx, 1);
       syncStorage();
-      logAction('حذف', 'هذا', a.item, 'البون: ' + a.qty);
-      renderArchiveTable();
+      logAction('حذف', 'عهدة', a.item, 'المخزن: ' + a.location);
+      switchArchiveTab(_arcTab);
     }
     function exportArchiveExcel() {
       if (!archiveData.length) return alert('لا توجد عهدات للتصدير');
@@ -5210,7 +5376,7 @@ function toggleEmployeeStatus(empId) {
           }
           syncStorage();
           logAction('استيراد', 'أرشيف', added + ' إضافة', updated + ' تحديث');
-          renderArchiveTable();
+          switchArchiveTab(_arcTab || 'incoming');
           alert('تم استيراد ' + (replaceAll ? archiveData.length : (added + updated)) + ' سجل بنجاح.\nإضافات: ' + added + ' | تحديثات: ' + updated);
         } catch(err) { alert('خطأ في استيراد بيانات الأرشيف: ' + err.message); }
         evt.target.value = '';
@@ -6112,7 +6278,8 @@ function toggleEmployeeStatus(empId) {
       var now = new Date().toISOString().split('T')[0];
       var overdue = 0;
       waterStations.forEach(function(w, i) {
-        w.status = (!w.nextDate || w.nextDate >= now) ? 'مفتوحة' : 'متأخرة';
+        if (w.done) { w.status = 'تم'; }
+        else { w.status = (!w.nextDate || w.nextDate >= now) ? 'مفتوحة' : 'متأخرة'; }
         if (w.status === 'متأخرة') overdue++;
         var docsForThis = waterDocs.filter(function(d) { return d.station === w.station && d.recordId === w.id; });
         var tr = document.createElement('tr');
@@ -6120,10 +6287,10 @@ function toggleEmployeeStatus(empId) {
           '<td>' + w.type + '</td>' +
           '<td>' + w.date + '</td>' +
           '<td style="color:' + (w.status === 'متأخرة' ? '#d32f2f;font-weight:700' : '#00695c;font-weight:600') + ';">' + (w.nextDate || '—') + '</td>' +
-          '<td><span class="status-badge ' + (w.status === 'متأخرة' ? 'status-danger' : 'status-ok') + '" style="' + (w.status === 'متأخرة' ? 'background:#ffebee;color:#b71c1c;' : '') + '">' + w.status + '</span></td>' +
+          '<td><span class="status-badge ' + (w.status === 'متأخرة' ? 'status-danger' : (w.status === 'تم' ? 'status-ok' : 'status-ok')) + '" style="' + (w.status === 'متأخرة' ? 'background:#ffebee;color:#b71c1c;' : (w.status === 'تم' ? 'background:#e8f5e9;color:#1b5e20;' : '')) + '">' + w.status + '</span></td>' +
           '<td style="font-size:12px;">' + (w.notes || '—') + '</td>' +
           '<td>' + (docsForThis.length ? '📎 ' + docsForThis.length : '—') + '</td>' +
-          '<td class="no-print"><button class="btn btn-danger" style="padding:2px 6px;font-size:11px;" onclick="deleteWaterRecord(' + i + ')">حذف</button></td>';
+          '<td class="no-print"><button class="btn btn-success" style="padding:2px 6px;font-size:11px;" onclick="toggleWaterDone(' + i + ')">' + (w.done ? 'إعادة فتح' : 'تم') + '</button> <button class="btn btn-danger" style="padding:2px 6px;font-size:11px;" onclick="deleteWaterRecord(' + i + ')">حذف</button></td>';
         tbody.appendChild(tr);
       });
       document.getElementById('water-station-count').innerText = waterStations.length;
@@ -6137,6 +6304,19 @@ function toggleEmployeeStatus(empId) {
       syncStorage();
       renderWaterStations();
     }
+    function toggleWaterDone(idx) {
+      var w = waterStations[idx];
+      if (!w) return;
+      if (w.done) {
+        w.done = false;
+        delete w.doneDate;
+      } else {
+        w.done = true;
+        w.doneDate = new Date().toISOString();
+      }
+      syncStorage();
+      renderWaterStations();
+    }
     function uploadWaterDoc() {
       var fileInput = document.getElementById('ws-doc-file');
       var station = document.getElementById('ws-doc-station').value;
@@ -6144,28 +6324,41 @@ function toggleEmployeeStatus(empId) {
       if (!file) return;
       var reader = new FileReader();
       reader.onload = function(e) {
-        waterDocs.push({
+        var recId = '';
+        for (var i = 0; i < waterStations.length; i++) {
+          if (waterStations[i].station === station) { recId = waterStations[i].id || ''; break; }
+        }
+        var rec = {
           id: 'wd_' + Date.now(),
           station: station,
           fileName: file.name,
           fileType: file.type,
           data: e.target.result,
+          recordId: recId,
           uploadedAt: new Date().toISOString()
-        });
+        };
+        waterDocs.push(rec);
         _saveWaterDocsToIDB();
+        try { _lsSet('lineh_water_docs', JSON.stringify(waterDocs)); _lsSet('lineh_water_docs_mirror', JSON.stringify(waterDocs)); } catch(err) {}
         renderWaterDocs();
+        renderWaterStations();
         document.getElementById('ws-upload-status').textContent = 'تم رفع المستند: ' + file.name;
         fileInput.value = '';
+        // رفع فوري للمستند كصف مستقل في السحابة (حماية من الضياع)
+        if (window.pushWaterDocsToCloud) { window.pushWaterDocsToCloud().catch(function(err){}); }
       };
       reader.readAsDataURL(file);
     }
     function renderWaterDocs() {
       var container = document.getElementById('water-docs-list');
       if (!container) return;
-      var stations = ['المحطة القديمة', 'المحطة الجديدة'];
+      var stationNames = [];
+      (waterStations || []).forEach(function(w) { if (w && w.station && stationNames.indexOf(w.station) === -1) stationNames.push(w.station); });
+      (waterDocs || []).forEach(function(d) { if (d && d.station && stationNames.indexOf(d.station) === -1) stationNames.push(d.station); });
+      if (!stationNames.length) stationNames = ['المحطة القديمة', 'المحطة الجديدة'];
       var html = '';
-      stations.forEach(function(st) {
-        var docs = waterDocs.filter(function(d) { return d.station === st; });
+      stationNames.forEach(function(st) {
+        var docs = (waterDocs || []).filter(function(d) { return d.station === st; });
         html += '<div style="background:#f5f5f5;border-radius:8px;padding:10px;border:1px solid #e0e0e0;">';
         html += '<h4 style="margin:0 0 6px;font-size:13px;color:#00695c;">' + st + ' (' + docs.length + ' مستند)</h4>';
         if (docs.length === 0) {
@@ -6187,10 +6380,35 @@ function toggleEmployeeStatus(empId) {
       container.innerHTML = html;
     }
     function deleteWaterDoc(id) {
-      if (!confirm('هل تريد حذف هذا المستند؟')) return;
-      for (var i = 0; i < waterDocs.length; i++) { if (waterDocs[i].id === id) { waterDocs.splice(i, 1); break; } }
-      _saveWaterDocsToIDB();
+      if (!requireAdmin()) return;
+      if (!confirm('هل تريد حذف هذا المستند نهائياً من الجهاز ومن السحابة؟\n(لا يمكن استرجاعه بعد الحذف)')) return;
+      var target = null, delKey = '';
+      for (var i = 0; i < waterDocs.length; i++) {
+        if (waterDocs[i].id === id) {
+          target = waterDocs[i];
+          delKey = (target.station || '') + '|' + (target.fileName || '') + '|' + (target.id || '');
+          waterDocs.splice(i, 1);
+          break;
+        }
+      }
+      if (!target) return;
+      // منع عودة المستند من السحابة بعد حذفه يدوياً
+      try {
+        var dels = window._waterDocDeletes ? _waterDocDeletes() : [];
+        if (dels.indexOf(target.id) === -1) dels.push(target.id);
+        if (window._saveWaterDocDeletes) _saveWaterDocDeletes(dels);
+      } catch(e) {}
+      // حذف صف المستند من السحابة مباشرة
+      try {
+        fetch(_sbEndpoint + '?id=eq.' + encodeURIComponent('waterdocs:' + (target.id || delKey)), {
+          method: 'DELETE',
+          headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
+        });
+      } catch(e) {}
+      try { _saveWaterDocsToIDB(); } catch(e) {}
+      try { _lsRemove('lineh_water_docs'); _lsSet('lineh_water_docs', JSON.stringify(waterDocs)); _lsSet('lineh_water_docs_mirror', JSON.stringify(waterDocs)); } catch(e) {}
       renderWaterDocs();
+      renderWaterStations();
     }
 
     // --- مطلوب ---
@@ -9126,7 +9344,7 @@ function exportContractorsToExcel() {
         if (bakeryContractorSupplies.length > 0) bakeryContractorSupplies = dedupArray(bakeryContractorSupplies, function(cs) { return cs.date + '|' + (cs.name||'') + '|' + (cs.count||0) + '|' + (cs.price||0); });
         if (contractors.length > 0) contractors = dedupArray(contractors, function(c) { return c.id || JSON.stringify(c); });
 
-        syncStorage(); renderTable(); renderHousingLayout(); renderInventoryTable(); renderInventoryItems(); renderArchiveTable(); renderVacationsTable(); renderOvertimeCalendar(); renderHospitalityTable(); renderMaintenanceTable(); renderSepticTable(); renderPeriodicMaintenance(); renderTeaSugarTable(); renderMealLogTable(); autoLogTodayMeals(); populateContractorSectorDropdown(); renderContractorsTable(); rebuildAllDropdowns(); renderBakeryIngredients(); renderBakeryProductions(); renderBakeryContractorSupplies(); renderBakeryInvoices(); updateBakeryStats(); updateBreadSupplyStats();
+        syncStorage(); renderTable(); renderHousingLayout(); renderInventoryTable(); renderInventoryItems(); switchArchiveTab(_arcTab || 'incoming'); renderVacationsTable(); renderOvertimeCalendar(); renderHospitalityTable(); renderMaintenanceTable(); renderSepticTable(); renderPeriodicMaintenance(); renderTeaSugarTable(); renderMealLogTable(); autoLogTodayMeals(); populateContractorSectorDropdown(); renderContractorsTable(); rebuildAllDropdowns(); renderBakeryIngredients(); renderBakeryProductions(); renderBakeryContractorSupplies(); renderBakeryInvoices(); updateBakeryStats(); updateBreadSupplyStats();
         renderBakeryIngredients(); renderBakeryProductions(); renderBakeryContractorSupplies(); renderBakeryInvoices();
         renderContractorRoomsList(); populateContractorRoomSectorDropdown(); renderEvaluations();
         _dataChangedSinceBackup = false;
@@ -10659,6 +10877,7 @@ reports.forEach(function(r) {
       periodicMaintenance = _safeJsonParse(_lsGet('lineh_periodic_maintenance'), []);
       waterStations = _safeJsonParse(_lsGet('lineh_water_stations'), []);
       waterDocs = _safeJsonParse(_lsGet('lineh_water_docs'), []);
+      if (!waterDocs.length) { try { waterDocs = _safeJsonParse(_lsGet('lineh_water_docs_mirror'), []); } catch(e) {} }
       // Load full data from IndexedDB (async)
       _idbLoadAll();
       teaSugarDisbursements = _safeJsonParse(_lsGet('lineh_tea_sugar'), []);
@@ -10868,8 +11087,8 @@ reports.forEach(function(r) {
 
     function getAllDataForSync() {
       var o = getAllDataObject();
-      ['dynamicSectors','contractorSectors','dynamicRooms','dynamicSeptics','dynamicDepts','dynamicTitles','dynamicVisitorTypes','bakeryContractorsNames'].forEach(function(k) { try { if (Array.isArray(o[k])) o[k] = _strArr(o[k]); } catch(e) {} });
-      var keys = ['employees','roomsCapacity','vacations','inventoryVouchers','excludedEmployees','contractors','mealLogs','mealWaste','inventoryItems','hospitalities','adminOvertime','maintenanceRecords','septicRecords','periodicMaintenance','teaSugarDisbursements','teaSugarBatches','dynamicSectors','contractorSectors','contractorRooms','dynamicRooms','dynamicSeptics','dynamicDepts','dynamicTitles','dynamicVisitorTypes','bakeryContractorsNames','evaluations','evalTemplates','appUsers','auditLog','bakeryIngredients','bakeryProductions','bakeryContractorSupplies','bakeryInvoices','bakeryStockLog','roomAssets','archiveData','quickActions','deptTitles','manualTotalBeds','dailyStats','finTransactions','finBudgets','syncDeletions','waterStations','waterDocs','ingredientMaster','mealSurveys','incident_reports'];
+      ['dynamicSectors','contractorSectors','dynamicRooms','dynamicSeptics','dynamicDepts','dynamicTitles','dynamicVisitorTypes','bakeryContractorsNames','dynamicStores'].forEach(function(k) { try { if (Array.isArray(o[k])) o[k] = _strArr(o[k]); } catch(e) {} });
+      var keys = ['employees','roomsCapacity','vacations','inventoryVouchers','excludedEmployees','contractors','mealLogs','mealWaste','inventoryItems','hospitalities','adminOvertime','maintenanceRecords','septicRecords','periodicMaintenance','teaSugarDisbursements','teaSugarBatches','dynamicSectors','contractorSectors','contractorRooms','dynamicRooms','dynamicSeptics','dynamicDepts','dynamicTitles','dynamicVisitorTypes','bakeryContractorsNames','dynamicStores','evaluations','evalTemplates','appUsers','auditLog','bakeryIngredients','bakeryProductions','bakeryContractorSupplies','bakeryInvoices','bakeryStockLog','roomAssets','archiveData','quickActions','deptTitles','manualTotalBeds','dailyStats','finTransactions','finBudgets','syncDeletions','waterStations','waterDocs','ingredientMaster','mealSurveys','incident_reports'];
       var result = {};
       for (var ki = 0; ki < keys.length; ki++) { result[keys[ki]] = o[keys[ki]]; }
       return result;
@@ -10940,6 +11159,7 @@ reports.forEach(function(r) {
         contractorSectors: function(s) { return (typeof s === 'string') ? s : (s.name || s); },
         contractorRooms: function(r) { return (r.sector || '') + '|' + (r.number || ''); },
         dynamicSectors: function(s) { return (typeof s === 'string') ? s : (s.name || s); },
+        dynamicStores: function(s) { return (typeof s === 'string') ? s : (s.name || s); },
         dynamicRooms: function(r) { return (typeof r === 'string') ? r : (r.name || r.sector+'|'+r.number || r); },
         dynamicSeptics: function(s) { return (typeof s === 'string') ? s : (s.name || s.id || s); },
         dynamicDepts: function(d) { return (typeof d === 'string') ? d : (d.name || d.id || d); },
@@ -11020,7 +11240,7 @@ reports.forEach(function(r) {
               currentAlldata[_del.entity] = _arr.filter(function(_item) { return _getItemKey(_item, _del.entity) !== _del.key; });
             }
           });
-          ['bakeryContractorsNames','dynamicVisitorTypes','dynamicSeptics','dynamicDepts','dynamicTitles','dynamicSectors','contractorSectors','bakeryContractorsNames'].forEach(function(k) { if (Array.isArray(currentAlldata[k])) currentAlldata[k] = _strArr(currentAlldata[k]); });
+          ['bakeryContractorsNames','dynamicVisitorTypes','dynamicSeptics','dynamicDepts','dynamicTitles','dynamicSectors','contractorSectors','dynamicStores','bakeryContractorsNames'].forEach(function(k) { if (Array.isArray(currentAlldata[k])) currentAlldata[k] = _strArr(currentAlldata[k]); });
           if (Array.isArray(currentAlldata.bakeryContractorSupplies)) currentAlldata.bakeryContractorSupplies = currentAlldata.bakeryContractorSupplies.map(function(r) { if (typeof r === 'object' && r && (typeof r.name !== 'string' || r.name === '[object Object]' || !r.name.trim())) r.name = 'غير معروف'; return r; });
           var resp = await fetch(_sbEndpoint, {
             method: 'POST',
@@ -11036,7 +11256,7 @@ reports.forEach(function(r) {
             var _ek = changed[ci];
             var _edata = allData[_ek];
             // Normalize string arrays
-            if (['bakeryContractorsNames','dynamicVisitorTypes','dynamicSeptics','dynamicDepts','dynamicTitles','dynamicSectors','contractorSectors','bakeryContractorsNames'].indexOf(_ek) !== -1 && Array.isArray(_edata)) _edata = _strArr(_edata);
+            if (['bakeryContractorsNames','dynamicVisitorTypes','dynamicSeptics','dynamicDepts','dynamicTitles','dynamicSectors','contractorSectors','dynamicStores','bakeryContractorsNames'].indexOf(_ek) !== -1 && Array.isArray(_edata)) _edata = _strArr(_edata);
             if (_ek === 'bakeryContractorSupplies' && Array.isArray(_edata)) _edata = _edata.map(function(r) { if (typeof r === 'object' && r && (typeof r.name !== 'string' || r.name === '[object Object]' || !r.name.trim())) r.name = 'غير معروف'; return r; });
             var _resp = await fetch(_rpcUrl, {
               method: 'POST',
@@ -11139,9 +11359,10 @@ reports.forEach(function(r) {
             dynamicVisitorTypes: ["ضيوف","سيدات","طلبة مدرسة","سائقين","مقدم خدمة بدون اجر","مقدم خدمة باجر","امن ليلي"],
             contractorSectors: ["قطاع 22", "الخيام", "سكن المقاولين"],
             contractorRooms: [],
-            bakeryContractorsNames: []
+            bakeryContractorsNames: [],
+            dynamicStores: []
           };
-          ['dynamicSeptics','dynamicRooms','dynamicDepts','dynamicTitles','dynamicSectors','dynamicVisitorTypes','contractorSectors','contractorRooms','bakeryContractorsNames'].forEach(function(k) {
+          ['dynamicSeptics','dynamicRooms','dynamicDepts','dynamicTitles','dynamicSectors','dynamicVisitorTypes','contractorSectors','contractorRooms','bakeryContractorsNames','dynamicStores'].forEach(function(k) {
             try {
               var arr = getEntityVar(k);
               if (Array.isArray(arr)) {
@@ -11298,7 +11519,7 @@ var reportsTab = document.getElementById('tab-reports');
     var debouncedSyncToSupabase = function() { setTimeout(pushToSupabase, 500); };
 
     // backward compat for old function refs
-    var DATA_KEYS = ['employees','roomsCapacity','vacations','hospitalities','maintenanceRecords','septicRecords','inventoryVouchers','inventoryItems','excludedEmployees','periodicMaintenance','teaSugarDisbursements','teaSugarBatches','mealLogs','mealWaste','contractors','dynamicSectors','dynamicRooms','dynamicSeptics','dynamicDepts','dynamicTitles','deptTitles','appUsers','auditLog','bakeryIngredients','bakeryProductions','bakeryContractorSupplies','bakeryInvoices','currentUser','manualTotalBeds','roomAssets','archiveData','quickActions','waterStations','waterDocs','finTransactions','finBudgets','ingredientMaster','mealSurveys','incident_reports'];
+    var DATA_KEYS = ['employees','roomsCapacity','vacations','hospitalities','maintenanceRecords','septicRecords','inventoryVouchers','inventoryItems','excludedEmployees','periodicMaintenance','teaSugarDisbursements','teaSugarBatches','mealLogs','mealWaste','contractors','dynamicSectors','dynamicStores','dynamicRooms','dynamicSeptics','dynamicDepts','dynamicTitles','deptTitles','appUsers','auditLog','bakeryIngredients','bakeryProductions','bakeryContractorSupplies','bakeryInvoices','currentUser','manualTotalBeds','roomAssets','archiveData','quickActions','waterStations','waterDocs','finTransactions','finBudgets','ingredientMaster','mealSurveys','incident_reports'];
 
     // Snapshot after pull — نعرف إيه اللي اتشال عشان push ما يضيفوش تاني
     var _snapshotKeys = {};
@@ -11313,7 +11534,7 @@ var reportsTab = document.getElementById('tab-reports');
       if (key==='hospitalities') return hospitalities; if (key==='maintenanceRecords') return maintenanceRecords; if (key==='septicRecords') return septicRecords;
       if (key==='inventoryVouchers') return inventoryVouchers; if (key==='inventoryItems') return inventoryItems; if (key==='excludedEmployees') return excludedEmployees;
       if (key==='periodicMaintenance') return periodicMaintenance; if (key==='teaSugarDisbursements') return teaSugarDisbursements; if (key==='teaSugarBatches') return teaSugarBatches;
-      if (key==='mealLogs') return mealLogs; if (key==='mealWaste') return mealWaste; if (key==='contractors') return contractors; if (key==='dynamicSectors') return dynamicSectors; if (key==='dynamicRooms') return dynamicRooms;
+      if (key==='mealLogs') return mealLogs; if (key==='mealWaste') return mealWaste; if (key==='contractors') return contractors; if (key==='dynamicSectors') return dynamicSectors; if (key==='dynamicStores') return dynamicStores; if (key==='dynamicRooms') return dynamicRooms;
       if (key==='dynamicSeptics') return dynamicSeptics; if (key==='dynamicDepts') return dynamicDepts; if (key==='dynamicTitles') return dynamicTitles; if (key==='deptTitles') return deptTitles;
       if (key==='appUsers') return appUsers; if (key==='auditLog') return auditLog; if (key==='bakeryIngredients') return bakeryIngredients; if (key==='bakeryProductions') return bakeryProductions;
       if (key==='bakeryContractorSupplies') return bakeryContractorSupplies; if (key==='bakeryInvoices') return bakeryInvoices; if (key==='roomAssets') return roomAssets;
@@ -11359,6 +11580,7 @@ var reportsTab = document.getElementById('tab-reports');
       else if (key === 'teaSugarDisbursements') teaSugarDisbursements = val;
       else if (key === 'teaSugarBatches') teaSugarBatches = val;
       else if (key === 'dynamicSectors') dynamicSectors = val;
+      else if (key === 'dynamicStores') dynamicStores = _strArr(val);
       else if (key === 'contractorSectors') contractorSectors = val;
       else if (key === 'contractorRooms') { contractorRooms = Array.isArray(val) ? val.filter(function(r) { return r && typeof r === 'object' && r.sector && r.number; }) : []; }
       else if (key === 'dynamicRooms') dynamicRooms = val;
@@ -11408,6 +11630,7 @@ var reportsTab = document.getElementById('tab-reports');
       else if (key === 'teaSugarDisbursements') return teaSugarDisbursements;
       else if (key === 'teaSugarBatches') return teaSugarBatches;
       else if (key === 'dynamicSectors') return dynamicSectors;
+      else if (key === 'dynamicStores') return dynamicStores;
       else if (key === 'contractorSectors') return contractorSectors;
       else if (key === 'contractorRooms') return contractorRooms;
       else if (key === 'dynamicRooms') return dynamicRooms;
@@ -11520,6 +11743,7 @@ var reportsTab = document.getElementById('tab-reports');
         teaSugarDisbursements: function(t) { return (t.date||'') + '|' + (t.period||t.type||'') + '|' + (t.empCode||t.empId||'') + '|' + (t.teaPacks||t.quantity||'') + '|' + (t.sugarKg||''); },
         teaSugarBatches: function(b) { return b.id || b._id; },
         dynamicSectors: function(s) { return (typeof s === 'string') ? s : (s.name || s); },
+        dynamicStores: function(s) { return (typeof s === 'string') ? s : (s.name || s); },
         dynamicRooms: function(r) { return (typeof r === 'string') ? r : (r.name || r.sector+'|'+r.number || r); },
         dynamicSeptics: function(s) { return (typeof s === 'string') ? s : (s.name || s.id || s); },
         dynamicDepts: function(d) { return (typeof d === 'string') ? d : (d.name || d.id || d); },
@@ -11833,7 +12057,7 @@ var reportsTab = document.getElementById('tab-reports');
       return {
         employees, roomsCapacity, vacations, hospitalities, maintenanceRecords, septicRecords,
         inventoryVouchers, excludedEmployees, periodicMaintenance, teaSugarDisbursements, teaSugarBatches, mealLogs,
-        inventoryItems, contractors, dynamicSectors, contractorSectors, contractorRooms, dynamicRooms, dynamicSeptics, dynamicDepts, dynamicTitles,
+        inventoryItems, contractors, dynamicSectors, dynamicStores, contractorSectors, contractorRooms, dynamicRooms, dynamicSeptics, dynamicDepts, dynamicTitles,
         appUsers, currentUser, bakeryIngredients, bakeryProductions,
         bakeryContractorSupplies, bakeryInvoices,
         manualTotalBeds, adminOvertime,
@@ -12392,7 +12616,7 @@ var reportsTab = document.getElementById('tab-reports');
       if (typeof finInit === 'function') finInit();
       _reportsApiUrl = _lsGet('linah_reports_api_url') || '';
       setTimeout(function() {
-        _safe(renderTable); _safe(renderInventoryTable); _safe(renderInventoryItems); _safe(renderArchiveTable); _safe(renderVacationsTable); _safe(renderOvertimeCalendar); _safe(calculateSystemStats);
+        _safe(renderTable); _safe(renderInventoryTable); _safe(renderInventoryItems); _safe(renderArchiveIncoming); _safe(renderVacationsTable); _safe(renderOvertimeCalendar); _safe(calculateSystemStats);
         setTimeout(function() {
           _safe(renderHospitalityTable); _safe(renderMaintenanceTable); _safe(renderSepticTable); _safe(renderPeriodicMaintenance); _safe(renderTeaSugarTable);
           setTimeout(function() {

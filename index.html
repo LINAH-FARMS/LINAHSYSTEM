@@ -79,6 +79,10 @@
     <div id="sync-log" style="display:none;position:fixed;bottom:0;left:0;right:0;max-height:200px;overflow-y:auto;background:rgba(0,0,0,0.88);color:#0f0;font-family:monospace;font-size:12px;padding:6px 10px;z-index:9999;direction:ltr;text-align:left;"></div>
   </header>
 
+  <div id="offline-banner" style="display:none;background:#c62828;color:#fff;padding:8px 14px;font-size:13px;font-weight:700;text-align:center;font-family:'Cairo',sans-serif;position:sticky;top:0;z-index:9998;box-shadow:0 2px 10px rgba(0,0,0,0.3);">
+    ⚠️ أنت غير متصل بالسحابة — أي تعديل الآن لن يُحفظ ويُستبدل عند الفتح القادم <span id="offline-last-sync" style="font-weight:400;"></span>
+  </div>
+
   <hr style="border:none;border-top:2px solid rgba(27,94,32,0.1);margin:4px 0;">
 
   <div class="toolbar no-print" style="display:flex;gap:6px;padding:8px 12px;background:white;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.06);margin-bottom:6px;flex-wrap:wrap;align-items:center;border:1px solid rgba(27,94,32,0.08);">
@@ -611,79 +615,145 @@
     <div class="no-print" style="margin-top:30px;border-top:2px solid var(--primary);padding-top:15px;">
       <h3 onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none';this.querySelector('.toggle-arrow').textContent=this.nextElementSibling.style.display==='none'?'▶':'▼'" style="margin-bottom:15px;cursor:pointer;user-select:none;display:flex;align-items:center;gap:8px;">🏛️ أرشيف المخازن — الشئون الإدارية <span class="toggle-arrow" style="font-size:12px;color:#888;">▶</span></h3>
       <div style="display:none;">
-      <div class="control-panel no-print" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;align-items:flex-end;">
-        <div class="form-group">
-          <label>اسم العهدة</label>
-          <input type="text" id="arc-item" placeholder="اسم العهدة">
-        </div>
-        <div class="form-group">
-          <label>البيان</label>
-          <input type="text" id="arc-desc" placeholder="وصف العهدة">
-        </div>
-        <div class="form-group">
-          <label>العدد</label>
-          <input type="number" id="arc-qty" value="1" min="1">
-        </div>
-        <div class="form-group">
-          <label>اسم المخزن</label>
-          <input type="text" id="arc-location" placeholder="مثال: مخزن العمد">
-        </div>
-        <div class="form-group">
-          <label>الحالة</label>
-          <select id="arc-condition">
-            <option value="جديدة">جديدة</option>
-            <option value="مستعملة">مستعملة</option>
-            <option value="تالفة">تالفة</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label>تاريخ إضافة العهدة</label>
-          <input type="date" id="arc-date">
-        </div>
-        <div class="form-group">
-          <label>جهة الصرف</label>
-          <input type="text" id="arc-issueto" placeholder="جهة الصرف (الإدارة المستلمة)">
-        </div>
-        <div class="form-group">
-          <label>تاريخ الصرف</label>
-          <input type="date" id="arc-issuedate">
-        </div>
-        <div class="form-group">
-          <label>القائم على الصرف</label>
-          <input type="text" id="arc-issueby" placeholder="اسم المسؤول عن الصرف">
-        </div>
-        <div class="form-group">
-          <label>المستلم</label>
-          <input type="text" id="arc-receiver" placeholder="اسم المستلم">
-        </div>
-        <button class="btn btn-primary" id="btn-save-archive" onclick="saveArchiveRecord()" style="justify-content:center;height:42px;">➕ إضافة عهدة</button>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px;padding-bottom:10px;border-bottom:2px solid rgba(27,94,32,0.15);">
+        <button class="btn btn-primary" id="arc-tab-incoming" onclick="switchArchiveTab('incoming')" style="padding:6px 16px;font-size:13px;">📥 وارد</button>
+        <button class="btn" id="arc-tab-outgoing" onclick="switchArchiveTab('outgoing')" style="padding:6px 16px;font-size:13px;">📤 صادر</button>
+        <button class="btn" id="arc-tab-stock" onclick="switchArchiveTab('stock')" style="padding:6px 16px;font-size:13px;">🗃️ المخزون الحالي</button>
+        <button class="btn" id="arc-tab-stores" onclick="switchArchiveTab('stores')" style="padding:6px 16px;font-size:13px;">🏪 إدارة المخازن</button>
       </div>
-      <div class="control-panel no-print" style="margin-top:10px;">
-        <input type="text" id="search-archive" class="search-input" placeholder="بحث في أرشيف المخازن..." oninput="renderArchiveTable()">
-        <button class="btn btn-excel" onclick="document.getElementById('arc-excel-file').click()" style="background-color:#1565c0;">📥 استيراد (Excel)</button>
-        <input type="file" id="arc-excel-file" style="display:none;" accept=".xlsx, .xls" onchange="importArchiveExcel(event)">
-        <button class="btn btn-excel" onclick="exportArchiveExcel()" style="background-color:#2e7d32;">📤 تصدير (Excel)</button>
-        <button class="btn btn-primary" onclick="importStoresArchive()" style="background-color:#e65100;">📥 استيراد عهد المخازن</button>
+
+      <div id="arc-panel-incoming">
+        <div class="control-panel no-print" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;align-items:flex-end;border:1px solid #c8e6c9;background:#f1f8e9;">
+          <div class="form-group">
+            <label style="font-weight:600;">اسم العهدة (الصنف)</label>
+            <input type="text" id="arc-item" placeholder="مثال: خرامة 40مم">
+          </div>
+          <div class="form-group">
+            <label style="font-weight:600;">البيان / الوصف</label>
+            <input type="text" id="arc-desc" placeholder="وصف العهدة">
+          </div>
+          <div class="form-group">
+            <label style="font-weight:600;">العدد (الكمية الواردة)</label>
+            <input type="number" id="arc-qty" value="1" min="1">
+          </div>
+          <div class="form-group">
+            <label style="font-weight:600;">المخزن</label>
+            <select id="arc-location" onchange="if(this.value==='__add__'){toggleStoreAddInput(true)}else{toggleStoreAddInput(false)}"></select>
+            <input type="text" id="arc-location-new" placeholder="اسم المخزن الجديد..." style="display:none;margin-top:4px;">
+          </div>
+          <div class="form-group">
+            <label style="font-weight:600;">الحالة</label>
+            <select id="arc-condition">
+              <option value="جديدة">جديدة</option>
+              <option value="مستعملة">مستعملة</option>
+              <option value="تالفة">تالفة</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label style="font-weight:600;">تاريخ الإضافة (الوارد)</label>
+            <input type="date" id="arc-date">
+          </div>
+          <button class="btn btn-primary" id="btn-save-archive" onclick="saveArchiveRecord()" style="justify-content:center;height:42px;background:#1b5e20;">➕ تسجيل وارد جديد</button>
+        </div>
+        <div class="control-panel no-print" style="margin-top:10px;">
+          <input type="text" id="search-archive" class="search-input" placeholder="بحث في الوارد بالصنف أو المخزن أو البيان..." oninput="renderArchiveIncoming()">
+          <button class="btn btn-excel" onclick="document.getElementById('arc-excel-file').click()" style="background-color:#1565c0;">📥 استيراد (Excel)</button>
+          <input type="file" id="arc-excel-file" style="display:none;" accept=".xlsx, .xls" onchange="importArchiveExcel(event)">
+          <button class="btn btn-excel" onclick="exportArchiveExcel()" style="background-color:#2e7d32;">📤 تصدير (Excel)</button>
+          <button class="btn btn-primary" onclick="importStoresArchive()" style="background-color:#e65100;">📥 استيراد عهد المخازن</button>
+        </div>
+        <div class="stats-container" style="margin-top:10px;grid-template-columns:repeat(4,1fr);">
+          <div class="stat-card"><h3>إجمالي الوارد (صنف)</h3><div class="value" id="arc-stat-incoming-items">0</div></div>
+          <div class="stat-card blue"><h3>إجمالي الكميات الواردة</h3><div class="value" id="arc-stat-incoming-qty">0</div></div>
+          <div class="stat-card orange"><h3>عدد المخازن</h3><div class="value" id="arc-stat-stores-count">0</div></div>
+          <div class="stat-card"><h3>متاح للصرف</h3><div class="value" id="arc-stat-available">0</div></div>
+        </div>
+        <div class="table-container" style="margin-top:10px;">
+          <table id="table-archive">
+            <thead>
+              <tr>
+                <th data-sort-key="item" class="sortable">اسم العهدة</th>
+                <th data-sort-key="desc" class="sortable">البيان</th>
+                <th data-sort-key="qty" class="sortable">العدد الوارد</th>
+                <th data-sort-key="location" class="sortable">المخزن</th>
+                <th data-sort-key="condition" class="sortable">الحالة</th>
+                <th data-sort-key="date" class="sortable">تاريخ الوارد</th>
+                <th class="no-print">إجراءات</th>
+              </tr>
+            </thead>
+            <tbody id="archive-table-body"></tbody>
+          </table>
+        </div>
       </div>
-      <div class="table-container" style="margin-top:10px;">
-        <table id="table-archive">
-          <thead>
-            <tr>
-              <th data-sort-key="item" class="sortable">اسم العهدة</th>
-              <th data-sort-key="desc" class="sortable">البيان</th>
-              <th data-sort-key="qty" class="sortable">العدد</th>
-              <th data-sort-key="location" class="sortable">اسم المخزن</th>
-              <th data-sort-key="condition" class="sortable">الحالة</th>
-              <th data-sort-key="date" class="sortable">تاريخ إضافة العهدة</th>
-              <th data-sort-key="issueto" class="sortable">جهة الصرف</th>
-              <th data-sort-key="issuedate" class="sortable">تاريخ الصرف</th>
-              <th data-sort-key="issueby" class="sortable">القائم على الصرف</th>
-              <th data-sort-key="receiver" class="sortable">المستلم</th>
-              <th class="no-print">إجراءات</th>
-            </tr>
-          </thead>
-          <tbody id="archive-table-body"></tbody>
-        </table>
+
+      <div id="arc-panel-outgoing" style="display:none;">
+        <div class="control-panel no-print" style="margin-top:10px;">
+          <input type="text" id="search-archive-out" class="search-input" placeholder="بحث في الصادر بالصنف أو جهة الصرف أو المستلم..." oninput="renderArchiveOutgoing()">
+        </div>
+        <div class="stats-container" style="margin-top:10px;grid-template-columns:repeat(3,1fr);">
+          <div class="stat-card"><h3>عدد حركات الصرف</h3><div class="value" id="arc-stat-outgoing-count">0</div></div>
+          <div class="stat-card blue"><h3>إجمالي الكميات المصروفة</h3><div class="value" id="arc-stat-outgoing-qty">0</div></div>
+          <div class="stat-card orange"><h3>آخر صرف</h3><div class="value" id="arc-stat-last-issue" style="font-size:16px;">—</div></div>
+        </div>
+        <div class="table-container" style="margin-top:10px;">
+          <table id="table-archive-out">
+            <thead>
+              <tr>
+                <th class="sortable">اسم العهدة</th>
+                <th class="sortable">العدد المصروف</th>
+                <th class="sortable">المخزن</th>
+                <th class="sortable">جهة الصرف</th>
+                <th class="sortable">تاريخ الصرف</th>
+                <th class="sortable">القائم على الصرف</th>
+                <th class="sortable">المستلم</th>
+                <th class="no-print">إجراءات</th>
+              </tr>
+            </thead>
+            <tbody id="archive-out-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="arc-panel-stock" style="display:none;">
+        <div class="stats-container" style="margin-top:10px;grid-template-columns:repeat(4,1fr);">
+          <div class="stat-card"><h3>إجمالي الأصناف بالمخازن</h3><div class="value" id="arc-stat-stock-items">0</div></div>
+          <div class="stat-card blue"><h3>إجمالي المتبقي (كمية)</h3><div class="value" id="arc-stat-stock-remaining">0</div></div>
+          <div class="stat-card orange"><h3>أصناف تنفد قريباً (≤3)</h3><div class="value" id="arc-stat-stock-low">0</div></div>
+          <div class="stat-card"><h3>أصناف نافدة</h3><div class="value" id="arc-stat-stock-empty">0</div></div>
+        </div>
+        <div class="table-container" style="margin-top:10px;">
+          <table id="table-archive-stock">
+            <thead>
+              <tr>
+                <th class="sortable">اسم الصنف</th>
+                <th class="sortable">المخزن</th>
+                <th class="sortable">إجمالي الوارد</th>
+                <th class="sortable">إجمالي الصادر</th>
+                <th class="sortable">المتبقي الحالي</th>
+                <th class="sortable">الحالة</th>
+              </tr>
+            </thead>
+            <tbody id="archive-stock-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="arc-panel-stores" style="display:none;">
+        <div class="control-panel no-print" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;align-items:flex-end;margin-top:10px;border:1px solid #bbdefb;background:#e3f2fd;">
+          <div class="form-group">
+            <label style="font-weight:600;">اسم المخزن الجديد</label>
+            <input type="text" id="store-new-name" placeholder="مثال: مخزن العمد">
+          </div>
+          <button class="btn btn-primary" onclick="addDynamicStore()" style="justify-content:center;height:42px;background:#1565c0;">🏪 إضافة مخزن</button>
+        </div>
+        <div class="table-container" style="margin-top:10px;">
+          <table id="table-archive-stores">
+            <thead>
+              <tr><th class="sortable">اسم المخزن</th><th class="sortable">عدد العهدات</th><th class="sortable">إجمالي الكميات</th><th class="no-print">إجراءات</th></tr>
+            </thead>
+            <tbody id="archive-stores-body"></tbody>
+          </table>
+        </div>
       </div>
       </div>
     </div>
@@ -1429,6 +1499,34 @@
         <button class="btn" style="background:#2e7d32;color:#fff;" onclick="exportRoomAssets()">📤 تصدير أصول الغرف</button>
       </div>
       <div id="room-assets-list" style="margin-top:12px; max-height:300px; overflow-y:auto;"></div>
+    </div>
+  </div>
+
+  <div id="modal-archive-issue" class="modal">
+    <div class="modal-content" style="max-width:500px;direction:rtl;text-align:right;">
+      <span class="close" onclick="closeModal('modal-archive-issue')">&times;</span>
+      <h3 style="color:#1b5e20;">📤 صرف عهدة من المخزن</h3>
+      <div id="arc-issue-info" style="background:#e8f5e9;padding:12px;border-radius:8px;font-size:14px;line-height:1.9;margin:10px 0;"></div>
+      <div class="form-group">
+        <label style="font-weight:600;">الكمية المصروفة</label>
+        <input type="number" id="arc-issue-qty" value="1" min="1">
+      </div>
+      <div class="form-group">
+        <label style="font-weight:600;">جهة الصرف (المنصرف إليه)</label>
+        <input type="text" id="arc-issue-to" placeholder="مثال: قسم الصيانة">
+      </div>
+      <div class="form-group">
+        <label style="font-weight:600;">القائم على الصرف</label>
+        <input type="text" id="arc-issue-by" placeholder="مثال: مهندس الصيانة">
+      </div>
+      <div class="form-group">
+        <label style="font-weight:600;">المستلم</label>
+        <input type="text" id="arc-issue-receiver" placeholder="اسم المستلم">
+      </div>
+      <div style="margin-top:12px;display:flex;gap:10px;">
+        <button class="btn" style="flex:1;background:#1b5e20;color:white;padding:8px;" onclick="submitArchiveIssue()">✅ تأكيد الصرف</button>
+        <button class="btn" style="flex:1;background:#666;color:white;padding:8px;" onclick="closeModal('modal-archive-issue')">إلغاء</button>
+      </div>
     </div>
   </div>
 

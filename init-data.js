@@ -93,6 +93,13 @@
     let evaluations = _safeJsonParse(_lsGet('lineh_evaluations'), []);
     let roomAssets = _safeJsonParse(_lsGet('lineh_room_assets'), []);
     let archiveData = _safeJsonParse(_lsGet('lineh_archive_data'), []);
+    let dynamicStores = _strArr(_safeJsonParse(_lsGet('lineh_dynamic_stores'), []));
+    if (archiveData.length > 0) {
+      archiveData.forEach(function(a) {
+        if (a && a.location && typeof a.location === 'string' && a.location.trim() && dynamicStores.indexOf(a.location.trim()) === -1) dynamicStores.push(a.location.trim());
+      });
+      if (dynamicStores.length) _lsSet('lineh_dynamic_stores', JSON.stringify(dynamicStores));
+    }
     let waterStations = _safeJsonParse(_lsGet('lineh_water_stations'), []);
     let waterDocs = []; // Loaded from IndexedDB (large base64 files)
     var _defaultQuickActions = [
