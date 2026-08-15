@@ -462,4 +462,77 @@
   } else {
     runNormalizeOnLoad();
   }
+
+  // ============================================================
+  //  الفتح المباشر من السحابة: عند فتح الصفحة دائماً نأخذ أحدث
+  //  نسخة من السحابة (مصدر الحقيقة) ونمسح الكاش القديم للكيانات
+  //  حتى لا يتأثر النظام ببيانات قديمة. عند انقطاع الإنترنت يفتح
+  //  البيانات المحفوظة محلياً (كبديل آمن وليس صفحة فارغة).
+  // ============================================================
+  const _CACHE_KEYS = [
+    'lineh_employees', 'lineh_rooms_capacity', 'lineh_vacations', 'lineh_hospitality',
+    'lineh_maintenance', 'lineh_septic', 'lineh_inventory', 'lineh_periodic_maintenance',
+    'lineh_tea_sugar', 'lineh_tea_sugar_batches', 'lineh_meal_logs', 'lineh_inventory_items',
+    'lineh_contractors', 'lineh_users'
+  ];
+
+  window.autoPullOnLoad = async function autoPullOnLoad() {
+    try {
+      if (!supabaseConnected) return;
+      const resp = await fetch(_sbEndpoint + '?select=id,data,updated_at&order=updated_at.desc', {
+        method: 'GET',
+        headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY },
+        mode: 'cors'
+      });
+      if (!resp.ok) return;
+      const rows = await resp.json();
+      let bestRow = null;
+      let bestMs = 0;
+      (rows || []).forEach(function (row) {
+        if (!row || row.id !== 'alldata' || !row.data) return;
+        let t = Date.parse(row.updated_at || '');
+        if (isNaN(t)) t = 0;
+        if (t >= bestMs) { bestMs = t; bestRow = row; }
+      });
+      if (!bestRow) return;
+      const remoteData = typeof bestRow.data === 'string' ? JSON.parse(bestRow.data) : bestRow.data;
+
+      // 1) استبدال كل الكيانات في الذاكرة بنسخة السحابة
+      Object.keys(remoteData).forEach(function (k) {
+        if (k === 'syncDeletions') return;
+        try { setEntityVar(k, remoteData[k]); } catch (e) {}
+      });
+      // 2) ضمان وجود مدير النظام دائماً (السحابة حالياً بلا مستخدمين)
+      if (Array.isArray(appUsers)) {
+        const hasAdmin = appUsers.some(function (u) { return u && u.name === 'مدير النظام'; });
+        if (!hasAdmin) {
+          appUsers.push({ name: 'مدير النظام', role: 'admin', passHash: (typeof hashPass === 'function') ? hashPass('admin123') : '' });
+        }
+      }
+      // 3) مسح الكاش القديم المخزن محلياً
+      _CACHE_KEYS.forEach(function (k) { try { _lsRemove(k); } catch (e) {} });
+      // 4) المعالجات اللاحقة (حذف + تكرار + سكن)
+      try { _applyDeletions(); } catch (e) {}
+      try { deduplicateAfterSync(); } catch (e) {}
+      try { normalizeHousingData(); } catch (e) {}
+      // 5) حفظ الحالة الجديدة محلياً (إعادة بناء الكاش من السحابة)
+      try { syncStorage(true, true); } catch (e) {}
+      // 6) إعادة رسم كل شيء
+      try { renderAll(); } catch (e) {}
+      try { if (typeof populateLoginDropdown === 'function') populateLoginDropdown(); } catch (e) {}
+      try { if (typeof importBakeryFormData === 'function') importBakeryFormData(); } catch (e) {}
+      try { if (typeof importMealWasteFormData === 'function') importMealWasteFormData(); } catch (e) {}
+      try { if (typeof importDailyDataFormData === 'function') importDailyDataFormData(); } catch (e) {}
+      try { if (typeof importMealSurveyFormData === 'function') importMealSurveyFormData(); } catch (e) {}
+      showSyncToast('تم فتح أحدث البيانات من السحابة ✅');
+    } catch (e) {
+      console.error('autoPullOnLoad:', e);
+      showSyncToast('غير متصل — تم فتح البيانات المحفوظة محلياً');
+    }
+  };
+
+  // الانتظار حتى يكتمل التحميل والرسم الأول ثم الفتح من السحابة
+  window.addEventListener('load', function () {
+    setTimeout(autoPullOnLoad, 1500);
+  });
 })();

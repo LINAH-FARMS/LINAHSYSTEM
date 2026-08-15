@@ -2962,8 +2962,20 @@ var _breadSuggestionIdCounter = 0;
         showLoginAlert(currentUser);
         updateCurrentUserDisplay();
       } else {
-        document.getElementById('login-screen').classList.remove('hidden');
-        updateCurrentUserDisplay();
+        // دخول مباشر تلقائي بدون شاشة تسجيل دخول — أي جهاز يفتح الصفحة يدخل فوراً
+        var autoUser = appUsers.find(function(u) { return u.name === 'مدير النظام'; }) || appUsers[0];
+        if (autoUser) {
+          currentUser = autoUser.name;
+          currentUserRole = autoUser.role || 'admin';
+          _lsSet('lineh_current_user', currentUser);
+          applyPermissions();
+          document.getElementById('login-screen').classList.add('hidden');
+          showLoginAlert(currentUser);
+          updateCurrentUserDisplay();
+        } else {
+          document.getElementById('login-screen').classList.remove('hidden');
+          updateCurrentUserDisplay();
+        }
       }
     }
 
