@@ -252,6 +252,7 @@
       _lsSet('linah_bakery_stock_log', JSON.stringify(bakeryStockLog));
       _lsSet('lineh_admin_overtime', JSON.stringify(adminOvertime));
       _lsSet('lineh_room_assets', JSON.stringify(roomAssets));
+      if (_backfillArchiveIds()) { /* حفظ الأسماء المستقرة بعد تخصيصها */ }
       _lsSet('lineh_archive_data', JSON.stringify(archiveData));
       _lsSet('lineh_dynamic_stores', JSON.stringify(_strArr(dynamicStores)));
       _lsSet('lineh_water_stations', JSON.stringify(waterStations));
@@ -5269,7 +5270,7 @@ function toggleEmployeeStatus(empId) {
         syncStorage();
         logAction('تعديل', 'عهدة', item, 'تسجيل: ' + location);
       } else {
-        archiveData.push({ item: item, desc: desc, qty: qty, location: location, condition: condition, date: date, modifiedAt: new Date().toISOString() });
+        archiveData.push({ id: 'arc_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7), item: item, desc: desc, qty: qty, location: location, condition: condition, date: date, modifiedAt: new Date().toISOString() });
         syncStorage();
         logAction('وارد', 'عهدة', item, 'كمية: ' + qty + ' | المخزن: ' + location + ' | الحالة: ' + condition);
       }
@@ -5360,7 +5361,7 @@ function toggleEmployeeStatus(empId) {
             var receiver = (cols[9] || '').toString().trim();
             if (!item) continue;
             if (replaceAll) {
-              archiveData.push({ item: item, desc: desc, qty: qty, location: location, condition: condition, date: date, issueto: issueto, issuedate: issuedate, issueby: issueby, receiver: receiver });
+              archiveData.push({ id: 'arc_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7), item: item, desc: desc, qty: qty, location: location, condition: condition, date: date, issueto: issueto, issuedate: issuedate, issueby: issueby, receiver: receiver });
               added++;
             } else {
               var existing = archiveData.find(function(a) { return a.item === item && a.location === location; });
@@ -5369,7 +5370,7 @@ function toggleEmployeeStatus(empId) {
                 existing.issueto = issueto; existing.issuedate = issuedate; existing.issueby = issueby; existing.receiver = receiver;
                 updated++;
               } else {
-                archiveData.push({ item: item, desc: desc, qty: qty, location: location, condition: condition, date: date, issueto: issueto, issuedate: issuedate, issueby: issueby, receiver: receiver });
+                archiveData.push({ id: 'arc_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7), item: item, desc: desc, qty: qty, location: location, condition: condition, date: date, issueto: issueto, issuedate: issuedate, issueby: issueby, receiver: receiver });
                 added++;
               }
             }
@@ -11121,6 +11122,18 @@ reports.forEach(function(r) {
       _lsSet('lineh_sync_deletions', JSON.stringify(syncDeletions));
     }
     function _ts(item) { if (item && typeof item === 'object') item.modifiedAt = new Date().toISOString(); return item; }
+    function _archiveStableId(a) {
+      var s = String((a.date||'') + '|' + (a.item||'') + '|' + (a.location||'') + '|' + (a.qty||'') + '|' + (a.condition||''));
+      var h = 5381;
+      for (var i = 0; i < s.length; i++) { h = ((h << 5) + h + s.charCodeAt(i)) >>> 0; }
+      return 'arc_' + h.toString(36);
+    }
+    function _backfillArchiveIds() {
+      if (!Array.isArray(archiveData)) return;
+      var changed = false;
+      archiveData.forEach(function(a) { if (a && !a.id) { a.id = _archiveStableId(a); changed = true; } });
+      return changed;
+    }
     function _isDeleted(entity, key, modifiedAt) {
       if (!syncDeletions || !Array.isArray(syncDeletions)) return false;
       return syncDeletions.some(function(d) { return d.entity === entity && d.key === key; });
@@ -11152,7 +11165,7 @@ reports.forEach(function(r) {
         bakeryInvoices: function(inv) { return inv.id || inv._id; },
         bakeryStockLog: function(s) { return (s.date || '') + '|' + (s.materialName || s.ingredient || '') + '|' + (s.type || '') + '|' + (s.reference || ''); },
         roomAssets: function(a) { return (a.room || '') + '|' + (a.item || '') + '|' + (a.id || ''); },
-        archiveData: function(a) { return a.id || a.date; },
+        archiveData: function(a) { return a.id || a.date + '|' + a.item + '|' + a.location; },
         quickActions: function(q) { return q.label; },
         dailyStats: function(d) { return d.date; },
         deptTitles: function(d) { return (d.dept||'') + '|' + (d.title||''); },
@@ -11772,7 +11785,7 @@ var reportsTab = document.getElementById('tab-reports');
         bakeryInvoices: function(inv) { return inv.id || inv._id; },
         bakeryStockLog: function(b) { return b.id || b.date || b; },
         roomAssets: function(a) { return (a.room||'') + '|' + (a.item||'') + '|' + (a.id||''); },
-        archiveData: function(a) { return a.id || a.date; },
+        archiveData: function(a) { return a.id || a.date + '|' + a.item + '|' + a.location; },
         quickActions: function(q) { return q.label || q; },
         deptTitles: function(d) { return (d.dept||'') + '|' + (d.title||''); },
         evaluations: function(e) { return (e.empCode||e.employeeCode||'') + '|' + (e.date||'') + '|' + (e.month||e.type||'') + '|' + (e.year||''); },
@@ -11819,6 +11832,7 @@ var reportsTab = document.getElementById('tab-reports');
       dedupBy(finTransactions, function(t) { return (t.date || '') + '|' + (t.task || '') + '|' + (t.orderNum || '') + '|' + (t.itemName || ''); });
       dedupBy(finBudgets, function(b) { return (b.code || '') + '|' + (b.month || '') + '|' + (b.year || ''); });
       dedupBy(waterStations, function(w) { return w.id || w.date + '|' + w.station + '|' + w.type; });
+      dedupBy(archiveData, function(a) { return a.id || a.date + '|' + a.item + '|' + a.location; });
       dedupBy(waterDocs, function(d) { return d.id || d.station + '|' + d.fileName; });
       dedupBy(mealSurveys, function(s) { return s.date + '|' + s.meal + '|' + s.employee; });
     }
