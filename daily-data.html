@@ -39,6 +39,9 @@ textarea{resize:vertical;min-height:60px}
 .menu-btn-maint{background:#e3f2fd;color:#1565c0;border:2px solid #90caf9}
 .menu-btn-septic{background:#e8f5e9;color:#2e7d32;border:2px solid #a5d6a7}
 .menu-btn-vacation{background:#f3e5f5;color:#7b1fa2;border:2px solid #ce93d8}
+.menu-btn-stores{background:#efebe9;color:#5d4037;border:2px solid #d7ccc8}
+.section-stores{background:#efebe9;border:1px solid #d7ccc8}
+.section-stores .section-title{color:#5d4037}
 .menu-btn .menu-icon{display:block;font-size:32px;margin-bottom:4px}
 .menu-btn .menu-label{font-size:14px}
 #modal-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:1000;justify-content:center;align-items:center;padding:12px}
@@ -63,7 +66,7 @@ textarea{resize:vertical;min-height:60px}
 <div class="header">
 <div class="logo">📋</div>
 <h1>البيانات اليومية</h1>
-<div class="sub">شاي · صيانة · بيارات · إجازات</div>
+<div class="sub">شاي · صيانة · بيارات · إجازات · مخازن</div>
 </div>
 
 <div class="menu-grid">
@@ -71,6 +74,7 @@ textarea{resize:vertical;min-height:60px}
 <button class="menu-btn menu-btn-maint" onclick="openModal('maint')"><span class="menu-icon">🛠️</span><span class="menu-label">الصيانة</span></button>
 <button class="menu-btn menu-btn-septic" onclick="openModal('septic')"><span class="menu-icon">🚽</span><span class="menu-label">البيارات</span></button>
 <button class="menu-btn menu-btn-vacation" onclick="openModal('vacation')"><span class="menu-icon">🏖️</span><span class="menu-label">الإجازات</span></button>
+<button class="menu-btn menu-btn-stores" onclick="openModal('stores')"><span class="menu-icon">🏪</span><span class="menu-label">المخازن</span></button>
 </div>
 
 <div id="msg"></div>
@@ -172,6 +176,26 @@ textarea{resize:vertical;min-height:60px}
 <button type="button" class="btn-save-section" onclick="saveVacationData()" style="background:#7b1fa2;">🏖️ تسجيل الإجازة</button>
 </div>
 
+<div id="modal-stores" class="modal-section section section-stores">
+<div class="section-title">🏪 أرشيف المخازن — الشئون الإدارية</div>
+<div class="form-row">
+<div class="form-group"><label>📦 المخزن</label><select id="dd-store-filter" onchange="renderArchivesMobile()"></select></div>
+<div class="form-group"><label>العرض</label><select id="dd-store-show-issued" onchange="renderArchivesMobile()"><option value="0">المتاح فقط</option><option value="1">الكل (مع الصادر)</option></select></div>
+</div>
+<div style="max-height:260px;overflow-y:auto;border:1px solid #e0e0e0;border-radius:10px;background:white;margin-bottom:14px;" id="dd-store-list"></div>
+<div class="section-title">📤 صرف من المخزن</div>
+<div class="form-group"><label>العهدة</label><select id="dd-issue-item"></select></div>
+<div class="form-row">
+<div class="form-group"><label>الكمية</label><input type="number" id="dd-issue-qty" min="1" value="1"></div>
+<div class="form-group"><label>جهة الصرف</label><input type="text" id="dd-issue-to" placeholder="اسم الجهة/القسم"></div>
+</div>
+<div class="form-row">
+<div class="form-group"><label>المستلم</label><input type="text" id="dd-issue-receiver" placeholder="اسم المستلم"></div>
+<div class="form-group"><label>القائم على الصرف</label><input type="text" id="dd-issue-by" placeholder="الاسم"></div>
+</div>
+<button type="button" class="btn-save-section" style="background:#5d4037;" onclick="saveStoreIssue()">🏪 حفظ الصرف</button>
+</div>
+
 </div>
 </div>
 </div>
@@ -191,6 +215,12 @@ if (!Array.isArray(invItems)) invItems = [];
 var vacations = [];
 try { var vd = localStorage.getItem('lineh_vacations'); if (vd) vacations = JSON.parse(vd); } catch(e){}
 if (!Array.isArray(vacations)) vacations = [];
+var archiveData = [];
+try { var adt = localStorage.getItem('lineh_archive_data'); if (adt) archiveData = JSON.parse(adt); } catch(e){}
+if (!Array.isArray(archiveData)) archiveData = [];
+var dynStores = [];
+try { var dsl = localStorage.getItem('lineh_dynamic_stores'); if (dsl) dynStores = JSON.parse(dsl); } catch(e){}
+if (!Array.isArray(dynStores)) dynStores = [];
 
 function _sanitizeStr(s) {
   if (typeof s !== 'string') return '';
@@ -225,6 +255,13 @@ try { var sn = localStorage.getItem('dyn_septics'); if (sn) { septicNames = _cle
       if (ad.employees && ad.employees.length) employees = ad.employees;
       if (ad.inventoryItems && ad.inventoryItems.length) invItems = ad.inventoryItems;
       if (ad.vacations && ad.vacations.length) vacations = ad.vacations;
+      if (ad.archiveData && ad.archiveData.length) archiveData = ad.archiveData;
+      if (ad.dynamicStores) {
+        var dsr = ad.dynamicStores;
+        if (typeof dsr === 'string') { try { dsr = JSON.parse(dsr); } catch(e){} }
+        if (!Array.isArray(dsr) && dsr && typeof dsr === 'object') { dsr = Object.values(dsr); }
+        if (Array.isArray(dsr)) dynStores = _cleanArr(dsr);
+      }
       var cnt = 0;
       if (ad.dynamicSeptics) {
         var raw = ad.dynamicSeptics;
@@ -257,13 +294,14 @@ try { var sn = localStorage.getItem('dyn_septics'); if (sn) { septicNames = _cle
 
 // ─── Modal ───
 function openModal(section) {
-  ['tea','maint','septic','vacation'].forEach(function(s) {
+  ['tea','maint','septic','vacation','stores'].forEach(function(s) {
     document.getElementById('modal-' + s).style.display = 'none';
   });
   document.getElementById('modal-' + section).style.display = 'block';
-  var titles = { tea:'🍵 الشاي', maint:'🛠️ الصيانة', septic:'🚽 البيارات', vacation:'🏖️ الإجازات' };
+  var titles = { tea:'🍵 الشاي', maint:'🛠️ الصيانة', septic:'🚽 البيارات', vacation:'🏖️ الإجازات', stores:'🏪 المخازن' };
   document.getElementById('modal-title').textContent = titles[section] || section;
   document.getElementById('modal-overlay').style.display = 'flex';
+  if (section === 'stores') renderArchivesMobile();
 }
 function closeModal() {
   document.getElementById('modal-overlay').style.display = 'none';
@@ -537,6 +575,103 @@ function _saveVacationToRemote(entry, msg) {
     localStorage.setItem('linah_vacation_pending', JSON.stringify(pending));
     showMsg('⚠️ تم الحفظ محلياً (سيتم الرفع لاحقاً)', false);
   });
+}
+
+function _arcKey(a) {
+  if (a && a.id) return a.id;
+  var s = String(((a&&a.item)||'') + '|' + ((a&&a.location)||'') + '|' + ((a&&a.qty)||'') + '|' + ((a&&a.condition)||''));
+  var h = 5381;
+  for (var i = 0; i < s.length; i++) { h = ((h << 5) + h + s.charCodeAt(i)) >>> 0; }
+  return 'arc_' + h.toString(36);
+}
+function renderArchivesMobile() {
+  var flt = document.getElementById('dd-store-filter');
+  var stores = dynStores.slice();
+  archiveData.forEach(function(a) { if (a && a.location && stores.indexOf(a.location) === -1) stores.push(a.location); });
+  var cur = flt.value;
+  flt.innerHTML = '<option value="">كل المخازن</option>' + stores.map(function(s) { return '<option value="' + String(s).replace(/"/g, '&quot;') + '">' + s + '</option>'; }).join('');
+  if (cur && stores.indexOf(cur) !== -1) flt.value = cur;
+  var showIssued = document.getElementById('dd-store-show-issued').value === '1';
+  var list = document.getElementById('dd-store-list');
+  var items = archiveData.filter(function(a) {
+    return a && (!flt.value || a.location === flt.value) && (showIssued || !(a.issueto || a.issuedate));
+  });
+  if (!items.length) {
+    list.innerHTML = '<div style="padding:12px;font-size:13px;color:#999;">لا توجد عهدات' + (showIssued ? '' : ' متاحة') + '.</div>';
+  } else {
+    var html = '';
+    items.forEach(function(a) {
+      var issued = (a.issueto || a.issuedate);
+      var ev = '';
+      if (issued) { ev = ' | صرف: ' + (a.issueto || '') + (a.receiver ? ' → ' + a.receiver : '') + (a.issuedate ? ' (' + a.issuedate + ')' : ''); }
+      html += '<div style="padding:8px 10px;border-bottom:1px solid #eee;font-size:13px;display:flex;justify-content:space-between;align-items:center;gap:8px;">';
+      html += '<div style="flex:1;"><b>' + (a.item || '') + '</b> <span style="color:#888;font-size:11px;">(' + (a.location || '') + ')</span><br><span style="font-size:11px;color:#777;">' + (a.condition || '') + ev + '</span></div>';
+      html += '<div style="font-weight:800;font-size:15px;color:#5d4037;">' + (a.qty !== undefined ? a.qty : '—') + '</div></div>';
+    });
+    list.innerHTML = html;
+  }
+  var sel = document.getElementById('dd-issue-item');
+  var avail = archiveData.filter(function(a) { return a && !(a.issueto || a.issuedate) && (!flt.value || a.location === flt.value); });
+  sel.innerHTML = '<option value="">— اختر العهدة —</option>' + avail.map(function(a) {
+    return '<option value="' + _arcKey(a) + '">' + (a.item || '') + ' — ' + (a.location || '') + ' (متاح ' + (a.qty || 0) + ')</option>';
+  }).join('');
+}
+function saveStoreIssue() {
+  var key = document.getElementById('dd-issue-item').value;
+  var qty = parseInt(document.getElementById('dd-issue-qty').value) || 0;
+  var to = (document.getElementById('dd-issue-to').value || '').trim();
+  var recv = (document.getElementById('dd-issue-receiver').value || '').trim();
+  var by = (document.getElementById('dd-issue-by').value || '').trim();
+  if (!key) { showMsg('اختر العهدة أولاً.', true); return; }
+  if (qty <= 0) { showMsg('ادخل كمية صحيحة.', true); return; }
+  if (!to) { showMsg('اكتب جهة الصرف.', true); return; }
+  var idx = -1;
+  for (var i = 0; i < archiveData.length; i++) { if (_arcKey(archiveData[i]) === key) { idx = i; break; } }
+  if (idx === -1) { showMsg('العهدة غير موجودة.', true); return; }
+  var a = archiveData[idx];
+  var availQty = parseInt(a.qty) || 0;
+  if (qty > availQty) { showMsg('الكمية المطلوبة أكبر من المتاح (' + availQty + ').', true); return; }
+  a.qty = availQty - qty;
+  if (!a.id) a.id = 'arc_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
+  a.issueto = to;
+  if (recv) a.receiver = recv;
+  if (by) a.issueby = by;
+  a.issuedate = new Date().toISOString().split('T')[0];
+  a.modifiedAt = new Date().toISOString();
+  a.desc = (a.desc ? a.desc + ' | ' : '') + 'تم صرف ' + qty + ' إلى ' + to + (recv ? ' (المستلم: ' + recv + ')' : '');
+  localStorage.setItem('lineh_archive_data', JSON.stringify(archiveData));
+  _syncArchiveRecordToAlldata(a);
+  renderArchivesMobile();
+  document.getElementById('dd-issue-qty').value = 1;
+  document.getElementById('dd-issue-to').value = '';
+  document.getElementById('dd-issue-receiver').value = '';
+  document.getElementById('dd-issue-by').value = '';
+  showMsg('✅ تم تسجيل صرف ' + qty + ' من «' + (a.item || '') + '»' + (a.qty === 0 ? ' (اكتمل الصرف)' : ''), false);
+}
+function _syncArchiveRecordToAlldata(rec) {
+  fetch(SB + '/rest/v1/sync_data?id=eq.alldata&select=data', {
+    headers: { 'apikey': KEY, 'Authorization': 'Bearer ' + KEY }
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(rows) {
+    var ad = {};
+    if (rows && rows[0] && rows[0].data) ad = typeof rows[0].data === 'string' ? JSON.parse(rows[0].data) : rows[0].data;
+    if (!Array.isArray(ad.archiveData)) ad.archiveData = [];
+    var found = false;
+    for (var i = 0; i < ad.archiveData.length; i++) {
+      var it = ad.archiveData[i];
+      if ((it && rec.id && it.id === rec.id) || (it && !it.id && !rec.id && (it.item || '') === (rec.item || '') && (it.location || '') === (rec.location || ''))) {
+        ad.archiveData[i] = rec; found = true; break;
+      }
+    }
+    if (!found) ad.archiveData.push(rec);
+    return fetch(SB + '/rest/v1/sync_data?id=eq.alldata', {
+      method: 'POST',
+      headers: { 'apikey': KEY, 'Authorization': 'Bearer ' + KEY, 'Content-Type': 'application/json', 'Prefer': 'resolution=merge-duplicates' },
+      body: JSON.stringify({ id: 'alldata', data: ad, updated_at: new Date().toISOString() })
+    });
+  })
+  .catch(function(){});
 }
 
 function resetTeaFields() {
