@@ -600,16 +600,46 @@
   });
 
   // ============================================================
-  //  مزامنة تلقائية دورية (كل 30 ثانية): رفع أي تعديلات محلية ثم
-  //  سحب أحدث نسخة من السحابة، حتى تنعكس تغييرات الفورم الخارجية
-  //  (daily-data) على البرنامج الرئيسي في تبويب القوة دون إعادة تحميل.
-  //  صامتة تماماً (بدون تنبيهات) حتى لا تزعج المستخدم أثناء العمل.
+  //  مزامنة تلقائية دورية (كل 30 ثانية) — اقتصادية جداً في استهلاك
+  //  الإنترنت:
+  //  1) فحص خفيف جداً (63 بايت فقط): جلب updated_at فقط للسطر alldata.
+  //  2) لو النسخة السحابية أحدث من آخر سحب → سحب كامل (مرة واحدة فقط).
+  //  3) دفع فقط لو فيه تعديلات محلية غير مرفوعة بعد (مقارنة محلية بلا شبكة).
+  //  بلا مزامنة كاملة كل دورة، استهلاك البيانات يبقى بضعة كيلوبايتات
+  //  في اليوم، والسحب الكامل (3MB تقريباً) يحدث فقط عند تغيير حقيقي.
   // ============================================================
   setInterval(function () {
     if (!supabaseConnected) return;
-    window.pushToSupabase(true)
-      .then(function () { return window.pullFromSupabase(true); })
-      .catch(function () {});
+    (async function () {
+      try {
+        const resp = await fetch(_sbEndpoint + '?select=id,updated_at&order=updated_at.desc&limit=1', {
+          method: 'GET',
+          headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY },
+          mode: 'cors'
+        });
+        if (resp.ok) {
+          const rows = await resp.json();
+          let cloudMs = 0;
+          (rows || []).forEach(function (row) {
+            if (!row || row.id !== 'alldata') return;
+            const t = Date.parse(row.updated_at || '');
+            if (!isNaN(t) && t > cloudMs) cloudMs = t;
+          });
+          let lastMs = 0;
+          try { lastMs = Date.parse((_pulledAt && (_pulledAt['_lastPull'] || _pulledAt['_lastPush'])) || '') || 0; } catch (e) {}
+          if (cloudMs > lastMs + 1000) await window.pullFromSupabase(true);
+        }
+      } catch (e) {}
+      try {
+        const allNow = getAllDataForSync();
+        const snap = JSON.parse(_lsGet('_lastPushSnapshot') || '{}');
+        let changed = Object.keys(snap).length === 0;
+        for (const k in allNow) {
+          if (snap[k] !== JSON.stringify(allNow[k])) { changed = true; break; }
+        }
+        if (changed) await window.pushToSupabase(true);
+      } catch (e) {}
+    })();
   }, 30000);
 
   // ============================================================
