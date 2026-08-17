@@ -197,7 +197,7 @@ textarea{resize:vertical;min-height:60px}
 <div class="form-group"><label>القائم على الصرف</label><input type="text" id="dd-issue-by" placeholder="الاسم"></div>
 </div>
 <button type="button" class="btn-save-section" style="background:#5d4037;" onclick="saveStoreIssue()">🏪 حفظ الصرف</button>
-<div class="section-title">➕ إضافة وارد جديد</div>
+<div class="section-title" id="dd-store-form-title">➕ إضافة وارد جديد</div>
 <div class="form-group"><label>العهدة (الصنف)</label><input type="text" id="dd-in-item" placeholder="اسم العهدة"></div>
 <div class="form-group"><label>البيان</label><input type="text" id="dd-in-desc" placeholder="اختياري"></div>
 <div class="form-row">
@@ -209,6 +209,7 @@ textarea{resize:vertical;min-height:60px}
 <div class="form-group"><label>التاريخ</label><input type="date" id="dd-in-date"></div>
 </div>
 <button type="button" class="btn-save-section" style="background:#795548;" onclick="saveStoreIncoming()">➕ تسجيل وارد</button>
+<button type="button" class="btn-save-section" id="dd-store-cancel-btn" style="display:none;background:#757575;" onclick="cancelStoreEdit()">✖️ إلغاء التعديل</button>
 </div>
 
 </div>
@@ -640,12 +641,14 @@ function renderArchivesMobile() {
         else if (issued) badge = ' <span style="color:#ef6c00;font-weight:800;font-size:10px;">[صرف جزئي]</span>';
       }
       html += '<div style="padding:8px 10px;border-bottom:1px solid #eee;font-size:13px;display:flex;justify-content:space-between;align-items:center;gap:8px;">';
+      var idx = archiveData.indexOf(a);
       html += '<div style="flex:1;"><b>' + (a.item || '') + '</b>' + badge + ' <span style="color:#888;font-size:11px;">(' + (a.location || '') + ')</span><br><span style="font-size:11px;color:#777;">' + (a.condition || '') + ev + '</span></div>';
       if (_ddStoresTab === 'in') {
         html += '<div style="text-align:left;font-size:11px;color:#777;">أصلي ' + (a.origQty !== undefined ? a.origQty : a.qty) + '<br><span style="font-weight:800;font-size:15px;color:#5d4037;">متبقي ' + arcRemainingM(a) + '</span></div>';
       } else {
         html += '<div style="font-weight:800;font-size:15px;color:#5d4037;">' + arcRemainingM(a) + '</div>';
       }
+      html += '<div style="display:flex;flex-direction:column;gap:4px;"><button style="background:#1565c0;color:#fff;border:none;border-radius:8px;padding:4px 8px;font-size:11px;cursor:pointer;font-family:\'Cairo\',sans-serif;" onclick="editStoreMobile(' + idx + ')">✏️</button><button style="background:#c62828;color:#fff;border:none;border-radius:8px;padding:4px 8px;font-size:11px;cursor:pointer;font-family:\'Cairo\',sans-serif;" onclick="deleteStoreMobile(' + idx + ')">🗑️</button></div>';
       html += '</div>';
     });
     list.innerHTML = html;
@@ -658,6 +661,67 @@ function renderArchivesMobile() {
   var dl = document.getElementById('dd-stores-datalist');
   if (dl) dl.innerHTML = stores.map(function(s) { return '<option value="' + String(s).replace(/"/g, '&quot;') + '">'; }).join('');
 }
+var _ddEditIdx = -1;
+function editStoreMobile(idx) {
+  var a = archiveData[idx];
+  if (!a) return;
+  _ddEditIdx = idx;
+  document.getElementById('dd-in-item').value = a.item || '';
+  document.getElementById('dd-in-desc').value = a.desc || '';
+  document.getElementById('dd-in-qty').value = a.qty || 1;
+  document.getElementById('dd-in-location').value = a.location || '';
+  document.getElementById('dd-in-condition').value = a.condition || 'جديد';
+  document.getElementById('dd-in-date').value = a.date || new Date().toISOString().split('T')[0];
+  document.getElementById('dd-store-form-title').textContent = '✏️ تعديل العهدة';
+  document.getElementById('dd-store-cancel-btn').style.display = 'block';
+  document.getElementById('dd-store-form-title').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+function cancelStoreEdit() {
+  _ddEditIdx = -1;
+  document.getElementById('dd-in-item').value = ''; document.getElementById('dd-in-desc').value = '';
+  document.getElementById('dd-in-qty').value = 1; document.getElementById('dd-in-location').value = '';
+  document.getElementById('dd-in-condition').value = 'جديد'; document.getElementById('dd-in-date').value = '';
+  document.getElementById('dd-store-form-title').textContent = '➕ إضافة وارد جديد';
+  document.getElementById('dd-store-cancel-btn').style.display = 'none';
+}
+function deleteStoreMobile(idx) {
+  var a = archiveData[idx];
+  if (!a) return;
+  var nm = (a.item || '') + ' — ' + (a.location || '');
+  if (!confirm('هل تريد حذف العهدة «' + nm + '» نهائياً؟')) return;
+  var key = a.id || String(a.date || '') + '|' + String(a.item || '') + '|' + String(a.location || '');
+  archiveData.splice(idx, 1);
+  localStorage.setItem('lineh_archive_data', JSON.stringify(archiveData));
+  if (_ddEditIdx === idx) cancelStoreEdit();
+  renderArchivesMobile();
+  _deleteArchiveRecordFromCloud(key);
+  showMsg('🗑️ تم حذف العهدة «' + nm + '»', false);
+}
+function _deleteArchiveRecordFromCloud(key) {
+  fetch(SB + '/rest/v1/sync_data?id=eq.alldata&select=data', {
+    headers: { 'apikey': KEY, 'Authorization': 'Bearer ' + KEY }
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(rows) {
+    var ad = {};
+    if (rows && rows[0] && rows[0].data) ad = typeof rows[0].data === 'string' ? JSON.parse(rows[0].data) : rows[0].data;
+    if (Array.isArray(ad.archiveData)) {
+      ad.archiveData = ad.archiveData.filter(function(it) {
+        if (!it) return false;
+        var itKey = it.id || String(it.date || '') + '|' + String(it.item || '') + '|' + String(it.location || '');
+        return itKey !== key;
+      });
+    }
+    if (!Array.isArray(ad.syncDeletions)) ad.syncDeletions = [];
+    ad.syncDeletions.push({ entity: 'archiveData', key: key, deletedAt: new Date().toISOString() });
+    return fetch(SB + '/rest/v1/sync_data?id=eq.alldata', {
+      method: 'POST',
+      headers: { 'apikey': KEY, 'Authorization': 'Bearer ' + KEY, 'Content-Type': 'application/json', 'Prefer': 'resolution=merge-duplicates' },
+      body: JSON.stringify({ id: 'alldata', data: ad, updated_at: new Date().toISOString() })
+    });
+  })
+  .catch(function(){});
+}
 function saveStoreIncoming() {
   var item = (document.getElementById('dd-in-item').value || '').trim();
   var desc = (document.getElementById('dd-in-desc').value || '').trim();
@@ -668,6 +732,19 @@ function saveStoreIncoming() {
   if (!item) { showMsg('اكتب اسم العهدة.', true); return; }
   if (qty <= 0) { showMsg('ادخل كمية صحيحة.', true); return; }
   if (!loc) { showMsg('اكتب اسم المخزن.', true); return; }
+  if (_ddEditIdx >= 0) {
+    var ea = archiveData[_ddEditIdx];
+    if (!ea) { cancelStoreEdit(); showMsg('العهدة غير موجودة.', true); return; }
+    if (!ea.id) ea.id = _arcKey(ea);
+    ea.item = item; ea.desc = desc; ea.qty = qty; ea.origQty = qty; ea.location = loc;
+    ea.condition = cond; ea.date = date; ea.modifiedAt = new Date().toISOString();
+    localStorage.setItem('lineh_archive_data', JSON.stringify(archiveData));
+    _syncArchiveRecordToAlldata(ea);
+    cancelStoreEdit();
+    renderArchivesMobile();
+    showMsg('✅ تم تعديل العهدة «' + item + '»', false);
+    return;
+  }
   var rec = { id: 'arc_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7), item: item, desc: desc, qty: qty, origQty: qty, location: loc, condition: cond, date: date, modifiedAt: new Date().toISOString() };
   archiveData.push(rec);
   if (dynStores.indexOf(loc) === -1) {
