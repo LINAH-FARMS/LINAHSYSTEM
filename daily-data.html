@@ -178,11 +178,13 @@ textarea{resize:vertical;min-height:60px}
 
 <div id="modal-stores" class="modal-section section section-stores">
 <div class="section-title">🏪 أرشيف المخازن — الشئون الإدارية</div>
-<div class="form-row">
-<div class="form-group"><label>📦 المخزن</label><select id="dd-store-filter" onchange="renderArchivesMobile()"></select></div>
-<div class="form-group"><label>العرض</label><select id="dd-store-show-issued" onchange="renderArchivesMobile()"><option value="0">المتاح فقط</option><option value="1">الكل (مع الصادر)</option></select></div>
+<div style="display:flex;gap:6px;margin-bottom:10px;">
+<button type="button" class="dd-stores-tab" data-tab="in" onclick="setStoresTab('in')" style="flex:1;padding:8px 4px;border:2px solid #d7ccc8;border-radius:10px;background:#fff;color:#5d4037;font-weight:800;font-size:13px;cursor:pointer;font-family:'Cairo',sans-serif;">📥 وارد</button>
+<button type="button" class="dd-stores-tab" data-tab="out" onclick="setStoresTab('out')" style="flex:1;padding:8px 4px;border:2px solid #d7ccc8;border-radius:10px;background:#fff;color:#5d4037;font-weight:800;font-size:13px;cursor:pointer;font-family:'Cairo',sans-serif;">📤 صادر</button>
+<button type="button" class="dd-stores-tab" data-tab="stock" onclick="setStoresTab('stock')" style="flex:1;padding:8px 4px;border:2px solid #d7ccc8;border-radius:10px;background:#fff;color:#5d4037;font-weight:800;font-size:13px;cursor:pointer;font-family:'Cairo',sans-serif;">🗃️ المخزون الحالي</button>
 </div>
-<div style="max-height:260px;overflow-y:auto;border:1px solid #e0e0e0;border-radius:10px;background:white;margin-bottom:14px;" id="dd-store-list"></div>
+<div class="form-group"><label>📦 المخزن</label><select id="dd-store-filter" onchange="renderArchivesMobile()"></select></div>
+<div style="max-height:240px;overflow-y:auto;border:1px solid #e0e0e0;border-radius:10px;background:white;margin-bottom:14px;" id="dd-store-list"></div>
 <div class="section-title">📤 صرف من المخزن</div>
 <div class="form-group"><label>العهدة</label><select id="dd-issue-item"></select></div>
 <div class="form-row">
@@ -301,7 +303,7 @@ function openModal(section) {
   var titles = { tea:'🍵 الشاي', maint:'🛠️ الصيانة', septic:'🚽 البيارات', vacation:'🏖️ الإجازات', stores:'🏪 المخازن' };
   document.getElementById('modal-title').textContent = titles[section] || section;
   document.getElementById('modal-overlay').style.display = 'flex';
-  if (section === 'stores') renderArchivesMobile();
+  if (section === 'stores') setStoresTab(_ddStoresTab);
 }
 function closeModal() {
   document.getElementById('modal-overlay').style.display = 'none';
@@ -584,6 +586,16 @@ function _arcKey(a) {
   for (var i = 0; i < s.length; i++) { h = ((h << 5) + h + s.charCodeAt(i)) >>> 0; }
   return 'arc_' + h.toString(36);
 }
+var _ddStoresTab = 'stock';
+function setStoresTab(t) {
+  _ddStoresTab = t;
+  document.querySelectorAll('.dd-stores-tab').forEach(function(btn) {
+    var on = btn.getAttribute('data-tab') === t;
+    btn.style.background = on ? '#5d4037' : '#fff';
+    btn.style.color = on ? '#fff' : '#5d4037';
+  });
+  renderArchivesMobile();
+}
 function renderArchivesMobile() {
   var flt = document.getElementById('dd-store-filter');
   var stores = dynStores.slice();
@@ -591,13 +603,17 @@ function renderArchivesMobile() {
   var cur = flt.value;
   flt.innerHTML = '<option value="">كل المخازن</option>' + stores.map(function(s) { return '<option value="' + String(s).replace(/"/g, '&quot;') + '">' + s + '</option>'; }).join('');
   if (cur && stores.indexOf(cur) !== -1) flt.value = cur;
-  var showIssued = document.getElementById('dd-store-show-issued').value === '1';
   var list = document.getElementById('dd-store-list');
-  var items = archiveData.filter(function(a) {
-    return a && (!flt.value || a.location === flt.value) && (showIssued || !(a.issueto || a.issuedate));
-  });
+  var items;
+  if (_ddStoresTab === 'out') {
+    items = archiveData.filter(function(a) { return a && (a.issueto || a.issuedate) && (!flt.value || a.location === flt.value); });
+  } else if (_ddStoresTab === 'in') {
+    items = archiveData.filter(function(a) { return a && (!flt.value || a.location === flt.value); });
+  } else {
+    items = archiveData.filter(function(a) { return a && !(a.issueto || a.issuedate) && (!flt.value || a.location === flt.value); });
+  }
   if (!items.length) {
-    list.innerHTML = '<div style="padding:12px;font-size:13px;color:#999;">لا توجد عهدات' + (showIssued ? '' : ' متاحة') + '.</div>';
+    list.innerHTML = '<div style="padding:12px;font-size:13px;color:#999;">لا توجد ' + (_ddStoresTab === 'out' ? 'صادرات' : (_ddStoresTab === 'in' ? 'عهدات' : 'عهدات متاحة')) + '.</div>';
   } else {
     var html = '';
     items.forEach(function(a) {
