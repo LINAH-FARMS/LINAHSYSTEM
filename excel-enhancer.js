@@ -28,7 +28,7 @@
     function addSec(title, emps) {
       var out = [[title + ' (' + emps.length + ')'], cols];
       emps.sort(function(a,b) { return (a.name||'').localeCompare(b.name||'', 'ar'); }).forEach(function(e) {
-        out.push([e.code||'', _c(e.name), e.contract||'دائم', e.nationalId||'—', e.hireDate||'—', _c(e.dept), _c(e.title), _c(e.gov), e.sector||'—', e.room||'—', e.status === 'P' ? 'متواجد' : 'في إجازة']);
+        out.push([e.code||'', _c(e.name), e.contract||'دائم', e.nationalId||'—', e.hireDate||'—', _c(e.dept), _c(e.title), _c(e.gov), e.sector||'—', e.room||'—', e.status === 'P' ? 'متواجد' : (e.status === 'V' ? 'في إجازة' : 'غائب')]);
       });
       out.push([]);
       var sr = allRows.length;

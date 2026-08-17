@@ -3661,7 +3661,7 @@ var _breadSuggestionIdCounter = 0;
 
       if(!editId) {
         let dupCode = employees.find(e => e.code && e.code.toLowerCase() === code.toLowerCase());
-        if(dupCode) return alert("الكود [" + code + "] مسجل مسبقاً باسم [" + dupCode.name + "].\nالحالة: " + (dupCode.status === 'P' ? 'متواجد' : 'في إجازة') + "\nالإدارة: " + (dupCode.dept || '—') + "\nتأكد قبل الإضافة.");
+        if(dupCode) return alert("الكود [" + code + "] مسجل مسبقاً باسم [" + dupCode.name + "].\nالحالة: " + (dupCode.status === 'P' ? 'متواجد' : dupCode.status === 'V' ? 'في إجازة' : 'غائب') + "\nالإدارة: " + (dupCode.dept || '—') + "\nتأكد قبل الإضافة.");
         let dupExcl = excludedEmployees.find(e => e.code && e.code.toLowerCase() === code.toLowerCase());
         if(dupExcl) return alert("الكود [" + code + "] موجود مسبقاً في المستبعدين باسم [" + dupExcl.name + "].\nتاريخ الاستبعاد: " + (dupExcl.date || '—') + "\nالسبب: " + (dupExcl.reason || '—') + "\nيرجى مراجعة البيانات.");
         let similarName = employees.find(e => e.name && e.name.trim().toLowerCase() === name.toLowerCase());
@@ -3820,7 +3820,7 @@ var _breadSuggestionIdCounter = 0;
           <td>${e.gov || '—'}</td>
           <td>${e.sector || '—'}</td>
           <td>${e.room || '—'}</td>
-          <td><span class="status-badge ${e.status==='P'?'status-p':'status-v'}">${e.status==='P'?'متواجد':'في إجازة'}</span></td>
+          <td><span class="status-badge ${e.status==='P'?'status-p':(e.status==='A'?'':'status-v')}" style="${e.status==='A'?'background:#ffebee;color:#c62828;':''}">${e.status==='P'?'متواجد':e.status==='V'?'في إجازة':'غائب'}</span></td>
           <td style="font-size:11px; max-width:150px; color:#555;">${e.assetsStr || e.assets || '—'}</td>
           <td><span style="color:var(--danger); font-weight:600;">${toArabicNumerals(e.date)}</span></td>
           <td><span style="font-style:italic; color:#d32f2f;">${e.reason}</span></td>
@@ -3912,6 +3912,9 @@ function toggleEmployeeStatus(empId) {
         if (emp.status === 'P') {
             emp.departureTime = new Date().toLocaleTimeString('ar-EG', {hour:'2-digit',minute:'2-digit'});
             emp.status = 'V';
+        } else if (emp.status === 'V') {
+            emp.status = 'P';
+            emp.departureTime = '';
         } else {
             emp.status = 'P';
             emp.departureTime = '';
@@ -3919,7 +3922,8 @@ function toggleEmployeeStatus(empId) {
         _ts(emp);
         playChangeSound();
         syncStorage();
-        logAction('تعديل', 'حالة موظف', emp.name, 'من ' + (oldStatus === 'P' ? 'تواجد' : 'إجازة') + ' إلى ' + (emp.status === 'P' ? 'تواجد' : 'إجازة'));
+        var _lbl = function(s) { return s === 'P' ? 'تواجد' : s === 'V' ? 'إجازة' : 'غائب'; };
+        logAction('تعديل', 'حالة موظف', emp.name, 'من ' + _lbl(oldStatus) + ' إلى ' + _lbl(emp.status));
         renderTable(); renderDashboard();
         calculateSystemStats();
         autoLogTodayMeals(); renderMealLogTable();
@@ -3961,7 +3965,7 @@ function toggleEmployeeStatus(empId) {
           <td>${e.gov || '—'}</td>
           <td>${e.sector || '—'}</td>
           <td>${e.room || '—'}</td>
-          <td><span class="status-badge ${e.status==='P'?'status-p':'status-v'}">${e.status==='P'?'تواجد P':`إجازة V ${e.departureTime?'(مغادرة '+e.departureTime+')':''}`}</span></td>
+          <td><span class="status-badge ${e.status==='P'?'status-p':(e.status==='A'?'':'status-v')}" style="${e.status==='A'?'background:#ffebee;color:#c62828;':''}">${e.status==='P'?'تواجد P':e.status==='A'?'غائب':`إجازة V ${e.departureTime?'(مغادرة '+e.departureTime+')':''}`}</span></td>
           <td class="no-print" style="display:none;">${assetsStr}</td>
           <td class="no-print" style="white-space:nowrap;">
             <button class="btn btn-secondary" style="padding:4px 8px; font-size:11px;" onclick="editEmployee('${e.id}')">📝 تعديل</button>
@@ -7993,7 +7997,7 @@ function renderTeaSugarTable() {
             stripEmoji(e.gov || '—'),
             e.sector || '—',
             e.room || '—',
-            e.status === 'P' ? 'متواجد' : 'في إجازة'
+e.status === 'P' ? 'متواجد' : (e.status === 'V' ? 'في إجازة' : 'غائب')
           ]);
         });
         out.push([]);
@@ -8079,7 +8083,7 @@ function renderTeaSugarTable() {
           stripEmoji(e.gov || ''),
           e.sector || '',
           e.room || '',
-          e.status === 'P' ? 'متواجد' : 'في إجازة',
+          e.status === 'P' ? 'متواجد' : (e.status === 'V' ? 'في إجازة' : 'غائب'),
           e.hireDate || ''
         ]);
       });
@@ -8768,7 +8772,7 @@ function exportContractorsToExcel() {
 
     function exportExcludedToExcel() {
       var data = sortNewestFirst(excludedEmployees, 'date').map(function(e) {
-        return { "التاريخ": e.date || '', "الاسم": e.name, "الكود": e.code || '', "نوع العقد": e.contract || '', "الرقم القومي": e.nationalId || '', "تاريخ التعيين": e.hireDate || '', "الإدارة": e.dept, "الوظيفة": e.title, "الجهة": e.gov, "المبنى": e.sector || '', "الغرفة": e.room || '', "الحالة": e.status === 'P' ? 'متواجد' : 'في إجازة', "العهد": (e.assetsStr || '').toString().replace(/[^\u0600-\u06FF\u0660-\u0669\u0020-\u007E\s]/g, '').trim() || '', "السبب": e.reason };
+        return { "التاريخ": e.date || '', "الاسم": e.name, "الكود": e.code || '', "نوع العقد": e.contract || '', "الرقم القومي": e.nationalId || '', "تاريخ التعيين": e.hireDate || '', "الإدارة": e.dept, "الوظيفة": e.title, "الجهة": e.gov, "المبنى": e.sector || '', "الغرفة": e.room || '', "الحالة": e.status === 'P' ? 'متواجد' : (e.status === 'V' ? 'في إجازة' : 'غائب'), "العهد": (e.assetsStr || '').toString().replace(/[^\u0600-\u06FF\u0660-\u0669\u0020-\u007E\s]/g, '').trim() || '', "السبب": e.reason };
       });
       var ws = XLSX.utils.json_to_sheet(data); var wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, "المستبعدين"); XLSX.writeFile(wb, "المستبعدين_" + new Date().toISOString().split('T')[0].replace(/-/g, '') + ".xlsx");

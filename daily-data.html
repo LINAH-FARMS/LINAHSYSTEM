@@ -221,7 +221,7 @@ textarea{resize:vertical;min-height:60px}
 <div id="force-stats" style="display:flex;gap:6px;margin-bottom:10px;"></div>
 <div class="form-group"><input type="text" id="force-search" placeholder="🔍 ابحث بالكود أو الاسم..." oninput="renderForceMobile()"></div>
 <div class="form-row" style="margin-bottom:10px;">
-<div class="form-group"><label>الحالة</label><select id="force-status" onchange="renderForceMobile()"><option value="">الكل</option><option value="P">متواجد</option><option value="V">في إجازة</option></select></div>
+<div class="form-group"><label>الحالة</label><select id="force-status" onchange="renderForceMobile()"><option value="">الكل</option><option value="P">متواجد</option><option value="V">في إجازة</option><option value="A">غائب</option></select></div>
 <div class="form-group"><label>الإدارة</label><select id="force-dept" onchange="renderForceMobile()"><option value="">كل الإدارات</option></select></div>
 </div>
 <div style="max-height:340px;overflow-y:auto;border:1px solid #e0e0e0;border-radius:10px;background:white;" id="force-list"></div>
@@ -346,6 +346,12 @@ document.getElementById('modal-overlay').addEventListener('click', function(e) {
 
 // ─── القوة (الموظفون) ───
 function _escHtml(s) { return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function _ddStLbl(s) {
+  if (s === 'P') return 'متواجد';
+  if (s === 'V') return 'في إجازة';
+  if (s === 'A') return 'غائب';
+  return '—';
+}
 function renderForceMobile() {
   var cnt = document.getElementById('force-count');
   if (cnt) cnt.textContent = employees.length;
@@ -359,12 +365,13 @@ function renderForceMobile() {
     Object.keys(dset).sort().forEach(function(d) { deptSel.innerHTML += '<option value="' + _escHtml(d) + '">' + _escHtml(d) + '</option>'; });
   }
   var stats = document.getElementById('force-stats');
-  var pCount = 0, vCount = 0;
-  employees.forEach(function(e) { if (e.status === 'P') pCount++; else if (e.status === 'V') vCount++; });
+  var pCount = 0, vCount = 0, aCount = 0;
+  employees.forEach(function(e) { if (e.status === 'P') pCount++; else if (e.status === 'V') vCount++; else if (e.status === 'A') aCount++; });
   stats.innerHTML =
     '<div style="flex:1;background:#fff;border:1px solid #c5cae9;border-radius:10px;padding:8px;text-align:center;"><div style="font-weight:800;font-size:18px;color:#3f51b5;">' + employees.length + '</div><div style="font-size:11px;color:#777;">إجمالي القوة</div></div>' +
     '<div style="flex:1;background:#fff;border:1px solid #c8e6c9;border-radius:10px;padding:8px;text-align:center;"><div style="font-weight:800;font-size:18px;color:#2e7d32;">' + pCount + '</div><div style="font-size:11px;color:#777;">🟢 متواجد</div></div>' +
-    '<div style="flex:1;background:#fff;border:1px solid #e1bee7;border-radius:10px;padding:8px;text-align:center;"><div style="font-weight:800;font-size:18px;color:#7b1fa2;">' + vCount + '</div><div style="font-size:11px;color:#777;">🟣 في إجازة</div></div>';
+    '<div style="flex:1;background:#fff;border:1px solid #e1bee7;border-radius:10px;padding:8px;text-align:center;"><div style="font-weight:800;font-size:18px;color:#7b1fa2;">' + vCount + '</div><div style="font-size:11px;color:#777;">🟣 في إجازة</div></div>' +
+    '<div style="flex:1;background:#fff;border:1px solid #ffcdd2;border-radius:10px;padding:8px;text-align:center;"><div style="font-weight:800;font-size:18px;color:#c62828;">' + aCount + '</div><div style="font-size:11px;color:#777;">🔴 غائب</div></div>';
   var rows = employees.filter(function(e) {
     if (!e) return false;
     if (q && !(e.name || '').toLowerCase().includes(q) && !(e.code || '').toLowerCase().includes(q)) return false;
@@ -379,13 +386,49 @@ function renderForceMobile() {
   }
   var html = '';
   rows.forEach(function(e) {
-    var stC = (e.status === 'P') ? '<span style="background:#e8f5e9;color:#2e7d32;font-size:10px;font-weight:800;border-radius:6px;padding:2px 6px;">متواجد</span>' :
-             (e.status === 'V') ? '<span style="background:#f3e5f5;color:#7b1fa2;font-size:10px;font-weight:800;border-radius:6px;padding:2px 6px;">في إجازة</span>' : '<span style="background:#f5f5f5;color:#888;font-size:10px;font-weight:800;border-radius:6px;padding:2px 6px;">—</span>';
+    var idx = employees.indexOf(e);
+    var opts = ['P','V','A'].map(function(v) {
+      return '<option value="' + v + '"' + ((e.status || '') === v ? ' selected' : '') + '>' + _ddStLbl(v) + '</option>';
+    }).join('');
+    var bg = (e.status === 'P') ? '#e8f5e9' : (e.status === 'V') ? '#f3e5f5' : (e.status === 'A') ? '#ffebee' : '#f5f5f5';
+    var fg = (e.status === 'P') ? '#2e7d32' : (e.status === 'V') ? '#7b1fa2' : (e.status === 'A') ? '#c62828' : '#888';
     html += '<div style="padding:8px 10px;border-bottom:1px solid #eee;font-size:13px;display:flex;justify-content:space-between;align-items:center;gap:8px;">';
     html += '<div style="flex:1;"><b>' + _escHtml(e.name || '') + '</b> <span style="color:#888;font-size:11px;">[' + _escHtml(e.code || '') + ']</span><br><span style="font-size:11px;color:#777;">' + _escHtml(e.dept || '—') + (e.title ? ' · ' + _escHtml(e.title) : '') + ' · ' + _escHtml(e.gov || '—') + (e.sector ? ' | ' + _escHtml(e.sector) + (e.room ? ' / ' + _escHtml(e.room) : '') : '') + '</span></div>';
-    html += stC + '</div>';
+    html += '<select onchange="ddSetEmpStatus(' + idx + ', this.value)" style="font-size:12px;padding:3px 6px;border:1px solid #ccc;border-radius:6px;background:' + bg + ';color:' + fg + ';font-family:inherit;font-weight:700;">' + opts + '</select>';
+    html += '</div>';
   });
   list.innerHTML = html;
+}
+function ddSetEmpStatus(idx, val) {
+  if (!employees[idx]) return;
+  employees[idx].status = val;
+  try { localStorage.setItem('lineh_employees', JSON.stringify(employees)); } catch(e){}
+  renderForceMobile();
+  _pushEmployeesToCloud();
+}
+function _pushEmployeesToCloud() {
+  fetch(SB + '/rest/v1/sync_data?id=eq.alldata&select=data', {
+    headers: { 'apikey': KEY, 'Authorization': 'Bearer ' + KEY }
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(rows) {
+    var ad = {};
+    if (rows && rows[0] && rows[0].data) {
+      ad = typeof rows[0].data === 'string' ? JSON.parse(rows[0].data) : rows[0].data;
+    }
+    ad.employees = employees.slice();
+    return fetch(SB + '/rest/v1/sync_data?id=eq.alldata', {
+      method: 'POST',
+      headers: { 'apikey': KEY, 'Authorization': 'Bearer ' + KEY, 'Content-Type': 'application/json', 'Prefer': 'resolution=merge-duplicates' },
+      body: JSON.stringify({ id: 'alldata', data: ad, updated_at: new Date().toISOString() })
+    });
+  })
+  .then(function(r) {
+    if (r && r.ok) showMsg('تم تحديث الحالة (مُزامن مع السحابة)', false);
+  })
+  .catch(function() {
+    showMsg('⚠️ تم الحفظ محلياً (يُرفع لاحقاً)', true);
+  });
 }
 
 // ─── Tea Search ───
