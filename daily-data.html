@@ -196,6 +196,18 @@ textarea{resize:vertical;min-height:60px}
 <div class="form-group"><label>القائم على الصرف</label><input type="text" id="dd-issue-by" placeholder="الاسم"></div>
 </div>
 <button type="button" class="btn-save-section" style="background:#5d4037;" onclick="saveStoreIssue()">🏪 حفظ الصرف</button>
+<div class="section-title">➕ إضافة وارد جديد</div>
+<div class="form-group"><label>العهدة (الصنف)</label><input type="text" id="dd-in-item" placeholder="اسم العهدة"></div>
+<div class="form-group"><label>البيان</label><input type="text" id="dd-in-desc" placeholder="اختياري"></div>
+<div class="form-row">
+<div class="form-group"><label>الكمية</label><input type="number" id="dd-in-qty" min="1" value="1"></div>
+<div class="form-group"><label>المخزن</label><input type="text" id="dd-in-location" list="dd-stores-datalist" placeholder="اسم المخزن"><datalist id="dd-stores-datalist"></datalist></div>
+</div>
+<div class="form-row">
+<div class="form-group"><label>الحالة</label><select id="dd-in-condition"><option>جديد</option><option>مستعمل</option></select></div>
+<div class="form-group"><label>التاريخ</label><input type="date" id="dd-in-date"></div>
+</div>
+<button type="button" class="btn-save-section" style="background:#795548;" onclick="saveStoreIncoming()">➕ تسجيل وارد</button>
 </div>
 
 </div>
@@ -631,6 +643,27 @@ function renderArchivesMobile() {
   sel.innerHTML = '<option value="">— اختر العهدة —</option>' + avail.map(function(a) {
     return '<option value="' + _arcKey(a) + '">' + (a.item || '') + ' — ' + (a.location || '') + ' (متاح ' + (a.qty || 0) + ')</option>';
   }).join('');
+  var dl = document.getElementById('dd-stores-datalist');
+  if (dl) dl.innerHTML = stores.map(function(s) { return '<option value="' + String(s).replace(/"/g, '&quot;') + '">'; }).join('');
+}
+function saveStoreIncoming() {
+  var item = (document.getElementById('dd-in-item').value || '').trim();
+  var desc = (document.getElementById('dd-in-desc').value || '').trim();
+  var qty = parseInt(document.getElementById('dd-in-qty').value) || 0;
+  var loc = (document.getElementById('dd-in-location').value || '').trim();
+  var cond = document.getElementById('dd-in-condition').value || 'جديد';
+  var date = document.getElementById('dd-in-date').value || new Date().toISOString().split('T')[0];
+  if (!item) { showMsg('اكتب اسم العهدة.', true); return; }
+  if (qty <= 0) { showMsg('ادخل كمية صحيحة.', true); return; }
+  if (!loc) { showMsg('اكتب اسم المخزن.', true); return; }
+  var rec = { id: 'arc_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7), item: item, desc: desc, qty: qty, location: loc, condition: cond, date: date, modifiedAt: new Date().toISOString() };
+  archiveData.push(rec);
+  localStorage.setItem('lineh_archive_data', JSON.stringify(archiveData));
+  _syncArchiveRecordToAlldata(rec);
+  renderArchivesMobile();
+  document.getElementById('dd-in-item').value = ''; document.getElementById('dd-in-desc').value = ''; document.getElementById('dd-in-qty').value = 1;
+  document.getElementById('dd-in-location').value = ''; document.getElementById('dd-in-condition').value = 'جديد'; document.getElementById('dd-in-date').value = '';
+  showMsg('✅ تم تسجيل وارد «' + item + '» (' + qty + ') في ' + loc, false);
 }
 function saveStoreIssue() {
   var key = document.getElementById('dd-issue-item').value;
