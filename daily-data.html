@@ -609,11 +609,9 @@ function setStoresTab(t) {
   });
   renderArchivesMobile();
 }
+function arcRemainingM(a) { return Math.max(0, (parseInt(a.qty) || 0) - (parseInt(a.issuedQty) || 0)); }
 function renderArchivesMobile() {
   var flt = document.getElementById('dd-store-filter');
-  archiveData.forEach(function(a) {
-    if (a && typeof a.qty === 'number' && typeof a.origQty !== 'number') a.origQty = a.qty;
-  });
   var stores = dynStores.slice();
   archiveData.forEach(function(a) { if (a && a.location && stores.indexOf(a.location) === -1) stores.push(a.location); });
   var cur = flt.value;
@@ -626,7 +624,7 @@ function renderArchivesMobile() {
   } else if (_ddStoresTab === 'in') {
     items = archiveData.filter(function(a) { return a && (!flt.value || a.location === flt.value); });
   } else {
-    items = archiveData.filter(function(a) { return a && (a.qty > 0) && (!flt.value || a.location === flt.value); });
+    items = archiveData.filter(function(a) { return a && arcRemainingM(a) > 0 && (!flt.value || a.location === flt.value); });
   }
   if (!items.length) {
     list.innerHTML = '<div style="padding:12px;font-size:13px;color:#999;">لا توجد ' + (_ddStoresTab === 'out' ? 'صادرات' : (_ddStoresTab === 'in' ? 'عهدات' : 'عهدات متاحة')) + '.</div>';
@@ -638,24 +636,24 @@ function renderArchivesMobile() {
       if (issued) { ev = ' | صرف: ' + (a.issueto || '') + (a.receiver ? ' → ' + a.receiver : '') + (a.issuedate ? ' (' + a.issuedate + ')' : ''); }
       var badge = '';
       if (_ddStoresTab === 'in') {
-        if (a.qty <= 0) badge = ' <span style="color:#c62828;font-weight:800;font-size:10px;">[مصروف كامل]</span>';
+        if (arcRemainingM(a) <= 0) badge = ' <span style="color:#c62828;font-weight:800;font-size:10px;">[مصروف كامل]</span>';
         else if (issued) badge = ' <span style="color:#ef6c00;font-weight:800;font-size:10px;">[صرف جزئي]</span>';
       }
       html += '<div style="padding:8px 10px;border-bottom:1px solid #eee;font-size:13px;display:flex;justify-content:space-between;align-items:center;gap:8px;">';
       html += '<div style="flex:1;"><b>' + (a.item || '') + '</b>' + badge + ' <span style="color:#888;font-size:11px;">(' + (a.location || '') + ')</span><br><span style="font-size:11px;color:#777;">' + (a.condition || '') + ev + '</span></div>';
       if (_ddStoresTab === 'in') {
-        html += '<div style="text-align:left;font-size:11px;color:#777;">أصلي ' + (a.origQty !== undefined ? a.origQty : a.qty) + '<br><span style="font-weight:800;font-size:15px;color:#5d4037;">متبقي ' + (a.qty !== undefined ? a.qty : '—') + '</span></div>';
+        html += '<div style="text-align:left;font-size:11px;color:#777;">أصلي ' + (a.origQty !== undefined ? a.origQty : a.qty) + '<br><span style="font-weight:800;font-size:15px;color:#5d4037;">متبقي ' + arcRemainingM(a) + '</span></div>';
       } else {
-        html += '<div style="font-weight:800;font-size:15px;color:#5d4037;">' + (a.qty !== undefined ? a.qty : '—') + '</div>';
+        html += '<div style="font-weight:800;font-size:15px;color:#5d4037;">' + arcRemainingM(a) + '</div>';
       }
       html += '</div>';
     });
     list.innerHTML = html;
   }
   var sel = document.getElementById('dd-issue-item');
-  var avail = archiveData.filter(function(a) { return a && (a.qty > 0) && (!flt.value || a.location === flt.value); });
+  var avail = archiveData.filter(function(a) { return a && arcRemainingM(a) > 0 && (!flt.value || a.location === flt.value); });
   sel.innerHTML = '<option value="">— اختر العهدة —</option>' + avail.map(function(a) {
-    return '<option value="' + _arcKey(a) + '">' + (a.item || '') + ' — ' + (a.location || '') + ' (متاح ' + (a.qty || 0) + ')</option>';
+    return '<option value="' + _arcKey(a) + '">' + (a.item || '') + ' — ' + (a.location || '') + ' (متاح ' + arcRemainingM(a) + ')</option>';
   }).join('');
   var dl = document.getElementById('dd-stores-datalist');
   if (dl) dl.innerHTML = stores.map(function(s) { return '<option value="' + String(s).replace(/"/g, '&quot;') + '">'; }).join('');
@@ -731,12 +729,10 @@ function saveStoreIssue() {
   for (var i = 0; i < archiveData.length; i++) { if (_arcKey(archiveData[i]) === key) { idx = i; break; } }
   if (idx === -1) { showMsg('العهدة غير موجودة.', true); return; }
   var a = archiveData[idx];
-  var availQty = parseInt(a.qty) || 0;
-  if (qty > availQty) { showMsg('الكمية المطلوبة أكبر من المتاح (' + availQty + ').', true); return; }
+  var rem = arcRemainingM(a);
+  if (qty > rem) { showMsg('الكمية المطلوبة أكبر من المتاح (' + rem + ').', true); return; }
   if (!a.id) a.id = 'arc_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
-  if (typeof a.origQty !== 'number') a.origQty = availQty;
-  a.issuedQty = (a.issuedQty || 0) + qty;
-  a.qty = a.origQty - a.issuedQty;
+  a.issuedQty = (parseInt(a.issuedQty) || 0) + qty;
   a.issueto = to;
   if (recv) a.receiver = recv;
   if (by) a.issueby = by;
@@ -750,7 +746,7 @@ function saveStoreIssue() {
   document.getElementById('dd-issue-to').value = '';
   document.getElementById('dd-issue-receiver').value = '';
   document.getElementById('dd-issue-by').value = '';
-  showMsg('✅ تم تسجيل صرف ' + qty + ' من «' + (a.item || '') + '»' + (a.qty === 0 ? ' (اكتمل الصرف)' : ''), false);
+  showMsg('✅ تم تسجيل صرف ' + qty + ' من «' + (a.item || '') + '»' + ((rem - qty) <= 0 ? ' (اكتمل الصرف)' : ''), false);
 }
 function _syncArchiveRecordToAlldata(rec) {
   fetch(SB + '/rest/v1/sync_data?id=eq.alldata&select=data', {
