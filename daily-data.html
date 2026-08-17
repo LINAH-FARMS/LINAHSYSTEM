@@ -184,6 +184,7 @@ textarea{resize:vertical;min-height:60px}
 <button type="button" class="dd-stores-tab" data-tab="stock" onclick="setStoresTab('stock')" style="flex:1;padding:8px 4px;border:2px solid #d7ccc8;border-radius:10px;background:#fff;color:#5d4037;font-weight:800;font-size:13px;cursor:pointer;font-family:'Cairo',sans-serif;">🗃️ المخزون الحالي</button>
 </div>
 <div class="form-group"><label>📦 المخزن</label><select id="dd-store-filter" onchange="renderArchivesMobile()"></select></div>
+<div class="form-group"><label>➕ إضافة مخزن جديد</label><div style="display:flex;gap:6px;"><input type="text" id="dd-new-store" placeholder="اسم المخزن" style="flex:1;"><button type="button" style="background:#5d4037;color:#fff;border:none;border-radius:10px;padding:8px 12px;font-family:'Cairo',sans-serif;font-weight:800;cursor:pointer;" onclick="addStoreMobile()">إضافة</button></div></div>
 <div style="max-height:240px;overflow-y:auto;border:1px solid #e0e0e0;border-radius:10px;background:white;margin-bottom:14px;" id="dd-store-list"></div>
 <div class="section-title">📤 صرف من المخزن</div>
 <div class="form-group"><label>العهدة</label><select id="dd-issue-item"></select></div>
@@ -610,6 +611,9 @@ function setStoresTab(t) {
 }
 function renderArchivesMobile() {
   var flt = document.getElementById('dd-store-filter');
+  archiveData.forEach(function(a) {
+    if (a && typeof a.qty === 'number' && typeof a.origQty !== 'number') a.origQty = a.qty;
+  });
   var stores = dynStores.slice();
   archiveData.forEach(function(a) { if (a && a.location && stores.indexOf(a.location) === -1) stores.push(a.location); });
   var cur = flt.value;
@@ -622,7 +626,7 @@ function renderArchivesMobile() {
   } else if (_ddStoresTab === 'in') {
     items = archiveData.filter(function(a) { return a && (!flt.value || a.location === flt.value); });
   } else {
-    items = archiveData.filter(function(a) { return a && !(a.issueto || a.issuedate) && (!flt.value || a.location === flt.value); });
+    items = archiveData.filter(function(a) { return a && (a.qty > 0) && (!flt.value || a.location === flt.value); });
   }
   if (!items.length) {
     list.innerHTML = '<div style="padding:12px;font-size:13px;color:#999;">لا توجد ' + (_ddStoresTab === 'out' ? 'صادرات' : (_ddStoresTab === 'in' ? 'عهدات' : 'عهدات متاحة')) + '.</div>';
@@ -632,14 +636,24 @@ function renderArchivesMobile() {
       var issued = (a.issueto || a.issuedate);
       var ev = '';
       if (issued) { ev = ' | صرف: ' + (a.issueto || '') + (a.receiver ? ' → ' + a.receiver : '') + (a.issuedate ? ' (' + a.issuedate + ')' : ''); }
+      var badge = '';
+      if (_ddStoresTab === 'in') {
+        if (a.qty <= 0) badge = ' <span style="color:#c62828;font-weight:800;font-size:10px;">[مصروف كامل]</span>';
+        else if (issued) badge = ' <span style="color:#ef6c00;font-weight:800;font-size:10px;">[صرف جزئي]</span>';
+      }
       html += '<div style="padding:8px 10px;border-bottom:1px solid #eee;font-size:13px;display:flex;justify-content:space-between;align-items:center;gap:8px;">';
-      html += '<div style="flex:1;"><b>' + (a.item || '') + '</b> <span style="color:#888;font-size:11px;">(' + (a.location || '') + ')</span><br><span style="font-size:11px;color:#777;">' + (a.condition || '') + ev + '</span></div>';
-      html += '<div style="font-weight:800;font-size:15px;color:#5d4037;">' + (a.qty !== undefined ? a.qty : '—') + '</div></div>';
+      html += '<div style="flex:1;"><b>' + (a.item || '') + '</b>' + badge + ' <span style="color:#888;font-size:11px;">(' + (a.location || '') + ')</span><br><span style="font-size:11px;color:#777;">' + (a.condition || '') + ev + '</span></div>';
+      if (_ddStoresTab === 'in') {
+        html += '<div style="text-align:left;font-size:11px;color:#777;">أصلي ' + (a.origQty !== undefined ? a.origQty : a.qty) + '<br><span style="font-weight:800;font-size:15px;color:#5d4037;">متبقي ' + (a.qty !== undefined ? a.qty : '—') + '</span></div>';
+      } else {
+        html += '<div style="font-weight:800;font-size:15px;color:#5d4037;">' + (a.qty !== undefined ? a.qty : '—') + '</div>';
+      }
+      html += '</div>';
     });
     list.innerHTML = html;
   }
   var sel = document.getElementById('dd-issue-item');
-  var avail = archiveData.filter(function(a) { return a && !(a.issueto || a.issuedate) && (!flt.value || a.location === flt.value); });
+  var avail = archiveData.filter(function(a) { return a && (a.qty > 0) && (!flt.value || a.location === flt.value); });
   sel.innerHTML = '<option value="">— اختر العهدة —</option>' + avail.map(function(a) {
     return '<option value="' + _arcKey(a) + '">' + (a.item || '') + ' — ' + (a.location || '') + ' (متاح ' + (a.qty || 0) + ')</option>';
   }).join('');
@@ -656,14 +670,53 @@ function saveStoreIncoming() {
   if (!item) { showMsg('اكتب اسم العهدة.', true); return; }
   if (qty <= 0) { showMsg('ادخل كمية صحيحة.', true); return; }
   if (!loc) { showMsg('اكتب اسم المخزن.', true); return; }
-  var rec = { id: 'arc_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7), item: item, desc: desc, qty: qty, location: loc, condition: cond, date: date, modifiedAt: new Date().toISOString() };
+  var rec = { id: 'arc_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7), item: item, desc: desc, qty: qty, origQty: qty, location: loc, condition: cond, date: date, modifiedAt: new Date().toISOString() };
   archiveData.push(rec);
+  if (dynStores.indexOf(loc) === -1) {
+    dynStores.push(loc);
+    localStorage.setItem('lineh_dynamic_stores', JSON.stringify(dynStores));
+    _syncStoreNamesToCloud();
+  }
   localStorage.setItem('lineh_archive_data', JSON.stringify(archiveData));
   _syncArchiveRecordToAlldata(rec);
   renderArchivesMobile();
   document.getElementById('dd-in-item').value = ''; document.getElementById('dd-in-desc').value = ''; document.getElementById('dd-in-qty').value = 1;
   document.getElementById('dd-in-location').value = ''; document.getElementById('dd-in-condition').value = 'جديد'; document.getElementById('dd-in-date').value = '';
   showMsg('✅ تم تسجيل وارد «' + item + '» (' + qty + ') في ' + loc, false);
+}
+function addStoreMobile() {
+  var name = (document.getElementById('dd-new-store').value || '').trim();
+  if (!name) { showMsg('اكتب اسم المخزن.', true); return; }
+  if (dynStores.indexOf(name) !== -1) { showMsg('هذا المخزن موجود بالفعل.', true); return; }
+  dynStores.push(name);
+  localStorage.setItem('lineh_dynamic_stores', JSON.stringify(dynStores));
+  _syncStoreNamesToCloud();
+  document.getElementById('dd-new-store').value = '';
+  renderArchivesMobile();
+  showMsg('✅ تمت إضافة مخزن «' + name + '»', false);
+}
+function _syncStoreNamesToCloud() {
+  fetch(SB + '/rest/v1/sync_data?id=eq.alldata&select=data', {
+    headers: { 'apikey': KEY, 'Authorization': 'Bearer ' + KEY }
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(rows) {
+    var ad = {};
+    if (rows && rows[0] && rows[0].data) ad = typeof rows[0].data === 'string' ? JSON.parse(rows[0].data) : rows[0].data;
+    var list = Array.isArray(ad.dynamicStores) ? ad.dynamicStores.slice() : [];
+    var seen = {};
+    list.forEach(function(s) { if (typeof s === 'string') seen[s] = true; });
+    var changed = false;
+    dynStores.forEach(function(s) { if (!seen[s]) { list.push(s); seen[s] = true; changed = true; } });
+    if (!changed) return;
+    ad.dynamicStores = list;
+    return fetch(SB + '/rest/v1/sync_data?id=eq.alldata', {
+      method: 'POST',
+      headers: { 'apikey': KEY, 'Authorization': 'Bearer ' + KEY, 'Content-Type': 'application/json', 'Prefer': 'resolution=merge-duplicates' },
+      body: JSON.stringify({ id: 'alldata', data: ad, updated_at: new Date().toISOString() })
+    });
+  })
+  .catch(function(){});
 }
 function saveStoreIssue() {
   var key = document.getElementById('dd-issue-item').value;
@@ -680,8 +733,10 @@ function saveStoreIssue() {
   var a = archiveData[idx];
   var availQty = parseInt(a.qty) || 0;
   if (qty > availQty) { showMsg('الكمية المطلوبة أكبر من المتاح (' + availQty + ').', true); return; }
-  a.qty = availQty - qty;
   if (!a.id) a.id = 'arc_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
+  if (typeof a.origQty !== 'number') a.origQty = availQty;
+  a.issuedQty = (a.issuedQty || 0) + qty;
+  a.qty = a.origQty - a.issuedQty;
   a.issueto = to;
   if (recv) a.receiver = recv;
   if (by) a.issueby = by;
