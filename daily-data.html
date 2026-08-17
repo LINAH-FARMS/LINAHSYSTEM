@@ -401,6 +401,7 @@ function renderForceMobile() {
 function ddSetEmpStatus(idx, val) {
   if (!employees[idx]) return;
   employees[idx].status = val;
+  employees[idx].modifiedAt = new Date().toISOString();
   try { localStorage.setItem('lineh_employees', JSON.stringify(employees)); } catch(e){}
   renderForceMobile();
   _pushEmployeesToCloud();
