@@ -1362,11 +1362,11 @@
       populateBctrDatalist();
     }
     function fixBakeryContractors() {
-      var _o = ["محمد شعبان","ممدوح بكر","عاطف عبد المغيث","مصطفى على","اسامه سمير","فارس محمد"];
+      var _o = ["محمد شعبان","ممدوح بكر","عاطف عبد المغيث","مصطفى على","اسامه سمير","فارس محمد","محمود السيد"];
       bakeryContractorsNames = _o.slice();
       syncStorage(); rebuildAllDropdowns(); renderDynamicLists();
       populateBctrDatalist();
-      alert("تم إعادة تعيين قائمة المقاولين إلى الـ 6 الأساسيين.");
+      alert("تم إعادة تعيين قائمة المقاولين الأساسيين.");
     }
     function syncBakeryContractorsToSupabase() {
       var raw = { id: 'alldata' };
@@ -11614,7 +11614,7 @@ var reportsTab = document.getElementById('tab-reports');
       else if (key === 'dynamicDepts') dynamicDepts = val;
       else if (key === 'dynamicTitles') dynamicTitles = val;
       else if (key === 'dynamicVisitorTypes') dynamicVisitorTypes = val;
-      else if (key === 'bakeryContractorsNames') { val = _strArr(val); var _fixedCtrs = ["محمد شعبان","ممدوح بكر","عاطف عبد المغيث","مصطفى على","اسامه سمير","فارس محمد"]; var _ctrSet = {}; _fixedCtrs.forEach(function(n) { _ctrSet[n] = true; }); val = val.filter(function(n) { return _ctrSet[n]; }); if (!val.length) val = _fixedCtrs.slice(); bakeryContractorsNames = val; }
+      else if (key === 'bakeryContractorsNames') { val = _strArr(val); var _fixedCtrs = ["محمد شعبان","ممدوح بكر","عاطف عبد المغيث","مصطفى على","اسامه سمير","فارس محمد","محمود السيد"]; var _ctrSet = {}; _fixedCtrs.forEach(function(n) { _ctrSet[n] = true; }); val = val.filter(function(n) { return _ctrSet[n]; }); _fixedCtrs.forEach(function(n) { if (val.indexOf(n) === -1) val.push(n); }); if (!val.length) val = _fixedCtrs.slice(); bakeryContractorsNames = val; }
       else if (key === 'evaluations') evaluations = val;
       else if (key === 'evalTemplates') evalTemplates = val;
       else if (key === 'appUsers') appUsers = filterLatinUsers(val);

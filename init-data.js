@@ -88,7 +88,7 @@
     let dynamicDepts = _safeJsonParse(_lsGet('dyn_depts'), ["الإدارة","الزراعة","الإنتاج","الصيانة","الأمن","النظافة","المخازن","الخدمات"]);
     let dynamicTitles = _safeJsonParse(_lsGet('dyn_titles'), ["مشرف","عامل","سائق","فني","مهندس زراعي","محاسب","أمين مخزن","طباخ","عامل نظافة"]);
     let dynamicVisitorTypes = _strArr(_safeJsonParse(_lsGet('dyn_visitor_types'), ["ضيوف","سيدات","طلبة مدرسة","سائقين","مقدم خدمة بدون اجر","مقدم خدمة باجر","امن ليلي"]));
-    let bakeryContractorsNames = _strArr(_safeJsonParse(_lsGet('linah_bakery_contractors_names'), ["محمد شعبان","ممدوح بكر","عاطف عبد المغيث","مصطفى على","اسامه سمير","فارس محمد"]));
+    let bakeryContractorsNames = _strArr(_safeJsonParse(_lsGet('linah_bakery_contractors_names'), ["محمد شعبان","ممدوح بكر","عاطف عبد المغيث","مصطفى على","اسامه سمير","فارس محمد","محمود السيد"]));
     (function(){ var _seen={},_cleaned=[]; function _add(n){ var c=typeof n==='string'?n.trim():(n&&n.name?n.name.trim():String(n).trim()); if(c&&c!=='[object Object]'&&!_seen[c]){_seen[c]=true;_cleaned.push(c);} } bakeryContractorsNames.forEach(_add); if(bakeryContractorSupplies.length>0){ bakeryContractorSupplies.forEach(function(r){ if(typeof r.name!=='string'||r.name==='[object Object]'||!r.name.trim()){ r.name='غير معروف'; } else { _add(r.name); } }); } if(JSON.stringify(_cleaned)!==JSON.stringify(bakeryContractorsNames)){ bakeryContractorsNames=_cleaned; try{localStorage.setItem('linah_bakery_contractors_names',JSON.stringify(bakeryContractorsNames));}catch(e){} } })();
     let evaluations = _safeJsonParse(_lsGet('lineh_evaluations'), []);
     let roomAssets = _safeJsonParse(_lsGet('lineh_room_assets'), []);

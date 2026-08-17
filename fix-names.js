@@ -37,8 +37,8 @@ function findBestName(name, allNames) {
 
 function unifyContractorNames() {
   if (typeof bakeryContractorSupplies === 'undefined' || !bakeryContractorSupplies) return;
-  if (typeof bakeryContractorsNames !== 'undefined' && bakeryContractorsNames && bakeryContractorsNames.length < 6) {
-    bakeryContractorsNames = ["محمد شعبان","ممدوح بكر","عاطف عبد المغيث","مصطفى على","اسامه سمير","فارس محمد"];
+  if (typeof bakeryContractorsNames !== 'undefined' && bakeryContractorsNames && bakeryContractorsNames.length < 7) {
+    bakeryContractorsNames = ["محمد شعبان","ممدوح بكر","عاطف عبد المغيث","مصطفى على","اسامه سمير","فارس محمد","محمود السيد"];
     _lsSet('linah_bakery_contractors_names', JSON.stringify(bakeryContractorsNames));
   }
   var allNames = [], nameIdx = {};
