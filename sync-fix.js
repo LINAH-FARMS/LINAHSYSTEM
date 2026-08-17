@@ -210,6 +210,25 @@
   }
 
   // ============================================================
+  //  قوائم الأسماء (البيارات، المخازن، الأقسام...): اتحاد فقط — لا تنقص أبداً
+  // ============================================================
+  const NAME_LIST_KEYS = ['dynamicSeptics','dynamicRooms','dynamicDepts','dynamicTitles','dynamicSectors','dynamicVisitorTypes','contractorSectors','contractorRooms','bakeryContractorsNames','dynamicStores','deptTitles'];
+  function _mergeNameLists(localArr, remoteArr) {
+    const out = [];
+    const seen = {};
+    [remoteArr, localArr].forEach(function (arr) {
+      (arr || []).forEach(function (x) {
+        if (typeof x !== 'string') return;
+        const s = x.trim();
+        if (s.length < 2 || seen[s]) return;
+        seen[s] = true;
+        out.push(s);
+      });
+    });
+    return out;
+  }
+
+  // ============================================================
   //  pushToSupabase — دفع مع دمج على مستوى العنصر (الأحدث يفوز)
   // ============================================================
   window.pushToSupabase = async function pushToSupabase() {
@@ -264,6 +283,8 @@
           const remoteArr = remote && Array.isArray(remote[k]) ? remote[k] : null;
           if (k === 'vacations') {
             mergedPayload[k] = _mergeVacations(val, remoteArr, TIE_LOCAL, delByEntity[k] || {});
+          } else if (NAME_LIST_KEYS.indexOf(k) !== -1) {
+            mergedPayload[k] = _mergeNameLists(val, remoteArr);
           } else {
             mergedPayload[k] = _mergeSyncElements(val, remoteArr, k, delByEntity[k] || {}, TIE_LOCAL);
           }
@@ -371,6 +392,8 @@
           if (Array.isArray(v) && Array.isArray(localVal)) {
             if (k === 'vacations') {
               setEntityVar(k, _mergeVacations(localVal, v, TIE_REMOTE, pullDelKeys[k] || {}));
+            } else if (NAME_LIST_KEYS.indexOf(k) !== -1) {
+              setEntityVar(k, _mergeNameLists(localVal, v));
             } else {
               setEntityVar(k, _mergeSyncElements(localVal, v, k, pullDelKeys[k] || {}, TIE_REMOTE));
             }
@@ -468,6 +491,8 @@
   // ============================================================
   window._mergeSyncElements = _mergeSyncElements;
   window._mergeVacations = _mergeVacations;
+  window._mergeNameLists = _mergeNameLists;
+  window.NAME_LIST_KEYS = NAME_LIST_KEYS;
   window.normalizeHousingData = normalizeHousingData;
 
   // تنظيم أسماء السكن عند بدء التشغيل (بدون سحابة)

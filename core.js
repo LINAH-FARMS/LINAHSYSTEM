@@ -19,18 +19,23 @@
         if (typeof x === 'string') return x;
         if (typeof x === 'number') return String(x);
         if (x && typeof x === 'object') {
-          if (typeof x.name === 'string') return x.name;
-          if (typeof x.title === 'string') return x.title;
-          if (typeof x.label === 'string') return x.label;
+          if (typeof x.name === 'string' && x.name.length >= 2) return x.name;
+          if (typeof x.title === 'string' && x.title.length >= 2) return x.title;
+          if (typeof x.label === 'string' && x.label.length >= 2) return x.label;
+          var keys = Object.keys(x);
+          if (keys.length && keys.every(function(k) { return /^\d+$/.test(k); })) {
+            var joined = keys.sort(function(a, b) { return Number(a) - Number(b); }).map(function(k) { return x[k]; }).join('').trim();
+            if (joined.length >= 2) return joined;
+          }
           var vals = Object.values(x);
           for (var vi = 0; vi < vals.length; vi++) {
             var vx = vals[vi];
-            if (typeof vx === 'string' && vx.length > 0) { if (!seen[vx]) { seen[vx] = true; return vx; } }
-            if (typeof vx === 'number') { var sv = String(vx); if (!seen[sv]) { seen[sv] = true; return sv; } }
+            if (typeof vx === 'string' && vx.length >= 2) { if (!seen[vx]) { seen[vx] = true; return vx; } }
+            if (typeof vx === 'number') { var sv = String(vx); if (sv.length >= 2 && !seen[sv]) { seen[sv] = true; return sv; } }
           }
         }
         return '';
-      }).filter(function(s) { return s && s.length > 0; });
+      }).filter(function(s) { return s && s.length >= 2; });
     }
     function hashPass(p) {
       var h = 0;

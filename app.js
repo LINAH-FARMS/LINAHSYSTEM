@@ -11795,6 +11795,9 @@ var reportsTab = document.getElementById('tab-reports');
         mealSurveys: function(s) { return s.date + '|' + s.meal + '|' + s.employee; }
       };
       syncDeletions.forEach(function(del) {
+        // قوائم الأسماء (البيارات/المخازن/الأقسام...): حذفها لا يُطبَّق أبداً — لا تَنقُص
+        var _nlk = window.NAME_LIST_KEYS || ['dynamicSeptics','dynamicRooms','dynamicDepts','dynamicTitles','dynamicSectors','dynamicVisitorTypes','contractorSectors','contractorRooms','bakeryContractorsNames','dynamicStores','deptTitles'];
+        if (_nlk.indexOf(del.entity) !== -1) return;
         var fn = _keyFns[del.entity];
         if (!fn) return;
         var arr = getEntityVar(del.entity);
