@@ -40,8 +40,11 @@ textarea{resize:vertical;min-height:60px}
 .menu-btn-septic{background:#e8f5e9;color:#2e7d32;border:2px solid #a5d6a7}
 .menu-btn-vacation{background:#f3e5f5;color:#7b1fa2;border:2px solid #ce93d8}
 .menu-btn-stores{background:#efebe9;color:#5d4037;border:2px solid #d7ccc8}
+.menu-btn-force{background:#e8eaf6;color:#3f51b5;border:2px solid #c5cae9}
 .section-stores{background:#efebe9;border:1px solid #d7ccc8}
 .section-stores .section-title{color:#5d4037}
+.section-force{background:#e8eaf6;border:1px solid #c5cae9}
+.section-force .section-title{color:#3f51b5}
 .menu-btn .menu-icon{display:block;font-size:32px;margin-bottom:4px}
 .menu-btn .menu-label{font-size:14px}
 #modal-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:1000;justify-content:center;align-items:center;padding:12px}
@@ -66,7 +69,7 @@ textarea{resize:vertical;min-height:60px}
 <div class="header">
 <div class="logo">📋</div>
 <h1>البيانات اليومية</h1>
-<div class="sub">شاي · صيانة · بيارات · إجازات · مخازن</div>
+<div class="sub">شاي · صيانة · بيارات · إجازات · مخازن · القوة</div>
 </div>
 
 <div class="menu-grid">
@@ -75,6 +78,7 @@ textarea{resize:vertical;min-height:60px}
 <button class="menu-btn menu-btn-septic" onclick="openModal('septic')"><span class="menu-icon">🚽</span><span class="menu-label">البيارات</span></button>
 <button class="menu-btn menu-btn-vacation" onclick="openModal('vacation')"><span class="menu-icon">🏖️</span><span class="menu-label">الإجازات</span></button>
 <button class="menu-btn menu-btn-stores" onclick="openModal('stores')"><span class="menu-icon">🏪</span><span class="menu-label">المخازن</span></button>
+<button class="menu-btn menu-btn-force" onclick="openModal('force')"><span class="menu-icon">👤</span><span class="menu-label">القوة (<b id="force-count">0</b>)</span></button>
 </div>
 
 <div id="msg"></div>
@@ -212,6 +216,17 @@ textarea{resize:vertical;min-height:60px}
 <button type="button" class="btn-save-section" id="dd-store-cancel-btn" style="display:none;background:#757575;" onclick="cancelStoreEdit()">✖️ إلغاء التعديل</button>
 </div>
 
+<div id="modal-force" class="modal-section section section-force">
+<div class="section-title">👤 القوة العاملة</div>
+<div id="force-stats" style="display:flex;gap:6px;margin-bottom:10px;"></div>
+<div class="form-group"><input type="text" id="force-search" placeholder="🔍 ابحث بالكود أو الاسم..." oninput="renderForceMobile()"></div>
+<div class="form-row" style="margin-bottom:10px;">
+<div class="form-group"><label>الحالة</label><select id="force-status" onchange="renderForceMobile()"><option value="">الكل</option><option value="P">متواجد</option><option value="V">في إجازة</option></select></div>
+<div class="form-group"><label>الإدارة</label><select id="force-dept" onchange="renderForceMobile()"><option value="">كل الإدارات</option></select></div>
+</div>
+<div style="max-height:340px;overflow-y:auto;border:1px solid #e0e0e0;border-radius:10px;background:white;" id="force-list"></div>
+</div>
+
 </div>
 </div>
 </div>
@@ -269,6 +284,8 @@ try { var sn = localStorage.getItem('dyn_septics'); if (sn) { septicNames = _cle
       if (!rows.length || !rows[0].data) { dbg.textContent = '⚠️ لا توجد بيانات على السحابة (شغّل البرنامج وsync أولاً)'; return; }
       var ad = rows[0].data;
       if (ad.employees && ad.employees.length) employees = ad.employees;
+      var fc = document.getElementById('force-count');
+      if (fc) fc.textContent = employees.length;
       if (ad.inventoryItems && ad.inventoryItems.length) invItems = ad.inventoryItems;
       if (ad.vacations && ad.vacations.length) vacations = ad.vacations;
       if (ad.archiveData && ad.archiveData.length) archiveData = ad.archiveData;
@@ -310,14 +327,15 @@ try { var sn = localStorage.getItem('dyn_septics'); if (sn) { septicNames = _cle
 
 // ─── Modal ───
 function openModal(section) {
-  ['tea','maint','septic','vacation','stores'].forEach(function(s) {
+  ['tea','maint','septic','vacation','stores','force'].forEach(function(s) {
     document.getElementById('modal-' + s).style.display = 'none';
   });
   document.getElementById('modal-' + section).style.display = 'block';
-  var titles = { tea:'🍵 الشاي', maint:'🛠️ الصيانة', septic:'🚽 البيارات', vacation:'🏖️ الإجازات', stores:'🏪 المخازن' };
+  var titles = { tea:'🍵 الشاي', maint:'🛠️ الصيانة', septic:'🚽 البيارات', vacation:'🏖️ الإجازات', stores:'🏪 المخازن', force:'👤 القوة العاملة' };
   document.getElementById('modal-title').textContent = titles[section] || section;
   document.getElementById('modal-overlay').style.display = 'flex';
   if (section === 'stores') setStoresTab(_ddStoresTab);
+  if (section === 'force') renderForceMobile();
 }
 function closeModal() {
   document.getElementById('modal-overlay').style.display = 'none';
@@ -325,6 +343,50 @@ function closeModal() {
 document.getElementById('modal-overlay').addEventListener('click', function(e) {
   if (e.target === this) closeModal();
 });
+
+// ─── القوة (الموظفون) ───
+function _escHtml(s) { return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function renderForceMobile() {
+  var cnt = document.getElementById('force-count');
+  if (cnt) cnt.textContent = employees.length;
+  var q = (document.getElementById('force-search').value || '').trim().toLowerCase();
+  var st = document.getElementById('force-status').value;
+  var dp = document.getElementById('force-dept').value;
+  var deptSel = document.getElementById('force-dept');
+  if (deptSel && deptSel.options.length === 1) {
+    var dset = {};
+    employees.forEach(function(e) { var d = (e.dept || '').trim(); if (d) dset[d] = true; });
+    Object.keys(dset).sort().forEach(function(d) { deptSel.innerHTML += '<option value="' + _escHtml(d) + '">' + _escHtml(d) + '</option>'; });
+  }
+  var stats = document.getElementById('force-stats');
+  var pCount = 0, vCount = 0;
+  employees.forEach(function(e) { if (e.status === 'P') pCount++; else if (e.status === 'V') vCount++; });
+  stats.innerHTML =
+    '<div style="flex:1;background:#fff;border:1px solid #c5cae9;border-radius:10px;padding:8px;text-align:center;"><div style="font-weight:800;font-size:18px;color:#3f51b5;">' + employees.length + '</div><div style="font-size:11px;color:#777;">إجمالي القوة</div></div>' +
+    '<div style="flex:1;background:#fff;border:1px solid #c8e6c9;border-radius:10px;padding:8px;text-align:center;"><div style="font-weight:800;font-size:18px;color:#2e7d32;">' + pCount + '</div><div style="font-size:11px;color:#777;">🟢 متواجد</div></div>' +
+    '<div style="flex:1;background:#fff;border:1px solid #e1bee7;border-radius:10px;padding:8px;text-align:center;"><div style="font-weight:800;font-size:18px;color:#7b1fa2;">' + vCount + '</div><div style="font-size:11px;color:#777;">🟣 في إجازة</div></div>';
+  var rows = employees.filter(function(e) {
+    if (!e) return false;
+    if (q && !(e.name || '').toLowerCase().includes(q) && !(e.code || '').toLowerCase().includes(q)) return false;
+    if (st && (e.status || '') !== st) return false;
+    if (dp && (e.dept || '') !== dp) return false;
+    return true;
+  });
+  var list = document.getElementById('force-list');
+  if (!rows.length) {
+    list.innerHTML = '<div style="padding:14px;font-size:13px;color:#999;text-align:center;">لا توجد نتائج.</div>';
+    return;
+  }
+  var html = '';
+  rows.forEach(function(e) {
+    var stC = (e.status === 'P') ? '<span style="background:#e8f5e9;color:#2e7d32;font-size:10px;font-weight:800;border-radius:6px;padding:2px 6px;">متواجد</span>' :
+             (e.status === 'V') ? '<span style="background:#f3e5f5;color:#7b1fa2;font-size:10px;font-weight:800;border-radius:6px;padding:2px 6px;">في إجازة</span>' : '<span style="background:#f5f5f5;color:#888;font-size:10px;font-weight:800;border-radius:6px;padding:2px 6px;">—</span>';
+    html += '<div style="padding:8px 10px;border-bottom:1px solid #eee;font-size:13px;display:flex;justify-content:space-between;align-items:center;gap:8px;">';
+    html += '<div style="flex:1;"><b>' + _escHtml(e.name || '') + '</b> <span style="color:#888;font-size:11px;">[' + _escHtml(e.code || '') + ']</span><br><span style="font-size:11px;color:#777;">' + _escHtml(e.dept || '—') + (e.title ? ' · ' + _escHtml(e.title) : '') + ' · ' + _escHtml(e.gov || '—') + (e.sector ? ' | ' + _escHtml(e.sector) + (e.room ? ' / ' + _escHtml(e.room) : '') : '') + '</span></div>';
+    html += stC + '</div>';
+  });
+  list.innerHTML = html;
+}
 
 // ─── Tea Search ───
 var empInp = document.getElementById('dd-emp-search');
