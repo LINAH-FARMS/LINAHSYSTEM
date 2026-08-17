@@ -231,9 +231,9 @@
   // ============================================================
   //  pushToSupabase — دفع مع دمج على مستوى العنصر (الأحدث يفوز)
   // ============================================================
-  window.pushToSupabase = async function pushToSupabase() {
+  window.pushToSupabase = async function pushToSupabase(silent) {
     if (!supabaseConnected) {
-      showSyncToast('غير متصل بـ Supabase');
+      if (!silent) showSyncToast('غير متصل بـ Supabase');
       return false;
     }
     while (_pushInProgress) { await new Promise(function (r) { setTimeout(r, 300); }); }
@@ -313,10 +313,10 @@
       _takeSnapshot();
       syncStorage(true, true);
       updateLastSyncTime();
-      showSyncToast('تم رفع البيانات إلى Supabase بنجاح ✅');
+      if (!silent) showSyncToast('تم رفع البيانات إلى Supabase بنجاح ✅');
     } catch (e) {
       syncLog('فشل الرفع: ' + e.message);
-      showSyncToast('تعذر رفع البيانات إلى Supabase');
+      if (!silent) showSyncToast('تعذر رفع البيانات إلى Supabase');
     } finally {
       _pushInProgress = false;
     }
@@ -329,7 +329,7 @@
   //  ب) حارس: لا تستبدل المحلي إذا كان أحدث من السحابة
   //  ج) دمج عنصري عند التطبيق (الأحدث يفوز، التعادل للـ remote)
   // ============================================================
-  window.pullFromSupabase = async function pullFromSupabase() {
+  window.pullFromSupabase = async function pullFromSupabase(silent) {
     if (!supabaseConnected) return;
     while (_pullInProgress) { await new Promise(function (r) { setTimeout(r, 300); }); }
     _pullInProgress = true;
@@ -374,7 +374,7 @@
 
       if (localNewer) {
         syncLog('التعديلات المحلية أحدث من السحابة (' + new Date(localMs).toLocaleTimeString('ar-EG') + ' > ' + new Date(cloudMs).toLocaleTimeString('ar-EG') + ') — تم الاحتفاظ بالبيانات المحلية');
-        showSyncToast('التعديلات المحلية أحدث من السحابة — لم يتم استبدالها');
+        if (!silent) showSyncToast('التعديلات المحلية أحدث من السحابة — لم يتم استبدالها');
       } else {
         // مفاتيح الحذف: أي سجل محذوف محلياً أو من جهاز آخر لا يُرجِع من السحابة
         const pullDelKeys = {};
@@ -478,7 +478,7 @@
       try { if (typeof importDailyDataFormData === 'function') importDailyDataFormData(); } catch (e) {}
       try { if (typeof importMealSurveyFormData === 'function') importMealSurveyFormData(); } catch (e) {}
       syncLog('تم السحب بنجاح من السحابة');
-      showSyncToast('تم سحب البيانات من السحابة بنجاح ✅');
+      if (!silent) showSyncToast('تم سحب البيانات من السحابة بنجاح ✅');
     } catch (e) {
       syncLog('خطأ أثناء السحب: ' + e.message);
     } finally {
@@ -598,6 +598,19 @@
   window.addEventListener('load', function () {
     setTimeout(autoPullOnLoad, 1500);
   });
+
+  // ============================================================
+  //  مزامنة تلقائية دورية (كل 30 ثانية): رفع أي تعديلات محلية ثم
+  //  سحب أحدث نسخة من السحابة، حتى تنعكس تغييرات الفورم الخارجية
+  //  (daily-data) على البرنامج الرئيسي في تبويب القوة دون إعادة تحميل.
+  //  صامتة تماماً (بدون تنبيهات) حتى لا تزعج المستخدم أثناء العمل.
+  // ============================================================
+  setInterval(function () {
+    if (!supabaseConnected) return;
+    window.pushToSupabase(true)
+      .then(function () { return window.pullFromSupabase(true); })
+      .catch(function () {});
+  }, 30000);
 
   // ============================================================
   //  مستندات محطات المياه — مزامنة محمية من الفقدان نهائياً:
