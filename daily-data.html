@@ -221,7 +221,7 @@ textarea{resize:vertical;min-height:60px}
 <div id="force-stats" style="display:flex;gap:6px;margin-bottom:10px;"></div>
 <div class="form-group"><input type="text" id="force-search" placeholder="🔍 ابحث بالكود أو الاسم..." oninput="renderForceMobile()"></div>
 <div class="form-row" style="margin-bottom:10px;">
-<div class="form-group"><label>الحالة</label><select id="force-status" onchange="renderForceMobile()"><option value="">الكل</option><option value="P">متواجد</option><option value="A">غير متواجد</option></select></div>
+<div class="form-group"><label>الحالة</label><select id="force-status" onchange="renderForceMobile()"><option value="">الكل</option><option value="P">متواجد</option><option value="V">غير متواجد</option></select></div>
 <div class="form-group"><label>الإدارة</label><select id="force-dept" onchange="renderForceMobile()"><option value="">كل الإدارات</option></select></div>
 </div>
 <div style="max-height:340px;overflow-y:auto;border:1px solid #e0e0e0;border-radius:10px;background:white;" id="force-list"></div>
@@ -372,7 +372,7 @@ function renderForceMobile() {
   var rows = employees.filter(function(e) {
     if (!e) return false;
     if (q && !(e.name || '').toLowerCase().includes(q) && !(e.code || '').toLowerCase().includes(q)) return false;
-    if (st === 'A') { if ((e.status || '') === 'P') return false; }
+    if (st === 'V') { if ((e.status || '') === 'P') return false; }
     else if (st && (e.status || '') !== st) return false;
     if (dp && (e.dept || '') !== dp) return false;
     return true;
@@ -385,8 +385,8 @@ function renderForceMobile() {
   var html = '';
   rows.forEach(function(e) {
     var idx = employees.indexOf(e);
-    var cur = (e.status === 'P') ? 'P' : 'A';
-    var opts = ['P','A'].map(function(v) {
+    var cur = (e.status === 'P') ? 'P' : 'V';
+    var opts = ['P','V'].map(function(v) {
       return '<option value="' + v + '"' + (cur === v ? ' selected' : '') + '>' + _ddStLbl(v) + '</option>';
     }).join('');
     var bg = (cur === 'P') ? '#e8f5e9' : '#ffebee';
