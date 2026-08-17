@@ -25,6 +25,11 @@
   }
 
   function _pickNewer(localItem, remoteItem, tie) {
+    // عناصر غير كائنات (نصوص/أرقام — قوائم السلسلات مثل أسماء البيارات)
+    // تُعاد كما هي: Object.assign على نص كان يحوّله لمصفوفة حروف {0:'ب',1:'ي'}
+    const localIsObj = localItem && typeof localItem === 'object';
+    const remoteIsObj = remoteItem && typeof remoteItem === 'object';
+    if (!localIsObj && !remoteIsObj) return localItem;
     const l = _timeMs(localItem && localItem.modifiedAt);
     const r = _timeMs(remoteItem && remoteItem.modifiedAt);
     let winner;
