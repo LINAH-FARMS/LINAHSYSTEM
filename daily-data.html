@@ -236,6 +236,7 @@ const SB = 'https://idejmgmftmrniviftcce.supabase.co';
 const KEY = 'sb_publishable_AvMTa-zmQ4hgA1hJNpYc3g_gu8rlirz';
 var HEADERS = { 'apikey': KEY, 'Authorization': 'Bearer ' + KEY, 'Content-Type': 'application/json' };
 var employees = [];
+var _cloudSyncDeletions = [];
 try { var d = localStorage.getItem('lineh_employees'); if (d) employees = JSON.parse(d); } catch(e){}
 var dailyData = [];
 try { var dd = localStorage.getItem('linah_daily_data'); if (dd) dailyData = JSON.parse(dd); } catch(e){}
@@ -283,7 +284,19 @@ try { var sn = localStorage.getItem('dyn_septics'); if (sn) { septicNames = _cle
       if (!rows) return;
       if (!rows.length || !rows[0].data) { dbg.textContent = '⚠️ لا توجد بيانات على السحابة (شغّل البرنامج وsync أولاً)'; return; }
       var ad = rows[0].data;
-      if (ad.employees && ad.employees.length) employees = ad.employees;
+      _cloudSyncDeletions = Array.isArray(ad.syncDeletions) ? ad.syncDeletions : [];
+      if (ad.employees && ad.employees.length) {
+        var _exclMap3 = {};
+        (ad.excludedEmployees || []).forEach(function(x){ _exclMap3[x.code || x.id || x.name] = true; });
+        var _seen3 = {}, _emps3 = [];
+        ad.employees.forEach(function(e){
+          var k = String((e && (e.code || e.id || e.name)) || '').trim();
+          if (!k || _exclMap3[k] || _seen3[k]) return;
+          _seen3[k] = true;
+          _emps3.push(e);
+        });
+        employees = _emps3;
+      }
       var fc = document.getElementById('force-count');
       if (fc) fc.textContent = employees.length;
       if (ad.inventoryItems && ad.inventoryItems.length) invItems = ad.inventoryItems;
@@ -406,6 +419,30 @@ function ddSetEmpStatus(idx, val) {
   renderForceMobile();
   _pushEmployeesToCloud();
 }
+function _ddEmpKey(e) { return String((e && (e.code || e.id || e.name)) || '').trim(); }
+function _ddMergeEmps(remoteList, localList, delKeys, tieLocal) {
+  var out = [], seen = {}, map = {};
+  function pick(a, b) {
+    var la = a && a.modifiedAt, lb = b && b.modifiedAt;
+    if (!la && !lb) return tieLocal ? a : b;
+    if (!lb) return a;
+    if (!la) return b;
+    return (String(lb) > String(la)) ? b : a;
+  }
+  function add(e) {
+    var k = _ddEmpKey(e);
+    if (!k || seen[k] || (delKeys && delKeys[k])) return;
+    seen[k] = true;
+    out.push(e);
+  }
+  (remoteList || []).forEach(function(e){ var k = _ddEmpKey(e); if (k) map[k] = e; });
+  (localList || []).forEach(function(e) {
+    var k = _ddEmpKey(e);
+    add(map[k] ? pick(e, map[k]) : e);
+  });
+  (remoteList || []).forEach(add);
+  return out;
+}
 function _pushEmployeesToCloud() {
   fetch(SB + '/rest/v1/sync_data?id=eq.alldata&select=data', {
     headers: { 'apikey': KEY, 'Authorization': 'Bearer ' + KEY }
@@ -416,7 +453,12 @@ function _pushEmployeesToCloud() {
     if (rows && rows[0] && rows[0].data) {
       ad = typeof rows[0].data === 'string' ? JSON.parse(rows[0].data) : rows[0].data;
     }
-    ad.employees = employees.slice();
+    var _delMap4 = {};
+    (_cloudSyncDeletions || []).forEach(function(d){ if (d && d.entity === 'employees') _delMap4[d.key] = true; });
+    var _exclMap4 = {};
+    (ad.excludedEmployees || []).forEach(function(x){ _exclMap4[x.code || x.id || x.name] = true; });
+    ad.employees = _ddMergeEmps(Array.isArray(ad.employees) ? ad.employees : [], employees.slice(), _delMap4, true)
+      .filter(function(e){ return !_exclMap4[_ddEmpKey(e)]; });
     return fetch(SB + '/rest/v1/sync_data?id=eq.alldata', {
       method: 'POST',
       headers: { 'apikey': KEY, 'Authorization': 'Bearer ' + KEY, 'Content-Type': 'application/json', 'Prefer': 'resolution=merge-duplicates' },
