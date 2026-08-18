@@ -431,7 +431,9 @@ function updateIngCost(inp) {
     CHEF_ING_COSTS[key] = val; saveChefIngCosts();
     var parts = key.split('|');
     var ing = ingredientMaster.find(function(i) { return i.name === parts[0]; });
-    if (ing) { ing.price = val; saveIngredientMaster(); }
+    if (ing) { ing.price = val; ing.modifiedAt = new Date().toISOString(); saveIngredientMaster(); }
+    try { if (typeof syncStorage === 'function') syncStorage(); } catch(e){}
+    try { if (typeof pushToSupabase === 'function') pushToSupabase(true); } catch(e){}
   }
 }
 
