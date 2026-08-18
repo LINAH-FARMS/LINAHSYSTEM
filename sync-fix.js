@@ -53,6 +53,44 @@
     return (item && (item.id || item.code || item.name)) || JSON.stringify(item);
   }
 
+  // قراءة السحابة بتقسيم جديد: صفوف ent:* (صف صغير لكل جدول — المصدر الأساسي)
+  // + صف alldata القديم للتوافق (نُستخدم قيمه فقط للجداول التي لا يوجد لها صف ent)
+  async function _readCloudMerge() {
+    const out = { data: {}, cloudMs: 0 };
+    const h = { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY };
+    try {
+      const r1 = await fetch(_sbEndpoint + '?id=like.ent:%25&select=id,data,updated_at&order=updated_at.desc', { method: 'GET', headers: h, mode: 'cors' });
+      const r2 = await fetch(_sbEndpoint + '?id=eq.alldata&select=id,data,updated_at', { method: 'GET', headers: h, mode: 'cors' });
+      if (r1.ok) {
+        const rows = await r1.json();
+        (rows || []).forEach(function (row) {
+          if (!row || !row.data || row.id.indexOf('ent:') !== 0) return;
+          let val = null;
+          try { val = typeof row.data === 'string' ? JSON.parse(row.data) : row.data; } catch (e) { val = null; }
+          if (val === null || val === undefined) return;
+          out.data[row.id.slice(4)] = val;
+          const t = Date.parse(row.updated_at || '');
+          if (!isNaN(t) && t > out.cloudMs) out.cloudMs = t;
+        });
+      }
+      if (r2.ok) {
+        const rows = await r2.json();
+        (rows || []).forEach(function (row) {
+          if (!row || row.id !== 'alldata' || !row.data) return;
+          const t = Date.parse(row.updated_at || '');
+          if (!isNaN(t) && t > out.cloudMs) out.cloudMs = t;
+          let obj = null;
+          try { obj = typeof row.data === 'string' ? JSON.parse(row.data) : row.data; } catch (e) { obj = null; }
+          if (!obj || typeof obj !== 'object') return;
+          Object.keys(obj).forEach(function (k) {
+            if (out.data[k] === undefined) out.data[k] = obj[k];
+          });
+        });
+      }
+    } catch (e) { syncLog('قراءة السحابة فشلت: ' + e.message); }
+    return out;
+  }
+
   // دمج عنصر-بعنصر بين النسخة المحلية والنسخة السحابية
   function _mergeSyncElements(localArr, remoteArr, entity, delKeys, tie) {
     if (!Array.isArray(localArr)) return localArr;
@@ -242,29 +280,9 @@
       const ts = new Date().toISOString();
       const allData = getAllDataForSync();
 
-      // قراءة أحدث نسخة من السحابة للدمج
-      let remote = null;
-      try {
-        const resp = await fetch(_sbEndpoint + '?select=id,data,updated_at&order=updated_at.desc', {
-          method: 'GET',
-          headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY },
-          mode: 'cors'
-        });
-        if (resp.ok) {
-          const rows = await resp.json();
-          let best = null;
-          let bestT = -1;
-          if (Array.isArray(rows)) {
-            rows.forEach(function (row) {
-              if (!row || row.id !== 'alldata' || !row.data) return;
-              let t = Date.parse(row.updated_at || '');
-              if (isNaN(t)) t = 0;
-              if (t >= bestT) { bestT = t; best = row; }
-            });
-            if (best) remote = typeof best.data === 'string' ? JSON.parse(best.data) : best.data;
-          }
-        }
-      } catch (e) { syncLog('قراءة النسخة السحابية للدمج فشلت: ' + e.message); }
+      // قراءة أحدث نسخة من السحابة للدمج (صفوف ent:* + alldata للتوافق)
+      const remoteRead = await _readCloudMerge();
+      let remote = Object.keys(remoteRead.data).length > 0 ? remoteRead.data : null;
 
       const delByEntity = {};
       syncDeletions.forEach(function (d) {
@@ -293,12 +311,41 @@
         }
       });
 
-      const upResp = await fetch(_sbEndpoint, {
-        method: 'POST',
-        headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/json', 'Prefer': 'resolution=merge-duplicates' },
-        body: JSON.stringify({ id: 'alldata', data: mergedPayload, updated_at: ts, device_id: _deviceId })
+      // الرفع بتقسيم جديد: صف صغير مستقل لكل جدول متغير (ent:<key>) —
+      // لا يتجاوز أي طلب حمولة السيرفر، فلا يعود خطأ 500 أبداً
+      let _snapLocal = {};
+      try { _snapLocal = JSON.parse(_lsGet('_lastPushSnapshot') || '{}'); } catch (e) { _snapLocal = {}; }
+      const _hasSnap = Object.keys(_snapLocal).length > 0;
+      const _changedKeys = [];
+      Object.keys(mergedPayload).forEach(function (k) {
+        if (k === 'incident_reports' || k === 'waterDocs') return;
+        if (!_hasSnap || JSON.stringify(mergedPayload[k]) !== _snapLocal[k]) _changedKeys.push(k);
       });
-      if (!upResp.ok) throw new Error('HTTP ' + upResp.status);
+      let _entErrors = 0;
+      for (let ci = 0; ci < _changedKeys.length; ci++) {
+        const _ck = _changedKeys[ci];
+        try {
+          const up = await fetch(_sbEndpoint, {
+            method: 'POST',
+            headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/json', 'Prefer': 'resolution=merge-duplicates' },
+            body: JSON.stringify({ id: 'ent:' + _ck, data: mergedPayload[_ck], updated_at: ts, device_id: _deviceId })
+          });
+          if (!up.ok) { _entErrors++; syncLog('فشل رفع ' + _ck + ' (HTTP ' + up.status + ')'); }
+        } catch (e) { _entErrors++; syncLog('خطأ رفع ' + _ck + ': ' + e.message); }
+      }
+      // توافق قديم غير حرج: محاولة تحديث صف alldata الكامل مرة واحدة فقط
+      // عند أول مزامنة لجهاز جديد — بعدها تُدار البيانات من صفوف ent:
+      // المنفصلة (توفير كامل للاستهلاك ولا تكرار لرفع 10 ميجا كل دورة)
+      if (!_hasSnap) {
+        try {
+          const upResp = await fetch(_sbEndpoint, {
+            method: 'POST',
+            headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/json', 'Prefer': 'resolution=merge-duplicates' },
+            body: JSON.stringify({ id: 'alldata', data: mergedPayload, updated_at: ts, device_id: _deviceId })
+          });
+          if (!upResp.ok) syncLog('رفع alldata الكامل غير ممكن (' + upResp.status + ') — البيانات محفوظة في صفوف ent: المنفصلة');
+        } catch (e) { syncLog('رفع alldata الكامل فشل: ' + e.message); }
+      }
       try { await pushWaterDocsToCloud(); } catch (e) { console.error('pushWaterDocsToCloud:', e); }
 
       // تحديث snapshot بما تم رفعه فعلاً (المدمج) ليكون المرجع الدقيق
@@ -334,26 +381,10 @@
     while (_pullInProgress) { await new Promise(function (r) { setTimeout(r, 300); }); }
     _pullInProgress = true;
     try {
-      const resp = await fetch(_sbEndpoint + '?select=id,data,updated_at&order=updated_at.desc', {
-        method: 'GET',
-        headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Range': '0-*' },
-        mode: 'cors'
-      });
-      if (!resp.ok) { syncLog('فشل السحب، حالة: ' + resp.status); return; }
-      const rows = await resp.json();
-      if (!rows || rows.length === 0) { syncLog('الجهاز هو المصدر الوحيد للبيانات'); return; }
-
-      // أحدث نسخة فقط
-      let bestRow = null;
-      let cloudMs = 0;
-      rows.forEach(function (row) {
-        if (!row || row.id !== 'alldata' || !row.data) return;
-        let t = Date.parse(row.updated_at || '');
-        if (isNaN(t)) t = 0;
-        if (t >= cloudMs) { cloudMs = t; bestRow = row; }
-      });
-      if (!bestRow) { syncLog('لم يتم العثور على بيانات سحابية'); return; }
-      const remoteData = typeof bestRow.data === 'string' ? JSON.parse(bestRow.data) : bestRow.data;
+      const remoteRead = await _readCloudMerge();
+      const cloudMs = remoteRead.cloudMs;
+      const remoteData = remoteRead.data;
+      if (Object.keys(remoteData).length === 0) { syncLog('لم يتم العثور على بيانات سحابية'); return; }
 
       // حارس آخر تعديل محلي: إذا كان المحلي أحدث من السحابة لا نستبدله
       const localMs = parseInt(_lsGet('_localChangeTime')) || 0;
@@ -523,23 +554,9 @@
   window.autoPullOnLoad = async function autoPullOnLoad() {
     try {
       if (!supabaseConnected) return;
-      const resp = await fetch(_sbEndpoint + '?select=id,data,updated_at&order=updated_at.desc', {
-        method: 'GET',
-        headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY },
-        mode: 'cors'
-      });
-      if (!resp.ok) return;
-      const rows = await resp.json();
-      let bestRow = null;
-      let bestMs = 0;
-      (rows || []).forEach(function (row) {
-        if (!row || row.id !== 'alldata' || !row.data) return;
-        let t = Date.parse(row.updated_at || '');
-        if (isNaN(t)) t = 0;
-        if (t >= bestMs) { bestMs = t; bestRow = row; }
-      });
-      if (!bestRow) return;
-      const remoteData = typeof bestRow.data === 'string' ? JSON.parse(bestRow.data) : bestRow.data;
+      const remoteRead = await _readCloudMerge();
+      const remoteData = remoteRead.data;
+      if (Object.keys(remoteData).length === 0) return;
 
       // 1) استبدال كل الكيانات في الذاكرة بنسخة السحابة
       const loadDelKeys = {};
@@ -612,7 +629,7 @@
     if (!supabaseConnected) return;
     (async function () {
       try {
-        const resp = await fetch(_sbEndpoint + '?select=id,updated_at&order=updated_at.desc&limit=1', {
+        const resp = await fetch(_sbEndpoint + '?select=id,updated_at&order=updated_at.desc&limit=200', {
           method: 'GET',
           headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY },
           mode: 'cors'
@@ -621,7 +638,8 @@
           const rows = await resp.json();
           let cloudMs = 0;
           (rows || []).forEach(function (row) {
-            if (!row || row.id !== 'alldata') return;
+            if (!row) return;
+            if (row.id !== 'alldata' && row.id.indexOf('ent:') !== 0) return;
             const t = Date.parse(row.updated_at || '');
             if (!isNaN(t) && t > cloudMs) cloudMs = t;
           });
