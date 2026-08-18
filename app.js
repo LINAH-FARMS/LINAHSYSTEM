@@ -7669,45 +7669,9 @@ function renderTeaSugarTable() {
       if (el.style.display === 'block') { renderMealWasteStats(); renderMealWasteTable(); }
     }
     function renderMealWasteStats() {
-      var el = document.getElementById('mw-stats');
-      if (!el) return;
+      // الكروت الإحصائية أزيلت من الواجهة — نُبقي الرسم البياني فقط
       var filtered = getFilteredMealWaste();
-      var totalWaste = 0, totalCost = 0, count = filtered.length, totalPrepared = 0, totalCookedQty = 0, totalPrepWaste = 0;
-      filtered.forEach(function(w) {
-        totalPrepared += getPreparedWeight(w);
-        totalWaste += (w.wasteEng||0) + (w.wasteWrk||0) + (w.wasteGuests||0) + (w.prepWaste||0);
-        totalPrepWaste += w.prepWaste || 0;
-        totalCost += w.cost || 0;
-        totalCookedQty += getPreparedWeight(w);
-      });
-      var wastePct = totalPrepared > 0 ? (Math.min(totalWaste / totalPrepared, 1) * 100) : 0;
-      var totalEngAte = 0, totalWrkAte = 0, totalWasteFromEng = 0, totalWasteFromWrk = 0, totalWasteFromGuests = 0, totalGuests = 0;
-      filtered.forEach(function(w) {
-        totalEngAte += w.engAte || 0;
-        totalWrkAte += w.wrkAte || 0;
-        totalWasteFromEng += w.wasteEng || 0;
-        totalWasteFromWrk += w.wasteWrk || 0;
-        totalWasteFromGuests += w.wasteGuests || 0;
-        totalGuests += w.guests || 0;
-      });
-      var avgEng = totalEngAte > 0 ? (totalWasteFromEng / totalEngAte) : 0;
-      var avgWrk = totalWrkAte > 0 ? (totalWasteFromWrk / totalWrkAte) : 0;
-      var avgGuests = totalGuests > 0 ? (totalWasteFromGuests / totalGuests) : 0;
-      var totalPeople = totalEngAte + totalWrkAte + totalGuests;
-      var costPerPerson = totalPeople > 0 ? (totalCost / totalPeople) : 0;
-      var wasteR = totalPrepared > 0 ? Math.min(totalWaste / totalPrepared, 1) : 0;
-      var wasteCost = wasteR * totalCost;
-      var totalEmpInFilter = employees.filter(function(e) { return e.status === 'P'; }).length;
-      el.innerHTML = [
-        '<div style="background:#2e7d32;color:white;padding:10px;border-radius:8px;text-align:center;"><div style="font-size:22px;font-weight:700;">' + totalEmpInFilter + '</div><div style="font-size:11px;">الموظفين الحاليين (P)</div></div>',
-        '<div style="background:#4a148c;color:white;padding:10px;border-radius:8px;text-align:center;"><div style="font-size:20px;font-weight:700;">' + totalCookedQty.toFixed(1) + ' كجم</div><div style="font-size:11px;">إجمالي المُعَد</div></div>',
-        '<div style="background:#795548;color:white;padding:10px;border-radius:8px;text-align:center;"><div style="font-size:20px;font-weight:700;">' + totalPrepWaste.toFixed(1) + ' كجم</div><div style="font-size:11px;">هدر التحضير</div></div>',
-        '<div style="background:#d32f2f;color:white;padding:10px;border-radius:8px;text-align:center;"><div style="font-size:20px;font-weight:700;">' + totalWaste.toFixed(1) + ' كجم</div><div style="font-size:11px;">هدر الطهي</div></div>',
-        '<div style="background:' + (wastePct <= 5 ? '#2e7d32' : '#d32f2f') + ';color:white;padding:10px;border-radius:8px;text-align:center;"><div style="font-size:20px;font-weight:700;">' + wastePct.toFixed(1) + '%</div><div style="font-size:11px;">نسبة الهدر (الهدف ≤5%)</div></div>',
-        '<div style="background:#1565c0;color:white;padding:10px;border-radius:8px;text-align:center;font-size:12px;"><div style="font-weight:700;">مهندس ' + (totalEngAte > 0 ? avgEng.toFixed(2) + ' كجم' : '—') + ' | عامل ' + (totalWrkAte > 0 ? avgWrk.toFixed(2) + ' كجم' : '—') + ' | ضيوف ' + (totalGuests > 0 ? avgGuests.toFixed(2) + ' كجم' : '—') + '</div><div style="font-size:11px;">متوسط هدر/فرد</div></div>',
-        '<div style="background:#37474f;color:white;padding:10px;border-radius:8px;text-align:center;"><div style="font-size:20px;font-weight:700;">' + costPerPerson.toFixed(0) + ' جنيه</div><div style="font-size:11px;">التكلفة/فرد (' + totalPeople + ' فرد)</div></div>',
-        '<div style="background:#b71c1c;color:white;padding:10px;border-radius:8px;text-align:center;"><div style="font-size:20px;font-weight:700;">' + wasteCost.toFixed(0) + ' جنيه</div><div style="font-size:11px;">تكلفة الهدر</div></div>'
-      ].join('');
+      var count = filtered.length;
       var chartContainer = document.getElementById('mw-chart-container');
       if (chartContainer && count > 0) {
         chartContainer.style.height = '260px';
