@@ -238,6 +238,11 @@ function calcPlanIngredients() {
   ];
   var totals = {}, mealSummaries = [], hasAny = false;
   mealConfigs.forEach(function(m) {
+    var sel = document.getElementById('plan-' + m.prefix + '-add');
+    if (sel && sel.value) {
+      var list = document.getElementById('plan-' + m.prefix + '-list');
+      if (list && !list.querySelector('[data-name="' + sel.value.replace(/"/g,'&quot;') + '"]')) addPlanDish(m.prefix);
+    }
     var count = parseInt(document.getElementById('plan-' + m.prefix + '-count').value) || 0;
     var dishes = getPlanDishList(m.prefix);
     if (count > 0 && dishes.length > 0) {
