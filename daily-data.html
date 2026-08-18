@@ -299,9 +299,17 @@ try { var sn = localStorage.getItem('dyn_septics'); if (sn) { septicNames = _cle
       }
       var fc = document.getElementById('force-count');
       if (fc) fc.textContent = employees.length;
-      if (ad.inventoryItems && ad.inventoryItems.length) invItems = ad.inventoryItems;
-      if (ad.vacations && ad.vacations.length) vacations = ad.vacations;
-      if (ad.archiveData && ad.archiveData.length) archiveData = ad.archiveData;
+      if (Array.isArray(ad.inventoryItems)) invItems = ad.inventoryItems;
+      if (Array.isArray(ad.vacations)) vacations = ad.vacations;
+      if (Array.isArray(ad.archiveData)) {
+        var _delA = {};
+        (_cloudSyncDeletions || []).forEach(function(d){ if (d && d.entity === 'archiveData') _delA[d.key] = true; });
+        archiveData = ad.archiveData.filter(function(it){
+          if (!it) return false;
+          var k = it.id || (String(it.date || '') + '|' + String(it.item || '') + '|' + String(it.location || ''));
+          return !_delA[k];
+        });
+      }
       if (ad.dynamicStores) {
         var dsr = ad.dynamicStores;
         if (typeof dsr === 'string') { try { dsr = JSON.parse(dsr); } catch(e){} }
@@ -845,6 +853,7 @@ function deleteStoreMobile(idx) {
   showMsg('🗑️ تم حذف العهدة «' + nm + '»', false);
 }
 function _deleteArchiveRecordFromCloud(key) {
+  _cloudSyncDeletions.push({ entity: 'archiveData', key: key, deletedAt: new Date().toISOString() });
   fetch(SB + '/rest/v1/sync_data?id=eq.alldata&select=data', {
     headers: { 'apikey': KEY, 'Authorization': 'Bearer ' + KEY }
   })
@@ -981,14 +990,16 @@ function _syncArchiveRecordToAlldata(rec) {
     var ad = {};
     if (rows && rows[0] && rows[0].data) ad = typeof rows[0].data === 'string' ? JSON.parse(rows[0].data) : rows[0].data;
     if (!Array.isArray(ad.archiveData)) ad.archiveData = [];
-    var found = false;
-    for (var i = 0; i < ad.archiveData.length; i++) {
-      var it = ad.archiveData[i];
-      if ((it && rec.id && it.id === rec.id) || (it && !it.id && !rec.id && (it.item || '') === (rec.item || '') && (it.location || '') === (rec.location || ''))) {
-        ad.archiveData[i] = rec; found = true; break;
-      }
-    }
-    if (!found) ad.archiveData.push(rec);
+    var _delA2 = {};
+    (_cloudSyncDeletions || []).forEach(function(d){ if (d && d.entity === 'archiveData') _delA2[d.key] = true; });
+    var _recKey = rec.id || (String(rec.date || '') + '|' + String(rec.item || '') + '|' + String(rec.location || ''));
+    if (_delA2[_recKey]) return;
+    ad.archiveData = ad.archiveData.filter(function(it){
+      if (!it) return false;
+      var k = it.id || (String(it.date || '') + '|' + String(it.item || '') + '|' + String(it.location || ''));
+      return k !== _recKey;
+    });
+    ad.archiveData.push(rec);
     return fetch(SB + '/rest/v1/sync_data?id=eq.alldata', {
       method: 'POST',
       headers: { 'apikey': KEY, 'Authorization': 'Bearer ' + KEY, 'Content-Type': 'application/json', 'Prefer': 'resolution=merge-duplicates' },
