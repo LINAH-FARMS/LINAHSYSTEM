@@ -83,7 +83,20 @@
           try { obj = typeof row.data === 'string' ? JSON.parse(row.data) : row.data; } catch (e) { obj = null; }
           if (!obj || typeof obj !== 'object') return;
           Object.keys(obj).forEach(function (k) {
-            if (out.data[k] === undefined) out.data[k] = obj[k];
+            const entVal = out.data[k];
+            if (entVal === undefined) { out.data[k] = obj[k]; return; }
+            if (Array.isArray(entVal) && Array.isArray(obj[k])) {
+              const byKey = {};
+              function _put(it) {
+                if (it === null || it === undefined) return;
+                const key = _entityKey(it, k);
+                if (!byKey[key]) { byKey[key] = it; return; }
+                byKey[key] = _pickNewer(byKey[key], it, TIE_REMOTE);
+              }
+              (obj[k] || []).forEach(_put);
+              (entVal || []).forEach(_put);
+              out.data[k] = Object.keys(byKey).map(function (key) { return byKey[key]; });
+            }
           });
         });
       }
