@@ -659,7 +659,7 @@
           <input type="text" id="search-archive" class="search-input" placeholder="بحث في الوارد بالصنف أو المخزن أو البيان..." oninput="renderArchiveIncoming()">
           <button class="btn btn-excel" onclick="document.getElementById('arc-excel-file').click()" style="background-color:#1565c0;">📥 استيراد (Excel)</button>
           <input type="file" id="arc-excel-file" style="display:none;" accept=".xlsx, .xls" onchange="importArchiveExcel(event)">
-          <button class="btn btn-excel" onclick="exportArchiveExcel()" style="background-color:#2e7d32;">📤 تصدير (Excel)</button>
+          <button class="btn btn-excel" onclick="exportArchiveExcelFull()" style="background-color:#2e7d32;">📤 تصدير (Excel)</button>
           <button class="btn btn-primary" onclick="importStoresArchive()" style="background-color:#e65100;">📥 استيراد عهد المخازن</button>
         </div>
         <div class="stats-container" style="margin-top:10px;grid-template-columns:repeat(4,1fr);">
@@ -3059,6 +3059,7 @@
   <script src="hr_fill.js"></script>
   <script src="stores_import.js"></script>
   <script src="minia-assets.js"></script>
+  <script src="archive-excel.js"></script>
   <script src="fix-names.js"></script>
   <script src="bread-print.js"></script>
   <script src="item-search.js"></script>
