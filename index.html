@@ -757,6 +757,79 @@
       </div>
       </div>
     </div>
+
+    <div id="minia-section" class="no-print" style="margin-top:30px;border-top:2px solid var(--primary);padding-top:15px;">
+      <h3 id="minia-section-title" onclick="var p=document.getElementById('minia-panel');p.style.display=p.style.display==='none'?'block':'none';document.getElementById('minia-arrow').textContent=p.style.display==='none'?'▶':'▼';if(p.style.display==='block')renderMiniaAssets();" style="margin-bottom:15px;cursor:pointer;user-select:none;display:flex;align-items:center;gap:8px;">📋 كشف أصول مزرعة المنيا — تسليم مزرعة الواحات <span id="minia-arrow" style="font-size:12px;color:#888;">▶</span></h3>
+      <div id="minia-panel" style="display:none;">
+        <div class="control-panel" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;align-items:flex-end;border:1px solid #ffe0b2;background:#fff8e1;">
+          <div class="form-group">
+            <label style="font-weight:600;">الأصل (الصنف) *</label>
+            <input type="text" id="ma-item" placeholder="مثال: تلفزيون LG 32 بوصة">
+          </div>
+          <div class="form-group">
+            <label style="font-weight:600;">البيان / المواصفات</label>
+            <input type="text" id="ma-desc" placeholder="اختياري">
+          </div>
+          <div class="form-group">
+            <label style="font-weight:600;">الوحدة</label>
+            <input type="text" id="ma-unit" list="ma-units" value="عدد">
+            <datalist id="ma-units">
+              <option value="عدد"></option><option value="كجم"></option><option value="لتر"></option><option value="متر"></option><option value="شيكارة"></option><option value="لفة"></option><option value="زوج"></option><option value="طقم"></option><option value="قطعة"></option>
+            </datalist>
+          </div>
+          <div class="form-group">
+            <label style="font-weight:600;">الكمية *</label>
+            <input type="number" id="ma-qty" value="1" min="1">
+          </div>
+          <div class="form-group">
+            <label style="font-weight:600;">المستلم</label>
+            <input type="text" id="ma-receiver" list="ma-receivers" placeholder="اسم المستلم">
+            <datalist id="ma-receivers"></datalist>
+          </div>
+          <div class="form-group">
+            <label style="font-weight:600;">تاريخ التسليم</label>
+            <input type="date" id="ma-date">
+          </div>
+          <div class="form-group">
+            <label style="font-weight:600;">ملاحظات</label>
+            <input type="text" id="ma-notes" placeholder="اختياري">
+          </div>
+          <button class="btn btn-primary" id="btn-save-minia" onclick="saveMiniaAsset()" style="justify-content:center;height:42px;background:#e65100;">➕ تسجيل أصل جديد</button>
+          <button class="btn btn-warning" id="btn-cancel-minia" onclick="cancelMiniaEdit()" style="justify-content:center;height:42px;display:none;">✖️ إلغاء التعديل</button>
+        </div>
+        <div class="control-panel no-print" style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+          <input type="text" id="search-minia" class="search-input" placeholder="بحث في الأصول بالصنف أو المستلم أو الوحدة..." oninput="renderMiniaAssets()" style="flex:1;min-width:180px;">
+          <button class="btn btn-excel" onclick="document.getElementById('ma-excel-file').click()" style="background-color:#1565c0;">📥 استيراد (Excel)</button>
+          <input type="file" id="ma-excel-file" style="display:none;" accept=".xlsx, .xls" onchange="importMiniaAssetsExcel(event)">
+          <button class="btn btn-primary" onclick="importMiniaAssetsSeed()" style="background-color:#e65100;">📊 استيراد الكشف المعتمد (52 صنف)</button>
+          <button class="btn btn-excel" onclick="exportMiniaAssetsExcel()" style="background-color:#2e7d32;">📤 تصدير (Excel)</button>
+          <button class="btn btn-secondary" onclick="printMiniaAssets()">🖨️ طباعة</button>
+        </div>
+        <div class="stats-container" style="margin-top:10px;grid-template-columns:repeat(4,1fr);">
+          <div class="stat-card"><h3>إجمالي أصناف الكشف</h3><div class="value" id="ma-stat-items">0</div></div>
+          <div class="stat-card blue"><h3>إجمالي الكميات</h3><div class="value" id="ma-stat-qty">0</div></div>
+          <div class="stat-card orange"><h3>عدد المستلمين</h3><div class="value" id="ma-stat-receivers">0</div></div>
+          <div class="stat-card"><h3>أحدث تاريخ تسليم</h3><div class="value" id="ma-stat-last" style="font-size:16px;">—</div></div>
+        </div>
+        <div class="table-container" style="margin-top:10px;">
+          <table id="table-minia">
+            <thead>
+              <tr>
+                <th style="width:40px;">م</th>
+                <th>اسم الأصل</th>
+                <th>البيان</th>
+                <th>الوحدة</th>
+                <th>الكمية</th>
+                <th>المستلم</th>
+                <th>تاريخ التسليم</th>
+                <th class="no-print">إجراءات</th>
+              </tr>
+            </thead>
+            <tbody id="minia-table-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
   </div>
 
   <div id="tab-vacations" class="tab-content">
@@ -2985,6 +3058,7 @@
   <script src="app-extra.js"></script>
   <script src="hr_fill.js"></script>
   <script src="stores_import.js"></script>
+  <script src="minia-assets.js"></script>
   <script src="fix-names.js"></script>
   <script src="bread-print.js"></script>
   <script src="item-search.js"></script>

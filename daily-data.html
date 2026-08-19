@@ -78,6 +78,7 @@ textarea{resize:vertical;min-height:60px}
 <button class="menu-btn menu-btn-septic" onclick="openModal('septic')"><span class="menu-icon">🚽</span><span class="menu-label">البيارات</span></button>
 <button class="menu-btn menu-btn-vacation" onclick="openModal('vacation')"><span class="menu-icon">🏖️</span><span class="menu-label">الإجازات</span></button>
 <button class="menu-btn menu-btn-stores" onclick="openModal('stores')"><span class="menu-icon">🏪</span><span class="menu-label">المخازن</span></button>
+<button class="menu-btn menu-btn-stores" onclick="openModal('minia')"><span class="menu-icon">📋</span><span class="menu-label">أصول المنيا</span></button>
 <button class="menu-btn menu-btn-force" onclick="openModal('force')"><span class="menu-icon">👤</span><span class="menu-label">القوة (<b id="force-count">0</b>)</span></button>
 </div>
 
@@ -214,6 +215,22 @@ textarea{resize:vertical;min-height:60px}
 </div>
 <button type="button" class="btn-save-section" style="background:#795548;" onclick="saveStoreIncoming()">➕ تسجيل وارد</button>
 <button type="button" class="btn-save-section" id="dd-store-cancel-btn" style="display:none;background:#757575;" onclick="cancelStoreEdit()">✖️ إلغاء التعديل</button>
+</div>
+
+<div id="modal-minia" class="modal-section section section-stores">
+<div class="section-title">📋 كشف أصول مزرعة المنيا — تسليم مزرعة الواحات</div>
+<div class="form-group"><label>الأصل (الصنف)</label><input type="text" id="dd-ma-item" placeholder="مثال: تلفزيون LG 32 بوصة"></div>
+<div class="form-row">
+<div class="form-group"><label>الكمية</label><input type="number" id="dd-ma-qty" min="1" value="1"></div>
+<div class="form-group"><label>الوحدة</label><input type="text" id="dd-ma-unit" value="عدد" list="dd-ma-units"><datalist id="dd-ma-units"><option>عدد</option><option>كجم</option><option>لتر</option><option>متر</option><option>شيكارة</option><option>لفة</option><option>زوج</option><option>طقم</option><option>قطعة</option></datalist></div>
+</div>
+<div class="form-row">
+<div class="form-group"><label>المستلم</label><input type="text" id="dd-ma-receiver" list="dd-ma-receivers"><datalist id="dd-ma-receivers"></datalist></div>
+<div class="form-group"><label>📅 تاريخ التسليم</label><input type="date" id="dd-ma-date"></div>
+</div>
+<button type="button" class="btn-save-section" style="background:#5d4037;" onclick="addMiniaMobile()">➕ تسجيل أصل جديد</button>
+<div class="section-title">الأصول المسجلة</div>
+<div style="max-height:260px;overflow-y:auto;border:1px solid #e0e0e0;border-radius:10px;background:white;margin-bottom:14px;" id="dd-minia-list"></div>
 </div>
 
 <div id="modal-force" class="modal-section section section-force">
@@ -361,14 +378,15 @@ try { var sn = localStorage.getItem('dyn_septics'); if (sn) { septicNames = _cle
 
 // ─── Modal ───
 function openModal(section) {
-  ['tea','maint','septic','vacation','stores','force'].forEach(function(s) {
+  ['tea','maint','septic','vacation','stores','minia','force'].forEach(function(s) {
     document.getElementById('modal-' + s).style.display = 'none';
   });
   document.getElementById('modal-' + section).style.display = 'block';
-  var titles = { tea:'🍵 الشاي', maint:'🛠️ الصيانة', septic:'🚽 البيارات', vacation:'🏖️ الإجازات', stores:'🏪 المخازن', force:'👤 القوة العاملة' };
+  var titles = { tea:'🍵 الشاي', maint:'🛠️ الصيانة', septic:'🚽 البيارات', vacation:'🏖️ الإجازات', stores:'🏪 المخازن', minia:'📋 أصول المنيا', force:'👤 القوة العاملة' };
   document.getElementById('modal-title').textContent = titles[section] || section;
   document.getElementById('modal-overlay').style.display = 'flex';
   if (section === 'stores') setStoresTab(_ddStoresTab);
+  if (section === 'minia') renderMiniaMobile();
   if (section === 'force') renderForceMobile();
 }
 function closeModal() {
@@ -1231,5 +1249,6 @@ function saveVacationData() {
   } catch(e) {}
 })();
 </script>
+<script src="minia-assets.js"></script>
 </body>
 </html>

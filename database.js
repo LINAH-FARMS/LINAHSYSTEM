@@ -69,7 +69,7 @@
       'inventoryVouchers','excludedEmployees','periodicMaintenance','teaSugarDisbursements','teaSugarBatches',
       'mealLogs','inventoryItems','contractors','evaluations','evalTemplates','auditLog',
       'bakeryIngredients','bakeryProductions','bakeryContractorSupplies','bakeryInvoices','bakeryStockLog',
-      'adminOvertime','roomAssets','archiveData','waterStations','waterDocs','quickActions','dailyStats',
+      'adminOvertime','roomAssets','archiveData','miniaAssets','waterStations','waterDocs','quickActions','dailyStats',
       'dynamicSectors','contractorSectors','contractorRooms','dynamicRooms','dynamicSeptics',
       'dynamicDepts','dynamicTitles','deptTitles','manualTotalBeds','syncDeletions','appUsers',
       'finTransactions','finBudgets','ingredientMaster','mealSurveys'

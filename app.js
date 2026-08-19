@@ -254,6 +254,7 @@
       _lsSet('lineh_room_assets', JSON.stringify(roomAssets));
       if (_backfillArchiveIds()) { /* حفظ الأسماء المستقرة بعد تخصيصها */ }
       _lsSet('lineh_archive_data', JSON.stringify(archiveData));
+      _lsSet('lineh_minia_assets', JSON.stringify(miniaAssets));
       _lsSet('lineh_dynamic_stores', JSON.stringify(_strArr(dynamicStores)));
       _lsSet('lineh_water_stations', JSON.stringify(waterStations));
       try { _lsSet('lineh_water_docs', JSON.stringify(waterDocs)); _lsSet('lineh_water_docs_mirror', JSON.stringify(waterDocs)); } catch(e) {}
@@ -11067,7 +11068,7 @@ reports.forEach(function(r) {
     function getAllDataForSync() {
       var o = getAllDataObject();
       ['dynamicSectors','contractorSectors','dynamicRooms','dynamicSeptics','dynamicDepts','dynamicTitles','dynamicVisitorTypes','bakeryContractorsNames','dynamicStores'].forEach(function(k) { try { if (Array.isArray(o[k])) o[k] = _strArr(o[k]); } catch(e) {} });
-      var keys = ['employees','roomsCapacity','vacations','inventoryVouchers','excludedEmployees','contractors','mealLogs','mealWaste','inventoryItems','hospitalities','adminOvertime','maintenanceRecords','septicRecords','periodicMaintenance','teaSugarDisbursements','teaSugarBatches','dynamicSectors','contractorSectors','contractorRooms','dynamicRooms','dynamicSeptics','dynamicDepts','dynamicTitles','dynamicVisitorTypes','bakeryContractorsNames','dynamicStores','evaluations','evalTemplates','appUsers','auditLog','bakeryIngredients','bakeryProductions','bakeryContractorSupplies','bakeryInvoices','bakeryStockLog','roomAssets','archiveData','quickActions','deptTitles','manualTotalBeds','dailyStats','finTransactions','finBudgets','syncDeletions','waterStations','waterDocs','ingredientMaster','mealSurveys','incident_reports'];
+      var keys = ['employees','roomsCapacity','vacations','inventoryVouchers','excludedEmployees','contractors','mealLogs','mealWaste','inventoryItems','hospitalities','adminOvertime','maintenanceRecords','septicRecords','periodicMaintenance','teaSugarDisbursements','teaSugarBatches','dynamicSectors','contractorSectors','contractorRooms','dynamicRooms','dynamicSeptics','dynamicDepts','dynamicTitles','dynamicVisitorTypes','bakeryContractorsNames','dynamicStores','evaluations','evalTemplates','appUsers','auditLog','bakeryIngredients','bakeryProductions','bakeryContractorSupplies','bakeryInvoices','bakeryStockLog','roomAssets','archiveData','quickActions','deptTitles','manualTotalBeds','dailyStats','finTransactions','finBudgets','syncDeletions','waterStations','waterDocs','ingredientMaster','mealSurveys','incident_reports','miniaAssets'];
       var result = {};
       for (var ki = 0; ki < keys.length; ki++) { result[keys[ki]] = o[keys[ki]]; }
       return result;
@@ -11144,6 +11145,7 @@ reports.forEach(function(r) {
         bakeryStockLog: function(s) { return (s.date || '') + '|' + (s.materialName || s.ingredient || '') + '|' + (s.type || '') + '|' + (s.reference || ''); },
         roomAssets: function(a) { return (a.room || '') + '|' + (a.item || '') + '|' + (a.id || ''); },
         archiveData: function(a) { return a.id || a.date + '|' + a.item + '|' + a.location; },
+        miniaAssets: function(a) { return a.id || a.item + '|' + a.unit + '|' + a.qty + '|' + a.receiver + '|' + a.date; },
         quickActions: function(q) { return q.label; },
         dailyStats: function(d) { return d.date; },
         deptTitles: function(d) { return (d.dept||'') + '|' + (d.title||''); },
@@ -11523,7 +11525,7 @@ var reportsTab = document.getElementById('tab-reports');
     var debouncedSyncToSupabase = function() { setTimeout(pushToSupabase, 500); };
 
     // backward compat for old function refs
-    var DATA_KEYS = ['employees','roomsCapacity','vacations','hospitalities','maintenanceRecords','septicRecords','inventoryVouchers','inventoryItems','excludedEmployees','periodicMaintenance','teaSugarDisbursements','teaSugarBatches','mealLogs','mealWaste','contractors','dynamicSectors','dynamicStores','dynamicRooms','dynamicSeptics','dynamicDepts','dynamicTitles','deptTitles','appUsers','auditLog','bakeryIngredients','bakeryProductions','bakeryContractorSupplies','bakeryInvoices','currentUser','manualTotalBeds','roomAssets','archiveData','quickActions','waterStations','waterDocs','finTransactions','finBudgets','ingredientMaster','mealSurveys','incident_reports'];
+    var DATA_KEYS = ['employees','roomsCapacity','vacations','hospitalities','maintenanceRecords','septicRecords','inventoryVouchers','inventoryItems','excludedEmployees','periodicMaintenance','teaSugarDisbursements','teaSugarBatches','mealLogs','mealWaste','contractors','dynamicSectors','dynamicStores','dynamicRooms','dynamicSeptics','dynamicDepts','dynamicTitles','deptTitles','appUsers','auditLog','bakeryIngredients','bakeryProductions','bakeryContractorSupplies','bakeryInvoices','currentUser','manualTotalBeds','roomAssets','archiveData','quickActions','waterStations','waterDocs','finTransactions','finBudgets','ingredientMaster','mealSurveys','incident_reports','miniaAssets'];
 
     // Snapshot after pull — نعرف إيه اللي اتشال عشان push ما يضيفوش تاني
     var _snapshotKeys = {};
@@ -11542,7 +11544,7 @@ var reportsTab = document.getElementById('tab-reports');
       if (key==='dynamicSeptics') return dynamicSeptics; if (key==='dynamicDepts') return dynamicDepts; if (key==='dynamicTitles') return dynamicTitles; if (key==='deptTitles') return deptTitles;
       if (key==='appUsers') return appUsers; if (key==='auditLog') return auditLog; if (key==='bakeryIngredients') return bakeryIngredients; if (key==='bakeryProductions') return bakeryProductions;
       if (key==='bakeryContractorSupplies') return bakeryContractorSupplies; if (key==='bakeryInvoices') return bakeryInvoices; if (key==='roomAssets') return roomAssets;
-      if (key==='archiveData') return archiveData; if (key==='quickActions') return quickActions;
+      if (key==='archiveData') return archiveData; if (key==='miniaAssets') return miniaAssets; if (key==='quickActions') return quickActions;
       if (key==='waterStations') return waterStations; if (key==='waterDocs') return waterDocs;
       if (key==='adminOvertime') return adminOvertime; if (key==='contractorSectors') return contractorSectors; if (key==='contractorRooms') return contractorRooms;
       if (key==='evaluations') return evaluations; if (key==='evalTemplates') return evalTemplates; if (key==='bakeryStockLog') return bakeryStockLog;
@@ -11604,6 +11606,7 @@ var reportsTab = document.getElementById('tab-reports');
       else if (key === 'bakeryStockLog') bakeryStockLog = val;
       else if (key === 'roomAssets') roomAssets = val;
       else if (key === 'archiveData') archiveData = val;
+      else if (key === 'miniaAssets') miniaAssets = val;
       else if (key === 'quickActions') quickActions = val;
       else if (key === 'waterStations') waterStations = val;
       else if (key === 'waterDocs') waterDocs = val;
@@ -11652,6 +11655,7 @@ var reportsTab = document.getElementById('tab-reports');
       else if (key === 'bakeryStockLog') return bakeryStockLog;
       else if (key === 'roomAssets') return roomAssets;
       else if (key === 'archiveData') return archiveData;
+      else if (key === 'miniaAssets') return miniaAssets;
       else if (key === 'quickActions') return quickActions;
       else if (key === 'waterStations') return waterStations;
       else if (key === 'waterDocs') return waterDocs;
@@ -11764,6 +11768,7 @@ var reportsTab = document.getElementById('tab-reports');
         bakeryStockLog: function(b) { return b.id || b.date || b; },
         roomAssets: function(a) { return (a.room||'') + '|' + (a.item||'') + '|' + (a.id||''); },
         archiveData: function(a) { return a.id || a.date + '|' + a.item + '|' + a.location; },
+        miniaAssets: function(a) { return a.id || a.item + '|' + a.unit + '|' + a.qty + '|' + a.receiver + '|' + a.date; },
         quickActions: function(q) { return q.label || q; },
         deptTitles: function(d) { return (d.dept||'') + '|' + (d.title||''); },
         evaluations: function(e) { return (e.empCode||e.employeeCode||'') + '|' + (e.date||'') + '|' + (e.month||e.type||'') + '|' + (e.year||''); },
@@ -11814,6 +11819,7 @@ var reportsTab = document.getElementById('tab-reports');
       dedupBy(finBudgets, function(b) { return (b.code || '') + '|' + (b.month || '') + '|' + (b.year || ''); });
       dedupBy(waterStations, function(w) { return w.id || w.date + '|' + w.station + '|' + w.type; });
       dedupBy(archiveData, function(a) { return a.id || a.date + '|' + a.item + '|' + a.location; });
+      dedupBy(miniaAssets, function(a) { return a.id || a.item + '|' + a.unit + '|' + a.qty + '|' + a.receiver + '|' + a.date; });
       dedupBy(waterDocs, function(d) { return d.id || d.station + '|' + d.fileName; });
       dedupBy(mealSurveys, function(s) { return s.date + '|' + s.meal + '|' + s.employee; });
     }
@@ -12072,6 +12078,7 @@ var reportsTab = document.getElementById('tab-reports');
         evaluations, evalTemplates, auditLog, bakeryStockLog, deptTitles,
         roomAssets,
         archiveData,
+        miniaAssets,
         quickActions,
         syncDeletions,
         waterStations, waterDocs,

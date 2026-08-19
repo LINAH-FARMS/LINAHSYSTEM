@@ -98,6 +98,7 @@
     let evaluations = _safeJsonParse(_lsGet('lineh_evaluations'), []);
     let roomAssets = _safeJsonParse(_lsGet('lineh_room_assets'), []);
     let archiveData = _safeJsonParse(_lsGet('lineh_archive_data'), []);
+    let miniaAssets = _safeJsonParse(_lsGet('lineh_minia_assets'), []);
     let dynamicStores = _strArr(_safeJsonParse(_lsGet('lineh_dynamic_stores'), []));
     if (archiveData.length > 0) {
       archiveData.forEach(function(a) {
