@@ -138,6 +138,13 @@
         if (val === null || val === undefined) return;
         out.data[row.id.slice(4)] = val;
       });
+      // سجل الحذف المعروف: أي عنصر بمفتاح محذوف لا يعود أبداً عبر alldata
+      const delSet = {};
+      try {
+        (window.syncDeletions || syncDeletions || []).forEach(function (d) {
+          if (d && d.entity && d.key) delSet[d.entity + '\u0000' + d.key] = true;
+        });
+      } catch (e) {}
       (rows || []).forEach(function (row) {
         if (!row || row.id !== 'alldata' || !row.data) return;
         const t = Date.parse(row.updated_at || '');
@@ -147,12 +154,19 @@
         if (!obj || typeof obj !== 'object') return;
         Object.keys(obj).forEach(function (k) {
           const entVal = out.data[k];
-          if (entVal === undefined) { out.data[k] = obj[k]; return; }
+          if (entVal === undefined) {
+            out.data[k] = Array.isArray(obj[k]) ? obj[k].filter(function (it) {
+              if (it === null || it === undefined) return false;
+              return !delSet[k + '\u0000' + _entityKey(it, k)];
+            }) : obj[k];
+            return;
+          }
           if (Array.isArray(entVal) && Array.isArray(obj[k])) {
             const byKey = {};
             function _put(it) {
               if (it === null || it === undefined) return;
               const key = _entityKey(it, k);
+              if (delSet[k + '\u0000' + key]) return;
               if (!byKey[key]) { byKey[key] = it; return; }
               byKey[key] = _pickNewer(byKey[key], it, TIE_REMOTE);
             }

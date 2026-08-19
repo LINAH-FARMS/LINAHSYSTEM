@@ -9385,7 +9385,7 @@ function exportContractorsToExcel() {
             var ctKey = (ct.name||'') + '|' + normalizeDateStr(p.date) + '|' + (ct.count||'');
             if (_importedKeys['ctr_' + ctKey]) return;
             if (_isDeleted('bakeryContractorSupplies', ctKey)) return;
-            var cExists = bakeryContractorSupplies.some(function(bc) { return bc.date === p.date && bc.name === ct.name && bc.count == ct.count; });
+            var cExists = bakeryContractorSupplies.some(function(bc) { return normalizeDateStr(bc.date) === normalizeDateStr(p.date) && bc.name === ct.name && bc.count == ct.count; });
             if (!cExists) { var ing = ct.ingredients || {}; bakeryContractorSupplies.push(_ts({ id: getBakeryNextId('CTR', bakeryContractorSupplies), date: p.date, name: ct.name, count: ct.count, price: ct.price || 2, paid: 0, responsible: ct.responsible || '', notes: '', ingredients: ing })); imported++; }
             _importedKeys['ctr_' + ctKey] = true;
           });
@@ -9421,7 +9421,7 @@ reports.forEach(function(r) {
               var ctKey = (ct.name||'') + '|' + normalizeDateStr(p.date) + '|' + (ct.count||'');
               if (_importedKeys['ctr_' + ctKey]) return;
               if (_isDeleted('bakeryContractorSupplies', ctKey)) return;
-              var cExists = bakeryContractorSupplies.some(function(bc) { return bc.date === p.date && bc.name === ct.name && bc.count == ct.count; });
+              var cExists = bakeryContractorSupplies.some(function(bc) { return normalizeDateStr(bc.date) === normalizeDateStr(p.date) && bc.name === ct.name && bc.count == ct.count; });
               if (!cExists) {
                 var ing = ct.ingredients || {};
                 bakeryContractorSupplies.push(_ts({
@@ -10290,6 +10290,7 @@ reports.forEach(function(r) {
       _logDeletion('bakeryContractorSupplies', (bakeryContractorSupplies[idx].name||'') + '|' + normalizeDateStr(bakeryContractorSupplies[idx].date) + '|' + (bakeryContractorSupplies[idx].count||''));
       bakeryContractorSupplies.splice(idx, 1);
       syncStorage(); renderBakeryContractorSupplies(); updateBakeryStats(); updateBreadSupplyStats();
+      pushToSupabase();
     }
 
     function addBakeryStock() {
@@ -10373,6 +10374,7 @@ reports.forEach(function(r) {
         if (!confirm(`تأكيد تحصيل ${c.name} ليوم ${c.date} بقيمة ${total.toFixed(2)} ج.م؟`)) return;
         c.paid = total;
       }
+      _ts(c);
       syncStorage(); renderBakeryContractorSupplies(); updateBakeryStats(); updateBreadSupplyStats();
       pushToSupabase();
     }
