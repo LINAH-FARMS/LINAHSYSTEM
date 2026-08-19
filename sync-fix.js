@@ -55,51 +55,113 @@
 
   // قراءة السحابة بتقسيم جديد: صفوف ent:* (صف صغير لكل جدول — المصدر الأساسي)
   // + صف alldata القديم للتوافق (نُستخدم قيمه فقط للجداول التي لا يوجد لها صف ent)
+  // المزامنة الجزئية الذكية: بدلاً من سحب data كل الجداول في كل مرة، نفحص
+  // أولاً قائمة خفيفة (id + updated_at فقط — بضعة كيلوبايت) ثم نسحب البيانات
+  // الكاملة فقط للجداول التي تغيرت فعلاً (أو أول مرة/عند فقدان الكاش).
+  const _ENT_TS_KEY = '_cloudEntTs';
+  function _entTsCache() {
+    try { return JSON.parse(_lsGet(_ENT_TS_KEY) || '{}'); } catch (e) { return {}; }
+  }
+  function _saveEntTsCache(c) {
+    try { _lsSet(_ENT_TS_KEY, JSON.stringify(c)); } catch (e) {}
+  }
   async function _readCloudMerge() {
     const out = { data: {}, cloudMs: 0 };
     const h = { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY };
+    const tsCache = _entTsCache();
+    const newCache = Object.assign({}, tsCache);
+    let rows = [];
     try {
-      const r1 = await fetch(_sbEndpoint + '?id=like.ent:%25&select=id,data,updated_at&order=updated_at.desc', { method: 'GET', headers: h, mode: 'cors' });
-      const r2 = await fetch(_sbEndpoint + '?id=eq.alldata&select=id,data,updated_at', { method: 'GET', headers: h, mode: 'cors' });
-      if (r1.ok) {
-        const rows = await r1.json();
-        (rows || []).forEach(function (row) {
-          if (!row || !row.data || row.id.indexOf('ent:') !== 0) return;
-          let val = null;
-          try { val = typeof row.data === 'string' ? JSON.parse(row.data) : row.data; } catch (e) { val = null; }
-          if (val === null || val === undefined) return;
-          out.data[row.id.slice(4)] = val;
+      const haveCache = Object.keys(tsCache).length > 0;
+      if (haveCache) {
+        // ---------- الوضع الجزئي: فحص خفيف ثم سحب المتغير فقط ----------
+        let meta = [];
+        let alldataMeta = null;
+        const rL = await fetch(_sbEndpoint + '?select=id,updated_at&id=like.ent:%25&order=updated_at.desc&limit=100', { method: 'GET', headers: h, mode: 'cors' });
+        if (rL.ok) { try { meta = await rL.json(); } catch (e) { meta = []; } }
+        const rA = await fetch(_sbEndpoint + '?id=eq.alldata&select=id,updated_at', { method: 'GET', headers: h, mode: 'cors' });
+        if (rA.ok) { try { const arr = await rA.json(); alldataMeta = arr && arr[0] ? arr[0] : null; } catch (e) { alldataMeta = null; } }
+        const changedIds = [];
+        let maxCloudMs = 0;
+        (meta || []).forEach(function (row) {
+          if (!row || !row.id || row.id.indexOf('ent:') !== 0) return;
           const t = Date.parse(row.updated_at || '');
-          if (!isNaN(t) && t > out.cloudMs) out.cloudMs = t;
+          if (!isNaN(t) && t > maxCloudMs) maxCloudMs = t;
+          if (tsCache[row.id] !== row.updated_at) changedIds.push(row.id);
         });
-      }
-      if (r2.ok) {
-        const rows = await r2.json();
-        (rows || []).forEach(function (row) {
-          if (!row || row.id !== 'alldata' || !row.data) return;
-          const t = Date.parse(row.updated_at || '');
-          if (!isNaN(t) && t > out.cloudMs) out.cloudMs = t;
-          let obj = null;
-          try { obj = typeof row.data === 'string' ? JSON.parse(row.data) : row.data; } catch (e) { obj = null; }
-          if (!obj || typeof obj !== 'object') return;
-          Object.keys(obj).forEach(function (k) {
-            const entVal = out.data[k];
-            if (entVal === undefined) { out.data[k] = obj[k]; return; }
-            if (Array.isArray(entVal) && Array.isArray(obj[k])) {
-              const byKey = {};
-              function _put(it) {
-                if (it === null || it === undefined) return;
-                const key = _entityKey(it, k);
-                if (!byKey[key]) { byKey[key] = it; return; }
-                byKey[key] = _pickNewer(byKey[key], it, TIE_REMOTE);
-              }
-              (obj[k] || []).forEach(_put);
-              (entVal || []).forEach(_put);
-              out.data[k] = Object.keys(byKey).map(function (key) { return byKey[key]; });
+        if (alldataMeta) {
+          const t = Date.parse(alldataMeta.updated_at || '');
+          if (!isNaN(t) && t > maxCloudMs) maxCloudMs = t;
+          if (tsCache['alldata'] !== alldataMeta.updated_at) changedIds.push('alldata');
+        }
+        out.cloudMs = maxCloudMs;
+        // سحب data فقط للصفوف المتغيرة — متتابع لتفادي قطع الاتصال
+        for (let i = 0; i < changedIds.length; i++) {
+          const cid = changedIds[i];
+          try {
+            const rr = await fetch(_sbEndpoint + '?id=eq.' + encodeURIComponent(cid) + '&select=id,data,updated_at', { method: 'GET', headers: h, mode: 'cors' });
+            if (rr.ok) {
+              const arr = await rr.json();
+              const row = arr && arr[0];
+              if (row && row.id) rows.push(row);
+            } else {
+              syncLog('فشل سحب ' + cid + ' (' + rr.status + ')');
             }
-          });
+          } catch (e) { syncLog('انقطاع أثناء سحب ' + cid + ': ' + e.message); }
+        }
+        (rows || []).forEach(function (row) { if (row && row.id && row.updated_at) newCache[row.id] = row.updated_at; });
+        _saveEntTsCache(newCache);
+      } else {
+        // ---------- أول مرة أو فقدان الكاش: السحب الكامل المعهود ----------
+        const r1 = await fetch(_sbEndpoint + '?id=like.ent:%25&select=id,data,updated_at&order=updated_at.desc&limit=100', { method: 'GET', headers: h, mode: 'cors' });
+        const r2 = await fetch(_sbEndpoint + '?id=eq.alldata&select=id,data,updated_at', { method: 'GET', headers: h, mode: 'cors' });
+        if (r1.ok) { try { rows = (await r1.json()) || []; } catch (e) { rows = []; } }
+        if (r2.ok) {
+          try {
+            const arr = await r2.json();
+            (arr || []).forEach(function (row) { if (row && row.id === 'alldata') rows.push(row); });
+          } catch (e) {}
+        }
+        (rows || []).forEach(function (row) {
+          if (!row || !row.id || !row.updated_at) return;
+          newCache[row.id] = row.updated_at;
+          const t = Date.parse(row.updated_at || '');
+          if (!isNaN(t) && t > out.cloudMs) out.cloudMs = t;
         });
+        _saveEntTsCache(newCache);
       }
+      // ---------- البناء المشترك: من الصفوف المسحوبة فعلاً ----------
+      (rows || []).forEach(function (row) {
+        if (!row || !row.data || row.id.indexOf('ent:') !== 0) return;
+        let val = null;
+        try { val = typeof row.data === 'string' ? JSON.parse(row.data) : row.data; } catch (e) { val = null; }
+        if (val === null || val === undefined) return;
+        out.data[row.id.slice(4)] = val;
+      });
+      (rows || []).forEach(function (row) {
+        if (!row || row.id !== 'alldata' || !row.data) return;
+        const t = Date.parse(row.updated_at || '');
+        if (!isNaN(t) && t > out.cloudMs) out.cloudMs = t;
+        let obj = null;
+        try { obj = typeof row.data === 'string' ? JSON.parse(row.data) : row.data; } catch (e) { obj = null; }
+        if (!obj || typeof obj !== 'object') return;
+        Object.keys(obj).forEach(function (k) {
+          const entVal = out.data[k];
+          if (entVal === undefined) { out.data[k] = obj[k]; return; }
+          if (Array.isArray(entVal) && Array.isArray(obj[k])) {
+            const byKey = {};
+            function _put(it) {
+              if (it === null || it === undefined) return;
+              const key = _entityKey(it, k);
+              if (!byKey[key]) { byKey[key] = it; return; }
+              byKey[key] = _pickNewer(byKey[key], it, TIE_REMOTE);
+            }
+            (obj[k] || []).forEach(_put);
+            (entVal || []).forEach(_put);
+            out.data[k] = Object.keys(byKey).map(function (key) { return byKey[key]; });
+          }
+        });
+      });
     } catch (e) { syncLog('قراءة السحابة فشلت: ' + e.message); }
     return out;
   }
@@ -397,7 +459,19 @@
       const remoteRead = await _readCloudMerge();
       const cloudMs = remoteRead.cloudMs;
       const remoteData = remoteRead.data;
-      if (Object.keys(remoteData).length === 0) { syncLog('لم يتم العثور على بيانات سحابية'); return; }
+
+      // تطبيق الحذف القادم من السحابة دائماً (حتى لو لم تتغير بيانات أخرى)
+      const pendingDeletions = syncDeletions.slice();
+      const remoteDels = Array.isArray(remoteData.syncDeletions) ? remoteData.syncDeletions : [];
+      syncDeletions = pendingDeletions.concat(remoteDels);
+      _applyDeletions();
+      _lsSet('lineh_sync_deletions', JSON.stringify(syncDeletions));
+
+      if (Object.keys(remoteData).length === 0) {
+        _pulledAt['_lastPull'] = new Date().toISOString();
+        _lsSet('_pulledAt', JSON.stringify(_pulledAt));
+        return;
+      }
 
       // حارس آخر تعديل محلي: إذا كان المحلي أحدث من السحابة لا نستبدله
       const localMs = parseInt(_lsGet('_localChangeTime')) || 0;
@@ -408,13 +482,6 @@
       } catch (e) { hasPriorSync = false; }
       const tolerance = 60000; // 60 ثانية لتفادي فروق الساعة
       const localNewer = hasPriorSync && cloudMs > 0 && localMs > 0 && (localMs - cloudMs) > tolerance;
-
-      // تطبيق الحذف القادم من السحابة دائماً
-      const pendingDeletions = syncDeletions.slice();
-      const remoteDels = Array.isArray(remoteData.syncDeletions) ? remoteData.syncDeletions : [];
-      syncDeletions = pendingDeletions.concat(remoteDels);
-      _applyDeletions();
-      _lsSet('lineh_sync_deletions', JSON.stringify(syncDeletions));
 
       if (localNewer) {
         syncLog('التعديلات المحلية أحدث من السحابة (' + new Date(localMs).toLocaleTimeString('ar-EG') + ' > ' + new Date(cloudMs).toLocaleTimeString('ar-EG') + ') — تم الاحتفاظ بالبيانات المحلية');
@@ -711,11 +778,19 @@
   window.pullWaterDocsFromCloud = async function pullWaterDocsFromCloud(silent) {
     if (!supabaseConnected) return;
     try {
-      const resp = await fetch(_sbEndpoint + '?select=id,data,updated_at&id=like.waterdocs%25', {
-        method: 'GET',
-        headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Range': '0-*' }
-      });
-      if (!resp.ok) { syncLog('فشل سحب مستندات المياه: ' + resp.status); return; }
+      let resp = null;
+      for (let attempt = 0; attempt < 3; attempt++) {
+        try {
+          resp = await fetch(_sbEndpoint + '?select=id,data,updated_at&id=like.waterdocs%25&order=updated_at.desc&limit=500', {
+            method: 'GET',
+            headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
+          });
+          if (resp && resp.ok) break;
+          syncLog('فشل سحب مستندات المياه (' + (resp ? resp.status : 'شبكة') + ') — محاولة ' + (attempt + 1) + '/3');
+        } catch (e) { syncLog('انقطاع الشبكة بسحب المستندات — محاولة ' + (attempt + 1) + '/3'); }
+        await new Promise(function (r) { setTimeout(r, 2000 * (attempt + 1)); });
+      }
+      if (!resp || !resp.ok) return;
       const rows = await resp.json();
       if (!rows || !Array.isArray(rows)) return;
       const cloudByKey = {};
