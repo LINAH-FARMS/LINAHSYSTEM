@@ -74,10 +74,10 @@ function printBreadStatement() {
       '.meta-item{text-align:center;}' +
       '.meta-label{display:block;color:#000;font-size:' + (pFont-1) + 'px;}' +
       '.meta-val{font-weight:900;color:#000;font-size:' + baseFont + 'px;}' +
-      'table{width:100%;border-collapse:collapse;font-size:' + baseFont + 'px;margin:4px 0;}' +
-      'thead th{background:#6c757d;color:#fff;padding:3px 2px;border:2px solid #6c757d;text-align:center;font-size:' + baseFont + 'px;font-weight:700;}' +
-      'tbody td{padding:' + rowPad + 'px 2px;border:1px solid #000;text-align:right;background:#fff;}' +
-      '.ctr-name{font-size:' + (baseFont+3) + 'px;font-weight:900;}' +
+      'table{width:100%;table-layout:fixed;border-collapse:collapse;font-size:' + baseFont + 'px;margin:4px 0;}' +
+      'thead th{background:#6c757d;color:#fff;padding:3px 2px;border:2px solid #6c757d;text-align:center;font-size:' + baseFont + 'px;font-weight:700;overflow:hidden;}' +
+      'tbody td{padding:' + rowPad + 'px 2px;border:1px solid #000;text-align:right;background:#fff;word-wrap:break-word;overflow:hidden;}' +
+      '.ctr-name{font-size:' + (baseFont+1) + 'px;font-weight:900;}' +
       '.c{text-align:center !important;}' +
       '.b{font-weight:900;}' +
       '.totals{margin:4px 0;padding:4px 10px;background:#fff;border:2px solid #000;border-radius:4px;}' +
@@ -103,7 +103,7 @@ function printBreadStatement() {
       '</div>' +
       '<table>' +
         '<thead><tr>' +
-          '<th style="width:18px;">م</th><th>التاريخ</th><th>المقاول</th><th style="width:38px;">عدد الأرغفة</th><th style="width:30px;">السعر</th><th style="width:38px;">الإجمالي</th><th style="width:38px;">المدفوع</th><th style="width:38px;">المتبقي</th><th>المسؤول</th>' +
+          '<th style="width:3%;">م</th><th style="width:9%;">التاريخ</th><th style="width:18%;">المقاول</th><th style="width:9%;">عدد الأرغفة</th><th style="width:9%;">السعر</th><th style="width:11%;">الإجمالي</th><th style="width:11%;">المدفوع</th><th style="width:11%;">المتبقي</th><th style="width:19%;">المسؤول</th>' +
         '</tr></thead><tbody>' + tableRows + '</tbody>' +
       '</table>' +
       '<div class="totals">' +
