@@ -488,20 +488,11 @@
         return;
       }
 
-      // حارس آخر تعديل محلي: إذا كان المحلي أحدث من السحابة لا نستبدله
-      const localMs = parseInt(_lsGet('_localChangeTime')) || 0;
-      let hasPriorSync = true;
-      try {
-        const snap = JSON.parse(_lsGet('_lastPushSnapshot') || '{}');
-        hasPriorSync = snap && Object.keys(snap).length > 0;
-      } catch (e) { hasPriorSync = false; }
-      const tolerance = 60000; // 60 ثانية لتفادي فروق الساعة
-      const localNewer = hasPriorSync && cloudMs > 0 && localMs > 0 && (localMs - cloudMs) > tolerance;
-
-      if (localNewer) {
-        syncLog('التعديلات المحلية أحدث من السحابة (' + new Date(localMs).toLocaleTimeString('ar-EG') + ' > ' + new Date(cloudMs).toLocaleTimeString('ar-EG') + ') — تم الاحتفاظ بالبيانات المحلية');
-        if (!silent) showSyncToast('التعديلات المحلية أحدث من السحابة — لم يتم استبدالها');
-      } else {
+      // الدمج عنصر-بعنصر (الأحدث modifiedAt يفوز) يحفظ التعديلات المحلية
+      // مهما كانت تواريخها، فلا حاجة لحارس منع السحب القديم — كان يمنع
+      // وصول تعديلات/إضافات/حذف الأجهزة الأخرى فيبقى الجهاز المحلي على
+      // نسخة قديمة (مثل اختلاف عدد القوة بين البرنامج والفورم الخارجي).
+      {
         // مفاتيح الحذف: أي سجل محذوف محلياً أو من جهاز آخر لا يُرجِع من السحابة
         const pullDelKeys = {};
         syncDeletions.forEach(function (d) {
@@ -714,35 +705,18 @@
   // ============================================================
   //  مزامنة تلقائية دورية (كل 30 ثانية) — اقتصادية جداً في استهلاك
   //  الإنترنت:
-  //  1) فحص خفيف جداً (63 بايت فقط): جلب updated_at فقط للسطر alldata.
-  //  2) لو النسخة السحابية أحدث من آخر سحب → سحب كامل (مرة واحدة فقط).
-  //  3) دفع فقط لو فيه تعديلات محلية غير مرفوعة بعد (مقارنة محلية بلا شبكة).
+  //  1) دفع التعديلات المحلية غير المرفوعة أولاً (مقارنة محلية بلا شبكة)
+  //  2) ثم سحب — إن دفعنا نقوم بسحب فوراً لالتقاط تعديلات الأجهزة الأخرى
+  //     (الدمج عنصر-بعنصر يحفظ التعديلات المحلية في كلا الحالتين)
+  //  3) بدون تغيير محلي: فحص خفيف (updated_at فقط) وسحب مرة واحدة فقط
+  //     لو النسخة السحابية أحدث من آخر سحب.
   //  بلا مزامنة كاملة كل دورة، استهلاك البيانات يبقى بضعة كيلوبايتات
   //  في اليوم، والسحب الكامل (3MB تقريباً) يحدث فقط عند تغيير حقيقي.
   // ============================================================
   setInterval(function () {
     if (!supabaseConnected) return;
     (async function () {
-      try {
-        const resp = await fetch(_sbEndpoint + '?select=id,updated_at&order=updated_at.desc&limit=200', {
-          method: 'GET',
-          headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY },
-          mode: 'cors'
-        });
-        if (resp.ok) {
-          const rows = await resp.json();
-          let cloudMs = 0;
-          (rows || []).forEach(function (row) {
-            if (!row) return;
-            if (row.id !== 'alldata' && row.id.indexOf('ent:') !== 0) return;
-            const t = Date.parse(row.updated_at || '');
-            if (!isNaN(t) && t > cloudMs) cloudMs = t;
-          });
-          let lastMs = 0;
-          try { lastMs = Date.parse((_pulledAt && (_pulledAt['_lastPull'] || _pulledAt['_lastPush'])) || '') || 0; } catch (e) {}
-          if (cloudMs > lastMs + 1000) await window.pullFromSupabase(true);
-        }
-      } catch (e) {}
+      let pushed = false;
       try {
         const allNow = getAllDataForSync();
         const snap = JSON.parse(_lsGet('_lastPushSnapshot') || '{}');
@@ -750,7 +724,31 @@
         for (const k in allNow) {
           if (snap[k] !== JSON.stringify(allNow[k])) { changed = true; break; }
         }
-        if (changed) await window.pushToSupabase(true);
+        if (changed) { await window.pushToSupabase(true); pushed = true; }
+      } catch (e) {}
+      try {
+        if (pushed) {
+          await window.pullFromSupabase(true);
+        } else {
+          const resp = await fetch(_sbEndpoint + '?select=id,updated_at&order=updated_at.desc&limit=200', {
+            method: 'GET',
+            headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY },
+            mode: 'cors'
+          });
+          if (resp.ok) {
+            const rows = await resp.json();
+            let cloudMs = 0;
+            (rows || []).forEach(function (row) {
+              if (!row) return;
+              if (row.id !== 'alldata' && row.id.indexOf('ent:') !== 0) return;
+              const t = Date.parse(row.updated_at || '');
+              if (!isNaN(t) && t > cloudMs) cloudMs = t;
+            });
+            let lastMs = 0;
+            try { lastMs = Date.parse((_pulledAt && (_pulledAt['_lastPull'] || _pulledAt['_lastPush'])) || '') || 0; } catch (e) {}
+            if (cloudMs > lastMs + 1000) await window.pullFromSupabase(true);
+          }
+        }
       } catch (e) {}
     })();
   }, 30000);
