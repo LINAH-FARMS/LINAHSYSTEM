@@ -58,11 +58,13 @@ function printBreadStatement() {
 
   var w = window.open('', '_blank');
   var pageSize = orientation === 'landscape' ? 'A4 landscape' : 'A4 portrait';
+  var pageW = orientation === 'landscape' ? 277 : 190;
   w.document.write('<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8"><title>بيان توريد خبز — LINAHSYSTEM</title>' +
     '<style>' +
-      '@page{size:' + pageSize + ';margin:8mm 10mm;}' +
+      '@page{size:' + (orientation === 'landscape' ? '297mm 210mm' : '210mm 297mm') + ';margin:8mm 10mm;}' +
+      'html,body{width:auto;}' +
       'body{font-family:Cairo,"Traditional Arabic","Segoe UI",sans-serif;padding:0;margin:0;color:#000;}' +
-      '.page{width:100%;max-width:100%;box-sizing:border-box;padding:2px 0;}' +
+      '.page{width:' + pageW + 'mm;max-width:100%;box-sizing:border-box;padding:2px 0;}' +
       '.logo-section{display:flex;align-items:center;justify-content:space-between;border-bottom:3px double #000;padding-bottom:4px;margin-bottom:6px;}' +
       '.logo-section .right{display:flex;align-items:center;gap:6px;}' +
       '.logo-section .right img{width:36px;height:36px;border-radius:50%;object-fit:cover;border:2px solid #000;padding:1px;}' +
@@ -103,7 +105,7 @@ function printBreadStatement() {
       '</div>' +
       '<table>' +
         '<thead><tr>' +
-          '<th style="width:3%;">م</th><th style="width:9%;">التاريخ</th><th style="width:18%;">المقاول</th><th style="width:9%;">عدد الأرغفة</th><th style="width:9%;">السعر</th><th style="width:11%;">الإجمالي</th><th style="width:11%;">المدفوع</th><th style="width:11%;">المتبقي</th><th style="width:19%;">المسؤول</th>' +
+          '<th style="width:3%;">م</th><th style="width:9%;">التاريخ</th><th style="width:18%;">المقاول</th><th style="width:9%;">عدد الأرغفة</th><th style="width:9%;">السعر</th><th style="width:11%;">الإجمالي</th><th style="width:11%;">المدفوع</th><th style="width:11%;">المتبقي</th><th style="width:18%;">المسؤول</th>' +
         '</tr></thead><tbody>' + tableRows + '</tbody>' +
       '</table>' +
       '<div class="totals">' +
