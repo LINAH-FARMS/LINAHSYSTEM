@@ -300,21 +300,48 @@ try { var sn = localStorage.getItem('dyn_septics'); if (sn) { septicNames = _cle
   dbg.textContent = '⚡ جاري تحميل البيانات...';
   var card = document.querySelector('.card');
   if (card) card.appendChild(dbg);
-  fetch(SB + '/rest/v1/sync_data?id=eq.alldata&select=data->syncDeletions,data->employees,data->excludedEmployees,data->inventoryItems,data->vacations,data->archiveData,data->dynamicStores,data->dynamicSeptics', { headers:{'apikey':KEY,'Authorization':'Bearer '+KEY} })
-    .then(function(r){
-      if (!r.ok) { dbg.textContent = '❌ خطأ في الاتصال: ' + r.status; return null; }
-      return r.json();
-    })
-    .then(function(rows){
-      if (!rows) return;
-      if (!rows.length || !rows[0]) { dbg.textContent = '⚠️ لا توجد بيانات على السحابة (شغّل البرنامج وsync أولاً)'; return; }
-      var ad = rows[0];
-      _cloudSyncDeletions = Array.isArray(ad.syncDeletions) ? ad.syncDeletions : [];
-      if (ad.employees && ad.employees.length) {
+  // القراءة من صفوف ent:* (نظام المزامنة الجديد) مع الرجوع لصف alldata القديم كبديل
+  var ENT_IDS = {
+    employees: 'ent:employees',
+    excludedEmployees: 'ent:excludedEmployees',
+    inventoryItems: 'ent:inventoryItems',
+    vacations: 'ent:vacations',
+    archiveData: 'ent:archiveData',
+    dynamicStores: 'ent:dynamicStores',
+    dynamicSeptics: 'ent:dynamicSeptics',
+    syncDeletions: 'ent:syncDeletions'
+  };
+  var entNames = Object.keys(ENT_IDS);
+  var entTasks = entNames.map(function(name){
+    return fetch(SB + '/rest/v1/sync_data?id=eq.' + encodeURIComponent(ENT_IDS[name]) + '&select=id,data', { headers:{'apikey':KEY,'Authorization':'Bearer '+KEY} })
+      .then(function(r){ return r.ok ? r.json() : []; })
+      .then(function(rows){ return (rows && rows[0] && rows[0].data) ? rows[0] : null; })
+      .catch(function(){ return null; });
+  });
+  var fbTask = fetch(SB + '/rest/v1/sync_data?id=eq.alldata&select=id,data', { headers:{'apikey':KEY,'Authorization':'Bearer '+KEY} })
+    .then(function(r){ return r.ok ? r.json() : []; })
+    .catch(function(){ return []; });
+  Promise.all(entTasks.concat([fbTask]))
+    .then(function(results){
+      var ent = {};
+      entTasks.forEach(function(_, i){
+        var r = results[i];
+        if (!r || !r.data) return;
+        try { ent[entNames[i]] = typeof r.data === 'string' ? JSON.parse(r.data) : r.data; } catch(e){}
+      });
+      var ad = {};
+      var fbRows = results[results.length - 1] || [];
+      if (fbRows[0] && fbRows[0].data) {
+        try { ad = typeof fbRows[0].data === 'string' ? JSON.parse(fbRows[0].data) : fbRows[0].data; } catch(e){}
+      }
+      function get(nm) { return (ent[nm] !== undefined) ? ent[nm] : ad[nm]; }
+      _cloudSyncDeletions = Array.isArray(get('syncDeletions')) ? get('syncDeletions') : [];
+      var cloudEmps = get('employees');
+      if (Array.isArray(cloudEmps) && cloudEmps.length) {
         var _exclMap3 = {};
-        (ad.excludedEmployees || []).forEach(function(x){ _exclMap3[x.code || x.id || x.name] = true; });
+        (get('excludedEmployees') || []).forEach(function(x){ _exclMap3[x.code || x.id || x.name] = true; });
         var _seen3 = {}, _emps3 = [];
-        ad.employees.forEach(function(e){
+        cloudEmps.forEach(function(e){
           var k = String((e && (e.code || e.id || e.name)) || '').trim();
           if (!k || _exclMap3[k] || _seen3[k]) return;
           _seen3[k] = true;
@@ -324,12 +351,13 @@ try { var sn = localStorage.getItem('dyn_septics'); if (sn) { septicNames = _cle
       }
       var fc = document.getElementById('force-count');
       if (fc) fc.textContent = employees.length;
-      if (Array.isArray(ad.inventoryItems)) invItems = ad.inventoryItems;
-      if (Array.isArray(ad.vacations)) vacations = ad.vacations;
-      if (Array.isArray(ad.archiveData)) {
+      if (Array.isArray(get('inventoryItems'))) invItems = get('inventoryItems');
+      if (Array.isArray(get('vacations'))) vacations = get('vacations');
+      var cloudArchive = get('archiveData');
+      if (Array.isArray(cloudArchive)) {
         var _delA = {};
         (_cloudSyncDeletions || []).forEach(function(d){ if (d && d.entity === 'archiveData') _delA[d.key] = true; });
-        var cloudA = ad.archiveData.filter(function(it){
+        var cloudA = cloudArchive.filter(function(it){
           if (!it) return false;
           var k = it.id || (String(it.date || '') + '|' + String(it.item || '') + '|' + String(it.location || ''));
           return !_delA[k];
@@ -340,19 +368,19 @@ try { var sn = localStorage.getItem('dyn_septics'); if (sn) { septicNames = _cle
         cloudA.forEach(_addA);
         archiveData = mergedA;
       }
-      if (ad.dynamicStores) {
-        var dsr = ad.dynamicStores;
+      var dsr = get('dynamicStores');
+      if (dsr) {
         if (typeof dsr === 'string') { try { dsr = JSON.parse(dsr); } catch(e){} }
         if (!Array.isArray(dsr) && dsr && typeof dsr === 'object') { dsr = Object.values(dsr); }
         if (Array.isArray(dsr)) dynStores = _cleanArr(dsr);
       }
       var cnt = 0;
-      if (ad.dynamicSeptics) {
-        var raw = ad.dynamicSeptics;
-        if (typeof raw === 'string') { try { raw = JSON.parse(raw); } catch(e) {} }
-        if (!Array.isArray(raw) && raw && typeof raw === 'object') { raw = Object.values(raw); }
-        if (Array.isArray(raw)) {
-          septicNames = raw.map(function(s){
+      var rawSeptics = get('dynamicSeptics');
+      if (rawSeptics) {
+        if (typeof rawSeptics === 'string') { try { rawSeptics = JSON.parse(rawSeptics); } catch(e) {} }
+        if (!Array.isArray(rawSeptics) && rawSeptics && typeof rawSeptics === 'object') { rawSeptics = Object.values(rawSeptics); }
+        if (Array.isArray(rawSeptics)) {
+          septicNames = rawSeptics.map(function(s){
             if (typeof s === 'string') return _sanitizeStr(s);
             if (s && typeof s === 'object') {
               if (s.name && typeof s.name === 'string') return _sanitizeStr(s.name);
@@ -483,25 +511,22 @@ function _ddMergeEmps(remoteList, localList, delKeys, tieLocal) {
   return out;
 }
 function _pushEmployeesToCloud() {
-  fetch(SB + '/rest/v1/sync_data?id=eq.alldata&select=data', {
+  fetch(SB + '/rest/v1/sync_data?id=eq.ent:employees&select=data', {
     headers: { 'apikey': KEY, 'Authorization': 'Bearer ' + KEY }
   })
   .then(function(r) { return r.json(); })
   .then(function(rows) {
-    var ad = {};
+    var remote = [];
     if (rows && rows[0] && rows[0].data) {
-      ad = typeof rows[0].data === 'string' ? JSON.parse(rows[0].data) : rows[0].data;
+      try { remote = typeof rows[0].data === 'string' ? JSON.parse(rows[0].data) : rows[0].data; } catch(e) { remote = []; }
     }
     var _delMap4 = {};
     (_cloudSyncDeletions || []).forEach(function(d){ if (d && d.entity === 'employees') _delMap4[d.key] = true; });
-    var _exclMap4 = {};
-    (ad.excludedEmployees || []).forEach(function(x){ _exclMap4[x.code || x.id || x.name] = true; });
-    ad.employees = _ddMergeEmps(Array.isArray(ad.employees) ? ad.employees : [], employees.slice(), _delMap4, true)
-      .filter(function(e){ return !_exclMap4[_ddEmpKey(e)]; });
-    return fetch(SB + '/rest/v1/sync_data?id=eq.alldata', {
+    var merged = _ddMergeEmps(Array.isArray(remote) ? remote : [], employees.slice(), _delMap4, true);
+    return fetch(SB + '/rest/v1/sync_data?id=eq.ent:employees', {
       method: 'POST',
       headers: { 'apikey': KEY, 'Authorization': 'Bearer ' + KEY, 'Content-Type': 'application/json', 'Prefer': 'resolution=merge-duplicates' },
-      body: JSON.stringify({ id: 'alldata', data: ad, updated_at: new Date().toISOString() })
+      body: JSON.stringify({ id: 'ent:employees', data: merged, updated_at: new Date().toISOString() })
     });
   })
   .then(function(r) {

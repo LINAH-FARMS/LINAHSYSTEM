@@ -340,14 +340,15 @@
   //  قوائم الأسماء (البيارات، المخازن، الأقسام...): اتحاد فقط — لا تنقص أبداً
   // ============================================================
   const NAME_LIST_KEYS = ['dynamicSeptics','dynamicRooms','dynamicDepts','dynamicTitles','dynamicSectors','dynamicVisitorTypes','contractorSectors','contractorRooms','bakeryContractorsNames','dynamicStores','deptTitles'];
-  function _mergeNameLists(localArr, remoteArr) {
+  function _mergeNameLists(localArr, remoteArr, entity, delKeys) {
     const out = [];
     const seen = {};
+    const del = (delKeys && typeof delKeys === 'object') ? delKeys : null;
     [remoteArr, localArr].forEach(function (arr) {
       (arr || []).forEach(function (x) {
         if (typeof x !== 'string') return;
         const s = x.trim();
-        if (s.length < 2 || seen[s]) return;
+        if (s.length < 2 || seen[s] || (del && del[s])) return;
         seen[s] = true;
         out.push(s);
       });
@@ -391,7 +392,7 @@
           if (k === 'vacations') {
             mergedPayload[k] = _mergeVacations(val, remoteArr, TIE_LOCAL, delByEntity[k] || {});
           } else if (NAME_LIST_KEYS.indexOf(k) !== -1) {
-            mergedPayload[k] = _mergeNameLists(val, remoteArr);
+            mergedPayload[k] = _mergeNameLists(val, remoteArr, k, delByEntity[k] || {});
           } else {
             mergedPayload[k] = _mergeSyncElements(val, remoteArr, k, delByEntity[k] || {}, TIE_LOCAL);
           }
@@ -518,7 +519,7 @@
             if (k === 'vacations') {
               setEntityVar(k, _mergeVacations(localVal, v, TIE_REMOTE, pullDelKeys[k] || {}));
             } else if (NAME_LIST_KEYS.indexOf(k) !== -1) {
-              setEntityVar(k, _mergeNameLists(localVal, v));
+              setEntityVar(k, _mergeNameLists(localVal, v, k, pullDelKeys[k] || {}));
             } else {
               setEntityVar(k, _mergeSyncElements(localVal, v, k, pullDelKeys[k] || {}, TIE_REMOTE));
             }
