@@ -56,15 +56,15 @@ function printBreadStatement() {
 
   var grandRem = grandTotalRevenue - grandTotalPaid;
 
-  var w = window.open('', '_blank');
+  var w = window.open('', '_blank', 'width=1100,height=780');
   var pageSize = orientation === 'landscape' ? 'A4 landscape' : 'A4 portrait';
   var pageW = orientation === 'landscape' ? 277 : 190;
   w.document.write('<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8"><title>بيان توريد خبز — LINAHSYSTEM</title>' +
     '<style>' +
       '@page{size:' + (orientation === 'landscape' ? '297mm 210mm' : '210mm 297mm') + ';margin:8mm 10mm;}' +
-      'html,body{width:auto;}' +
+      'html,body{width:auto;direction:rtl;}' +
       'body{font-family:Cairo,"Traditional Arabic","Segoe UI",sans-serif;padding:0;margin:0;color:#000;}' +
-      '.page{width:' + pageW + 'mm;max-width:100%;box-sizing:border-box;padding:2px 0;}' +
+      '.page{width:' + pageW + 'mm;max-width:100%;box-sizing:border-box;padding:2px 0;margin:0 auto;}' +
       '.logo-section{display:flex;align-items:center;justify-content:space-between;border-bottom:3px double #000;padding-bottom:4px;margin-bottom:6px;}' +
       '.logo-section .right{display:flex;align-items:center;gap:6px;}' +
       '.logo-section .right img{width:36px;height:36px;border-radius:50%;object-fit:cover;border:2px solid #000;padding:1px;}' +
@@ -118,5 +118,6 @@ function printBreadStatement() {
       '<div class="footer">بيان توريد خبز — لينه فارمز © ' + new Date().getFullYear() + '</div>' +
     '</div></body></html>');
   w.document.close();
+  try { w.resizeTo(1100, 780); w.focus(); } catch (e) {}
   setTimeout(function() { w.print(); }, 600);
 }
