@@ -1416,6 +1416,36 @@
       syncStorage(); rebuildAllDropdowns(); renderDynamicLists();
     }
 
+    function addNewTitleForDept() {
+      var deptSel = document.getElementById('form-emp-dept');
+      var titleSel = document.getElementById('form-emp-title-select');
+      var dept = deptSel ? deptSel.value : '';
+      if (!dept) { alert('الرجاء اختيار الإدارة أولاً.'); return; }
+      var titleName = window.prompt('أدخل المسمى الوظيفي الجديد للإدارة المختارة: ' + dept, '');
+      if (titleName === null || titleName === undefined) return;
+      titleName = String(titleName).trim();
+      if (!titleName) return;
+      if (!deptTitles[dept]) deptTitles[dept] = [];
+      if (deptTitles[dept].includes(titleName)) { alert('هذا المسمى مسجل بالفعل لهذه الإدارة.'); return; }
+      deptTitles[dept].push(titleName);
+      if (!dynamicTitles.includes(titleName)) dynamicTitles.push(titleName);
+      _lsSet('dept_titles', JSON.stringify(deptTitles));
+      _lsSet('dyn_titles', JSON.stringify(dynamicTitles));
+      rebuildAllDropdowns();
+      if (titleSel) {
+        var found = false;
+        Array.from(titleSel.options).forEach(function(o) { if (o.value === titleName) found = true; });
+        if (found) {
+          titleSel.value = titleName;
+        } else {
+          var opt = document.createElement('option');
+          opt.value = titleName; opt.textContent = titleName;
+          titleSel.appendChild(opt);
+          titleSel.value = titleName;
+        }
+      }
+    }
+
     function addDeptTitle() {
       let dept = document.getElementById('dept-title-dept-select').value;
       let titleName = document.getElementById('new-dept-title').value.trim();
