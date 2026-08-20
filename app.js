@@ -91,13 +91,29 @@
       _lsSet('dyn_titles', JSON.stringify(dynamicTitles));
       rebuildDeptTitles();
 
+      function _restoreFormVal(selId, val) {
+        if (!val) return;
+        var sel = document.getElementById(selId);
+        if (!sel) return;
+        for (var i = 0; i < sel.options.length; i++) {
+          if (sel.options[i].value === val) { sel.value = val; break; }
+        }
+      }
+
       fillSelectWithOptions('form-emp-dept', dynamicDepts, '-- اختر الإدارة --');
       fillSelectWithOptions('form-emp-gov', validGovs, '-- اختر المحافظة --');
       fillSelectWithOptions('form-emp-sector', dynamicSectors, '-- اختر المبنى --');
       var secSel = document.getElementById('form-emp-sector');
       if (secSel) { secSel.onchange = updateEmpRoomBySector; }
+      // استرجاع الاختيارات قبل بناء القوائم التابعة — وإلا تُمحى قائمة
+      // الغرفة (لأن المبنى فارغ لحظتها) وقائمة الوظيفة (بسبب الإدارة الفارغة)
+      _restoreFormVal('form-emp-dept', _prevForm.dept);
+      _restoreFormVal('form-emp-gov', _prevForm.gov);
+      _restoreFormVal('form-emp-sector', _prevForm.sector);
       updateEmpRoomBySector();
       filterTitlesByDept();
+      _restoreFormVal('form-emp-title-select', _prevForm.title);
+      _restoreFormVal('form-emp-room', _prevForm.room);
 
       fillSelectWithOptions('inv-dept-select', dynamicDepts, '-- اختر القسم --');
       fillSelectWithOptions('septic-name-select', dynamicSeptics, '-- اختر --');
@@ -109,20 +125,6 @@
       fillSelectWithOptions('hosp-type', dynamicVisitorTypes, '');
       populateBctrDatalist();
       initEmployeeDatalists();
-      // استرجاع الاختيارات المحفوظة (إن كانت القيم ما زالت موجودة في القوائم)
-      function _restoreFormVal(selId, val) {
-        if (!val) return;
-        var sel = document.getElementById(selId);
-        if (!sel) return;
-        for (var i = 0; i < sel.options.length; i++) {
-          if (sel.options[i].value === val) { sel.value = val; break; }
-        }
-      }
-      _restoreFormVal('form-emp-dept', _prevForm.dept);
-      _restoreFormVal('form-emp-gov', _prevForm.gov);
-      _restoreFormVal('form-emp-sector', _prevForm.sector);
-      _restoreFormVal('form-emp-title-select', _prevForm.title);
-      _restoreFormVal('form-emp-room', _prevForm.room);
     }
 
     function populateVacationEmpSelect() {}
