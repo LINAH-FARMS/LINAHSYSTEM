@@ -254,7 +254,7 @@ const KEY = 'sb_publishable_AvMTa-zmQ4hgA1hJNpYc3g_gu8rlirz';
 var HEADERS = { 'apikey': KEY, 'Authorization': 'Bearer ' + KEY, 'Content-Type': 'application/json' };
 var employees = [];
 var _cloudSyncDeletions = [];
-try { var d = localStorage.getItem('lineh_employees'); if (d) employees = JSON.parse(d); } catch(e){}
+try { var d = localStorage.getItem('dd_lineh_employees') || localStorage.getItem('lineh_employees'); if (d) employees = JSON.parse(d); } catch(e){}
 var dailyData = [];
 try { var dd = localStorage.getItem('linah_daily_data'); if (dd) dailyData = JSON.parse(dd); } catch(e){}
 if (!Array.isArray(dailyData)) dailyData = [];
@@ -351,6 +351,7 @@ try { var sn = localStorage.getItem('dyn_septics'); if (sn) { septicNames = _cle
       }
       var fc = document.getElementById('force-count');
       if (fc) fc.textContent = employees.length;
+      try { renderForceMobile(); } catch(e){}
       if (Array.isArray(get('inventoryItems'))) invItems = get('inventoryItems');
       if (Array.isArray(get('vacations'))) vacations = get('vacations');
       var cloudArchive = get('archiveData');
@@ -482,7 +483,7 @@ function ddSetEmpStatus(idx, val) {
   if (!employees[idx]) return;
   employees[idx].status = val;
   employees[idx].modifiedAt = new Date().toISOString();
-  try { localStorage.setItem('lineh_employees', JSON.stringify(employees)); } catch(e){}
+  try { localStorage.setItem('dd_lineh_employees', JSON.stringify(employees)); } catch(e){}
   renderForceMobile();
   _pushEmployeesToCloud();
 }
