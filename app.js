@@ -58,6 +58,16 @@
     }
 
     function rebuildAllDropdowns() {
+      // الحفاظ على اختيارات نافذة إضافة/تعديل الموظف أثناء إعادة بناء القوائم
+      // (كانت تُمحى عند أي مزامنة/سحب لأن القوائم تُبنى من جديد من الصفر)
+      function _prevFormVal(id) { var el = document.getElementById(id); return el ? el.value : ''; }
+      var _prevForm = {
+        dept: _prevFormVal('form-emp-dept'),
+        gov: _prevFormVal('form-emp-gov'),
+        sector: _prevFormVal('form-emp-sector'),
+        title: _prevFormVal('form-emp-title-select'),
+        room: _prevFormVal('form-emp-room')
+      };
       autoDiscoverDynamicData();
       // Normalize Arabic variants for dedup (ة/ه, أ/إ/آ/ا, ى/ي)
       function govNorm(s) { return s.replace(/[ة]/g,'ه').replace(/[أإآ]/g,'ا').replace(/[ى]/g,'ي'); }
@@ -99,6 +109,20 @@
       fillSelectWithOptions('hosp-type', dynamicVisitorTypes, '');
       populateBctrDatalist();
       initEmployeeDatalists();
+      // استرجاع الاختيارات المحفوظة (إن كانت القيم ما زالت موجودة في القوائم)
+      function _restoreFormVal(selId, val) {
+        if (!val) return;
+        var sel = document.getElementById(selId);
+        if (!sel) return;
+        for (var i = 0; i < sel.options.length; i++) {
+          if (sel.options[i].value === val) { sel.value = val; break; }
+        }
+      }
+      _restoreFormVal('form-emp-dept', _prevForm.dept);
+      _restoreFormVal('form-emp-gov', _prevForm.gov);
+      _restoreFormVal('form-emp-sector', _prevForm.sector);
+      _restoreFormVal('form-emp-title-select', _prevForm.title);
+      _restoreFormVal('form-emp-room', _prevForm.room);
     }
 
     function populateVacationEmpSelect() {}
