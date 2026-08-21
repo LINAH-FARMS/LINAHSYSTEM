@@ -87,9 +87,10 @@
     return null;
   }
 
-  // ---- إلغاء الحذف عند إعادة الإضافة المتعمدة ----
-  // إن وُجد الاسم المحذوف موجوداً محلياً فهذا يعني أن المستخدم أعاده عمداً
-  function _unkillReAdded() {
+  // ---- شفاء لمرة واحدة عند الإقلاع فقط ----
+  // يقارن قائمة الحذف بحالة آخر جلسة محفوظة: أي اسم ما زال محفوظاً
+  // في البيانات من الجلسة السابقة يعني إعادة إضافة عمدية سابقة فيُشطب
+  function _healOnce() {
     Object.keys(LIST_OF).forEach(function (kind) {
       var arr = _arrOf(kind);
       if (!Array.isArray(arr) || !kill[kind]) return;
@@ -100,6 +101,32 @@
       });
     });
   }
+
+  // ---- إلغاء الحذف عند إعادة الإضافة المتعمدة فقط ----
+  // لم نعد نخمن من مجرد وجود الاسم في البيانات — السحابة قد تعيد المحذوف
+  // باسم شبه مطابق فيظن أنه إضافة عمدية. الإلغاء الآن يحدث حصراً عند ضغط
+  // زر "إضافة" في الإدارة المرنة لنفس العنصر (نقرأ الخانة قبل مسحها)
+  function _clearKillFor(kind, name) {
+    var n = _norm(name);
+    if (n && kill[kind] && kill[kind][n]) { delete kill[kind][n]; _save(); return true; }
+    return false;
+  }
+  var ADD_MAP = [
+    { btn: 'btn-sector', input: 'new-sector', kind: 'sectors' },
+    { btn: 'btn-room',   input: 'new-room',   kind: 'rooms' },
+    { btn: 'btn-septic', input: 'new-septic', kind: 'septics' }
+  ];
+  // capture=true حتى نقرأ قيمة الخانة قبل أن يمسحها معالج زر الإضافة
+  document.addEventListener('click', function (ev) {
+    var t = ev.target;
+    if (!t || !t.closest) return;
+    ADD_MAP.forEach(function (m) {
+      if (!t.closest('#' + m.btn)) return;
+      var inp = document.getElementById(m.input);
+      var val = inp ? String(inp.value || '').trim() : '';
+      if (val) _clearKillFor(m.kind, val);
+    });
+  }, true);
 
   // ---- الطرد الدائم من كل مكان ----
   function prune() {
@@ -139,9 +166,9 @@
     try { if (typeof rebuildAllDropdowns === 'function') rebuildAllDropdowns(); } catch (e) {}
   }
 
-  // تشغيل بعد الأحداث: إلغاء الحذف للمُعاد إضافته ثم طرد الباقي
+  // تشغيل بعد الأحداث: طرد المحذوف فقط — بدون أي إلغاء تلقائي
+  // (السحابة قد تعيد اسماً محذوفاً باسم شبه مطابق فلا يجوز إلغاء حذفه هنا)
   function run() {
-    try { if (armed) _unkillReAdded(); } catch (e) {}
     try { if (prune()) { if (typeof syncStorage === 'function') syncStorage(); _refreshUI(); } } catch (e) {}
   }
   // تشغيل عند الإقلاع: طرد فقط بدون إلغاء (حتى لا تُشرعن استعادة الافتراضيات)
@@ -192,8 +219,10 @@
 
   // ---- الإقلاع ----
   function boot() {
-    // شفاء ذاتي: أي اسم في قائمة الحذف وما زال موجوداً في البيانات = إعادة إضافة عمداً
-    try { _unkillReAdded(); } catch (e) {}
+    // شفاء ذاتي مرة واحدة عند الإقلاع فقط: أي اسم في قائمة الحذف وما زال
+    // محفوظاً في بيانات آخر جلسة = إعادة إضافة عمدية سابقة فيُشطب من القائمة.
+    // (لا نكرر هذا بعد الإقلاع — عودة الاسم لاحقاً تعني رجوعاً من السحابة ويُطرد)
+    try { _healOnce(); } catch (e) {}
     try { _seedFromLog(); } catch (e) {}
     bootPrune();
     armed = true;
