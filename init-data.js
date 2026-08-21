@@ -152,10 +152,18 @@
         var sec = _sanitize(r.sector);
         if (sec) validSet[sec] = true;
       });
-      dynamicSectors = Object.keys(validSet).sort();
+      // احترام الحذف: أي مبنى مسجل حذفه في syncDeletions لا يُعاد إضافته أبداً
+      var _delSet = {};
+      try {
+        (_safeJsonParse(_lsGet('lineh_sync_deletions'), [])).forEach(function(_d) {
+          if (_d && _d.entity === 'dynamicSectors' && _d.key) _delSet[String(_d.key).trim()] = true;
+        });
+      } catch (_e) {}
+      dynamicSectors = Object.keys(validSet).filter(function(_s) { return !_delSet[_s]; }).sort();
       // Ensure the 12 known buildings are present as fallback
       var knownBuildings = ["سكن المهندسين (السكن الجديد)","سكن الموظفين (السكن الإداري)","سكن العاملين (السكن الإداري)","سكن العاملين الجديد 2025 (C)","سكن العاملين الجديد 2025 (D)","سكن العاملين الجديد 2025 (E)","سكن العاملين الجديد 2025 (F)","سكن العاملين (سكن الجيزوارين)","سكن العاملين (سكن النخالين)","سكن القطاعات","سكن فاليو الجديد","سكن الكرفان"];
-      if (!dynamicSectors.length) dynamicSectors = knownBuildings.slice();
+      // لا يُستعاد أي مبنى افتراضي إذا كان المستخدم قد حذف مباني أو كل المباني
+      if (!dynamicSectors.length && Object.keys(_delSet).length === 0) dynamicSectors = knownBuildings.slice();
       _lsSet('dyn_sectors', JSON.stringify(dynamicSectors));
     })();
     // evalTemplates now stores KPI objects: [{ name, max }, ...]
