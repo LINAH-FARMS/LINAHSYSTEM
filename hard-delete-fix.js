@@ -1,8 +1,8 @@
 // ============================================================
 //  حماية نهائية ضد رجوع المحذوف (مباني / غرف / بيارات):
 //  - قائمة حذف دائمة في localStorage لا تنتهي ولا تمسحها المزامنة
-//  - تُبذر تلقائياً من سجل الحذف القديم syncDeletions فتشمل
-//    كل ما حُذف سابقاً بصيغ مفاتيح خاطئة
+//  - تُبذر من سجل الحذف القديم بشكل آمن: أي اسم ما زال موجوداً
+//    في البيانات الحالية لا يُطرد أبداً (حماية للمباني المعاد إضافتها)
 //  - مطابقة مُطبَّعة (مسافات/أرقام عربية/محارف خفية) فلا يرجع
 //    العنصر باسم شبه متطابق مثل "بيارة ق 6" و"بيارة ق6"
 //  - تعمل بعد كل: تحميل، اكتشاف تلقائي، سحب، دفع، ودورياً
@@ -48,7 +48,17 @@
     return !!(n && kill[kind] && kill[kind][n]);
   }
 
-  // ---- بذر القائمة الدائمة من سجل الحذف القديم ----
+  // ---- بذر آمن من سجل الحذف القديم ----
+  // الأمان أولاً: لا نبذر حذفاً لأي اسم ما زال موجوداً في البيانات الحالية،
+  // فقد يكون المستخدم أعاد إضافته عمداً بعد حذف قديم — وبذلك لا تُمسح مبانٍ نشطة
+  function _isPresent(kind, name) {
+    var arr = _arrOf(kind);
+    if (!arr) return true; // البيانات غير جاهزة = نعتبره موجوداً ولا نبذر (الأمان أولاً)
+    var n = _norm(name);
+    if (!n) return true;
+    for (var i = 0; i < arr.length; i++) { if (_norm(arr[i]) === n) return true; }
+    return false;
+  }
   function _seedFromLog() {
     var dels = [];
     try { var d0 = JSON.parse(localStorage.getItem('lineh_sync_deletions') || '[]'); if (Array.isArray(d0)) dels = d0.slice(); } catch (e) {}
@@ -56,19 +66,32 @@
     dels.forEach(function (d) {
       if (!d || d.key == null) return;
       var k = String(d.key);
-      if (d.entity === 'dynamicSectors') _add('sectors', k);
-      else if (d.entity === 'roomsCapacity' && k.indexOf('|') === -1) _add('sectors', k); // صيغة قديمة: اسم المبنى فقط
-      else if (d.entity === 'dynamicRooms') _add('rooms', k);
-      else if (d.entity === 'dynamicSeptics') _add('septics', k);
+      var kind = null;
+      if (d.entity === 'dynamicSectors') kind = 'sectors';
+      else if (d.entity === 'roomsCapacity' && k.indexOf('|') === -1) kind = 'sectors'; // صيغة قديمة: اسم المبنى فقط
+      else if (d.entity === 'dynamicRooms') kind = 'rooms';
+      else if (d.entity === 'dynamicSeptics') kind = 'septics';
+      if (!kind) return;
+      if (_isPresent(kind, k)) return; // موجود حالياً = مستخدم فعلياً — لا يُطرد
+      _add(kind, k);
     });
+  }
+
+  // ---- الوصول الآمن لمصفوفات النظام (let عامة لا تظهر على window) ----
+  function _arrOf(kind) {
+    try {
+      if (kind === 'sectors' && typeof dynamicSectors !== 'undefined' && Array.isArray(dynamicSectors)) return dynamicSectors;
+      if (kind === 'rooms' && typeof dynamicRooms !== 'undefined' && Array.isArray(dynamicRooms)) return dynamicRooms;
+      if (kind === 'septics' && typeof dynamicSeptics !== 'undefined' && Array.isArray(dynamicSeptics)) return dynamicSeptics;
+    } catch (e) {}
+    return null;
   }
 
   // ---- إلغاء الحذف عند إعادة الإضافة المتعمدة ----
   // إن وُجد الاسم المحذوف موجوداً محلياً فهذا يعني أن المستخدم أعاده عمداً
   function _unkillReAdded() {
     Object.keys(LIST_OF).forEach(function (kind) {
-      var arr = null;
-      try { arr = (typeof window[LIST_OF[kind]] !== 'undefined') ? window[LIST_OF[kind]] : null; } catch (e) { arr = null; }
+      var arr = _arrOf(kind);
       if (!Array.isArray(arr) || !kill[kind]) return;
       Object.keys(kill[kind]).forEach(function (n) {
         for (var i = 0; i < arr.length; i++) {
@@ -168,7 +191,13 @@
   }
 
   // ---- الإقلاع ----
-  function boot() { try { _seedFromLog(); } catch (e) {} bootPrune(); armed = true; }
+  function boot() {
+    // شفاء ذاتي: أي اسم في قائمة الحذف وما زال موجوداً في البيانات = إعادة إضافة عمداً
+    try { _unkillReAdded(); } catch (e) {}
+    try { _seedFromLog(); } catch (e) {}
+    bootPrune();
+    armed = true;
+  }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
   else boot();
   window.addEventListener('load', function () { try { bootPrune(); } catch (e) {} });
