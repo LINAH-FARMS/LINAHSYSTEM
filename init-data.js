@@ -89,6 +89,15 @@
     let dynamicRooms = _strArr(_safeJsonParse(_lsGet('dyn_rooms'), ["غرفة 1","غرفة 2","غرفة 3","غرفة 4","غرفة 5","غرفة 6","غرفة 7","غرفة 8","غرفة 9","غرفة 10","غرفة 11","غرفة 12","غرفة 13"]));
     let dynamicSeptics = _strArr(_safeJsonParse(_lsGet('dyn_septics'), ["بيارة محطة الفرز الجديدة قطاع 22","بيارة المطبخ","بيارة السكن الاداري","بيارة ق3","بيارة سكن نخالين 22","بيارة ق30","بيارة ق6","بيارة ق27","بيارة قطاع 25","بيارة قطاع 33","بيارة قطاع 24","بيارة البير الجديد","بيارة مبني الادارة","بيارة قطاع 27","بيارة قطاع 29","بيارة قطاع 30","بيارة قطاع 21","بيارة قطاع 1","بيارة قطاع 31","بيارة مجمع الحمامات الخارجيه"]));
     if (dynamicSeptics.length === 0) { dynamicSeptics = ["بيارة محطة الفرز الجديدة قطاع 22","بيارة المطبخ","بيارة السكن الاداري","بيارة ق3","بيارة سكن نخالين 22","بيارة ق30","بيارة ق6","بيارة ق27","بيارة قطاع 25","بيارة قطاع 33","بيارة قطاع 24","بيارة البير الجديد","بيارة مبني الادارة","بيارة قطاع 27","بيارة قطاع 29","بيارة قطاع 30","بيارة قطاع 21","بيارة قطاع 1","بيارة قطاع 31","بيارة مجمع الحمامات الخارجيه"]; _lsSet('dyn_septics', JSON.stringify(dynamicSeptics)); }
+    // احترام الحذف للغرف والبيارات: أي عنصر مسجل حذفه في syncDeletions لا يُستعاد من الافتراضيات
+    try {
+      var _delSetRS = {};
+      (_safeJsonParse(_lsGet('lineh_sync_deletions'), [])).forEach(function (_d) { if (_d && _d.entity && _d.key) _delSetRS[_d.entity + '|' + String(_d.key).trim()] = true; });
+      if (Object.keys(_delSetRS).length) {
+        dynamicRooms = dynamicRooms.filter(function (_r) { return !_delSetRS['dynamicRooms|' + String(_r).trim()]; });
+        dynamicSeptics = dynamicSeptics.filter(function (_s) { return !_delSetRS['dynamicSeptics|' + String(_s).trim()]; });
+      }
+    } catch (e) {}
 
     let dynamicDepts = _safeJsonParse(_lsGet('dyn_depts'), ["الإدارة","الزراعة","الإنتاج","الصيانة","الأمن","النظافة","المخازن","الخدمات"]);
     let dynamicTitles = _safeJsonParse(_lsGet('dyn_titles'), ["مشرف","عامل","سائق","فني","مهندس زراعي","محاسب","أمين مخزن","طباخ","عامل نظافة"]);

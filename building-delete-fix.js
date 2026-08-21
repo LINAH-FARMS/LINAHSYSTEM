@@ -85,9 +85,10 @@
         if (roomsCapacity.length !== before) changed = true;
       }
       if (Array.isArray(employees)) {
-        const before = employees.length;
-        employees = employees.filter(function (e) { return !(e && del[_norm(e.sector)]); });
-        if (employees.length !== before) changed = true;
+        // تفريغ حقول المبنى/الغرفة فقط — لا نحذف سجل الموظف نفسه
+        employees.forEach(function (e) {
+          if (e && e.sector && del[_norm(e.sector)]) { e.sector = ''; e.room = ''; changed = true; }
+        });
       }
       return changed;
     } catch (e) { return false; }
