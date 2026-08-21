@@ -340,10 +340,15 @@ try { var sn = localStorage.getItem('dyn_septics'); if (sn) { septicNames = _cle
       if (Array.isArray(cloudEmps) && cloudEmps.length) {
         var _exclMap3 = {};
         (get('excludedEmployees') || []).forEach(function(x){ _exclMap3[x.code || x.id || x.name] = true; });
+        // احترام سجل الحذف: أي موظف محذوف من النظام الرئيسي لا يظهر في الفورم ولا يرجع للسحابة
+        var _delE3 = {};
+        (_cloudSyncDeletions || []).forEach(function(d){ if (d && d.entity === 'employees' && d.key) _delE3[String(d.key).trim()] = true; });
         var _seen3 = {}, _emps3 = [];
         cloudEmps.forEach(function(e){
           var k = String((e && (e.code || e.id || e.name)) || '').trim();
           if (!k || _exclMap3[k] || _seen3[k]) return;
+          // النظام يسجل حذف الموظف بمفتاح id||code||name — نفحص كل الصيغ
+          if (_delE3[String((e && e.code) || '').trim()] || _delE3[String((e && e.id) || '').trim()] || _delE3[String((e && e.name) || '').trim()]) return;
           _seen3[k] = true;
           _emps3.push(e);
         });
@@ -499,7 +504,9 @@ function _ddMergeEmps(remoteList, localList, delKeys, tieLocal) {
   }
   function add(e) {
     var k = _ddEmpKey(e);
-    if (!k || seen[k] || (delKeys && delKeys[k])) return;
+    if (!k || seen[k]) return;
+    // النظام يسجل حذف الموظف بمفتاح id||code||name — نفحص كل الصيغ حتى لا يرجع المحذوف للسحابة
+    if (delKeys && (delKeys[String((e && e.code) || '').trim()] || delKeys[String((e && e.id) || '').trim()] || delKeys[String((e && e.name) || '').trim()])) return;
     seen[k] = true;
     out.push(e);
   }
