@@ -5597,24 +5597,9 @@ function toggleEmployeeStatus(empId) {
     }
 
     function updateEmployeeVacationStatuses() {
-      var today = new Date();
-      var y = today.getFullYear();
-      var m = String(today.getMonth() + 1).padStart(2, '0');
-      var d = String(today.getDate()).padStart(2, '0');
-      var todayStr = y + '-' + m + '-' + d;
-      employees.forEach(function(emp) {
-        var empCode = emp.code || emp.id;
-        var empVacations = vacations.filter(function(v) { return v.code === empCode; });
-        if (empVacations.length === 0) return;
-        var active = empVacations.some(function(v) {
-          var travel = v.travelDate || v.start;
-          var ret = v.returnDate || v.end;
-          if (!travel || !ret) return false;
-          return todayStr >= travel && todayStr < ret;
-        });
-        var newStatus = active ? 'V' : 'P';
-        if (emp.status !== newStatus) { emp.status = newStatus; _ts(emp); }
-      });
+      // تم تعطيل التحويل التلقائي للحالة بين V وP بطلب المستخدم:
+      // الحالة تتغير يدوياً فقط من زر التواجد/الإجازة في جدول القوة العاملة
+      return;
     }
 
     function addVacationMovement() {
@@ -5738,12 +5723,7 @@ function toggleEmployeeStatus(empId) {
         }
         var v = vacations[idx]; vacations.splice(idx, 1); syncStorage(); renderVacationsTable(); if(v) logAction('delete','حذف', v.name, v.code ? 'عهدة: ' + v.code : '');
         if (empCode) {
-          var hasMore = vacations.some(function(v) { return v.code === empCode; });
-          if (hasMore) { updateEmployeeVacationStatuses(); }
-          else {
-            var emp = employees.find(function(e) { return (e.code || e.id) === empCode; });
-            if (emp && emp.status !== 'P') { emp.status = 'P'; _ts(emp); }
-          }
+          // تم تعطيل إرجاع الحالة تلقائياً إلى P عند حذف الإجازة (بدون تحويل V إلى P)
           renderTable(); renderDashboard();
         }
       }
