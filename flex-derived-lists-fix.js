@@ -155,13 +155,16 @@
   }
 
   let refreshing = false;
+  let refreshTimer = null;
   function refreshUI() {
     if (refreshing) return;
-    refreshing = true;
-    setTimeout(() => {
+    if (refreshTimer) clearTimeout(refreshTimer);
+    refreshTimer = setTimeout(() => {
+      refreshTimer = null;
+      refreshing = true;
       try { if (typeof renderDynamicLists === 'function') window.renderDynamicLists(); } catch (e) {}
       refreshing = false;
-    }, 30);
+    }, 250);
   }
   function run(withUI) {
     try {
