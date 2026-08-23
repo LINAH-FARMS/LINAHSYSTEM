@@ -273,16 +273,8 @@ textarea{resize:vertical;min-height:60px}
 
 <div id="modal-hosp" class="modal-section section section-stores">
 <div class="section-title">🍽️ تسجيل ضيافة موظف</div>
-<div class="form-group" style="position:relative;">
-<label>البحث عن الموظف *</label>
-<input type="text" id="hosp2-emp-search" autocomplete="off" placeholder="اكتب الكود أو الاسم...">
-<div id="hosp2-suggestions" style="display:none;position:absolute;top:100%;left:0;right:0;background:#fff;border:1px solid #ddd;border-radius:8px;z-index:50;max-height:200px;overflow-y:auto;box-shadow:0 4px 12px rgba(0,0,0,0.1);"></div>
-</div>
-<input type="hidden" id="hosp2-emp-id">
+<div class="form-group"><label>الاسم *</label><input type="text" id="dd-h-name" placeholder="اسم الزائر أو الجهة — مثل تبويب الضيافة بالسيستم"></div>
 <div class="form-row">
-<div class="form-group"><label>الكود</label><input type="text" id="hosp2-emp-code" readonly style="background:#f5f5f5;"></div>
-<div class="form-group"><label>الاسم</label><input type="text" id="hosp2-emp-name" readonly style="background:#f5f5f5;"></div>
-</div>
 <div class="form-row">
 <div class="form-group"><label>نوع الزائر</label><select id="dd-h-type"></select></div>
 <div class="form-group"><label>الصفة / الجهة</label><input type="text" id="dd-h-title" placeholder="اختياري"></div>
@@ -782,51 +774,7 @@ function populateHospTypes() {
   sel.innerHTML = types.map(function(t){ return '<option value="' + _escHtml(t) + '">' + _escHtml(t) + '</option>'; }).join('');
   if (cur && types.indexOf(cur) !== -1) sel.value = cur;
 }
-var hospInp = document.getElementById('hosp2-emp-search');
-var hospHid = document.getElementById('hosp2-emp-id');
-var hospSug = document.getElementById('hosp2-suggestions');
-var hospCode = document.getElementById('hosp2-emp-code');
-var hospName = document.getElementById('hosp2-emp-name');
-
-function _hospPickEmp(e) {
-  hospInp.value = '[' + (e.code||'') + '] ' + (e.name||'');
-  hospHid.value = e.id || e.code;
-  hospCode.value = e.code || '';
-  hospName.value = e.name || '';
-  hospSug.style.display = 'none';
-}
-hospInp.addEventListener('input', function(){
-  var q = this.value.trim().toLowerCase();
-  hospSug.innerHTML = ''; hospSug.style.display = 'none';
-  hospCode.value = ''; hospName.value = ''; hospHid.value = '';
-  if (!q) return;
-  var matches = employees.filter(function(e){
-    return (e.name||'').toLowerCase().includes(q) || (e.code||'').toLowerCase().includes(q);
-  }).slice(0, 10);
-  if (!matches.length) return;
-  hospSug.style.display = 'block';
-  matches.forEach(function(e){
-    var d = document.createElement('div');
-    d.className = 'emp-match';
-    d.innerText = '[' + (e.code||'') + '] ' + (e.name||'') + (e.dept ? ' — ' + e.dept : '');
-    d.onclick = function(){ _hospPickEmp(e); };
-    hospSug.appendChild(d);
-  });
-});
-hospInp.addEventListener('focus', function(){
-  if (!hospHid.value) {
-    hospSug.innerHTML = '';
-    employees.slice(0, 10).forEach(function(e){
-      var d = document.createElement('div');
-      d.className = 'emp-match';
-      d.innerText = '[' + (e.code||'') + '] ' + (e.name||'') + (e.dept ? ' — ' + e.dept : '');
-      d.onclick = function(){ _hospPickEmp(e); };
-      hospSug.appendChild(d);
-    });
-    hospSug.style.display = 'block';
-  }
-});
-hospInp.addEventListener('blur', function(){ setTimeout(function(){ hospSug.style.display = 'none'; }, 200); });
+var hospNameEl = document.getElementById('dd-h-name');
 
 function _pushHospitalitiesToCloud() {
   fetch(SB + '/rest/v1/sync_data?id=eq.ent:hospitalities&select=data', {
@@ -852,13 +800,14 @@ function _pushHospitalitiesToCloud() {
   .catch(function(){ showMsg('⚠️ تم تسجيل الضيافة محلياً فقط', true); });
 }
 function ddSaveHospitality() {
-  if (!hospHid.value || !hospName.value) { showMsg('⚠️ اختر الموظف من البحث أولاً', true); return; }
+  var guestName = (hospNameEl && hospNameEl.value || '').trim();
+  if (!guestName) { showMsg('⚠️ اكتب اسم الزائر أو الجهة أولاً', true); return; }
   var arrival = document.getElementById('dd-h-arrival').value || new Date().toISOString().split('T')[0];
   var type = document.getElementById('dd-h-type').value || 'ضيوف';
   for (var i = 0; i < hospitalities.length; i++) {
     var h = hospitalities[i];
-    if (h && h.name === hospName.value && h.arrival === arrival) {
-      showMsg('⚠️ توجد ضيافة مسجلة بالفعل لنفس الموظف في نفس التاريخ (' + arrival + ')', true);
+    if (h && h.name === guestName && h.arrival === arrival) {
+      showMsg('⚠️ توجد ضيافة مسجلة بالفعل لنفس الاسم في نفس التاريخ (' + arrival + ')', true);
       return;
     }
   }
@@ -870,7 +819,7 @@ function ddSaveHospitality() {
   var nowIso = new Date().toISOString();
   var rec = {
     _id: String(Date.now()),
-    name: hospName.value,
+    name: guestName,
     type: type,
     title: document.getElementById('dd-h-title').value.trim(),
     arrival: arrival,
@@ -885,7 +834,7 @@ function ddSaveHospitality() {
   try { localStorage.setItem('lineh_hospitality', JSON.stringify(hospitalities)); } catch(e){}
   try { localStorage.setItem('lineh_hospitalities', JSON.stringify(hospitalities)); } catch(e){}
   _pushHospitalitiesToCloud();
-  hospInp.value = ''; hospHid.value = ''; hospCode.value = ''; hospName.value = '';
+  if (hospNameEl) hospNameEl.value = '';
   document.getElementById('dd-h-title').value = '';
   document.getElementById('dd-h-departure').value = '';
   document.getElementById('dd-h-guests').value = 1;
