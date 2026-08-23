@@ -43,33 +43,40 @@
   // ---- تنفيذ الحذف ----
   function deleteSingleRoom(sector, number) {
     if (!requireAdmin()) return;
-    const rec = (roomsCapacity || []).find(function (r) { return r && r.sector === sector && r.number === number; });
-    if (!rec) return alert('لم يتم العثور على الغرفة.');
-    const residents = (employees || []).filter(function (e) { return e && e.sector === sector && e.room === number; });
-    let msg = 'هل أنت متأكد من حذف الغرفة "' + number + '" من مبنى "' + sector + '" نهائياً؟';
+    // مطابقة مُطبَّعة: قد يكون الرقم مخزناً كرقم لا نص أو باختلاف مسافات،
+    // والمطابقة الحرفية تفشل فتظهر رسالة "لم يتم العثور على الغرفة"
+    const NS = _norm(sector), NN = _norm(number);
+    const matches = (roomsCapacity || []).filter(function (r) { return r && _norm(r.sector) === NS && _norm(r.number) === NN; });
+    if (!matches.length) return alert('لم يتم العثور على الغرفة.');
+    const rec = matches[0];
+    const cSector = String(rec.sector), cNumber = String(rec.number);
+    const isMatch = function (v1, v2) { return _norm(v1) === NS && _norm(v2) === NN; };
+    const residents = (employees || []).filter(function (e) { return e && isMatch(e.sector, e.room); });
+    let msg = 'هل أنت متأكد من حذف الغرفة "' + cNumber + '" من مبنى "' + cSector + '" نهائياً؟';
     if (residents.length) msg += '\n\nالغرفة بها ' + residents.length + ' مقيم — سيتم فك ارتباطهم بهذه الغرفة والمبنى (بدون حذفهم من القوة).';
+    if (matches.length > 1) msg += '\nملاحظة: توجد ' + matches.length + ' سجلات مكررة لهذه الغرفة وسيتم حذفها كلها.';
     msg += '\nلن تعود الغرفة بعد التحديث أو المزامنة وسيختفي اسمها من الإدارة المرنة.';
     if (!confirm(msg)) return;
 
     try {
       if (typeof _logDeletion === 'function') {
-        _logDeletion('roomsCapacity', sector + '|' + number);
-        _logDeletion('dynamicRooms', number);
+        _logDeletion('roomsCapacity', cSector + '|' + cNumber);
+        _logDeletion('dynamicRooms', cNumber);
       }
     } catch (e) {}
-    _addKill(sector, number);
+    _addKill(cSector, cNumber);
 
-    roomsCapacity = roomsCapacity.filter(function (r) { return !(r && r.sector === sector && r.number === number); });
+    roomsCapacity = roomsCapacity.filter(function (r) { return !(r && isMatch(r.sector, r.number)); });
     residents.forEach(function (e) { e.sector = ''; e.room = ''; });
     try {
-      if (Array.isArray(dynamicRooms)) dynamicRooms = dynamicRooms.filter(function (x) { return _norm(x) !== _norm(number); });
+      if (Array.isArray(dynamicRooms)) dynamicRooms = dynamicRooms.filter(function (x) { return _norm(x) !== NN; });
     } catch (e) {}
 
     syncStorage();
     renderHousingLayout();
     updateHousingStats();
     try { rebuildAllDropdowns(); } catch (e) {}
-    alert('تم حذف الغرفة "' + number + '" بنجاح' + (residents.length ? ' وفك ارتباط ' + residents.length + ' مقيم.' : '.'));
+    alert('تم حذف الغرفة "' + cNumber + '" بنجاح' + (residents.length ? ' وفك ارتباط ' + residents.length + ' مقيم.' : '.'));
   }
 
   // ---- حقن زر الحذف في بطاقة كل غرفة بعد كل رسم ----
