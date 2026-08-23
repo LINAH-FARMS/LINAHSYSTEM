@@ -41,6 +41,8 @@ textarea{resize:vertical;min-height:60px}
 .menu-btn-vacation{background:#f3e5f5;color:#7b1fa2;border:2px solid #ce93d8}
 .menu-btn-stores{background:#efebe9;color:#5d4037;border:2px solid #d7ccc8}
 .menu-btn-force{background:#e8eaf6;color:#3f51b5;border:2px solid #c5cae9}
+.menu-btn-empadd{background:#e0f7fa;color:#00838f;border:2px solid #80deea}
+.menu-btn-hosp{background:#fce4ec;color:#ad1457;border:2px solid #f48fb1}
 .section-stores{background:#efebe9;border:1px solid #d7ccc8}
 .section-stores .section-title{color:#5d4037}
 .section-force{background:#e8eaf6;border:1px solid #c5cae9}
@@ -80,6 +82,8 @@ textarea{resize:vertical;min-height:60px}
 <button class="menu-btn menu-btn-stores" onclick="openModal('stores')"><span class="menu-icon">🏪</span><span class="menu-label">المخازن</span></button>
 <button class="menu-btn menu-btn-stores" onclick="openModal('minia')"><span class="menu-icon">📋</span><span class="menu-label">أصول المنيا</span></button>
 <button class="menu-btn menu-btn-force" onclick="openModal('force')"><span class="menu-icon">👤</span><span class="menu-label">القوة (<b id="force-count">0</b>)</span></button>
+<button class="menu-btn menu-btn-empadd" onclick="openModal('empadd')"><span class="menu-icon">➕</span><span class="menu-label">إضافة موظف</span></button>
+<button class="menu-btn menu-btn-hosp" onclick="openModal('hosp')"><span class="menu-icon">🍽️</span><span class="menu-label">تسجيل ضيافة</span></button>
 </div>
 
 <div id="msg"></div>
@@ -244,6 +248,53 @@ textarea{resize:vertical;min-height:60px}
 <div style="max-height:340px;overflow-y:auto;border:1px solid #e0e0e0;border-radius:10px;background:white;" id="force-list"></div>
 </div>
 
+<div id="modal-empadd" class="modal-section section section-stores">
+<div class="section-title">➕ إضافة موظف جديد</div>
+<div class="form-group"><label>اسم الموظف *</label><input type="text" id="dd-ne-name" placeholder="الاسم الرباعي"></div>
+<div class="form-row">
+<div class="form-group"><label>الكود</label><input type="text" id="dd-ne-code" inputmode="numeric" placeholder="تلقائي"></div>
+<div class="form-group"><label>التعاقد</label><select id="dd-ne-contract"><option>دائم</option><option>كاجول</option></select></div>
+</div>
+<div class="form-group"><label>الإدارة</label><select id="dd-ne-dept"></select></div>
+<div class="form-row">
+<div class="form-group"><label>الوظيفة</label><input type="text" id="dd-ne-title" list="dd-titles-dl" placeholder="مثال: عامل زراعي"><datalist id="dd-titles-dl"></datalist></div>
+<div class="form-group"><label>المحافظة</label><input type="text" id="dd-ne-gov" list="dd-govs-dl" placeholder="اختياري"><datalist id="dd-govs-dl"></datalist></div>
+</div>
+<div class="form-row">
+<div class="form-group"><label>الموبايل</label><input type="tel" id="dd-ne-mobile" placeholder="اختياري"></div>
+<div class="form-group"><label>📅 تاريخ المباشرة</label><input type="date" id="dd-ne-hiredate"></div>
+</div>
+<div class="form-group"><label>المبني / الغرفة</label><input type="text" id="dd-ne-room" placeholder="اختياري — مثال: E6"></div>
+<button type="button" class="btn-save-section" style="background:#00838f;" onclick="ddAddEmployee()">💾 حفظ الموظف الجديد</button>
+</div>
+
+<div id="modal-hosp" class="modal-section section section-stores">
+<div class="section-title">🍽️ تسجيل ضيافة موظف</div>
+<div class="form-group" style="position:relative;">
+<label>البحث عن الموظف *</label>
+<input type="text" id="hosp2-emp-search" autocomplete="off" placeholder="اكتب الكود أو الاسم...">
+<div id="hosp2-suggestions" style="display:none;position:absolute;top:100%;left:0;right:0;background:#fff;border:1px solid #ddd;border-radius:8px;z-index:50;max-height:200px;overflow-y:auto;box-shadow:0 4px 12px rgba(0,0,0,0.1);"></div>
+</div>
+<input type="hidden" id="hosp2-emp-id">
+<div class="form-row">
+<div class="form-group"><label>الكود</label><input type="text" id="hosp2-emp-code" readonly style="background:#f5f5f5;"></div>
+<div class="form-group"><label>الاسم</label><input type="text" id="hosp2-emp-name" readonly style="background:#f5f5f5;"></div>
+</div>
+<div class="form-row">
+<div class="form-group"><label>نوع الزائر</label><select id="dd-h-type"></select></div>
+<div class="form-group"><label>الصفة / الجهة</label><input type="text" id="dd-h-title" placeholder="اختياري"></div>
+</div>
+<div class="form-row">
+<div class="form-group"><label>📅 تاريخ الوصول</label><input type="date" id="dd-h-arrival"></div>
+<div class="form-group"><label>📅 تاريخ المغادرة</label><input type="date" id="dd-h-departure"></div>
+</div>
+<div class="form-row">
+<div class="form-group"><label>عدد الأفراد</label><input type="number" id="dd-h-guests" min="1" value="1"></div>
+<div class="form-group"><label>الوجبات</label><div style="display:flex;gap:10px;padding-top:6px;font-size:13px;font-weight:700;"><label><input type="checkbox" id="dd-h-meal-bf"> إفطار</label><label><input type="checkbox" id="dd-h-meal-lh"> غداء</label><label><input type="checkbox" id="dd-h-meal-dn"> عشاء</label></div></div>
+</div>
+<button type="button" class="btn-save-section" style="background:#ad1457;" onclick="ddSaveHospitality()">💾 تسجيل الضيافة</button>
+</div>
+
 </div>
 </div>
 </div>
@@ -270,6 +321,15 @@ if (!Array.isArray(archiveData)) archiveData = [];
 var dynStores = [];
 try { var dsl = localStorage.getItem('lineh_dynamic_stores'); if (dsl) dynStores = JSON.parse(dsl); } catch(e){}
 if (!Array.isArray(dynStores)) dynStores = [];
+var hospitalities = [];
+try { var hh = localStorage.getItem('lineh_hospitalities'); if (hh) hospitalities = JSON.parse(hh); } catch(e){}
+if (!Array.isArray(hospitalities)) hospitalities = [];
+var visitorTypes = [];
+try { var vtl = localStorage.getItem('lineh_visitor_types'); if (vtl) visitorTypes = JSON.parse(vtl); } catch(e){}
+if (!Array.isArray(visitorTypes) || !visitorTypes.length) visitorTypes = ['زائر'];
+var deptList = [];
+try { var ddl = localStorage.getItem('lineh_dynamic_depts'); if (ddl) deptList = JSON.parse(ddl); } catch(e){}
+if (!Array.isArray(deptList)) deptList = [];
 
 function _sanitizeStr(s) {
   if (typeof s !== 'string') return '';
@@ -309,6 +369,9 @@ try { var sn = localStorage.getItem('dyn_septics'); if (sn) { septicNames = _cle
     archiveData: 'ent:archiveData',
     dynamicStores: 'ent:dynamicStores',
     dynamicSeptics: 'ent:dynamicSeptics',
+    hospitalities: 'ent:hospitalities',
+    dynamicVisitorTypes: 'ent:dynamicVisitorTypes',
+    dynamicDepts: 'ent:dynamicDepts',
     syncDeletions: 'ent:syncDeletions'
   };
   var entNames = Object.keys(ENT_IDS);
@@ -380,6 +443,24 @@ try { var sn = localStorage.getItem('dyn_septics'); if (sn) { septicNames = _cle
         if (!Array.isArray(dsr) && dsr && typeof dsr === 'object') { dsr = Object.values(dsr); }
         if (Array.isArray(dsr)) dynStores = _cleanArr(dsr);
       }
+      var hsr = get('hospitalities');
+      if (hsr) {
+        if (typeof hsr === 'string') { try { hsr = JSON.parse(hsr); } catch(e){} }
+        if (!Array.isArray(hsr) && hsr && typeof hsr === 'object') { hsr = Object.values(hsr); }
+        if (Array.isArray(hsr) && hsr.length) hospitalities = hsr;
+      }
+      var vtr = get('dynamicVisitorTypes');
+      if (vtr) {
+        if (typeof vtr === 'string') { try { vtr = JSON.parse(vtr); } catch(e){} }
+        var _vt = Array.isArray(vtr) ? vtr : (vtr && typeof vtr === 'object' ? Object.values(vtr) : []);
+        if (_vt.length) visitorTypes = _cleanArr(_vt);
+      }
+      var ddr = get('dynamicDepts');
+      if (ddr) {
+        if (typeof ddr === 'string') { try { ddr = JSON.parse(ddr); } catch(e){} }
+        var _dp = Array.isArray(ddr) ? ddr : (ddr && typeof ddr === 'object' ? Object.values(ddr) : []);
+        deptList = _cleanArr(_dp);
+      }
       var cnt = 0;
       var rawSeptics = get('dynamicSeptics');
       if (rawSeptics) {
@@ -412,16 +493,19 @@ try { var sn = localStorage.getItem('dyn_septics'); if (sn) { septicNames = _cle
 
 // ─── Modal ───
 function openModal(section) {
-  ['tea','maint','septic','vacation','stores','minia','force'].forEach(function(s) {
+  ['tea','maint','septic','vacation','stores','minia','force','empadd','hosp'].forEach(function(s) {
     document.getElementById('modal-' + s).style.display = 'none';
   });
   document.getElementById('modal-' + section).style.display = 'block';
-  var titles = { tea:'🍵 الشاي', maint:'🛠️ الصيانة', septic:'🚽 البيارات', vacation:'🏖️ الإجازات', stores:'🏪 المخازن', minia:'📋 أصول المنيا', force:'👤 القوة العاملة' };
+  var titles = { tea:'🍵 الشاي', maint:'🛠️ الصيانة', septic:'🚽 البيارات', vacation:'🏖️ الإجازات', stores:'🏪 المخازن', minia:'📋 أصول المنيا', force:'👤 القوة العاملة', empadd:'➕ إضافة موظف جديد', hosp:'🍽️ تسجيل ضيافة موظف' };
   document.getElementById('modal-title').textContent = titles[section] || section;
   document.getElementById('modal-overlay').style.display = 'flex';
+  var _today = new Date().toISOString().split('T')[0];
   if (section === 'stores') setStoresTab(_ddStoresTab);
   if (section === 'minia') renderMiniaMobile();
   if (section === 'force') renderForceMobile();
+  if (section === 'empadd') { populateEmpAddForm(); try { suggestNextCode(); } catch(e){} document.getElementById('dd-ne-hiredate').value = _today; }
+  if (section === 'hosp') { populateHospTypes(); document.getElementById('dd-h-arrival').value = _today; }
 }
 function closeModal() {
   document.getElementById('modal-overlay').style.display = 'none';
@@ -543,6 +627,188 @@ function _pushEmployeesToCloud() {
   .catch(function() {
     showMsg('⚠️ تم الحفظ محلياً (يُرفع لاحقاً)', true);
   });
+}
+
+// ─── إضافة موظف جديد ───
+function _ddNextCode() {
+  var mx = 0;
+  employees.forEach(function(e){ var n = parseInt(String((e && e.code) || '').replace(/\D/g, ''), 10); if (!isNaN(n) && n > mx) mx = n; });
+  return String(mx + 1);
+}
+function suggestNextCode() {
+  var el = document.getElementById('dd-ne-code');
+  if (el && !el.value.trim()) el.value = _ddNextCode();
+}
+function populateEmpAddForm() {
+  var sel = document.getElementById('dd-ne-dept');
+  if (!sel) return;
+  var dset = {};
+  employees.forEach(function(e){ var d = ((e && e.dept) || '').trim(); if (d) dset[d] = true; });
+  (deptList || []).forEach(function(d){ d = String(d).trim(); if (d) dset[d] = true; });
+  var cur = sel.value;
+  sel.innerHTML = '<option value="">— اختر الإدارة —</option>' + Object.keys(dset).sort().map(function(d){ return '<option value="' + _escHtml(d) + '">' + _escHtml(d) + '</option>'; }).join('');
+  if (cur && dset[cur]) sel.value = cur;
+  var tset = {}, gset = {};
+  employees.forEach(function(e){
+    var t = ((e && e.title) || '').trim(); if (t) tset[t] = true;
+    var g = ((e && e.gov) || '').trim(); if (g) gset[g] = true;
+  });
+  var td = document.getElementById('dd-titles-dl'), gd = document.getElementById('dd-govs-dl');
+  if (td) td.innerHTML = Object.keys(tset).sort().map(function(t){ return '<option value="' + _escHtml(t) + '">'; }).join('');
+  if (gd) gd.innerHTML = Object.keys(gset).sort().map(function(g){ return '<option value="' + _escHtml(g) + '">'; }).join('');
+}
+function ddAddEmployee() {
+  var name = document.getElementById('dd-ne-name').value.trim();
+  if (!name) { showMsg('⚠️ الرجاء إدخال اسم الموظف', true); return; }
+  var code = document.getElementById('dd-ne-code').value.trim();
+  if (!code) code = _ddNextCode();
+  var dup = null;
+  for (var i = 0; i < employees.length; i++) {
+    if (String(employees[i].code || '').trim() === code) { dup = employees[i]; break; }
+  }
+  if (dup) { showMsg('⚠️ الكود ' + code + ' مستخدم بالفعل للموظف: ' + (dup.name || ''), true); return; }
+  var now = new Date().toISOString();
+  var rec = {
+    id: 'dd_' + Date.now(),
+    code: code,
+    name: name,
+    dept: document.getElementById('dd-ne-dept').value,
+    title: document.getElementById('dd-ne-title').value.trim(),
+    gov: document.getElementById('dd-ne-gov').value.trim(),
+    nationalId: document.getElementById('dd-ne-mobile').value.trim(),
+    hireDate: document.getElementById('dd-ne-hiredate').value || now.split('T')[0],
+    contract: document.getElementById('dd-ne-contract').value || 'دائم',
+    sector: '',
+    room: document.getElementById('dd-ne-room').value.trim(),
+    status: 'P',
+    vacationBalance: 30,
+    assets: [],
+    modifiedAt: now,
+    createdAt: now
+  };
+  if (rec.contract === 'كاجول') rec.status = 'P';
+  employees.push(rec);
+  try { localStorage.setItem('dd_lineh_employees', JSON.stringify(employees)); } catch(e){}
+  var fc = document.getElementById('force-count'); if (fc) fc.textContent = employees.length;
+  try { renderForceMobile(); } catch(e){}
+  _pushEmployeesToCloud();
+  showMsg('✅ تمت إضافة الموظف: ' + name + ' [' + code + '] — الحالة: متواجد، التعاقد: ' + rec.contract);
+  ['dd-ne-name','dd-ne-code','dd-ne-title','dd-ne-gov','dd-ne-mobile','dd-ne-room'].forEach(function(id){ document.getElementById(id).value = ''; });
+  suggestNextCode();
+}
+
+// ─── تسجيل الضيافة ───
+function populateHospTypes() {
+  var sel = document.getElementById('dd-h-type');
+  if (!sel) return;
+  var types = (visitorTypes && visitorTypes.length) ? visitorTypes : ['زائر'];
+  var cur = sel.value;
+  sel.innerHTML = types.map(function(t){ return '<option value="' + _escHtml(t) + '">' + _escHtml(t) + '</option>'; }).join('');
+  if (cur && types.indexOf(cur) !== -1) sel.value = cur;
+}
+var hospInp = document.getElementById('hosp2-emp-search');
+var hospHid = document.getElementById('hosp2-emp-id');
+var hospSug = document.getElementById('hosp2-suggestions');
+var hospCode = document.getElementById('hosp2-emp-code');
+var hospName = document.getElementById('hosp2-emp-name');
+
+function _hospPickEmp(e) {
+  hospInp.value = '[' + (e.code||'') + '] ' + (e.name||'');
+  hospHid.value = e.id || e.code;
+  hospCode.value = e.code || '';
+  hospName.value = e.name || '';
+  hospSug.style.display = 'none';
+}
+hospInp.addEventListener('input', function(){
+  var q = this.value.trim().toLowerCase();
+  hospSug.innerHTML = ''; hospSug.style.display = 'none';
+  hospCode.value = ''; hospName.value = ''; hospHid.value = '';
+  if (!q) return;
+  var matches = employees.filter(function(e){
+    return (e.name||'').toLowerCase().includes(q) || (e.code||'').toLowerCase().includes(q);
+  }).slice(0, 10);
+  if (!matches.length) return;
+  hospSug.style.display = 'block';
+  matches.forEach(function(e){
+    var d = document.createElement('div');
+    d.className = 'emp-match';
+    d.innerText = '[' + (e.code||'') + '] ' + (e.name||'') + (e.dept ? ' — ' + e.dept : '');
+    d.onclick = function(){ _hospPickEmp(e); };
+    hospSug.appendChild(d);
+  });
+});
+hospInp.addEventListener('focus', function(){
+  if (!hospHid.value) {
+    hospSug.innerHTML = '';
+    employees.slice(0, 10).forEach(function(e){
+      var d = document.createElement('div');
+      d.className = 'emp-match';
+      d.innerText = '[' + (e.code||'') + '] ' + (e.name||'') + (e.dept ? ' — ' + e.dept : '');
+      d.onclick = function(){ _hospPickEmp(e); };
+      hospSug.appendChild(d);
+    });
+    hospSug.style.display = 'block';
+  }
+});
+hospInp.addEventListener('blur', function(){ setTimeout(function(){ hospSug.style.display = 'none'; }, 200); });
+
+function _pushHospitalitiesToCloud() {
+  fetch(SB + '/rest/v1/sync_data?id=eq.ent:hospitalities&select=data', {
+    headers: { 'apikey': KEY, 'Authorization': 'Bearer ' + KEY }
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(rows) {
+    var remote = [];
+    if (rows && rows[0] && rows[0].data) {
+      try { remote = typeof rows[0].data === 'string' ? JSON.parse(rows[0].data) : rows[0].data; } catch(e) { remote = []; }
+    }
+    var seen = {}, merged = [];
+    function add(h) { if (!h) return; var k = String(h._id || '') || (String(h.name||'')+'|'+String(h.arrival||'')); if (!k || seen[k]) return; seen[k] = true; merged.push(h); }
+    (Array.isArray(remote) ? remote : []).forEach(add);
+    hospitalities.forEach(add);
+    return fetch(SB + '/rest/v1/sync_data?id=eq.ent:hospitalities', {
+      method: 'POST',
+      headers: { 'apikey': KEY, 'Authorization': 'Bearer ' + KEY, 'Content-Type': 'application/json', 'Prefer': 'resolution=merge-duplicates' },
+      body: JSON.stringify({ id: 'ent:hospitalities', data: merged, updated_at: new Date().toISOString() })
+    });
+  })
+  .then(function(r) { if (r && r.ok) showMsg('🍽️ تم تسجيل الضيافة ومزامنتها مع السحابة', false); })
+  .catch(function(){ showMsg('⚠️ تم تسجيل الضيافة محلياً فقط', true); });
+}
+function ddSaveHospitality() {
+  if (!hospHid.value || !hospName.value) { showMsg('⚠️ اختر الموظف من البحث أولاً', true); return; }
+  var arrival = document.getElementById('dd-h-arrival').value || new Date().toISOString().split('T')[0];
+  var type = document.getElementById('dd-h-type').value || 'زائر';
+  for (var i = 0; i < hospitalities.length; i++) {
+    var h = hospitalities[i];
+    if (h && h.name === hospName.value && h.arrival === arrival) {
+      showMsg('⚠️ توجد ضيافة مسجلة بالفعل لنفس الموظف في نفس التاريخ (' + arrival + ')', true);
+      return;
+    }
+  }
+  var meals = [];
+  if (document.getElementById('dd-h-meal-bf').checked) meals.push('إفطار');
+  if (document.getElementById('dd-h-meal-lh').checked) meals.push('غداء');
+  if (document.getElementById('dd-h-meal-dn').checked) meals.push('عشاء');
+  var guests = parseInt(document.getElementById('dd-h-guests').value, 10) || 1;
+  var rec = {
+    _id: String(Date.now()),
+    name: hospName.value,
+    type: type,
+    title: document.getElementById('dd-h-title').value.trim(),
+    arrival: arrival,
+    departure: document.getElementById('dd-h-departure').value,
+    guests: guests,
+    meals: meals
+  };
+  hospitalities.push(rec);
+  try { localStorage.setItem('lineh_hospitalities', JSON.stringify(hospitalities)); } catch(e){}
+  _pushHospitalitiesToCloud();
+  hospInp.value = ''; hospHid.value = ''; hospCode.value = ''; hospName.value = '';
+  document.getElementById('dd-h-title').value = '';
+  document.getElementById('dd-h-departure').value = '';
+  document.getElementById('dd-h-guests').value = 1;
+  ['dd-h-meal-bf','dd-h-meal-lh','dd-h-meal-dn'].forEach(function(id){ document.getElementById(id).checked = false; });
 }
 
 // ─── Tea Search ───

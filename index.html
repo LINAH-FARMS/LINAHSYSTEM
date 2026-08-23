@@ -189,6 +189,26 @@
       </div>
     </div>
 
+    <div class="dash-chart-panel" style="margin-top:14px;">
+      <div class="dash-chart-title">⏱️ موظفون على رأس العمل 45 يوم متواصل بدون إجازة <span class="badge-count" id="dash-ls45-badge">0</span></div>
+      <div style="overflow:auto;max-height:340px;margin-top:8px;">
+        <table style="width:100%;border-collapse:collapse;font-size:12.5px;">
+          <thead>
+            <tr style="background:#f1f8e9;color:#33691e;">
+              <th style="padding:6px 8px;text-align:right;border-bottom:2px solid #c5e1a5;">الكود</th>
+              <th style="padding:6px 8px;text-align:right;border-bottom:2px solid #c5e1a5;">الاسم</th>
+              <th style="padding:6px 8px;text-align:right;border-bottom:2px solid #c5e1a5;">الإدارة</th>
+              <th style="padding:6px 8px;text-align:right;border-bottom:2px solid #c5e1a5;">الوظيفة</th>
+              <th style="padding:6px 8px;text-align:center;border-bottom:2px solid #c5e1a5;">أيام متواصلة</th>
+              <th style="padding:6px 8px;text-align:center;border-bottom:2px solid #c5e1a5;">آخر إجازة / المباشرة</th>
+            </tr>
+          </thead>
+          <tbody id="ls45-tbody"></tbody>
+        </table>
+      </div>
+      <div id="ls45-empty" style="display:none;color:#777;font-size:13px;padding:10px;text-align:center;">لا يوجد موظف تجاوز 45 يوم بدون إجازة 👍</div>
+    </div>
+
     <div class="dash-chart-row">
       <div class="dash-chart-panel">
         <div class="dash-chart-title">📊 توزيع القوة <span class="badge-count" id="dash-dnut-badge">0</span></div>
@@ -398,6 +418,9 @@
           <option value="">كل التعاقدات</option>
           <option value="دائم">دائم</option>
           <option value="كاجول">كاجول</option>
+        </select>
+        <select id="filter-dept" onchange="renderTable()" style="flex:1;min-width:140px;">
+          <option value="">كل الإدارات</option>
         </select>
       </div>
       

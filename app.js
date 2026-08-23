@@ -567,6 +567,54 @@
       }
       try { renderDashboardSepticChart(); } catch(e) { console.error('septic chart error:', e); }
       try { renderDashboardMaintChart(); } catch(e) { console.error('maint chart error:', e); }
+      try { renderLongStay45(); } catch(e) { console.error('ls45 error:', e); }
+    }
+
+    // ===== موظفون على رأس العمل 45 يوم متواصل بدون إجازة =====
+    // آخر تاريخ انتهاء/عودة إجازة للموظف من سجل الإجازات
+    function _ls45LastBreak(code) {
+      let last = '';
+      (vacations || []).forEach(v => {
+        const vc = String(v.code || v.employeeCode || '').trim();
+        if (!vc || vc !== String(code).trim()) return;
+        const cand = String(v.returnDate || v.end || v.endDate || v.dateTo || '').trim();
+        if (cand && cand > last) last = cand;
+      });
+      return last;
+    }
+    // القائمة تتحدث تلقائياً مع renderDashboard: نزول إجازة أو استبعاد يخرجه فوراً
+    function renderLongStay45() {
+      const tb = document.getElementById('ls45-tbody');
+      if (!tb) return;
+      const today = new Date(); today.setHours(0,0,0,0);
+      const rows = [];
+      employees.forEach(e => {
+        if (e.status !== 'P') return;
+        const vacEnd = _ls45LastBreak(e.code);
+        const baseD = vacEnd || (e.hireDate || '');
+        if (!baseD) return;
+        const bd = new Date(String(baseD).split('T')[0]);
+        if (isNaN(bd)) return;
+        bd.setHours(0,0,0,0);
+        const days = Math.floor((today - bd) / 86400000);
+        if (days >= 45) rows.push({ e: e, days: days, src: vacEnd || (e.hireDate || '') });
+      });
+      rows.sort((a, b) => b.days - a.days);
+      tb.innerHTML = rows.map(r => {
+        const col = r.days >= 75 ? '#c62828' : (r.days >= 60 ? '#e65100' : '#1b5e20');
+        return '<tr>' +
+          '<td style="padding:5px 8px;border-bottom:1px solid #eee;"><b>' + (r.e.code || '') + '</b></td>' +
+          '<td style="padding:5px 8px;border-bottom:1px solid #eee;">' + (r.e.name || '') + '</td>' +
+          '<td style="padding:5px 8px;border-bottom:1px solid #eee;color:#2e7d32;">' + (r.e.dept || '—') + '</td>' +
+          '<td style="padding:5px 8px;border-bottom:1px solid #eee;">' + (r.e.title || '—') + '</td>' +
+          '<td style="padding:5px 8px;border-bottom:1px solid #eee;text-align:center;font-weight:800;color:' + col + ';">' + r.days + '</td>' +
+          '<td style="padding:5px 8px;border-bottom:1px solid #eee;text-align:center;">' + (r.src || '—') + '</td>' +
+        '</tr>';
+      }).join('');
+      const badge = document.getElementById('dash-ls45-badge');
+      if (badge) badge.innerText = rows.length;
+      const empty = document.getElementById('ls45-empty');
+      if (empty) empty.style.display = rows.length ? 'none' : 'block';
     }
 
     function renderDashboardSepticChart() {
@@ -3994,9 +4042,11 @@ function toggleEmployeeStatus(empId) {
     }
 }
     function renderTable() {
+      try { populateDeptFilter(); } catch(e) {}
       let q = document.getElementById('search-emp').value.toLowerCase();
       let statusFil = document.getElementById('filter-status').value;
       let contractFil = document.getElementById('filter-contract').value;
+      let deptFil = document.getElementById('filter-dept') ? document.getElementById('filter-dept').value : '';
       let tbody = document.querySelector('#table-employees-data tbody');
       tbody.innerHTML = '';
 
@@ -4005,7 +4055,8 @@ function toggleEmployeeStatus(empId) {
                           ((e.code||'').toLowerCase() === q);
         let matchStatus = statusFil ? e.status === statusFil : true;
         let matchContract = contractFil ? e.contract === contractFil : true;
-        return matchSearch && matchStatus && matchContract;
+        let matchDept = deptFil ? (e.dept || '') === deptFil : true;
+        return matchSearch && matchStatus && matchContract && matchDept;
       });
 
       // Apply sort
@@ -4040,6 +4091,19 @@ function toggleEmployeeStatus(empId) {
         tbody.appendChild(tr);
       });
       renderHousingLayout();
+    }
+
+    // تعبئة قائمة فلتر الإدارات في تبويب القوة من الإدارات الفعلية للموظفين
+    function populateDeptFilter() {
+      const sel = document.getElementById('filter-dept');
+      if (!sel) return;
+      const cur = sel.value;
+      const depts = [...new Set(employees.map(e => (e.dept || '').trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'ar'));
+      const sig = depts.join('|');
+      if (sel.dataset.sig === sig) { if (cur && depts.includes(cur)) sel.value = cur; return; }
+      sel.innerHTML = '<option value="">كل الإدارات</option>' + depts.map(d => `<option value="${d.replace(/"/g,'&quot;')}">${d}</option>`).join('');
+      sel.dataset.sig = sig;
+      if (cur && depts.includes(cur)) sel.value = cur;
     }
 
     function rebuildRoomsFromEmployees() {
@@ -10954,7 +11018,7 @@ reports.forEach(function(r) {
           if (el.id !== 'ctr-daily-rate' && el.id !== 'ctr-beds') el.value = '';
         }
       });
-      document.querySelectorAll('select').forEach(el => { if (el.id !== 'filter-status' && el.id !== 'filter-contract') el.selectedIndex = 0; });
+      document.querySelectorAll('select').forEach(el => { if (el.id !== 'filter-status' && el.id !== 'filter-contract' && el.id !== 'filter-dept') el.selectedIndex = 0; });
 
       // Re-render everything
       sortEmployeesAlphabetically(); rebuildAllDropdowns(); calculateSystemStats();
