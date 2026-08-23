@@ -50,6 +50,8 @@
   try { manual = JSON.parse(localStorage.getItem(MANUAL_KEY) || '{}') || {}; } catch (e) { manual = {}; }
   let kills = {};
   try { kills = JSON.parse(localStorage.getItem(KILLS_KEY) || '{}') || {}; } catch (e) { kills = {}; }
+  // عدّاد المراجعة: أي تغيير في اليدوي أو المحذوف يبطل الكاش ويستدعي إعادة الحساب
+  let rev = 0;
 
   const _saveManual = () => { try { localStorage.setItem(MANUAL_KEY, JSON.stringify(manual)); } catch (e) {} };
   const _saveKills = () => { try { localStorage.setItem(KILLS_KEY, JSON.stringify(kills)); } catch (e) {} };
@@ -62,18 +64,19 @@
     if (kills[type][n]) return false;
     kills[type][n] = new Date().toISOString();
     _saveKills();
+    rev++;
     return true;
   }
   function _removeKill(type, name) {
     const n = _norm(name);
-    if (kills[type] && kills[type][n]) { delete kills[type][n]; _saveKills(); return true; }
+    if (kills[type] && kills[type][n]) { delete kills[type][n]; _saveKills(); rev++; return true; }
     return false;
   }
   function _markManual(type, name) {
     const v = String(name || '').trim();
     if (!v) return;
     if (!manual[type]) manual[type] = [];
-    if (!manual[type].some(x => _norm(x) === _norm(v))) { manual[type].push(v); _saveManual(); }
+    if (!manual[type].some(x => _norm(x) === _norm(v))) { manual[type].push(v); _saveManual(); rev++; }
   }
 
   // ---- الإقلاع: تبنّي الأسماء الموجودة حالياً حتى لا يختفي شيء اليوم ----
@@ -120,32 +123,49 @@
   }
 
   // ---- الحساب اللحظي لكل قائمة: مصادر + يدوي − محذوف ----
+  // تحسين الأداء: النبضة كل ثانية لا تعيد التطبيع المكلف إلا عند تغير فعلي
+  // (بصمة خام للمصادر + عدّاد rev لليدوي/المحذوف، وكاش منفصل لمفتاح المصفوفة الحالية)
   let syncing = false;
+  const _cacheT = {};
   function syncDerived(withUI) {
-    if (syncing) return;
+    if (syncing) return false;
     syncing = true;
     let changedAny = false;
     Object.keys(TYPES).forEach(t => {
       const cfg = TYPES[t];
       const arr = cfg.arr();
       if (!Array.isArray(arr)) return;
-      const seen = {};
-      const desired = [];
-      const push = name => {
-        if (typeof name !== 'string') return;
-        const k = _norm(name);
-        if (!k || k.length < 2 || seen[k] || _isKilled(t, name)) return;
-        seen[k] = true;
-        desired.push(name);
-      };
-      cfg.src().forEach(push);
-      (manual[t] || []).forEach(push);
-      const curKey = arr.map(_norm).join('\u0001');
-      const wantKey = desired.map(_norm).join('\u0001');
+      const srcArr = cfg.src();
+      const rawWant = srcArr.join('\u0002') + '\u0003' + (manual[t] || []).join('\u0002');
+      let c = _cacheT[t];
+      let wantKey, wantNames;
+      if (c && c.rev === rev && c.rawWant === rawWant) {
+        wantKey = c.wantKey; wantNames = c.wantNames;
+      } else {
+        wantNames = [];
+        const seen = {};
+        const push = name => {
+          if (typeof name !== 'string') return;
+          const k = _norm(name);
+          if (!k || k.length < 2 || seen[k] || _isKilled(t, name)) return;
+          seen[k] = true;
+          wantNames.push(name);
+        };
+        srcArr.forEach(push);
+        (manual[t] || []).forEach(push);
+        wantKey = wantNames.map(_norm).join('\u0001');
+        c = _cacheT[t] = { rev, rawWant, wantKey, wantNames, rawCur: null, curKey: null };
+      }
+      const rawCur = arr.join('\u0002');
+      let curKey;
+      if (c.rawCur === rawCur) { curKey = c.curKey; }
+      else { curKey = arr.map(_norm).join('\u0001'); c.rawCur = rawCur; c.curKey = curKey; }
       if (curKey !== wantKey) {
         arr.splice(0, arr.length);
-        desired.forEach(n => arr.push(n));
-        try { localStorage.setItem(cfg.ls, JSON.stringify(desired)); } catch (e) {}
+        wantNames.forEach(n => arr.push(n));
+        try { localStorage.setItem(cfg.ls, JSON.stringify(wantNames)); } catch (e) {}
+        c.rawCur = arr.join('\u0002');
+        c.curKey = wantKey;
         changedAny = true;
       }
     });
@@ -166,11 +186,14 @@
       refreshing = false;
     }, 250);
   }
-  function run(withUI) {
+  function run(withUI, onlyIfChanged) {
+    let changed = false;
     try {
-      if (syncDerived(false) && typeof syncStorage === 'function') { try { syncStorage(); } catch (e) {} }
+      changed = syncDerived(false);
+      if (changed && typeof syncStorage === 'function') { try { syncStorage(); } catch (e) {} }
     } catch (e) {}
-    if (withUI) refreshUI();
+    if (withUI && (!onlyIfChanged || changed)) refreshUI();
+    return changed;
   }
 
   // ---- التقاط الحذف: تسجيل مسبق + تراجع عند الإلغاء ----
@@ -223,10 +246,11 @@
   }, true);
 
   // ---- بعد السحب والدفع وإعادة البناء والرسم (النداءات الخارجية) ----
+  // onlyIfChanged: لا نعيد رسم القوائم إلا إذا تغير شيء فعلاً — المزامنة متكررة والرسم مكلف
   ['autoDiscoverDynamicData', 'rebuildAllDropdowns'].forEach(fn => {
     const orig = window[fn];
     if (typeof orig === 'function') {
-      window[fn] = function () { syncDerived(false); const r = orig.apply(this, arguments); run(true); return r; };
+      window[fn] = function () { syncDerived(false); const r = orig.apply(this, arguments); run(true, true); return r; };
     }
   });
   ['pullFromSupabase', 'pushToSupabase', 'syncStorage'].forEach(fn => {
@@ -235,8 +259,8 @@
       window[fn] = function () {
         let res;
         try { res = orig.apply(this, arguments); } catch (e) { run(false); throw e; }
-        if (res && typeof res.then === 'function') return res.then(v => { run(true); return v; });
-        run(true);
+        if (res && typeof res.then === 'function') return res.then(v => { run(true, true); return v; });
+        run(true, true);
         return res;
       };
     }
