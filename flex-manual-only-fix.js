@@ -145,7 +145,8 @@
     try { localStorage.setItem(SEED_FLAG, new Date().toISOString()); } catch (e) {}
   }
 
-  // ---- التقاط الحذف: نسجل فقط إذا حُذف فعلاً (وليس إلغاء تأكيد) ----
+  // ---- التقاط الحذف: نسجل الحذف قبل التنفيذ حتى لا يعاده الاكتشاف
+  //      أو إعادة البناء أثناء الزر نفسه، ونتراجع عند الإلغاء ----
   const DEL_KIND = { dept: 'dept', septic: 'septic' };
   const _origDel = window.deleteDynamicItem;
   if (typeof _origDel === 'function') {
@@ -156,6 +157,7 @@
         const src = _arrOf(kind);
         if (Array.isArray(src) && src[idx] != null) item = typeof src[idx] === 'string' ? src[idx] : (src[idx].name || src[idx].label || null);
       }
+      if (kind && item != null) _add(kind, item); // مسبقاً: أي طرد أثناء التنفيذ يشمله
       const r = _origDel.apply(this, arguments);
       if (kind && item != null) {
         const arr = _arrOf(kind);
@@ -167,7 +169,8 @@
             if (v && _norm(v) === ni) { still = true; break; }
           }
         }
-        if (!still) { _add(kind, item); run(true); }
+        if (still) { _remove(kind, item); run(true); } // ألغى المستخدم التأكيد
+        else run(true);
       }
       return r;
     };
