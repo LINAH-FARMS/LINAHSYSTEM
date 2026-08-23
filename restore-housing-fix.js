@@ -158,6 +158,7 @@
     try {
       if (typeof roomsCapacity === 'undefined' || !Array.isArray(roomsCapacity)) return changed;
       ROOMS.forEach(function (r) {
+        if (_roomKilled(BUILDING, r.number)) return;
         const exists = roomsCapacity.some(function (x) {
           return x && _norm(x.sector) === N_BUILDING && _norm(x.number) === _norm(r.number);
         });
@@ -172,6 +173,13 @@
   }
 
   // 4) إصلاح تعيينات الموظفين التي فرّغها الطرد (فقط الفارغة)
+  // لا نُرجع مقيم في غرفة حُذفت عمداً عبر زر حذف الغرفة الواحدة
+  function _roomKilled(sector, room) {
+    try {
+      const kill = JSON.parse(localStorage.getItem('lineh_room_hard_deletes') || '{}') || {};
+      return !!kill[_norm(sector) + '|' + _norm(room)];
+    } catch (e) { return false; }
+  }
   function healEmployees() {
     let changed = false;
     try {
@@ -182,6 +190,7 @@
         if (!e && res.code) e = employees.find(function (x) { return x && x.code && String(x.code) === String(res.code); });
         if (!e) e = employees.find(function (x) { return x && _norm(x.name) === _norm(res.name); });
         if (!e) return;
+        if (_roomKilled(BUILDING, res.room)) return;
         if ((!e.sector || !String(e.sector).trim()) || (!e.room || !String(e.room).trim())) {
           if (_norm(e.sector || '') !== N_BUILDING || _norm(e.room || '') !== _norm(res.room)) {
             e.sector = BUILDING;
