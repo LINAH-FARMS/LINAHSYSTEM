@@ -594,10 +594,13 @@
       var labels = Object.keys(map).sort();
       var values = labels.map(function(l) { return map[l]; });
       var total = values.reduce(function(a, b) { return a + b; }, 0);
+      var _sig = from + '|' + to + '|' + labels.join(',') + '|' + values.join(',');
       if (g('dash-septic-badge')) g('dash-septic-badge').innerText = total;
       if (g('dash-septic-legend')) g('dash-septic-legend').innerHTML = 'إجمالي النقلات: ' + total + ' | الفترة: ' + from + ' → ' + to;
 
-      // Destroy existing Chart.js instance
+      // Destroy existing Chart.js instance (فقط عند تغير البيانات - لمنع رقص الرسم مع كل دورة مزامنة)
+      if (canvas.__sig === _sig && canvas.__chart) return;
+      canvas.__sig = _sig;
       if (canvas.__chart) { try { canvas.__chart.destroy(); } catch(e) {} }
       if (typeof Chart === 'undefined') return;
       var ctx = canvas.getContext('2d');
@@ -615,7 +618,7 @@
           }]
         },
         options: {
-          responsive: true, maintainAspectRatio: false,
+          responsive: true, maintainAspectRatio: false, animation: false,
           plugins: {
             legend: { display: false },
             tooltip: {
@@ -651,6 +654,7 @@
       var labels = Object.keys(catMap).sort();
       var values = labels.map(function(l) { return catMap[l]; });
       var total = values.reduce(function(a,b) { return a+b; }, 0);
+      var _sig = from + '|' + to + '|' + labels.join(',') + '|' + values.join(',');
       if (g('dash-maint-badge')) g('dash-maint-badge').innerText = total;
       if (g('dash-maint-stats')) {
         g('dash-maint-stats').innerHTML = labels.map(function(l, i) {
@@ -658,6 +662,9 @@
         }).join(' ') + ' | <span style="font-weight:700;">الإجمالي: ' + total + '</span>';
       }
       if (g('dash-maint-legend')) g('dash-maint-legend').innerHTML = 'الفترة: ' + from + ' → ' + to;
+      // إعادة البناء فقط عند تغير البيانات - لمنع رقص الرسم مع كل دورة مزامنة
+      if (canvas.__sig === _sig && canvas.__chart) return;
+      canvas.__sig = _sig;
       if (canvas.__chart) { try { canvas.__chart.destroy(); } catch(e) {} }
       if (typeof Chart === 'undefined') return;
       var ctx = canvas.getContext('2d');
@@ -674,7 +681,7 @@
           }]
         },
         options: {
-          responsive: true, maintainAspectRatio: false,
+          responsive: true, maintainAspectRatio: false, animation: false,
           plugins: {
             legend: { display: false },
             tooltip: { rtl: true, callbacks: { label: function(ctx) { return ctx.parsed.y + ' مهمة'; } } }
