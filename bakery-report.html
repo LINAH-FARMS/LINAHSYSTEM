@@ -183,14 +183,6 @@ function _ctrKills() {
 const _ctrDead = _ctrKills();
 
 function _loadBctr() {
-<<<<<<< Updated upstream
-  var out = [];
-  var seen = {};
-  function add(v) { v = _sanitize(v); if (v && !seen[v]) { seen[v] = true; out.push(v); } }
-  try { var raw = JSON.parse(localStorage.getItem('linah_bakery_contractors_names') || '[]'); if (Array.isArray(raw)) raw.forEach(add); } catch(e){}
-  // مرآة حماية المقاولين: تحتفظ بكل اسم أضيف يدوياً حتى لو مسحته مزامنة قديمة
-  try { var mir = JSON.parse(localStorage.getItem('lineh_bakery_ctr_mirror') || '[]'); if (Array.isArray(mir)) mir.forEach(add); } catch(e){}
-=======
   const out = [];
   const seen = {};
   function add(v) {
@@ -204,7 +196,6 @@ function _loadBctr() {
   try { const raw = JSON.parse(localStorage.getItem('linah_bakery_contractors_names') || '[]'); if (Array.isArray(raw)) raw.forEach(add); } catch(e){}
   // مرآة حماية المقاولين: تحتفظ بكل اسم أضيف يدوياً حتى لو مسحته مزامنة قديمة
   try { const mir = JSON.parse(localStorage.getItem('lineh_bakery_ctr_mirror') || '[]'); if (Array.isArray(mir)) mir.forEach(add); } catch(e){}
->>>>>>> Stashed changes
   return out;
 }
 var bakeryContractorsNames = _loadBctr();
@@ -212,13 +203,6 @@ if (!bakeryContractorsNames.length) bakeryContractorsNames = ["محمد شعبا
 var _bctrLoaded = false;
 
 function _unionNames(a, b) {
-<<<<<<< Updated upstream
-  var out = [];
-  var seen = {};
-  (a || []).concat(b || []).forEach(function (n) {
-    n = _sanitize(n);
-    if (n && !seen[n]) { seen[n] = true; out.push(n); }
-=======
   const out = [];
   const seen = {};
   (a || []).concat(b || []).forEach(function (n) {
@@ -228,25 +212,10 @@ function _unionNames(a, b) {
     if (!k || seen[k] || _ctrDead[k]) return;
     seen[k] = true;
     out.push(n);
->>>>>>> Stashed changes
   });
   return out;
 }
 
-<<<<<<< Updated upstream
-function loadBakeryContractors() {
-  fetch(SB + '/rest/v1/sync_data?id=eq.alldata', {
-    method: 'GET',
-    headers: { 'apikey': KEY, 'Authorization': 'Bearer ' + KEY }
-  })
-  .then(function(r) { return r.json(); })
-  .then(function(rows) {
-    if (rows && rows.length > 0 && rows[0].data && rows[0].data.bakeryContractorsNames) {
-      var names = rows[0].data.bakeryContractorsNames.map(function(n){ return _sanitize(n); }).filter(function(s){return s;});
-      // دمج وليس استبدال: السحابة قد تكون قديمة ناقصة أسماء مضافة محلياً
-      if (names.length) bakeryContractorsNames = _unionNames(names, bakeryContractorsNames);
-    }
-=======
 // تحديث قوائم الاختيار المفتوحة بعد وصول قائمة السحابة
 function _refreshCtrSelects() {
   const list = bakeryContractorsNames.map(function(nm){ return typeof nm==='string'?nm:(nm&&nm.name?nm.name:String(nm)); });
@@ -281,7 +250,6 @@ function loadBakeryContractors() {
     } catch(e) {}
     const names = _unionNames(cloudEnt, _unionNames(legacy, bakeryContractorsNames));
     if (names.length) bakeryContractorsNames = names;
->>>>>>> Stashed changes
     _bctrLoaded = true;
     _refreshCtrSelects();
   }).catch(function() { _bctrLoaded = true; });
