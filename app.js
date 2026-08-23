@@ -570,45 +570,50 @@
       try { renderLongStay45(); } catch(e) { console.error('ls45 error:', e); }
     }
 
-    // ===== موظفون على رأس العمل 45 يوم متواصل بدون إجازة =====
-    // آخر تاريخ انتهاء/عودة إجازة للموظف من سجل الإجازات
-    function _ls45LastBreak(code) {
-      let last = '';
-      (vacations || []).forEach(v => {
-        const vc = String(v.code || v.employeeCode || '').trim();
-        if (!vc || vc !== String(code).trim()) return;
-        const cand = String(v.returnDate || v.end || v.endDate || v.dateTo || '').trim();
-        if (cand && cand > last) last = cand;
-      });
-      return last;
-    }
-    // القائمة تتحدث تلقائياً مع renderDashboard: نزول إجازة أو استبعاد يخرجه فوراً
+    // ===== موظفون لم تتحرك حالتهم 45 يوم (بدون تبديل بين P و V) =====
+    // العدّاد يصفر مع كل ضغطة زر التواجد (تبديل P↔V) عبر حقل lastStatusMove
+    // القائمة تتحدث تلقائياً مع renderDashboard: أي حركة حالة تخرجه فوراً
     function renderLongStay45() {
       const tb = document.getElementById('ls45-tbody');
       if (!tb) return;
       const today = new Date(); today.setHours(0,0,0,0);
+      const todayStr = today.getFullYear() + '-' + String(today.getMonth()+1).padStart(2,'0') + '-' + String(today.getDate()).padStart(2,'0');
       const rows = [];
+      let dirty = false;
       employees.forEach(e => {
-        if (e.status !== 'P') return;
-        const vacEnd = _ls45LastBreak(e.code);
-        const baseD = vacEnd || (e.hireDate || '');
-        if (!baseD) return;
-        const bd = new Date(String(baseD).split('T')[0]);
-        if (isNaN(bd)) return;
-        bd.setHours(0,0,0,0);
-        const days = Math.floor((today - bd) / 86400000);
-        if (days >= 45) rows.push({ e: e, days: days, src: vacEnd || (e.hireDate || '') });
+        if (e.status !== 'P' && e.status !== 'V') return;
+        if (!e.lastStatusMove) {
+          // بذرة أول مرة: من حالته إجازة فعلية يبدأ العد من تاريخ سفر الإجازة، والباقي من اليوم (بداية العد)
+          let seed = new Date(today);
+          if (e.status === 'V') {
+            const code = String(e.code || e.id || '').trim();
+            const vac = (vacations || []).find(v => String(v.code || '').trim() === code &&
+              String(v.returnDate || v.end || '').slice(0, 10) > todayStr);
+            if (vac) { const p = new Date(String(vac.travelDate || vac.start || '').split('T')[0]); if (!isNaN(p)) seed = p; }
+          }
+          seed.setHours(0,0,0,0);
+          e.lastStatusMove = seed.getFullYear() + '-' + String(seed.getMonth()+1).padStart(2,'0') + '-' + String(seed.getDate()).padStart(2,'0');
+          dirty = true;
+        }
+        const md = new Date(String(e.lastStatusMove).split('T')[0]);
+        if (isNaN(md)) return;
+        md.setHours(0,0,0,0);
+        const days = Math.floor((today - md) / 86400000);
+        if (days >= 45) rows.push({ e: e, days: days, src: String(e.lastStatusMove).split('T')[0] });
       });
+      if (dirty) { try { syncStorage(); } catch(e) {} }
       rows.sort((a, b) => b.days - a.days);
       tb.innerHTML = rows.map(r => {
         const col = r.days >= 75 ? '#c62828' : (r.days >= 60 ? '#e65100' : '#1b5e20');
+        const stLbl = r.e.status === 'V' ? 'إجازة' : 'تواجد';
+        const stCol = r.e.status === 'V' ? '#6a1b9a' : '#2e7d32';
         return '<tr>' +
           '<td style="padding:5px 8px;border-bottom:1px solid #eee;"><b>' + (r.e.code || '') + '</b></td>' +
           '<td style="padding:5px 8px;border-bottom:1px solid #eee;">' + (r.e.name || '') + '</td>' +
           '<td style="padding:5px 8px;border-bottom:1px solid #eee;color:#2e7d32;">' + (r.e.dept || '—') + '</td>' +
           '<td style="padding:5px 8px;border-bottom:1px solid #eee;">' + (r.e.title || '—') + '</td>' +
           '<td style="padding:5px 8px;border-bottom:1px solid #eee;text-align:center;font-weight:800;color:' + col + ';">' + r.days + '</td>' +
-          '<td style="padding:5px 8px;border-bottom:1px solid #eee;text-align:center;">' + (r.src || '—') + '</td>' +
+          '<td style="padding:5px 8px;border-bottom:1px solid #eee;text-align:center;"><span style="font-weight:800;color:' + stCol + ';">' + stLbl + '</span> | ' + (r.src || '—') + '</td>' +
         '</tr>';
       }).join('');
       const badge = document.getElementById('dash-ls45-badge');
@@ -4032,6 +4037,8 @@ function toggleEmployeeStatus(empId) {
             emp.departureTime = '';
         }
         _ts(emp);
+        // حركة حالة P↔V تصفّر عدّاد الـ 45 يوم
+        emp.lastStatusMove = new Date().toISOString().split('T')[0];
         playChangeSound();
         syncStorage();
         var _lbl = function(s) { return s === 'P' ? 'تواجد' : s === 'V' ? 'إجازة' : 'غائب'; };
@@ -8274,8 +8281,8 @@ e.status === 'P' ? 'متواجد' : (e.status === 'V' ? 'في إجازة' : 'غ�
             if (!emp) { skipped++; return; }
             emp.sector = sector;
             emp.room = room;
-            if (status === 'موجود') emp.status = 'P';
-            else if (status === 'إجازة') emp.status = 'V';
+            if (status === 'موجود') { if (emp.status !== 'P') { emp.status = 'P'; emp.lastStatusMove = new Date().toISOString().split('T')[0]; } }
+            else if (status === 'إجازة') { if (emp.status !== 'V') { emp.status = 'V'; emp.lastStatusMove = new Date().toISOString().split('T')[0]; } }
             updated++;
           });
           syncStorage(); renderAll();
