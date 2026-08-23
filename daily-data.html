@@ -322,11 +322,13 @@ var dynStores = [];
 try { var dsl = localStorage.getItem('lineh_dynamic_stores'); if (dsl) dynStores = JSON.parse(dsl); } catch(e){}
 if (!Array.isArray(dynStores)) dynStores = [];
 var hospitalities = [];
-try { var hh = localStorage.getItem('lineh_hospitalities'); if (hh) hospitalities = JSON.parse(hh); } catch(e){}
+// مفتاح السيستم الرئيسي الصحيح lineh_hospitality (وليس lineh_hospitalities)
+try { var hh = localStorage.getItem('lineh_hospitality'); if (!hh) hh = localStorage.getItem('lineh_hospitalities'); if (hh) hospitalities = JSON.parse(hh); } catch(e){}
 if (!Array.isArray(hospitalities)) hospitalities = [];
 var visitorTypes = [];
-try { var vtl = localStorage.getItem('lineh_visitor_types'); if (vtl) visitorTypes = JSON.parse(vtl); } catch(e){}
-if (!Array.isArray(visitorTypes) || !visitorTypes.length) visitorTypes = ['زائر'];
+// مفتاح السيستم الرئيسي الصحيح dyn_visitor_types (وليس lineh_visitor_types)
+try { var vtl = localStorage.getItem('dyn_visitor_types'); if (!vtl) vtl = localStorage.getItem('lineh_visitor_types'); if (vtl) visitorTypes = JSON.parse(vtl); } catch(e){}
+if (!Array.isArray(visitorTypes) || !visitorTypes.length) visitorTypes = ['ضيوف','سيدات','طلبة مدرسة','سائقين','مقدم خدمة بدون اجر','مقدم خدمة باجر','امن ليلي'];
 var deptList = [];
 try { var ddl = localStorage.getItem('lineh_dynamic_depts'); if (ddl) deptList = JSON.parse(ddl); } catch(e){}
 if (!Array.isArray(deptList)) deptList = [];
@@ -453,7 +455,7 @@ try { var sn = localStorage.getItem('dyn_septics'); if (sn) { septicNames = _cle
       if (vtr) {
         if (typeof vtr === 'string') { try { vtr = JSON.parse(vtr); } catch(e){} }
         var _vt = Array.isArray(vtr) ? vtr : (vtr && typeof vtr === 'object' ? Object.values(vtr) : []);
-        if (_vt.length) visitorTypes = _cleanArr(_vt);
+        if (_vt.length) { visitorTypes = _cleanArr(_vt); try { populateHospTypes(); } catch(e){} }
       }
       var ddr = get('dynamicDepts');
       if (ddr) {
@@ -701,7 +703,8 @@ function ddAddEmployee() {
 function populateHospTypes() {
   var sel = document.getElementById('dd-h-type');
   if (!sel) return;
-  var types = (visitorTypes && visitorTypes.length) ? visitorTypes : ['زائر'];
+  // نفس أنواع الزوار في تبويب الضيافة بالسيستم الرئيسي
+  var types = (visitorTypes && visitorTypes.length) ? visitorTypes : ['ضيوف','سيدات','طلبة مدرسة','سائقين','مقدم خدمة بدون اجر','مقدم خدمة باجر','امن ليلي'];
   var cur = sel.value;
   sel.innerHTML = types.map(function(t){ return '<option value="' + _escHtml(t) + '">' + _escHtml(t) + '</option>'; }).join('');
   if (cur && types.indexOf(cur) !== -1) sel.value = cur;
@@ -778,7 +781,7 @@ function _pushHospitalitiesToCloud() {
 function ddSaveHospitality() {
   if (!hospHid.value || !hospName.value) { showMsg('⚠️ اختر الموظف من البحث أولاً', true); return; }
   var arrival = document.getElementById('dd-h-arrival').value || new Date().toISOString().split('T')[0];
-  var type = document.getElementById('dd-h-type').value || 'زائر';
+  var type = document.getElementById('dd-h-type').value || 'ضيوف';
   for (var i = 0; i < hospitalities.length; i++) {
     var h = hospitalities[i];
     if (h && h.name === hospName.value && h.arrival === arrival) {
@@ -791,6 +794,7 @@ function ddSaveHospitality() {
   if (document.getElementById('dd-h-meal-lh').checked) meals.push('غداء');
   if (document.getElementById('dd-h-meal-dn').checked) meals.push('عشاء');
   var guests = parseInt(document.getElementById('dd-h-guests').value, 10) || 1;
+  var nowIso = new Date().toISOString();
   var rec = {
     _id: String(Date.now()),
     name: hospName.value,
@@ -799,9 +803,13 @@ function ddSaveHospitality() {
     arrival: arrival,
     departure: document.getElementById('dd-h-departure').value,
     guests: guests,
-    meals: meals
+    meals: meals,
+    createdAt: nowIso,
+    modifiedAt: nowIso
   };
   hospitalities.push(rec);
+  // كتابة المفتاح الصحيح الذي يقرأه تبويب الضيافة + القديم للتوافق
+  try { localStorage.setItem('lineh_hospitality', JSON.stringify(hospitalities)); } catch(e){}
   try { localStorage.setItem('lineh_hospitalities', JSON.stringify(hospitalities)); } catch(e){}
   _pushHospitalitiesToCloud();
   hospInp.value = ''; hospHid.value = ''; hospCode.value = ''; hospName.value = '';

@@ -217,12 +217,18 @@ function _unionNames(a, b) {
 }
 
 // تحديث قوائم الاختيار المفتوحة بعد وصول قائمة السحابة
+// وتحويل أي حقل نصي (اتإنشأ والقائمة لسه فاضية) إلى قائمة اختيار كاملة
 function _refreshCtrSelects() {
   const list = bakeryContractorsNames.map(function(nm){ return typeof nm==='string'?nm:(nm&&nm.name?nm.name:String(nm)); });
-  document.querySelectorAll('select[id^="ctr-name-"]').forEach(function(sel) {
-    const cur = sel.value;
+  if (!list.length) return;
+  document.querySelectorAll('select[id^="ctr-name-"], input[id^="ctr-name-"]').forEach(function(el) {
+    const cur = el.value;
+    const sel = document.createElement('select');
+    sel.id = el.id;
+    sel.setAttribute('style', 'width:100%;padding:11px 12px;border:2px solid #e0e0e0;border-radius:10px;font-size:14px;font-family:Cairo;background:white;-webkit-appearance:none;');
     sel.innerHTML = '<option value="">-- اختر المقاول --</option>' +
       list.map(function(_nm){ return '<option value="' + _nm.replace(/"/g,'&quot;') + '">' + _nm + '</option>'; }).join('');
+    el.parentNode.replaceChild(sel, el);
     if (cur && list.indexOf(cur) !== -1) sel.value = cur;
   });
 }
