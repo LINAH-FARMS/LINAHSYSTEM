@@ -105,14 +105,17 @@
   }
 
   let refreshing = false;
+  let refreshTimer = null;
   function refreshUI() {
     if (refreshing) return;
-    refreshing = true;
-    setTimeout(function () {
+    if (refreshTimer) clearTimeout(refreshTimer);
+    refreshTimer = setTimeout(function () {
+      refreshTimer = null;
+      refreshing = true;
       try { if (typeof renderDynamicLists === 'function') renderDynamicLists(); } catch (e) {}
       try { if (typeof populateBctrDatalist === 'function') populateBctrDatalist(); } catch (e) {}
       refreshing = false;
-    }, 50);
+    }, 250);
   }
 
   function run(withUI) {

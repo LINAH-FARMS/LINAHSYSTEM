@@ -18,14 +18,32 @@
     function _openIDB() {
       return new Promise(function(resolve, reject) {
         if (!window.indexedDB) { reject(new Error('IndexedDB عملية السحابة')); return; }
-        var req = indexedDB.open('LinahSystemDB', 2);
+        // فتح بدون إصدار محدد لتجنب VersionError لو الإصدار الحالي أعلى
+        var req = indexedDB.open('LinahSystemDB');
         req.onupgradeneeded = function(e) {
           var db = e.target.result;
           if (!db.objectStoreNames.contains('allData')) {
             db.createObjectStore('allData', { keyPath: 'key' });
           }
         };
-        req.onsuccess = function(e) { _idbReady = true; resolve(e.target.result); };
+        req.onsuccess = function(e) {
+          var db = e.target.result;
+          // شفاء ذاتي: لو المخزن مفقود رغم وجود القاعدة نرفع الإصدار قسرياً
+          if (db.objectStoreNames && db.objectStoreNames.contains('allData')) {
+            _idbReady = true; resolve(db); return;
+          }
+          var ver = (db.version || 0) + 1;
+          try { db.close(); } catch (errClose) {}
+          var req2 = indexedDB.open('LinahSystemDB', ver);
+          req2.onupgradeneeded = function(e2) {
+            var d2 = e2.target.result;
+            if (!d2.objectStoreNames.contains('allData')) {
+              d2.createObjectStore('allData', { keyPath: 'key' });
+            }
+          };
+          req2.onsuccess = function(e2) { _idbReady = true; resolve(e2.target.result); };
+          req2.onerror = function(e2) { reject(e2.target.error); };
+        };
         req.onerror = function(e) { reject(e.target.error); };
       });
     }
@@ -146,8 +164,8 @@
     }
 
     // ===== IndexedDB functions for waterDocs (large base64 files) =====
-    function _saveWaterDocsToIDB() {
-      if (!window.indexedDB) return Promise.resolve();
+    var _waterDocsSaveTimer = null;
+    function _doSaveWaterDocsToIDB() {
       return _openIDB().then(function(db) {
         return new Promise(function(resolve, reject) {
           var tx = db.transaction('allData', 'readwrite');
@@ -157,6 +175,17 @@
           tx.onerror = function() { reject(tx.error); };
         });
       }).catch(function(err) { console.warn('فشل حفظ مستندات المياه في IDB:', err); });
+    }
+    // حفظ مؤجل ومجمع: النداءات المتتالية خلال ثانية تُدمج في كتابة واحدة
+    function _saveWaterDocsToIDB() {
+      if (!window.indexedDB) return Promise.resolve();
+      if (_waterDocsSaveTimer) clearTimeout(_waterDocsSaveTimer);
+      return new Promise(function(resolve) {
+        _waterDocsSaveTimer = setTimeout(function() {
+          _waterDocsSaveTimer = null;
+          resolve(_doSaveWaterDocsToIDB());
+        }, 1000);
+      });
     }
 
     function _loadWaterDocsFromIDB() {
@@ -203,9 +232,7 @@
     /* Load IndexedDB data into memory cache before init */
     (function _loadIDBCache() {
       if (!window.indexedDB) return;
-      var _req = indexedDB.open('LinahSystemDB', 2);
-      _req.onsuccess = function(_e) {
-        var _db = _e.target.result;
+      _openIDB().then(function(_db) {
         try {
           var _tx = _db.transaction('allData', 'readonly');
           var _store = _tx.objectStore('allData');
@@ -219,5 +246,5 @@
             });
           };
         } catch(_ee) {}
-      };
+      }).catch(function() {});
     })();
