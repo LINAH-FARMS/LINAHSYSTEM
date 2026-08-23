@@ -53,12 +53,58 @@
     if (!n || n.length < 2 || kill[n]) return false;
     kill[n] = new Date().toISOString();
     _saveKill();
+    _pushTombstone(name); // تزامن الحذف مع بقية الأجهزة وفورم التقرير
     return true;
   }
   function _removeKill(name) {
     const n = _norm(name);
-    if (kill[n]) { delete kill[n]; _saveKill(); return true; }
+    if (kill[n]) { delete kill[n]; _saveKill(); _pullTombstone(name); return true; }
     return false;
+  }
+
+  // ---- تزامن الحذف عبر السحابة: كتابة/إزالة شاهد الحذف في ent:syncDeletions
+  //      حتى تلتزم بها كل الأجهزة وفورم تقرير المخابز ----
+  const SB_URL = 'https://idejmgmftmrniviftcce.supabase.co';
+  const SB_KEY = 'sb_publishable_AvMTa-zmQ4hgA1hJNpYc3g_gu8rlirz';
+  function _sbHeaders(extra) {
+    const h = { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY, 'Content-Type': 'application/json' };
+    if (extra) Object.keys(extra).forEach(function(k){ h[k] = extra[k]; });
+    return h;
+  }
+  function _withDelRow(fn) {
+    try {
+      fetch(SB_URL + '/rest/v1/sync_data?id=eq.' + encodeURIComponent('ent:syncDeletions') + '&select=data', { headers: _sbHeaders() })
+        .then(function (r) { return r.json(); })
+        .then(function (rows) {
+          let data = rows && rows.length ? rows[0].data : [];
+          if (typeof data === 'string') { try { data = JSON.parse(data); } catch (e) { data = []; } }
+          if (!Array.isArray(data)) data = [];
+          data = fn(data);
+          if (!data) return; // لا تغيير
+          return fetch(SB_URL + '/rest/v1/sync_data', {
+            method: 'POST',
+            headers: _sbHeaders({ 'Prefer': 'resolution=merge-duplicates' }),
+            body: JSON.stringify({ id: 'ent:syncDeletions', data: data, updated_at: new Date().toISOString(), device_id: 'linah-app' })
+          });
+        }).catch(function () {});
+    } catch (e) {}
+  }
+  function _pushTombstone(rawName) {
+    const n = _norm(rawName);
+    if (!n) return;
+    _withDelRow(function (data) {
+      if (data.some(function (d) { return d && d.entity === 'bakeryContractorsNames' && _norm(d.key) === n; })) return null;
+      data.push({ entity: 'bakeryContractorsNames', key: String(rawName || ''), time: new Date().toISOString() });
+      return data;
+    });
+  }
+  function _pullTombstone(rawName) {
+    const n = _norm(rawName);
+    if (!n) return;
+    _withDelRow(function (data) {
+      const out = data.filter(function (d) { return !(d && d.entity === 'bakeryContractorsNames' && _norm(d.key) === n); });
+      return out.length === data.length ? null : out;
+    });
   }
   function _markAdded(name) {
     const n = _norm(name);
@@ -258,6 +304,11 @@
         _saveAdded();
         mirror = Array.isArray(bakeryContractorsNames) ? bakeryContractorsNames.slice() : [];
         _saveMirror();
+        // بداية صفحة جديدة: نمسح شواهد حذف المقاولين من السحابة أيضاً
+        _withDelRow(function (data) {
+          const out = data.filter(function (d) { return !(d && d.entity === 'bakeryContractorsNames'); });
+          return out.length === data.length ? null : out;
+        });
       } catch (e) {}
       return r;
     };

@@ -159,13 +159,52 @@ function _sanitize(n) {
   var s = n.trim().replace(/[\u0000-\u001F\u007F-\u009F\u200B-\u200F\u2028-\u202E\uFEFF\u00AD\u061C\u2060-\u2069\uFFFD]/g, '').replace(/[?]/g, '').trim();
   return (s && s !== '[object Object]' && s.length >= 2) ? s : '';
 }
+// نفس تطبيع ملف حماية المقاولين حتى يطابق الحذف الدائم بالضبط
+function _ctrNorm(s) {
+  return String(s == null ? '' : s)
+    .replace(/[\u0000-\u001F\u007F-\u009F\u200B-\u200F\u2028-\u202E\uFEFF\u00AD\u061C\u2060-\u2069\uFFFD]/g, '')
+    .replace(/[\u0660-\u0669]/g, function (d) { return String(d.charCodeAt(0) - 0x0660); })
+    .replace(/[\u06F0-\u06F9]/g, function (d) { return String(d.charCodeAt(0) - 0x06F0); })
+    .normalize('NFC')
+    .replace(/[ة]/g, 'ه').replace(/[أإآ]/g, 'ا').replace(/[ى]/g, 'ي')
+    .toLowerCase()
+    .replace(/\s+/g, '')
+    .trim();
+}
+// قائمة المحذوف نهائياً (نفس مفتاح ملف الحماية في السيستم الرئيسي)
+function _ctrKills() {
+  const k = {};
+  try {
+    const o = JSON.parse(localStorage.getItem('lineh_bakery_ctr_killed') || '{}');
+    if (o && typeof o === 'object' && !Array.isArray(o)) Object.keys(o).forEach(function(x){ if (x) k[x] = true; });
+  } catch(e){}
+  return k;
+}
+const _ctrDead = _ctrKills();
+
 function _loadBctr() {
+<<<<<<< Updated upstream
   var out = [];
   var seen = {};
   function add(v) { v = _sanitize(v); if (v && !seen[v]) { seen[v] = true; out.push(v); } }
   try { var raw = JSON.parse(localStorage.getItem('linah_bakery_contractors_names') || '[]'); if (Array.isArray(raw)) raw.forEach(add); } catch(e){}
   // مرآة حماية المقاولين: تحتفظ بكل اسم أضيف يدوياً حتى لو مسحته مزامنة قديمة
   try { var mir = JSON.parse(localStorage.getItem('lineh_bakery_ctr_mirror') || '[]'); if (Array.isArray(mir)) mir.forEach(add); } catch(e){}
+=======
+  const out = [];
+  const seen = {};
+  function add(v) {
+    v = _sanitize(v);
+    if (!v) return;
+    const k = _ctrNorm(v);
+    if (!k || seen[k] || _ctrDead[k]) return; // الالتزام بقائمة السيستم: المحذوف نهائياً لا يعود
+    seen[k] = true;
+    out.push(v);
+  }
+  try { const raw = JSON.parse(localStorage.getItem('linah_bakery_contractors_names') || '[]'); if (Array.isArray(raw)) raw.forEach(add); } catch(e){}
+  // مرآة حماية المقاولين: تحتفظ بكل اسم أضيف يدوياً حتى لو مسحته مزامنة قديمة
+  try { const mir = JSON.parse(localStorage.getItem('lineh_bakery_ctr_mirror') || '[]'); if (Array.isArray(mir)) mir.forEach(add); } catch(e){}
+>>>>>>> Stashed changes
   return out;
 }
 var bakeryContractorsNames = _loadBctr();
@@ -173,15 +212,28 @@ if (!bakeryContractorsNames.length) bakeryContractorsNames = ["محمد شعبا
 var _bctrLoaded = false;
 
 function _unionNames(a, b) {
+<<<<<<< Updated upstream
   var out = [];
   var seen = {};
   (a || []).concat(b || []).forEach(function (n) {
     n = _sanitize(n);
     if (n && !seen[n]) { seen[n] = true; out.push(n); }
+=======
+  const out = [];
+  const seen = {};
+  (a || []).concat(b || []).forEach(function (n) {
+    n = _sanitize(n);
+    if (!n) return;
+    const k = _ctrNorm(n);
+    if (!k || seen[k] || _ctrDead[k]) return;
+    seen[k] = true;
+    out.push(n);
+>>>>>>> Stashed changes
   });
   return out;
 }
 
+<<<<<<< Updated upstream
 function loadBakeryContractors() {
   fetch(SB + '/rest/v1/sync_data?id=eq.alldata', {
     method: 'GET',
@@ -194,9 +246,45 @@ function loadBakeryContractors() {
       // دمج وليس استبدال: السحابة قد تكون قديمة ناقصة أسماء مضافة محلياً
       if (names.length) bakeryContractorsNames = _unionNames(names, bakeryContractorsNames);
     }
+=======
+// تحديث قوائم الاختيار المفتوحة بعد وصول قائمة السحابة
+function _refreshCtrSelects() {
+  const list = bakeryContractorsNames.map(function(nm){ return typeof nm==='string'?nm:(nm&&nm.name?nm.name:String(nm)); });
+  document.querySelectorAll('select[id^="ctr-name-"]').forEach(function(sel) {
+    const cur = sel.value;
+    sel.innerHTML = '<option value="">-- اختر المقاول --</option>' +
+      list.map(function(_nm){ return '<option value="' + _nm.replace(/"/g,'&quot;') + '">' + _nm + '</option>'; }).join('');
+    if (cur && list.indexOf(cur) !== -1) sel.value = cur;
+  });
+}
+
+function loadBakeryContractors() {
+  const READ_H = { 'apikey': KEY, 'Authorization': 'Bearer ' + KEY };
+  function getJson(url) { return fetch(url, { headers: READ_H }).then(function(r){ return r.json(); }); }
+  Promise.all([
+    getJson(SB + '/rest/v1/sync_data?id=eq.ent%3AbakeryContractorsNames&select=data'),
+    getJson(SB + '/rest/v1/sync_data?id=eq.ent%3AsyncDeletions&select=data'),
+    getJson(SB + '/rest/v1/sync_data?id=eq.alldata&select=data')
+  ]).then(function(res) {
+    function toArr(d) { if (typeof d === 'string') { try { d = JSON.parse(d); } catch(e) { d = null; } } return Array.isArray(d) ? d : []; }
+    // محذوفات السحابة تُطبَّق على كل المصادر (تزامن الحذف بين الأجهزة)
+    toArr(res[1] && res[1].length ? res[1][0].data : null).forEach(function(dl) {
+      if (dl && dl.entity === 'bakeryContractorsNames' && dl.key != null) _ctrDead[_ctrNorm(String(dl.key))] = true;
+    });
+    // صف المزامنة الرسمي هو الأساس، ثم القديم، ثم المحلي — والنتيجة مطابقة للسيستم
+    const cloudEnt = toArr(res[0] && res[0].length ? res[0][0].data : null);
+    let legacy = [];
+    try {
+      let dAll = res[2] && res[2].length ? res[2][0].data : null;
+      if (typeof dAll === 'string') { try { dAll = JSON.parse(dAll); } catch(e) { dAll = null; } }
+      if (dAll && Array.isArray(dAll.bakeryContractorsNames)) legacy = dAll.bakeryContractorsNames;
+    } catch(e) {}
+    const names = _unionNames(cloudEnt, _unionNames(legacy, bakeryContractorsNames));
+    if (names.length) bakeryContractorsNames = names;
+>>>>>>> Stashed changes
     _bctrLoaded = true;
-  })
-  .catch(function() { _bctrLoaded = true; });
+    _refreshCtrSelects();
+  }).catch(function() { _bctrLoaded = true; });
 }
 
 function calcDiesel() {
