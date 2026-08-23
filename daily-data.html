@@ -264,7 +264,10 @@ textarea{resize:vertical;min-height:60px}
 <div class="form-group"><label>الموبايل</label><input type="tel" id="dd-ne-mobile" placeholder="اختياري"></div>
 <div class="form-group"><label>📅 تاريخ المباشرة</label><input type="date" id="dd-ne-hiredate"></div>
 </div>
-<div class="form-group"><label>المبني / الغرفة</label><input type="text" id="dd-ne-room" placeholder="اختياري — مثال: E6"></div>
+<div class="form-row">
+<div class="form-group"><label>المبنى السكني</label><select id="dd-ne-sector" onchange="ddRoomsBySector()"></select></div>
+<div class="form-group"><label>رقم الغرفة</label><select id="dd-ne-room"></select></div>
+</div>
 <button type="button" class="btn-save-section" style="background:#00838f;" onclick="ddAddEmployee()">💾 حفظ الموظف الجديد</button>
 </div>
 
@@ -332,6 +335,10 @@ if (!Array.isArray(visitorTypes) || !visitorTypes.length) visitorTypes = ['ضي�
 var deptList = [];
 try { var ddl = localStorage.getItem('lineh_dynamic_depts'); if (ddl) deptList = JSON.parse(ddl); } catch(e){}
 if (!Array.isArray(deptList)) deptList = [];
+var roomsCapacity = [];
+// مفتاح السيستم الرئيسي الصحيح lineh_rooms_capacity (البديل القديم rooms_db)
+try { var rc0 = localStorage.getItem('lineh_rooms_capacity'); if (!rc0) rc0 = localStorage.getItem('rooms_db'); if (rc0) roomsCapacity = JSON.parse(rc0); } catch(e){}
+if (!Array.isArray(roomsCapacity)) roomsCapacity = [];
 
 function _sanitizeStr(s) {
   if (typeof s !== 'string') return '';
@@ -374,6 +381,7 @@ try { var sn = localStorage.getItem('dyn_septics'); if (sn) { septicNames = _cle
     hospitalities: 'ent:hospitalities',
     dynamicVisitorTypes: 'ent:dynamicVisitorTypes',
     dynamicDepts: 'ent:dynamicDepts',
+    roomsCapacity: 'ent:roomsCapacity',
     syncDeletions: 'ent:syncDeletions'
   };
   var entNames = Object.keys(ENT_IDS);
@@ -462,6 +470,17 @@ try { var sn = localStorage.getItem('dyn_septics'); if (sn) { septicNames = _cle
         if (typeof ddr === 'string') { try { ddr = JSON.parse(ddr); } catch(e){} }
         var _dp = Array.isArray(ddr) ? ddr : (ddr && typeof ddr === 'object' ? Object.values(ddr) : []);
         deptList = _cleanArr(_dp);
+      }
+      var rcld = get('roomsCapacity');
+      if (Array.isArray(rcld) && rcld.length) {
+        // احترام سجل الحذف: حذف مبنى كامل بمفتاح المبني وحده، وحذف غرفة بمفتاح مبني|غرفة
+        var _delR = {};
+        (_cloudSyncDeletions || []).forEach(function(d){ if (d && d.entity === 'roomsCapacity' && d.key) _delR[String(d.key)] = true; });
+        roomsCapacity = rcld.filter(function(r){
+          if (!r || !r.sector) return false;
+          var sk = String(r.sector), fk = sk + '|' + String(r.number == null ? '' : r.number);
+          return !_delR[sk] && !_delR[fk];
+        });
       }
       var cnt = 0;
       var rawSeptics = get('dynamicSeptics');
@@ -658,6 +677,32 @@ function populateEmpAddForm() {
   var td = document.getElementById('dd-titles-dl'), gd = document.getElementById('dd-govs-dl');
   if (td) td.innerHTML = Object.keys(tset).sort().map(function(t){ return '<option value="' + _escHtml(t) + '">'; }).join('');
   if (gd) gd.innerHTML = Object.keys(gset).sort().map(function(g){ return '<option value="' + _escHtml(g) + '">'; }).join('');
+  // قائمة المباني من roomsCapacity — نفس مصدر السيستم الرئيسي
+  var ssel = document.getElementById('dd-ne-sector');
+  if (ssel) {
+    var sset = {};
+    roomsCapacity.forEach(function(r){ var s = ((r && r.sector) || '').trim(); if (s) sset[s] = true; });
+    var scur = ssel.value;
+    ssel.innerHTML = '<option value="">— اختر المبنى —</option>' + Object.keys(sset).sort(function(a,b){ return a.localeCompare(b, 'ar'); }).map(function(s){ return '<option value="' + _escHtml(s) + '">' + _escHtml(s) + '</option>'; }).join('');
+    if (scur && sset[scur]) ssel.value = scur;
+    ddRoomsBySector();
+  }
+}
+function ddRoomsBySector() {
+  var ssel = document.getElementById('dd-ne-sector'), rsel = document.getElementById('dd-ne-room');
+  if (!rsel) return;
+  var sec = ssel ? ssel.value : '';
+  rsel.innerHTML = '';
+  if (!sec) { rsel.innerHTML = '<option value="">— اختر المبنى أولاً —</option>'; return; }
+  var uniq = {};
+  roomsCapacity.forEach(function(r){ if (r && r.sector === sec && r.number != null && String(r.number).trim()) uniq[String(r.number).trim()] = true; });
+  var list = Object.keys(uniq).sort(function(a,b){
+    var na = parseInt(a, 10), nb = parseInt(b, 10);
+    if (!isNaN(na) && !isNaN(nb)) return na - nb;
+    return a.localeCompare(b, 'ar');
+  });
+  if (!list.length) { rsel.innerHTML = '<option value="">لا توجد غرف مسجلة في هذا المبنى</option>'; return; }
+  rsel.innerHTML = '<option value="">— اختر الغرفة —</option>' + list.map(function(n){ return '<option value="' + _escHtml(n) + '">' + _escHtml(n) + '</option>'; }).join('');
 }
 function ddAddEmployee() {
   var name = document.getElementById('dd-ne-name').value.trim();
@@ -680,7 +725,7 @@ function ddAddEmployee() {
     nationalId: document.getElementById('dd-ne-mobile').value.trim(),
     hireDate: document.getElementById('dd-ne-hiredate').value || now.split('T')[0],
     contract: document.getElementById('dd-ne-contract').value || 'دائم',
-    sector: '',
+    sector: ((document.getElementById('dd-ne-sector') || {}).value || '').trim(),
     room: document.getElementById('dd-ne-room').value.trim(),
     status: 'P',
     vacationBalance: 30,
@@ -695,7 +740,9 @@ function ddAddEmployee() {
   try { renderForceMobile(); } catch(e){}
   _pushEmployeesToCloud();
   showMsg('✅ تمت إضافة الموظف: ' + name + ' [' + code + '] — الحالة: متواجد، التعاقد: ' + rec.contract);
-  ['dd-ne-name','dd-ne-code','dd-ne-title','dd-ne-gov','dd-ne-mobile','dd-ne-room'].forEach(function(id){ document.getElementById(id).value = ''; });
+  ['dd-ne-name','dd-ne-code','dd-ne-title','dd-ne-gov','dd-ne-mobile'].forEach(function(id){ document.getElementById(id).value = ''; });
+  var _ss = document.getElementById('dd-ne-sector'); if (_ss) _ss.value = '';
+  ddRoomsBySector();
   suggestNextCode();
 }
 
