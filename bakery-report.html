@@ -159,12 +159,27 @@ function _sanitize(n) {
   return (s && s !== '[object Object]' && s.length >= 2) ? s : '';
 }
 function _loadBctr() {
-  try { var raw = JSON.parse(localStorage.getItem('linah_bakery_contractors_names') || '[]'); if (Array.isArray(raw)) return raw.map(_sanitize).filter(function(s){return s;}); } catch(e){}
-  return [];
+  var out = [];
+  var seen = {};
+  function add(v) { v = _sanitize(v); if (v && !seen[v]) { seen[v] = true; out.push(v); } }
+  try { var raw = JSON.parse(localStorage.getItem('linah_bakery_contractors_names') || '[]'); if (Array.isArray(raw)) raw.forEach(add); } catch(e){}
+  // مرآة حماية المقاولين: تحتفظ بكل اسم أضيف يدوياً حتى لو مسحته مزامنة قديمة
+  try { var mir = JSON.parse(localStorage.getItem('lineh_bakery_ctr_mirror') || '[]'); if (Array.isArray(mir)) mir.forEach(add); } catch(e){}
+  return out;
 }
 var bakeryContractorsNames = _loadBctr();
 if (!bakeryContractorsNames.length) bakeryContractorsNames = ["محمد شعبان","ممدوح بكر","عاطف عبد المغيث","مصطفى على","اسامه سمير","فارس محمد"];
 var _bctrLoaded = false;
+
+function _unionNames(a, b) {
+  var out = [];
+  var seen = {};
+  (a || []).concat(b || []).forEach(function (n) {
+    n = _sanitize(n);
+    if (n && !seen[n]) { seen[n] = true; out.push(n); }
+  });
+  return out;
+}
 
 function loadBakeryContractors() {
   fetch(SB + '/rest/v1/sync_data?id=eq.alldata', {
@@ -175,7 +190,8 @@ function loadBakeryContractors() {
   .then(function(rows) {
     if (rows && rows.length > 0 && rows[0].data && rows[0].data.bakeryContractorsNames) {
       var names = rows[0].data.bakeryContractorsNames.map(function(n){ return _sanitize(n); }).filter(function(s){return s;});
-      if (names.length) bakeryContractorsNames = names;
+      // دمج وليس استبدال: السحابة قد تكون قديمة ناقصة أسماء مضافة محلياً
+      if (names.length) bakeryContractorsNames = _unionNames(names, bakeryContractorsNames);
     }
     _bctrLoaded = true;
   })
