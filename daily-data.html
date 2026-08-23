@@ -255,7 +255,7 @@ textarea{resize:vertical;min-height:60px}
 <div class="form-group"><label>الكود</label><input type="text" id="dd-ne-code" inputmode="numeric" placeholder="تلقائي"></div>
 <div class="form-group"><label>التعاقد</label><select id="dd-ne-contract"><option>دائم</option><option>كاجول</option></select></div>
 </div>
-<div class="form-group"><label>الإدارة</label><select id="dd-ne-dept"></select></div>
+<div class="form-group"><label>الإدارة</label><select id="dd-ne-dept" onchange="ddOnDeptChange()"></select></div>
 <div class="form-row">
 <div class="form-group"><label>الوظيفة</label><input type="text" id="dd-ne-title" list="dd-titles-dl" placeholder="مثال: عامل زراعي"><datalist id="dd-titles-dl"></datalist></div>
 <div class="form-group"><label>المحافظة</label><input type="text" id="dd-ne-gov" list="dd-govs-dl" placeholder="اختياري"><datalist id="dd-govs-dl"></datalist></div>
@@ -660,6 +660,7 @@ function suggestNextCode() {
   var el = document.getElementById('dd-ne-code');
   if (el && !el.value.trim()) el.value = _ddNextCode();
 }
+var _ddDeptTitles = {}, _ddAllTitles = {};
 function populateEmpAddForm() {
   var sel = document.getElementById('dd-ne-dept');
   if (!sel) return;
@@ -670,10 +671,14 @@ function populateEmpAddForm() {
   sel.innerHTML = '<option value="">— اختر الإدارة —</option>' + Object.keys(dset).sort().map(function(d){ return '<option value="' + _escHtml(d) + '">' + _escHtml(d) + '</option>'; }).join('');
   if (cur && dset[cur]) sel.value = cur;
   var tset = {}, gset = {};
+  _ddDeptTitles = {};
   employees.forEach(function(e){
     var t = ((e && e.title) || '').trim(); if (t) tset[t] = true;
     var g = ((e && e.gov) || '').trim(); if (g) gset[g] = true;
+    var d = ((e && e.dept) || '').trim(), tt = ((e && e.title) || '').trim();
+    if (d && tt) { if (!_ddDeptTitles[d]) _ddDeptTitles[d] = {}; _ddDeptTitles[d][tt] = true; }
   });
+  _ddAllTitles = tset;
   var td = document.getElementById('dd-titles-dl'), gd = document.getElementById('dd-govs-dl');
   if (td) td.innerHTML = Object.keys(tset).sort().map(function(t){ return '<option value="' + _escHtml(t) + '">'; }).join('');
   if (gd) gd.innerHTML = Object.keys(gset).sort().map(function(g){ return '<option value="' + _escHtml(g) + '">'; }).join('');
@@ -687,6 +692,27 @@ function populateEmpAddForm() {
     if (scur && sset[scur]) ssel.value = scur;
     ddRoomsBySector();
   }
+  ddTitlesByDept();
+}
+// قائمة الوظائف مرتبطة بالإدارة المختارة — نفس سلوك السيستم الرئيسي
+function ddOnDeptChange() {
+  var tinp = document.getElementById('dd-ne-title');
+  if (tinp) tinp.value = '';
+  ddTitlesByDept();
+}
+function ddTitlesByDept() {
+  var dsel = document.getElementById('dd-ne-dept'), td = document.getElementById('dd-titles-dl');
+  if (!td) return;
+  var dept = dsel ? dsel.value : '';
+  var keys = [];
+  if (!dept) {
+    keys = []; // لا إدارة → لا اقتراحات وظائف
+  } else {
+    var m = _ddDeptTitles[dept];
+    keys = (m && Object.keys(m).length) ? Object.keys(m) : Object.keys(_ddAllTitles);
+    keys.sort(function(a,b){ return a.localeCompare(b, 'ar'); });
+  }
+  td.innerHTML = keys.map(function(t){ return '<option value="' + _escHtml(t) + '">'; }).join('');
 }
 function ddRoomsBySector() {
   var ssel = document.getElementById('dd-ne-sector'), rsel = document.getElementById('dd-ne-room');
