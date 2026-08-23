@@ -143,6 +143,7 @@ textarea{resize:vertical;min-height:60px}
     <div class="icon">🎉</div>
     <h2>تم حفظ بيانات اليوم بنجاح!</h2>
     <p>بيانات الإنتاج والمقاولين اتبعتت للإدارة.<br>شكراً لك!</p>
+    <p id="sync-status" style="font-size:14px;font-weight:700;margin-top:8px;"></p>
     <button class="btn-reset" onclick="resetForm()">📊 إدخال بيانات يوم جديد</button>
   </div>
   <div class="footer">LINAH FARMS — Baharia Oasis — Bakery Daily Report</div>
@@ -443,9 +444,90 @@ function submitBakeryData() {
     .catch(function() {});  // silent fail
   }
 
+  // الربط المباشر بالسيستم الرئيسي: كتابة صفوف ent:* الصغيرة (نفس بروتوكول sync-fix.js)
+  // بدل إعادة رفع صف alldata الضخم الذي يسبب خطأ 500 من السيرفر
+  function saveToEntityRows() {
+    const UPSERT = { 'apikey': KEY, 'Authorization': 'Bearer ' + KEY, 'Content-Type': 'application/json', 'Prefer': 'resolution=merge-duplicates' };
+    const READ_H = { 'apikey': KEY, 'Authorization': 'Bearer ' + KEY };
+    function getArr(id) {
+      return fetch(SB + '/rest/v1/sync_data?id=eq.' + encodeURIComponent(id) + '&select=data', { headers: READ_H })
+        .then(function(r) { return r.json(); })
+        .then(function(rows) {
+          let d = rows && rows.length > 0 ? rows[0].data : null;
+          if (typeof d === 'string') { try { d = JSON.parse(d); } catch(e) { d = null; } }
+          return Array.isArray(d) ? d : [];
+        });
+    }
+    function putRow(id, arr) {
+      return fetch(SB + '/rest/v1/sync_data', {
+        method: 'POST', headers: UPSERT,
+        body: JSON.stringify({ id: id, data: arr, updated_at: new Date().toISOString(), device_id: 'bakery-form' })
+      }).then(function(r) { if (!r.ok) throw new Error('upsert ' + id + ' → HTTP ' + r.status); });
+    }
+    function nextId(arr, prefix) {
+      let mx = 0;
+      (arr || []).forEach(function(x) {
+        const m = /^([A-Z]+)(\d+)$/.exec(String((x && x.id) || ''));
+        if (m && m[1] === prefix) mx = Math.max(mx, parseInt(m[2], 10) || 0);
+      });
+      return prefix + ('00' + (mx + 1)).slice(-3);
+    }
+    function normDate(s) {
+      if (!s) return '';
+      try {
+        let m = String(s).match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+        if (m) return m[1] + '-' + ('0'+m[2]).slice(-2) + '-' + ('0'+m[3]).slice(-2);
+        m = String(s).match(/^(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})$/);
+        if (m) return m[3] + '-' + ('0'+m[2]).slice(-2) + '-' + ('0'+m[1]).slice(-2);
+      } catch(_ne) {}
+      return String(s || '');
+    }
+
+    const prodRec = {
+      date: production.date, breadCount: production.breadCount,
+      flourUsed: production.flourUsed, yeastUsed: production.yeastUsed,
+      saltUsed: production.saltUsed, branUsed: production.branUsed,
+      dieselUsed: production.dieselUsed, opCost: production.operatingCost || 1200,
+      notes: (production.bakerName ? 'تكلفة: ' + production.bakerName : '') + (production.notes ? ' | ' + production.notes : '')
+    };
+    const ctrRecs = (contractors || []).filter(function(ct) { return ct && ct.name; }).map(function(ct) {
+      return { date: production.date, name: ct.name, count: ct.count,
+        price: ct.price || 2, paid: 0, responsible: ct.responsible || '', notes: '',
+        ingredients: ct.ingredients || {} };
+    });
+
+    return Promise.all([
+      getArr('ent:bakeryProductions'),
+      getArr('ent:bakeryContractorSupplies'),
+      getArr('ent:syncDeletions')
+    ]).then(function(res) {
+      const prods = res[0], sups = res[1], dels = res[2];
+      const deletedKeys = {};
+      (dels || []).forEach(function(dl) { if (dl && dl.entity === 'bakeryContractorSupplies' && dl.key) deletedKeys[dl.key] = true; });
+
+      const dupP = prods.some(function(x) { return normDate(x.date) === normDate(prodRec.date) && String(x.breadCount) === String(prodRec.breadCount); });
+      if (!dupP) { prodRec.id = nextId(prods, 'PROD'); prods.push(prodRec); }
+
+      ctrRecs.forEach(function(rec) {
+        const key = (rec.name || '') + '|' + normDate(rec.date) + '|' + (rec.count || '');
+        if (deletedKeys[key]) return;
+        const dupC = sups.some(function(x) { return normDate(x.date) === normDate(rec.date) && x.name === rec.name && String(x.count) === String(rec.count); });
+        if (!dupC) { rec.id = nextId(sups, 'CTR'); sups.push(rec); }
+      });
+
+      return Promise.all([
+        putRow('ent:bakeryProductions', prods),
+        putRow('ent:bakeryContractorSupplies', sups)
+      ]).then(function() { return true; });
+    });
+  }
+
   saveToDailyReport()
-    .then(function() { return saveToAlldata(); })
-    .then(function() {
+    .then(function() { return saveToEntityRows(); })
+    .then(function(linked) {
+      try { saveToAlldata(); } catch(e) {}
+      const st = document.getElementById('sync-status');
+      if (st) st.textContent = '✅ اتربطت بالسيستم الرئيسي — هتظهر في تبويب المخابز بعد أول سحب';
       document.getElementById('bakery-form').style.display = 'none';
       document.getElementById('success-msg').style.display = 'block';
     })
@@ -453,6 +535,8 @@ function submitBakeryData() {
       var existing = JSON.parse(localStorage.getItem('linah_bakery_reports') || '[]');
       existing.push(report);
       localStorage.setItem('linah_bakery_reports', JSON.stringify(existing));
+      const st = document.getElementById('sync-status');
+      if (st) st.textContent = '⚠️ تعذر الربط بالسيستم الآن — البيانات محفوظة محلياً وستُزامن تلقائياً لاحقاً';
       document.getElementById('bakery-form').style.display = 'none';
       document.getElementById('success-msg').style.display = 'block';
     });
