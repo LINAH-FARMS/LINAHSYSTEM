@@ -3903,7 +3903,7 @@ var _breadSuggestionIdCounter = 0;
       excludedRecord.assetsStr = (emp.assets && emp.assets.length > 0) ? emp.assets.map(a => `${a.item} (${a.qty})`).join('، ') : "لا يوجد";
 
       excludedEmployees.push(excludedRecord);
-      _logDeletion('employees', emp.id || emp.code || emp.name);
+      [emp.id, emp.code, emp.name].forEach(function(k){ if (k) _logDeletion('employees', String(k)); });
       employees.splice(idx, 1);
 
       rebuildDeptTitles();
@@ -3952,7 +3952,8 @@ var _breadSuggestionIdCounter = 0;
 
     function permanentlyDeleteExcluded(idx) { if (!requireAdmin()) return;
       if(confirm("هل تريد مسح هذا السجل التابع للمستبعد تماماً حتى من الأرشيف القانوني؟")) {
-        _logDeletion('excludedEmployees', excludedEmployees[idx].code || excludedEmployees[idx].name);
+        var _ex = excludedEmployees[idx];
+        [_ex.id, _ex.code, _ex.name].forEach(function(k){ if (k) _logDeletion('excludedEmployees', String(k)); });
         excludedEmployees.splice(idx, 1); syncStorage(); renderExcludedTable();
       }
     }
@@ -3967,7 +3968,7 @@ var _breadSuggestionIdCounter = 0;
       }
       if (!Array.isArray(assetsVal)) assetsVal = [];
       var emp = {
-        id: Date.now().toString(),
+        id: rec.id || Date.now().toString(),
         code: rec.code || '',
         name: rec.name,
         contract: rec.contract || 'دائم',
@@ -3982,8 +3983,10 @@ var _breadSuggestionIdCounter = 0;
         assets: assetsVal
       };
       employees.push(_ts(emp));
-      _logDeletion('excludedEmployees', rec.code || rec.id || rec.name);
-      _removeDeletion('employees', emp.id);
+      // مفتاح سجل المستبعد الفعلي هو id||code||name — نسجل كل الصيغ لضمان الحجب في كل الأجهزة
+      [rec.id, rec.code, rec.name].forEach(function(k){ if (k) _logDeletion('excludedEmployees', String(k)); });
+      // نشيل حجر حذف الموظف المسجل وقت الاستبعاد (بنفس صيغ المفتاح)
+      [rec.id, rec.code, rec.name].forEach(function(k){ if (k) _removeDeletion('employees', String(k)); });
       excludedEmployees.splice(idx, 1);
       sortEmployeesAlphabetically();
       rebuildDeptTitles();
