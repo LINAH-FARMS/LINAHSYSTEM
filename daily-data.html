@@ -20,6 +20,10 @@ input,select,textarea{width:100%;padding:11px 12px;border:2px solid #e0e0e0;bord
 input:focus,select:focus,textarea:focus{border-color:#5d4037;outline:none}
 textarea{resize:vertical;min-height:60px}
 .form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.form-row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.meal-checkboxes{display:flex;gap:12px;align-items:center;flex-wrap:wrap;padding-top:4px}
+.meal-checkboxes label{display:flex;align-items:center;gap:5px;font-weight:700;cursor:pointer;font-size:13px;white-space:nowrap}
+.meal-checkboxes input[type="checkbox"]{width:auto;margin-left:4px;accent-color:#ad1457}
 .section{border-radius:12px;padding:14px;margin-bottom:14px}
 .section-tea{background:#fff3e0;border:1px solid #ffcc80}
 .section-maint{background:#e3f2fd;border:1px solid #90caf9}
@@ -272,22 +276,21 @@ textarea{resize:vertical;min-height:60px}
 </div>
 
 <div id="modal-hosp" class="modal-section section section-stores">
-<div class="section-title">🍽️ تسجيل ضيافة موظف</div>
-<div class="form-group"><label>الاسم *</label><input type="text" id="dd-h-name" placeholder="اسم الزائر أو الجهة — مثل تبويب الضيافة بالسيستم"></div>
+<div class="section-title">🍽️ تسجيل ضيافة زائر</div>
+<div class="form-group"><label>الاسم *</label><input type="text" id="dd-h-name" placeholder="اسم الزائر أو الجهة"></div>
 <div class="form-row">
-<div class="form-row">
-<div class="form-group"><label>نوع الزائر</label><select id="dd-h-type"></select></div>
-<div class="form-group"><label>الصفة / الجهة</label><input type="text" id="dd-h-title" placeholder="اختياري"></div>
+<div class="form-group"><label>تصنيف الزائر</label><select id="dd-h-type"></select></div>
+<div class="form-group"><label>الصفة / الغرض</label><input type="text" id="dd-h-title" placeholder="الصفة أو الملاحظات"></div>
 </div>
 <div class="form-row">
 <div class="form-group"><label>📅 تاريخ الوصول</label><input type="date" id="dd-h-arrival"></div>
-<div class="form-group"><label>📅 تاريخ المغادرة</label><input type="date" id="dd-h-departure"></div>
+<div class="form-group"><label>📅 تاريخ المغادرة المتوقع</label><input type="date" id="dd-h-departure"></div>
 </div>
 <div class="form-row">
-<div class="form-group"><label>عدد الأفراد</label><input type="number" id="dd-h-guests" min="1" value="1"></div>
-<div class="form-group"><label>الوجبات</label><div style="display:flex;gap:10px;padding-top:6px;font-size:13px;font-weight:700;"><label><input type="checkbox" id="dd-h-meal-bf"> إفطار</label><label><input type="checkbox" id="dd-h-meal-lh"> غداء</label><label><input type="checkbox" id="dd-h-meal-dn"> عشاء</label></div></div>
+<div class="form-group"><label>عدد الضيوف</label><input type="number" id="dd-h-guests" min="1" value="1"></div>
+<div class="form-group"><label>الوجبات المستحقة لليوم</label><div class="meal-checkboxes"><label><input type="checkbox" id="dd-h-meal-bf" checked> 🍳 إفطار</label><label><input type="checkbox" id="dd-h-meal-lh" checked> 🍗 غداء</label><label><input type="checkbox" id="dd-h-meal-dn" checked> 🧀 عشاء</label></div></div>
 </div>
-<button type="button" class="btn-save-section" style="background:#ad1457;" onclick="ddSaveHospitality()">💾 تسجيل الضيافة</button>
+<button type="button" class="btn-save-section" style="background:#ad1457;" onclick="ddSaveHospitality()">🛎️ تسجيل الضيافة</button>
 </div>
 
 </div>
@@ -518,7 +521,7 @@ function openModal(section) {
   if (section === 'minia') renderMiniaMobile();
   if (section === 'force') renderForceMobile();
   if (section === 'empadd') { populateEmpAddForm(); try { suggestNextCode(); } catch(e){} document.getElementById('dd-ne-hiredate').value = _today; }
-  if (section === 'hosp') { populateHospTypes(); document.getElementById('dd-h-arrival').value = _today; }
+  if (section === 'hosp') { populateHospTypes(); document.getElementById('dd-h-arrival').value = _today; ['dd-h-meal-bf','dd-h-meal-lh','dd-h-meal-dn'].forEach(function(id){ document.getElementById(id).checked = true; }); }
 }
 function closeModal() {
   document.getElementById('modal-overlay').style.display = 'none';
