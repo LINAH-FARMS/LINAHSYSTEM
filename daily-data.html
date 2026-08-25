@@ -1206,7 +1206,7 @@ function deleteStoreMobile(idx) {
   if (!confirm('هل تريد حذف العهدة «' + nm + '» نهائياً؟')) return;
   var key = a.id || String(a.date || '') + '|' + String(a.item || '') + '|' + String(a.location || '');
   archiveData.splice(idx, 1);
-  localStorage.setItem('lineh_archive_data', JSON.stringify(archiveData));
+  saveArchiveSafe();
   if (_ddEditIdx === idx) cancelStoreEdit();
   renderArchivesMobile();
   _deleteArchiveRecordFromCloud(key);
@@ -1238,6 +1238,20 @@ function _deleteArchiveRecordFromCloud(key) {
   })
   .catch(function(){});
 }
+function saveArchiveSafe() {
+  try {
+    localStorage.setItem('lineh_archive_data', JSON.stringify(archiveData));
+    return true;
+  } catch (e) {
+    if (e && e.name === 'QuotaExceededError' && archiveData.length > 50) {
+      archiveData.sort(function (a, b) { return new Date(a.modifiedAt || a.date || 0) - new Date(b.modifiedAt || b.date || 0); });
+      archiveData = archiveData.slice(Math.ceil(archiveData.length * 0.3));
+      try { localStorage.setItem('lineh_archive_data', JSON.stringify(archiveData)); return true; } catch (e2) {}
+    }
+    showMsg('⚠️ تخزين العهدة وصل للحد الأقصى للتخزين المحلي.', true);
+    return false;
+  }
+}
 function saveStoreIncoming() {
   var item = (document.getElementById('dd-in-item').value || '').trim();
   var desc = (document.getElementById('dd-in-desc').value || '').trim();
@@ -1254,7 +1268,7 @@ function saveStoreIncoming() {
     if (!ea.id) ea.id = _arcKey(ea);
     ea.item = item; ea.desc = desc; ea.qty = qty; ea.origQty = qty; ea.location = loc;
     ea.condition = cond; ea.date = date; ea.modifiedAt = new Date().toISOString();
-    localStorage.setItem('lineh_archive_data', JSON.stringify(archiveData));
+    saveArchiveSafe();
     _syncArchiveRecordToAlldata(ea);
     cancelStoreEdit();
     renderArchivesMobile();
@@ -1268,7 +1282,7 @@ function saveStoreIncoming() {
     localStorage.setItem('lineh_dynamic_stores', JSON.stringify(dynStores));
     _syncStoreNamesToCloud();
   }
-  localStorage.setItem('lineh_archive_data', JSON.stringify(archiveData));
+  saveArchiveSafe();
   _syncArchiveRecordToAlldata(rec);
   renderArchivesMobile();
   document.getElementById('dd-in-item').value = ''; document.getElementById('dd-in-desc').value = ''; document.getElementById('dd-in-qty').value = 1;
@@ -1332,7 +1346,7 @@ function saveStoreIssue() {
   a.issuedate = new Date().toISOString().split('T')[0];
   a.modifiedAt = new Date().toISOString();
   a.desc = (a.desc ? a.desc + ' | ' : '') + 'تم صرف ' + qty + ' إلى ' + to + (recv ? ' (المستلم: ' + recv + ')' : '');
-  localStorage.setItem('lineh_archive_data', JSON.stringify(archiveData));
+  saveArchiveSafe();
   _syncArchiveRecordToAlldata(a);
   renderArchivesMobile();
   document.getElementById('dd-issue-qty').value = 1;
