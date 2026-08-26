@@ -9387,6 +9387,11 @@ function exportContractorsToExcel() {
       reader.readAsText(file);
       
       function processRestoreData(data) {
+        if (data && Array.isArray(data.rows) && data.rows.length > 0 && data.rows[0] && data.rows[0].id) {
+          var flat = {};
+          data.rows.forEach(function(r) { if (r && r.id) flat[r.id] = r.data; }
+          ); data = flat;
+        }
         if(data.employees) { employees = data.employees; employees.forEach(function(e) { if (typeof e.vacationBalance !== 'number') e.vacationBalance = 30; }); }
         if(data.roomsCapacity) {
           roomsCapacity = data.roomsCapacity;
