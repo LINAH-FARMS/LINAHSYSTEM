@@ -12430,6 +12430,11 @@ var reportsTab = document.getElementById('tab-reports');
         let file = await fileHandle.getFile();
         let text = await file.text();
         let data = JSON.parse(text);
+        if (data && Array.isArray(data.rows) && data.rows.length > 0 && data.rows[0] && data.rows[0].id) {
+          var flat = {};
+          data.rows.forEach(function(r) { if (r && r.id) flat[r.id] = r.data; });
+          data = flat;
+        }
 
         // Highlight active
         document.querySelectorAll('.backup-item').forEach(el => el.classList.remove('active'));
@@ -12539,7 +12544,7 @@ var reportsTab = document.getElementById('tab-reports');
       renderVacationsTable(); renderOvertimeCalendar(); renderHospitalityTable(); renderMaintenanceTable(); renderSepticTable();
       renderPeriodicMaintenance(); renderTeaSugarTable(); renderMealLogTable(); autoLogTodayMeals();
       populateContractorSectorDropdown(); renderContractorsTable();
-      alert('لم يتم اختيار تقرير');
+      alert('✅ تمت استعادة النسخة الاحتياطية وتحديث البيانات بنجاح');
     }
 
     function exportThisBackup() {
