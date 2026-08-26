@@ -9348,7 +9348,7 @@ function exportContractorsToExcel() {
     }
 
     function importBackupSystem(evt) {
-      if (!requireAdmin() || currentUser !== 'مسح كافة') return;
+      if (!requireAdmin()) { alert('⚠️ يجب تسجيل الدخول كمسؤول لاستعادة النسخة الاحتياطية'); return; }
       let file = evt.target.files[0]; if(!file) { alert('لم يتم اختيار ملف'); return; }
       evt.target.value = '';
       alert('جاري استعادة البيانات من: ' + file.name + ' (' + file.size + ' بايت)');
