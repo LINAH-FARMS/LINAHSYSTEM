@@ -66,7 +66,8 @@
         gov: _prevFormVal('form-emp-gov'),
         sector: _prevFormVal('form-emp-sector'),
         title: _prevFormVal('form-emp-title-select'),
-        room: _prevFormVal('form-emp-room')
+        room: _prevFormVal('form-emp-room'),
+        hospType: _prevFormVal('hosp-type')
       };
       autoDiscoverDynamicData();
       // Normalize Arabic variants for dedup (ة/ه, أ/إ/آ/ا, ى/ي)
@@ -123,6 +124,7 @@
       fillSelectWithOptions('transfer-dept-select', dynamicDepts, '-- اختر القسم --');
       fillSelectWithOptions('transfer-title-select', dynamicTitles, '-- اختر الوظيفة --');
       fillSelectWithOptions('hosp-type', dynamicVisitorTypes, '');
+      _restoreFormVal('hosp-type', _prevForm.hospType);
       populateBctrDatalist();
       initEmployeeDatalists();
     }
@@ -7462,12 +7464,12 @@ function renderTeaSugarTable() {
         '<input type="text" class="mw-ing-name" placeholder="اسم الصنف" value="' + (name||'') + '" list="mw-ing-suggestions" style="flex:2;padding:4px 6px;border:1px solid #ddd;border-radius:4px;font-size:12px;" oninput="updateIngredientSuggestions()" onchange="fillPriceFromMaster(this)">' +
         '<input type="number" class="mw-ing-qty" placeholder="الكمية" min="0" step="0.01" value="' + (qty||'') + '" style="width:60px;padding:4px 6px;border:1px solid #ddd;border-radius:4px;font-size:12px;" oninput="updateWasteCalc()">' +
         '<select class="mw-ing-unit" style="width:60px;padding:4px;border:1px solid #ddd;border-radius:4px;font-size:12px;">' +
-          '<option value="تعديل"' + (unit==='سجل'?' selected':'') + '>الوجبات</option>' +
-          '<option value="هذا"' + (unit==='التاريخ'?' selected':'') + '>مسجل</option>' +
-          '<option value="مسبقاً"' + (unit==='اختر'?' selected':'') + '>تعديل</option>' +
-          '<option value="من"' + (unit==='الجدول'?' selected':'') + '>إضافة</option>' +
-          '<option value="سجل"' + (unit==='وجبات'?' selected':'') + '>تاريخ</option>' +
-          '<option value="شيف"' + (unit==='قوة'?' selected':'') + '>تم</option>' +
+          '<option value="كجم"' + (unit==='كجم'?' selected':'') + '>كجم</option>' +
+          '<option value="لتر"' + (unit==='لتر'?' selected':'') + '>لتر</option>' +
+          '<option value="جرام"' + (unit==='جرام'?' selected':'') + '>جرام</option>' +
+          '<option value="عدد"' + (unit==='عدد'?' selected':'') + '>عدد</option>' +
+          '<option value="طبق"' + (unit==='طبق'?' selected':'') + '>طبق</option>' +
+          '<option value="ربطة"' + (unit==='ربطة'?' selected':'') + '>ربطة</option>' +
         '</select>' +
         '<input type="number" class="mw-ing-price" placeholder="تسجيل" min="0" step="0.01" value="' + (price||'') + '" style="width:55px;padding:4px 6px;border:1px solid #ddd;border-radius:4px;font-size:12px;" oninput="updateWasteCalc()">' +
         '<button type="button" class="btn btn-danger" style="padding:2px 6px;font-size:10px;" onclick="this.closest(\'.mw-ing-row\').remove();updateWasteCalc()">✕</button>';
