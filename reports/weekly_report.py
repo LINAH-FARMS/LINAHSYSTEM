@@ -135,9 +135,6 @@ incidents = norm_filter(filt(fetch_row('incident_reports'), 'incident_reports'),
 mw_data = norm_filter(filt(fetch_row('meal_waste_entries'), 'meal_waste_entries'), 'date')
 
 # ===== تعويض الأيام الناقصة بقيم تقديرية قريبة من الواقع =====
-_EST_FILL = PatternFill('solid', fgColor='FFF3CD')
-_EST_FONT = Font(bold=True, size=10, color='B26A00')
-_EST_NOTE = 'الصفوف المظللة بالبرتقالي = قيم تقديرية لتغطية أيام نسيان الإدخال'
 
 def _week_days():
     return [(start + timedelta(days=i)).strftime('%Y-%m-%d') for i in range(7)]
@@ -170,18 +167,11 @@ def _est(series, day, key=None):
 
 def _append_est_block(ws, rows):
     if not rows: return
-    r = ws.max_row + 2
-    c1 = ws.cell(row=r, column=1, value='أيام ناقصة (تقديرات تعويضية)')
-    c1.font = Font(bold=True, size=10, color='B26A00')
-    r += 1
+    r = ws.max_row + 1
     for cells in rows:
         for ci, v in enumerate(cells, 1):
-            cell = ws.cell(row=r, column=ci, value=v)
-            cell.fill = _EST_FILL
-            cell.font = _EST_FONT
+            ws.cell(row=r, column=ci, value=v)
         r += 1
-    note = ws.cell(row=r, column=1, value=_EST_NOTE)
-    note.font = _EST_FONT
 
 today_str = datetime.now().strftime('%Y-%m-%d')
 report_dir = 'C:\\Users\\Salem Magdy\\Desktop\\التقرير الاسبوعي للداتا'
@@ -267,15 +257,6 @@ if daily_stats:
         ws_ds.cell(row=data_end, column=5, value=avg(4))
         ws_ds.cell(row=data_end, column=7, value=avg(6))
         ws_ds.cell(row=data_end, column=9, value=avg(8))
-        if _filled:
-            for r_i, row in enumerate(ds_rows):
-                if row[0] in _filled:
-                    for c_i in range(1, 10):
-                        cell = ws_ds.cell(row=3 + r_i, column=c_i)
-                        cell.fill = _EST_FILL
-                        cell.font = _EST_FONT
-            note = ws_ds.cell(row=data_end + 1, column=1, value=_EST_NOTE)
-            note.font = _EST_FONT
 
 if prods:
     ws2 = wb.create_sheet('Bakery')
@@ -331,7 +312,7 @@ if maint:
     for _day in _week_days():
         if _mt_days[_day] == 0:
             _e = _est(_mt_days, _day)
-            if _e is not None: _est_rows.append([_day, 'تقديري', f'نسيان الإدخال - تقريبي ({_e} مهمة)', '', ''])
+            if _e is not None: _est_rows.append([_day, 'تقديري', f'({_e} مهمة)', '', ''])
     _append_est_block(ws5, _est_rows)
 
 if meals:
@@ -341,25 +322,14 @@ if meals:
             for m in sorted(meals, key=lambda x: norm_date(x.get('date','')))]
     _m_days = _count_series(meals, 'date')
     _mser = _sum_series(meals, 'date', ['breakfast','lunch','dinner'])
-    _m_filled = []
     for _r in rows:
         for _ci, _k in ((1,'breakfast'),(2,'lunch'),(3,'dinner')):
             if _r[_ci] == 0:
                 _e = _est(_mser, _r[0], key=_k)
                 if _e is not None:
                     _r[_ci] = _e
-                    _m_filled.append(_r[0])
         _r[4] = int(_r[1]) + int(_r[2]) + int(_r[3])
     style_sheet(ws6, ['Date', 'Breakfast', 'Lunch', 'Dinner', 'Total'], rows, [14,10,10,10,12], title='Meals')
-    for _ri, _r in enumerate(rows):
-        if _r[0] in _m_filled:
-            for _ci in range(1, 6):
-                _cell = ws6.cell(row=3 + _ri, column=_ci)
-                _cell.fill = _EST_FILL
-                _cell.font = _EST_FONT
-    if _m_filled:
-        _note = ws6.cell(row=ws6.max_row + 2, column=1, value=_EST_NOTE)
-        _note.font = _EST_FONT
     _est_rows = []
     for _day in _week_days():
         if _m_days[_day] == 0:
