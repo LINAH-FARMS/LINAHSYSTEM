@@ -94,6 +94,12 @@
           if (!isNaN(t) && t > maxCloudMs) maxCloudMs = t;
           if (tsCache['alldata'] !== alldataMeta.updated_at) changedIds.push('alldata');
         }
+        // ضمان جلب صفوف المخبز دائماً (غائبة من alldata): حتى لو ظل
+        // updated_at دون تغيير فترة طويلة، تُدمج بياناتها الكاملة مع المحلي
+        // فلا تفقد أيام إنتاج الفرن بعد أول سحب.
+        ['ent:bakeryProductions','ent:bakeryContractorSupplies','ent:bakeryInvoices','ent:bakeryStockLog','ent:bakeryIngredients'].forEach(function (eid) {
+          if (changedIds.indexOf(eid) === -1) changedIds.push(eid);
+        });
         out.cloudMs = maxCloudMs;
         // سحب data فقط للصفوف المتغيرة — متتابع لتفادي قطع الاتصال
         for (let i = 0; i < changedIds.length; i++) {
