@@ -7088,9 +7088,9 @@ function renderTeaSugarTable() {
       var today = now.toISOString().split('T')[0];
       var hour = now.getHours();
       var s = getTodayMealStats();
-      var bf = hour >= 11 ? s.pCount : 0;
-      var lh = hour >= 15 ? s.pCount : 0;
-      var dn = hour >= 20 ? s.pCount : 0;
+      var bf = hour >= 8 ? s.pCount : 0;
+      var lh = hour >= 12 ? s.pCount : 0;
+      var dn = hour >= 18 ? s.pCount : 0;
       if (bf === 0 && lh === 0 && dn === 0) return;
       var existingIdx = mealLogs.findIndex(function(l) { return normalizeDateStr(l.date) === today; });
       if (existingIdx >= 0) {
@@ -12814,7 +12814,7 @@ var reportsTab = document.getElementById('tab-reports');
       }, 0);
 
       try { var _iv = validateDataIntegrity(); if (_iv.indexOf('بيانات') >= 0) console.warn('بيانات مسجلة مستبعدين:\n' + _iv); } catch(_e) {}
-      // Auto-log meals every 5 minutes to catch dinner (>=21) and other meals
+      // Auto-log meals every 5 minutes to catch dinner (>=18) and other meals
       setInterval(autoLogTodayMeals, 5 * 60 * 1000);
       // Also log when user returns to the page
       document.addEventListener('visibilitychange', function() { if (!document.hidden) autoLogTodayMeals(); });
