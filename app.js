@@ -10300,6 +10300,16 @@ reports.forEach(function(r) {
         var normDate = normalizeDateStr(date);
         var ingIds = ['ING001','ING002','ING003','ING004','ING007'];
 
+        // منع التكرار: نفس المقاول في نفس اليوم
+        var ctrDup = bakeryContractorSupplies.find(function(r, idx) {
+          if (_editingCtrIdx >= 0 && idx === _editingCtrIdx) return false;
+          return (typeof namesMatch === 'function' ? namesMatch(r.name, name) : r.name === name) && normalizeDateStr(r.date) === normDate;
+        });
+        if (ctrDup) {
+          alert('⚠️ منع التكرار: المقاول "' + name + '" مسجّل بالفعل بتاريخ ' + normDate + '.\nعدّل السجل الموجود أو احذفه ثم أعد الإضافة.');
+          return;
+        }
+
         // If editing, restore old ingredients first
         if (_editingCtrIdx >= 0) {
           var oldRec = bakeryContractorSupplies[_editingCtrIdx];
@@ -10313,24 +10323,6 @@ reports.forEach(function(r) {
           }
           bakeryStockLog = bakeryStockLog.filter(function(l) { return l.reference !== 'CTR_' + oldRec.name || normalizeDateStr(l.date) !== normalizeDateStr(oldRec.date); });
           bakeryContractorSupplies.splice(_editingCtrIdx, 1);
-        }
-
-        // Check duplicate (skip if editing same record)
-        if (_editingCtrIdx === -1) {
-          var dupIdx = bakeryContractorSupplies.findIndex(function(r) { return r.name === name && normalizeDateStr(r.date) === normDate; });
-          if (dupIdx >= 0) {
-            var oldSup = bakeryContractorSupplies[dupIdx];
-            if (oldSup.ingredients) {
-              Object.keys(oldSup.ingredients).forEach(function(id) {
-                var qty = oldSup.ingredients[id];
-                if (qty <= 0) return;
-                var ing = bakeryIngredients.find(function(i) { return i.id === id; });
-                if (ing) ing.currentQty = (ing.currentQty || 0) + qty;
-              });
-            }
-            bakeryStockLog = bakeryStockLog.filter(function(l) { return l.reference !== 'CTR_' + name || normalizeDateStr(l.date) !== normDate; });
-            bakeryContractorSupplies.splice(dupIdx, 1);
-          }
         }
 
         // Deduct new ingredients

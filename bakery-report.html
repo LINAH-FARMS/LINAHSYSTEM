@@ -411,6 +411,20 @@ function submitBakeryData() {
 
   var report = { production: production, contractors: contractors };
 
+  // منع التكرار داخل الفورم الواحد قبل الحفظ (نفس المقاول في نفس اليوم)
+  var seenCtr = {};
+  for (var ci = 0; ci < contractors.length; ci++) {
+    var ck = _ctrNorm(contractors[ci].name);
+    if (!ck) { btn.disabled = false; btn.textContent = '✅ حفظ بيانات اليوم'; document.getElementById('error-msg').textContent = 'اسم المقاول غير صالح في أحد الصفوف.'; document.getElementById('error-msg').style.display = 'block'; return; }
+    if (seenCtr[ck]) {
+      btn.disabled = false; btn.textContent = '✅ حفظ بيانات اليوم';
+      document.getElementById('error-msg').textContent = 'منع التكرار: المقاول «' + contractors[ci].name + '» مكرر في نفس التقرير. احذف التكرار من الصفوف ثم أعد الحفظ.';
+      document.getElementById('error-msg').style.display = 'block';
+      return;
+    }
+    seenCtr[ck] = true;
+  }
+
   function saveToDailyReport() {
     return fetch(SB + '/rest/v1/sync_data?id=eq.bakery_daily_reports', {
       method: 'GET',
@@ -486,7 +500,7 @@ function submitBakeryData() {
       contractors.forEach(function(ct) {
         var ctKey = (ct.name || '') + '|' + normDate(production.date) + '|' + (ct.count || '');
         if (deletedKeys[ctKey]) return;
-        var exists = bcs.some(function(x) { return normDate(x.date) === normDate(production.date) && x.name === ct.name && String(x.count) === String(ct.count); });
+        var exists = bcs.some(function(x) { return normDate(x.date) === normDate(production.date) && _ctrNorm(x.name) === _ctrNorm(ct.name); });
         if (!exists) {
           bcs.push({
             id: 'CTR' + Date.now() + '_' + Math.random().toString(36).slice(2,6),
@@ -573,7 +587,7 @@ function submitBakeryData() {
       ctrRecs.forEach(function(rec) {
         const key = (rec.name || '') + '|' + normDate(rec.date) + '|' + (rec.count || '');
         if (deletedKeys[key]) return;
-        const dupC = sups.some(function(x) { return normDate(x.date) === normDate(rec.date) && x.name === rec.name && String(x.count) === String(rec.count); });
+        const dupC = sups.some(function(x) { return normDate(x.date) === normDate(rec.date) && _ctrNorm(x.name) === _ctrNorm(rec.name); });
         if (!dupC) { rec.id = nextId(sups, 'CTR'); sups.push(rec); }
       });
 
