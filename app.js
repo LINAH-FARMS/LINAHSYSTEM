@@ -810,8 +810,15 @@
     function closeModal(id) { var el = document.getElementById(id); if (el) { el.style.display = 'none'; el.classList.remove('open'); } }
     function showPythonModal() { openModal('modal-python'); }
     function runPythonReport() {
-      try { var a = document.createElement('a'); a.href = 'linah://run-report'; a.click(); } catch(e) {}
-      setTimeout(function() { openModal('modal-python'); }, 100);
+      try {
+        var a = document.createElement('a');
+        a.href = 'linah://run-report';
+        a.style.display = 'none';
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(function() { if (a.parentNode) a.parentNode.removeChild(a); }, 50);
+      } catch(e) {}
+      setTimeout(function() { openModal('modal-python'); }, 150);
     }
     function runCustomReport() {
       var from = document.getElementById('custom-report-from').value;

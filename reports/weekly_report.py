@@ -143,7 +143,9 @@ except Exception:
 mw_data = norm_filter(mw_data, 'date')
 
 today_str = datetime.now().strftime('%Y-%m-%d')
-filename = f'C:\\Users\\Salem Magdy\\Desktop\\Lina_Weekly_{today_str}.xlsx'
+report_dir = 'C:\\Users\\Salem Magdy\\Desktop\\التقرير الاسبوعي للداتا'
+os.makedirs(report_dir, exist_ok=True)
+filename = os.path.join(report_dir, f'Lina_Weekly_{today_str}.xlsx')
 
 base = filename.replace('.xlsx','')
 i = 1
