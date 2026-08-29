@@ -134,6 +134,55 @@ incidents = norm_filter(filt(fetch_row('incident_reports'), 'incident_reports'),
 # Fetch meal waste entries (stored under a separate sync_data id)
 mw_data = norm_filter(filt(fetch_row('meal_waste_entries'), 'meal_waste_entries'), 'date')
 
+# ===== تعويض الأيام الناقصة بقيم تقديرية قريبة من الواقع =====
+_EST_FILL = PatternFill('solid', fgColor='FFF3CD')
+_EST_FONT = Font(bold=True, size=10, color='B26A00')
+_EST_NOTE = 'الصفوف المظللة بالبرتقالي = قيم تقديرية لتغطية أيام نسيان الإدخال'
+
+def _week_days():
+    return [(start + timedelta(days=i)).strftime('%Y-%m-%d') for i in range(7)]
+
+def _sum_series(records, date_key, keys):
+    m = {d: {k: 0 for k in keys} for d in _week_days()}
+    for r in records:
+        d = norm_date(r.get(date_key, ''))
+        if d in m:
+            for k in keys:
+                m[d][k] += float(r.get(k, 0) or 0)
+    return m
+
+def _count_series(records, date_key):
+    m = {d: 0 for d in _week_days()}
+    for r in records:
+        d = norm_date(r.get(date_key, ''))
+        if d in m: m[d] += 1
+    return m
+
+def _est(series, day, key=None):
+    if key is not None:
+        series = {d: series[d][key] for d in series}
+    vals = [series[d] for d in _week_days() if d in series and series[d]]
+    if len(vals) < 1: return None
+    idx = _week_days().index(day)
+    nb = [series[_week_days()[di]] for di in (idx - 1, idx + 1) if 0 <= di < 7 and _week_days()[di] in series and series[_week_days()[di]]]
+    if nb: return int(round(1.0 * sum(nb) / len(nb)))
+    return int(round(1.0 * sum(vals) / len(vals)))
+
+def _append_est_block(ws, rows):
+    if not rows: return
+    r = ws.max_row + 2
+    c1 = ws.cell(row=r, column=1, value='أيام ناقصة (تقديرات تعويضية)')
+    c1.font = Font(bold=True, size=10, color='B26A00')
+    r += 1
+    for cells in rows:
+        for ci, v in enumerate(cells, 1):
+            cell = ws.cell(row=r, column=ci, value=v)
+            cell.fill = _EST_FILL
+            cell.font = _EST_FONT
+        r += 1
+    note = ws.cell(row=r, column=1, value=_EST_NOTE)
+    note.font = _EST_FONT
+
 today_str = datetime.now().strftime('%Y-%m-%d')
 report_dir = 'C:\\Users\\Salem Magdy\\Desktop\\التقرير الاسبوعي للداتا'
 os.makedirs(report_dir, exist_ok=True)
@@ -162,14 +211,50 @@ daily_stats = data.get('dailyStats', [])
 daily_stats = norm_filter(daily_stats, 'date')
 if daily_stats:
     ws_ds = wb.create_sheet('DailyStats')
-    ds_rows = [[
-        norm_date(s.get('date','')),
-        s.get('total',0),
-        s.get('permP',0), f"{s.get('permPPct',0)}%",
-        s.get('permV',0), f"{s.get('permVPct',0)}%",
-        s.get('casP',0), f"{s.get('casPPct',0)}%",
-        s.get('hospGuests',0)
-    ] for s in sorted(daily_stats, key=lambda x: norm_date(x.get('date','')))]
+    ds_by_date = {}
+    for _s in sorted(daily_stats, key=lambda x: norm_date(x.get('date',''))):
+        ds_by_date[norm_date(_s.get('date',''))] = _s
+    _ds_keys = ['total', 'permP', 'permV', 'casP', 'hospGuests']
+    kseries = {}
+    for k in _ds_keys:
+        kseries[k] = {d: (ds_by_date[d].get(k) or 0) for d in ds_by_date if (ds_by_date[d].get(k) or 0) != 0}
+    _filled = set()
+    for k in _ds_keys:
+        for day in _week_days():
+            rec = ds_by_date.get(day)
+            if rec is not None and not (rec.get(k) or 0):
+                e = _est(kseries[k], day)
+                if e is not None:
+                    rec[k] = e
+                    _filled.add(day)
+    ds_rows = []
+    for day in _week_days():
+        s = ds_by_date.get(day)
+        if s is None:
+            _tot = _est(kseries['total'], day) or 0
+            if not _tot: continue
+            estv = {k: (_est(kseries[k], day) or 0) for k in _ds_keys}
+            _tot = estv['total']
+            ds_rows.append([day, _tot,
+                estv['permP'], f"{round(estv['permP'] * 100 / max(_tot,1))}%",
+                estv['permV'], f"{round(estv['permV'] * 100 / max(_tot,1))}%",
+                estv['casP'], f"{round(estv['casP'] * 100 / max(_tot,1))}%",
+                estv['hospGuests']])
+            _filled.add(day)
+            continue
+        _tot = s.get('total',0) or 0
+        if day in _filled:
+            ds_rows.append([day, _tot,
+                s.get('permP',0), f"{round((s.get('permP',0) or 0) * 100 / max(_tot,1))}%",
+                s.get('permV',0), f"{round((s.get('permV',0) or 0) * 100 / max(_tot,1))}%",
+                s.get('casP',0), f"{round((s.get('casP',0) or 0) * 100 / max(_tot,1))}%",
+                s.get('hospGuests',0)])
+        else:
+            ds_rows.append([day, _tot,
+                s.get('permP',0), (str(s.get('permPPct',0)) + '%' if s.get('permPPct') is not None else '0%'),
+                s.get('permV',0), (str(s.get('permVPct',0)) + '%' if s.get('permVPct') is not None else '0%'),
+                s.get('casP',0), (str(s.get('casPPct',0)) + '%' if s.get('casPPct') is not None else '0%'),
+                s.get('hospGuests',0)])
     style_sheet(ws_ds, ['Date', 'Total', 'Perm Present', 'Perm Present %', 'Perm Leave', 'Perm Leave %',
                          'Casual Present', 'Casual Present %', 'Guests'],
                 ds_rows, [14,10,12,12,12,12,12,12,10], title='Daily Statistics')
@@ -182,6 +267,15 @@ if daily_stats:
         ws_ds.cell(row=data_end, column=5, value=avg(4))
         ws_ds.cell(row=data_end, column=7, value=avg(6))
         ws_ds.cell(row=data_end, column=9, value=avg(8))
+        if _filled:
+            for r_i, row in enumerate(ds_rows):
+                if row[0] in _filled:
+                    for c_i in range(1, 10):
+                        cell = ws_ds.cell(row=3 + r_i, column=c_i)
+                        cell.fill = _EST_FILL
+                        cell.font = _EST_FONT
+            note = ws_ds.cell(row=data_end + 1, column=1, value=_EST_NOTE)
+            note.font = _EST_FONT
 
 if prods:
     ws2 = wb.create_sheet('Bakery')
@@ -197,6 +291,17 @@ if prods:
     ws2.cell(row=data_end, column=5, value=round(sum(float(p.get('saltUsed',0)or 0) for p in prods),1))
     ws2.cell(row=data_end, column=6, value=round(sum(float(p.get('yeastUsed',0)or 0) for p in prods),1))
     ws2.cell(row=data_end, column=7, value=round(sum(float(p.get('dieselUsed',0)or 0) for p in prods),1))
+    _prod_days = _count_series(prods, 'date')
+    _bser = _sum_series(prods, 'date', ['breadCount','flourUsed','branUsed','saltUsed','yeastUsed','dieselUsed'])
+    _est_rows = []
+    for _day in _week_days():
+        if _prod_days[_day] == 0:
+            _row = [_day]
+            for _k in ['breadCount','flourUsed','branUsed','saltUsed','yeastUsed','dieselUsed']:
+                _e = _est(_bser, _day, key=_k)
+                _row.append(_e if _e is not None else 0)
+            _est_rows.append(_row)
+    _append_est_block(ws2, _est_rows)
 
 if ctr_sup:
     ws3 = wb.create_sheet('Contractors')
@@ -207,6 +312,17 @@ if ctr_sup:
     ws3.cell(row=data_end, column=1, value='الإجمالي').font = Font(bold=True, size=11, color='1B5E20')
     ws3.cell(row=data_end, column=3, value=sum(r[2] for r in rows))
     ws3.cell(row=data_end, column=5, value=round(sum(r[4] for r in rows),2))
+    _c_days = _count_series(ctr_sup, 'date')
+    _cl = {d: 0 for d in _week_days()}
+    for _c in ctr_sup:
+        _d = norm_date(_c.get('date',''))
+        if _d in _cl: _cl[_d] += int(_c.get('count',0) or 0)
+    _est_rows = []
+    for _day in _week_days():
+        if _c_days[_day] == 0:
+            _e = _est(_cl, _day)
+            if _e is not None: _est_rows.append([_day, 'لجميع الموردين (تقريبًا)', _e, '', ''])
+    _append_est_block(ws3, _est_rows)
 
 if hosp:
     ws4 = wb.create_sheet('Hospitality')
@@ -221,13 +337,47 @@ if maint:
         [norm_date(m.get('date','')), m.get('category',''), m.get('task',''), m.get('cost',0), m.get('responsible','')]
         for m in sorted(maint, key=lambda x: norm_date(x.get('date','')))
     ], [14,15,30,10,20], title='Maintenance')
+    _mt_days = _count_series(maint, 'date')
+    _est_rows = []
+    for _day in _week_days():
+        if _mt_days[_day] == 0:
+            _e = _est(_mt_days, _day)
+            if _e is not None: _est_rows.append([_day, 'تقديري', f'نسيان الإدخال - تقريبي ({_e} مهمة)', '', ''])
+    _append_est_block(ws5, _est_rows)
 
 if meals:
     ws6 = wb.create_sheet('Meals')
     rows = [[norm_date(m.get('date','')), m.get('breakfast',0), m.get('lunch',0), m.get('dinner',0),
              int(m.get('breakfast',0)or 0)+int(m.get('lunch',0)or 0)+int(m.get('dinner',0)or 0)]
             for m in sorted(meals, key=lambda x: norm_date(x.get('date','')))]
+    _m_days = _count_series(meals, 'date')
+    _mser = _sum_series(meals, 'date', ['breakfast','lunch','dinner'])
+    _m_filled = []
+    for _r in rows:
+        for _ci, _k in ((1,'breakfast'),(2,'lunch'),(3,'dinner')):
+            if _r[_ci] == 0:
+                _e = _est(_mser, _r[0], key=_k)
+                if _e is not None:
+                    _r[_ci] = _e
+                    _m_filled.append(_r[0])
+        _r[4] = int(_r[1]) + int(_r[2]) + int(_r[3])
     style_sheet(ws6, ['Date', 'Breakfast', 'Lunch', 'Dinner', 'Total'], rows, [14,10,10,10,12], title='Meals')
+    for _ri, _r in enumerate(rows):
+        if _r[0] in _m_filled:
+            for _ci in range(1, 6):
+                _cell = ws6.cell(row=3 + _ri, column=_ci)
+                _cell.fill = _EST_FILL
+                _cell.font = _EST_FONT
+    if _m_filled:
+        _note = ws6.cell(row=ws6.max_row + 2, column=1, value=_EST_NOTE)
+        _note.font = _EST_FONT
+    _est_rows = []
+    for _day in _week_days():
+        if _m_days[_day] == 0:
+            _b = _est(_mser, _day, key='breakfast'); _l = _est(_mser, _day, key='lunch'); _dn = _est(_mser, _day, key='dinner')
+            if _b is not None and _l is not None and _dn is not None:
+                _est_rows.append([_day, _b, _l, _dn, _b + _l + _dn])
+    _append_est_block(ws6, _est_rows)
 
 if septic:
     ws7 = wb.create_sheet('Septic')
@@ -251,6 +401,15 @@ if tea_sugar:
          t.get('teaPacks',0), t.get('sugarKg',0), t.get('period',t.get('type',''))]
         for t in sorted(tea_sugar, key=lambda x: norm_date(x.get('date','')))
     ], [14,12,25,10,10,20], title='Tea & Sugar')
+    _ts_days = _count_series(tea_sugar, 'date')
+    _tser = _sum_series(tea_sugar, 'date', ['teaPacks', 'sugarKg'])
+    _est_rows = []
+    for _day in _week_days():
+        if _ts_days[_day] == 0:
+            _t = _est(_tser, _day, key='teaPacks'); _s = _est(_tser, _day, key='sugarKg')
+            if _t is not None and _s is not None:
+                _est_rows.append([_day, '', 'تقديري', _t, _s, 'أسبوعي'])
+    _append_est_block(ws9, _est_rows)
 
 if ts_batches:
     ws10 = wb.create_sheet('TeaSugarBatches')
