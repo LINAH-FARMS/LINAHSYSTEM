@@ -5,8 +5,8 @@ from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from openpyxl.utils import get_column_letter
 
-SUPABASE_URL = 'https://cwqghiqykohefaggedjl.supabase.co'
-SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN3cWdoaXF5a29oZWZhZ2dlZGpsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEwMjUyMjEsImV4cCI6MjA5NjYwMTIyMX0.3a3hRcNdmYQCtjYjBroAT6df1T_7oz-XWUeD3wagYw8'
+SUPABASE_URL = 'https://idejmgmftmrniviftcce.supabase.co'
+SUPABASE_KEY = 'sb_publishable_AvMTa-zmQ4hgA1hJNpYc3g_gu8rlirz'
 
 _ARABIC_DIGITS = str.maketrans('٠١٢٣٤٥٦٧٨٩', '0123456789')
 _EMOJI_PATTERN = re.compile(r'[\U00002600-\U000027BF\U0001F300-\U0001FAFF\U0000FE00-\U0000FE0F]')
@@ -26,10 +26,13 @@ def norm_date(s):
 def strip_emoji(s):
     return _EMOJI_PATTERN.sub('', s).strip() if isinstance(s, str) else (s or '')
 
-def fetch():
-    r = requests.get(f'{SUPABASE_URL}/rest/v1/sync_data?id=eq.alldata&select=data', headers={'apikey': SUPABASE_KEY, 'Authorization': f'Bearer {SUPABASE_KEY}'})
-    raw = r.json()[0]['data']
-    return json.loads(raw) if isinstance(raw, str) else raw
+def fetch_row(row_id):
+    r = requests.get(f'{SUPABASE_URL}/rest/v1/sync_data', params={'id': 'eq.' + row_id}, headers={'apikey': SUPABASE_KEY, 'Authorization': f'Bearer {SUPABASE_KEY}'}, timeout=30)
+    j = r.json()
+    if isinstance(j, list) and len(j) > 0:
+        raw = j[0].get('data')
+        return json.loads(raw) if isinstance(raw, str) else raw
+    return []
 
 def last_completed_friday():
     today = datetime.now()
@@ -65,7 +68,21 @@ def norm_filter(arr, key):
     return [x for x in arr if norm_date(x.get(key,'')) >= fmt(start) and norm_date(x.get(key,'')) <= fmt(end)]
 
 print('[جاري سحب البيانات...]')
-data = fetch()
+data = {k: fetch_row(rid) for k, rid in [
+    ('employees', 'ent:employees'),
+    ('hospitalities', 'ent:hospitalities'),
+    ('bakeryProductions', 'ent:bakeryProductions'),
+    ('bakeryContractorSupplies', 'ent:bakeryContractorSupplies'),
+    ('mealLogs', 'ent:mealLogs'),
+    ('maintenanceRecords', 'ent:maintenanceRecords'),
+    ('septicRecords', 'ent:septicRecords'),
+    ('teaSugarBatches', 'ent:teaSugarBatches'),
+    ('teaSugarDisbursements', 'ent:teaSugarDisbursements'),
+    ('dailyStats', 'ent:dailyStats'),
+    ('mealWaste', 'ent:mealWaste'),
+    ('syncDeletions', 'ent:syncDeletions'),
+]}    
+print(f'[تم السحب] الكيانات: {", ".join(f"{k}={len(v)}" for k, v in data.items())}')
 
 sync_del = data.get('syncDeletions', [])
 def filt(arr, entity):
@@ -113,34 +130,9 @@ maint = norm_filter(data.get('maintenanceRecords', []), 'date')
 septic = norm_filter(data.get('septicRecords', []), 'date')
 ts_batches = norm_filter(data.get('teaSugarBatches', []), 'date')
 tea_sugar = norm_filter(data.get('teaSugarDisbursements', []), 'date')
-# Fetch incident reports (stored under a separate sync_data id)
-try:
-    ri = requests.get(f'{SUPABASE_URL}/rest/v1/sync_data?id=eq.incident_reports&select=data', headers={'apikey': SUPABASE_KEY, 'Authorization': f'Bearer {SUPABASE_KEY}'})
-    ri_raw = ri.json()
-    if isinstance(ri_raw, list) and len(ri_raw) > 0:
-        ri_d = ri_raw[0]
-        ri_data = json.loads(ri_d['data']) if isinstance(ri_d.get('data',''), str) else ri_d.get('data', [])
-        if not isinstance(ri_data, list): ri_data = []
-    else:
-        ri_data = []
-except Exception:
-    ri_data = []
-ri_data = filt(ri_data, 'incident_reports')
-incidents = norm_filter(ri_data, 'opened_at')
-# Also include tea sugar by matching period of batches found this week
+incidents = norm_filter(filt(fetch_row('incident_reports'), 'incident_reports'), 'opened_at')
 # Fetch meal waste entries (stored under a separate sync_data id)
-try:
-    rw = requests.get(f'{SUPABASE_URL}/rest/v1/sync_data?id=eq.meal_waste_entries&select=data', headers={'apikey': SUPABASE_KEY, 'Authorization': f'Bearer {SUPABASE_KEY}'})
-    mw_raw = rw.json()
-    if isinstance(mw_raw, list) and len(mw_raw) > 0:
-        mw_d = mw_raw[0]
-        mw_data = json.loads(mw_d['data']) if isinstance(mw_d.get('data',''), str) else mw_d.get('data', [])
-        if not isinstance(mw_data, list): mw_data = []
-    else:
-        mw_data = []
-except Exception:
-    mw_data = []
-mw_data = norm_filter(mw_data, 'date')
+mw_data = norm_filter(filt(fetch_row('meal_waste_entries'), 'meal_waste_entries'), 'date')
 
 today_str = datetime.now().strftime('%Y-%m-%d')
 report_dir = 'C:\\Users\\Salem Magdy\\Desktop\\التقرير الاسبوعي للداتا'
