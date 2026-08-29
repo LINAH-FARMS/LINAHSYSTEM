@@ -11477,14 +11477,26 @@ reports.forEach(function(r) {
         if (rows && rows.length > 0) {
           var mergedData = {};
           var _remoteDels = [];
+          // alldata هو المصدر الأساسي، وصفوف ent:* تُدمج فقط لملء أي كيان
+          // غير موجود في alldata (مثل بيانات المخبز المنتقلة لصفوف ent:) فلا
+          // تُفقد الأيام الناقصة عند السحب.
           for (var ri = 0; ri < rows.length; ri++) {
-            var row = rows[ri]; if (!row.id || !row.data || row.id !== 'alldata') continue;
+            var row = rows[ri]; if (!row.id || !row.data) continue;
+            if (row.id !== 'alldata' && row.id.indexOf('ent:') !== 0) continue;
             var _ad = typeof row.data === 'string' ? JSON.parse(row.data) : row.data;
-            if (_ad && typeof _ad === 'object') {
-              if (Array.isArray(_ad.syncDeletions)) _remoteDels = _remoteDels.concat(_ad.syncDeletions);
-              for (var _aki in _ad) {
-                if (_aki === 'syncDeletions') continue;
-                mergedData[_aki] = _ad[_aki];
+            if (row.id === 'alldata') {
+              if (_ad && typeof _ad === 'object') {
+                if (Array.isArray(_ad.syncDeletions)) _remoteDels = _remoteDels.concat(_ad.syncDeletions);
+                for (var _aki in _ad) {
+                  if (_aki === 'syncDeletions') continue;
+                  mergedData[_aki] = _ad[_aki];
+                }
+              }
+            } else {
+              // ent:* -> مفتاح الكيان = الاسم بدون بادئة ent:، وdata هو المصفوفة مباشرة
+              var _enName = row.id.slice(4);
+              if (mergedData[_enName] === undefined || mergedData[_enName] === null) {
+                mergedData[_enName] = _ad;
               }
             }
           }
