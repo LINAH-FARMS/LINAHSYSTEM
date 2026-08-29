@@ -312,17 +312,6 @@ if ctr_sup:
     ws3.cell(row=data_end, column=1, value='الإجمالي').font = Font(bold=True, size=11, color='1B5E20')
     ws3.cell(row=data_end, column=3, value=sum(r[2] for r in rows))
     ws3.cell(row=data_end, column=5, value=round(sum(r[4] for r in rows),2))
-    _c_days = _count_series(ctr_sup, 'date')
-    _cl = {d: 0 for d in _week_days()}
-    for _c in ctr_sup:
-        _d = norm_date(_c.get('date',''))
-        if _d in _cl: _cl[_d] += int(_c.get('count',0) or 0)
-    _est_rows = []
-    for _day in _week_days():
-        if _c_days[_day] == 0:
-            _e = _est(_cl, _day)
-            if _e is not None: _est_rows.append([_day, 'لجميع الموردين (تقريبًا)', _e, '', ''])
-    _append_est_block(ws3, _est_rows)
 
 if hosp:
     ws4 = wb.create_sheet('Hospitality')
