@@ -170,6 +170,40 @@
     try { if (typeof updateHousingStats === 'function') updateHousingStats(); } catch (e) {}
   }
 
+  // ---- إصلاح: إعادة البناء من العاملين لا تعيد الغرف المحذوفة نهائياً ----
+  // rebuildRoomsFromEmployees() يعيد إنشاء roomsCapacity بالكامل من تعيينات
+  // العاملين، فيتجاوز قائمة الحذف ويعيد الغرفة المشغولة التي حُذفت. هنا نغلفها
+  // لطرد أي غرفة في قائمة الحذف الدائم وفك ارتباط سكانها بعد كل إعادة بناء.
+  function _rebuildCleanup() {
+    try {
+      const kill = _load();
+      const keys = Object.keys(kill);
+      if (!keys.length) return;
+      keys.forEach(function (k) {
+        const sep = k.indexOf('|');
+        if (sep < 0) return;
+        const ns = k.slice(0, sep), nn = k.slice(sep + 1);
+        if (Array.isArray(employees)) {
+          employees.forEach(function (e) {
+            if (e && _norm(e.sector) === ns && _norm(e.room) === nn) { e.sector = ''; e.room = ''; }
+          });
+        }
+      });
+      if (Array.isArray(roomsCapacity)) {
+        roomsCapacity = roomsCapacity.filter(function (r) { return !(r && _isKilled(r.sector, r.number)); });
+        dynamicSectors = dynamicSectors.filter(function (s) { return roomsCapacity.some(function (r) { return r.sector === s; }); });
+      }
+    } catch (e) {}
+  }
+  const _origRebuild = window.rebuildRoomsFromEmployees;
+  if (typeof _origRebuild === 'function') {
+    window.rebuildRoomsFromEmployees = function () {
+      const n = _origRebuild.apply(this, arguments);
+      try { _rebuildCleanup(); } catch (e) {}
+      return n;
+    };
+  }
+
   const _origPull = window.pullFromSupabase;
   if (typeof _origPull === 'function') {
     window.pullFromSupabase = function () {
