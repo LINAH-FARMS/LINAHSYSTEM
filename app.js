@@ -10417,6 +10417,46 @@ reports.forEach(function(r) {
       pushToSupabase();
     }
 
+    // حذف جميع سجلات توريد المقاولين المكررة (نفس المقاول + نفس اليوم) نهائياً
+    function deleteExistingContractorDuplicates() {
+      if (!requireAdmin()) return;
+      var normName = function(n) { return (typeof namesMatch === 'function') ? (function(nn){ try { return (window.normalizeNameFlat ? normalizeNameFlat(nn) : String(nn||'').trim()); } catch(e){ return String(nn||'').trim(); } })(n) : String(n||'').trim(); };
+      var groups = {};
+      bakeryContractorSupplies.forEach(function(r, i) {
+        if (!r || !r.name) return;
+        var key = normName(r.name) + '|' + normalizeDateStr(r.date);
+        if (!groups[key]) groups[key] = [];
+        groups[key].push(i);
+      });
+      var toRemove = [];
+      Object.keys(groups).forEach(function(k) {
+        var arr = groups[k];
+        if (arr.length > 1) toRemove = toRemove.concat(arr.slice(1));
+      });
+      if (!toRemove.length) { alert('لا توجد تكرارات لتوريد المقاولين بنفس اليوم.'); return; }
+      if (!confirm('سيتم حذف ' + toRemove.length + ' سجل(ات) مكرر لمقاولين بنفس اليوم.\nهل تريد المتابعة؟')) return;
+      toRemove.sort(function(a, b) { return b - a; });
+      toRemove.forEach(function(i) {
+        var rec = bakeryContractorSupplies[i];
+        if (!rec) return;
+        if (rec.ingredients) {
+          Object.keys(rec.ingredients).forEach(function(id) {
+            var qty = rec.ingredients[id];
+            if (qty <= 0) return;
+            var ing = bakeryIngredients.find(function(x) { return x.id === id; });
+            if (ing) ing.currentQty = (ing.currentQty || 0) + qty;
+          });
+        }
+        bakeryStockLog = bakeryStockLog.filter(function(l) { return l.reference !== 'CTR_' + rec.name || normalizeDateStr(l.date) !== normalizeDateStr(rec.date); });
+        _logDeletion('bakeryContractorSupplies', (rec.name||'') + '|' + normalizeDateStr(rec.date) + '|' + (rec.count||''));
+        bakeryContractorSupplies.splice(i, 1);
+      });
+      syncStorage(); renderBakeryContractorSupplies(); updateBakeryStats(); updateBreadSupplyStats();
+      updateBctrIngredientStocks(); renderBakeryIngredients();
+      pushToSupabase();
+      alert('تم حذف ' + toRemove.length + ' سجل(ات) مكرر بنجاح ✅');
+    }
+
     function addBakeryStock() {
       let sel = document.getElementById('stock-add-material');
       sel.innerHTML = '<option value="">اختر المكون</option>' + bakeryIngredients.map(i => '<option value="' + i.id + '">' + i.name + ' (' + (i.currentQty||0) + ' ' + i.unit + ')</option>').join('');
