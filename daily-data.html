@@ -54,6 +54,17 @@ textarea{resize:vertical;min-height:60px}
 .section-force .section-title{color:#3f51b5}
 .menu-btn .menu-icon{display:block;font-size:32px;margin-bottom:4px}
 .menu-btn .menu-label{font-size:14px}
+.menu-cell{display:flex;flex-direction:column;gap:4px}
+.menu-report-btn{padding:6px 8px;border:1px solid #d7ccc8;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Cairo',sans-serif;background:#fff;color:#5d4037;text-align:center;transition:transform 0.2s}
+.menu-report-btn:active{transform:scale(0.96)}
+#report-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:1000;justify-content:center;align-items:center;padding:12px}
+#report-content{background:white;border-radius:16px;width:100%;max-width:440px;max-height:90vh;overflow-y:auto;padding:20px;box-shadow:0 8px 30px rgba(0,0,0,0.15);position:relative}
+#report-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;padding-bottom:10px;border-bottom:2px solid #f0f0f0}
+#report-title{font-size:18px;font-weight:800}
+#report-close{cursor:pointer;font-size:22px;color:#999;width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:50%;transition:background 0.2s}
+#report-close:hover{background:#f0f0f0;color:#555}
+.rp-print-btn{width:100%;padding:12px;background:#1b5e20;color:white;border:none;border-radius:10px;cursor:pointer;font-size:15px;font-weight:800;font-family:'Cairo',sans-serif;margin-top:14px;transition:transform 0.2s}
+.rp-print-btn:active{transform:scale(0.98)}
 #modal-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:1000;justify-content:center;align-items:center;padding:12px}
 #modal-content{background:white;border-radius:16px;width:100%;max-width:480px;max-height:90vh;overflow-y:auto;padding:20px;box-shadow:0 8px 30px rgba(0,0,0,0.15);position:relative}
 #modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;padding-bottom:10px;border-bottom:2px solid #f0f0f0}
@@ -80,16 +91,16 @@ textarea{resize:vertical;min-height:60px}
 </div>
 
 <div class="menu-grid">
-<button class="menu-btn menu-btn-tea" onclick="openModal('tea')"><span class="menu-icon">🍵</span><span class="menu-label">الشاي</span></button>
-<button class="menu-btn menu-btn-maint" onclick="openModal('maint')"><span class="menu-icon">🛠️</span><span class="menu-label">الصيانة</span></button>
-<button class="menu-btn menu-btn-septic" onclick="openModal('septic')"><span class="menu-icon">🚽</span><span class="menu-label">البيارات</span></button>
-<button class="menu-btn menu-btn-vacation" onclick="openModal('vacation')"><span class="menu-icon">🏖️</span><span class="menu-label">الإجازات</span></button>
-<button class="menu-btn menu-btn-stores" onclick="openModal('stores')"><span class="menu-icon">🏪</span><span class="menu-label">المخازن</span></button>
-<button class="menu-btn menu-btn-stores" onclick="openModal('minia')"><span class="menu-icon">📋</span><span class="menu-label">أصول المنيا</span></button>
-<button class="menu-btn menu-btn-force" onclick="openModal('force')"><span class="menu-icon">👤</span><span class="menu-label">القوة (<b id="force-count">0</b>)</span></button>
-<button class="menu-btn menu-btn-empadd" onclick="openModal('empadd')"><span class="menu-icon">➕</span><span class="menu-label">إضافة موظف</span></button>
-<button class="menu-btn menu-btn-hosp" onclick="openModal('hosp')"><span class="menu-icon">🍽️</span><span class="menu-label">تسجيل ضيافة</span></button>
-<button class="menu-btn menu-btn-bread" onclick="openBreadPlanReport()"><span class="menu-icon">🥖</span><span class="menu-label">اعداد الخبز للغد</span></button>
+<div class="menu-cell"><button class="menu-btn menu-btn-tea" onclick="openModal('tea')"><span class="menu-icon">🍵</span><span class="menu-label">الشاي</span></button><button class="menu-report-btn" onclick="openReportModal('tea')">📊 التقرير</button></div>
+<div class="menu-cell"><button class="menu-btn menu-btn-maint" onclick="openModal('maint')"><span class="menu-icon">🛠️</span><span class="menu-label">الصيانة</span></button><button class="menu-report-btn" onclick="openReportModal('maint')">📊 التقرير</button></div>
+<div class="menu-cell"><button class="menu-btn menu-btn-septic" onclick="openModal('septic')"><span class="menu-icon">🚽</span><span class="menu-label">البيارات</span></button><button class="menu-report-btn" onclick="openReportModal('septic')">📊 التقرير</button></div>
+<div class="menu-cell"><button class="menu-btn menu-btn-vacation" onclick="openModal('vacation')"><span class="menu-icon">🏖️</span><span class="menu-label">الإجازات</span></button><button class="menu-report-btn" onclick="openReportModal('vacation')">📊 التقرير</button></div>
+<div class="menu-cell"><button class="menu-btn menu-btn-stores" onclick="openModal('stores')"><span class="menu-icon">🏪</span><span class="menu-label">المخازن</span></button><button class="menu-report-btn" onclick="openReportModal('stores')">📊 التقرير</button></div>
+<div class="menu-cell"><button class="menu-btn menu-btn-stores" onclick="openModal('minia')"><span class="menu-icon">📋</span><span class="menu-label">أصول المنيا</span></button><button class="menu-report-btn" onclick="openReportModal('minia')">📊 التقرير</button></div>
+<div class="menu-cell"><button class="menu-btn menu-btn-force" onclick="openModal('force')"><span class="menu-icon">👤</span><span class="menu-label">القوة (<b id="force-count">0</b>)</span></button><button class="menu-report-btn" onclick="openReportModal('force')">📊 التقرير</button></div>
+<div class="menu-cell"><button class="menu-btn menu-btn-empadd" onclick="openModal('empadd')"><span class="menu-icon">➕</span><span class="menu-label">إضافة موظف</span></button><button class="menu-report-btn" onclick="openReportModal('empadd')">📊 التقرير</button></div>
+<div class="menu-cell"><button class="menu-btn menu-btn-hosp" onclick="openModal('hosp')"><span class="menu-icon">🍽️</span><span class="menu-label">تسجيل ضيافة</span></button><button class="menu-report-btn" onclick="openReportModal('hosp')">📊 التقرير</button></div>
+<div class="menu-cell"><button class="menu-btn menu-btn-bread" onclick="openBreadPlanReport()"><span class="menu-icon">🥖</span><span class="menu-label">اعداد الخبز للغد</span></button><button class="menu-report-btn" onclick="openBreadPlanReport()">🥖 الخطة</button></div>
 </div>
 
 <div id="msg"></div>
@@ -295,6 +306,24 @@ textarea{resize:vertical;min-height:60px}
 <button type="button" class="btn-save-section" style="background:#ad1457;" onclick="ddSaveHospitality()">🛎️ تسجيل الضيافة</button>
 </div>
 
+</div>
+</div>
+</div>
+
+<div id="report-overlay">
+<div id="report-content">
+<div id="report-header">
+<div id="report-title"></div>
+<div id="report-close" onclick="closeReportModal()">✕</div>
+</div>
+<div id="report-body">
+<div class="report-section-title" id="report-section-title" style="display:none;font-size:14px;font-weight:800;margin-bottom:10px;padding-bottom:6px;border-bottom:2px dashed #e0e0e0;"></div>
+<div class="form-row">
+<div class="form-group"><label>📅 من تاريخ</label><input type="date" id="rp-from"></div>
+<div class="form-group"><label>📅 إلى تاريخ</label><input type="date" id="rp-to"></div>
+</div>
+<div style="background:#f1f8e9;border-radius:10px;padding:10px 12px;margin-top:10px;font-size:12px;color:#33691e;border:1px solid #c5e1a5;line-height:1.7;" id="rp-hint"></div>
+<button type="button" class="rp-print-btn" onclick="generateReportForSection()">📄 توليد التقرير</button>
 </div>
 </div>
 </div>
@@ -1907,6 +1936,299 @@ function generateBreadPlanReport() {
       else { alert('لا يمكن فتح التقرير'); }
     } catch(e2) { alert('خطأ في توليد التقرير: ' + e.message); }
   }
+}
+
+// ─── نظام التقارير لكل قسم (من تاريخ إلى تاريخ) ───
+var _rpSection = '';
+var _rpHintMap = {
+  tea: 'تقرير صرف الشاي والسكر لكل موظف بكل دورة.',
+  maint: 'تقرير طلبات الصيانة: النوع، البند، الفني، الحالة، الخامات.',
+  septic: 'تقرير عمليات تسليك البيارات: عدد النقلات والمشرف لكل بيارة.',
+  vacation: 'تقرير الإجازات: النوع، المدة، السفر، آخر يوم عمل، العودة.',
+  stores: 'تقرير المخازن: الوارد والصادر والمتبقي لكل عهدة حسب المخزن.',
+  minia: 'تقرير كشف أصول مزرعة المنيا (تسليم للواحات).',
+  force: 'تقرير القوة العاملة الكامل مع الحالة (متواجد / إجازة).',
+  empadd: 'تقرير الموظفين المضافين حديثاً خلال الفترة.',
+  hosp: 'تقرير الضيافة: الزيارات والضيوف والوجبات المستحقة.'
+};
+function _rpToday() { return new Date().toISOString().split('T')[0]; }
+function _rpMonthStart() {
+  var d = new Date();
+  return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-01';
+}
+function openReportModal(section) {
+  _rpSection = section;
+  var titles = { tea:'🍵 تقرير الشاي والسكر', maint:'🛠️ تقرير الصيانة', septic:'🚽 تقرير البيارات', vacation:'🏖️ تقرير الإجازات', stores:'🏪 تقرير المخازن', minia:'📋 تقرير أصول المنيا', force:'👤 تقرير القوة العاملة', empadd:'➕ تقرير الموظفين المضافين', hosp:'🍽️ تقرير الضيافة' };
+  document.getElementById('report-title').textContent = titles[section] || 'تقرير';
+  var rts = document.getElementById('report-section-title');
+  if (rts) { rts.style.display = 'block'; rts.textContent = titles[section] || 'تقرير'; }
+  document.getElementById('rp-from').value = _rpMonthStart();
+  document.getElementById('rp-to').value = _rpToday();
+  var hint = document.getElementById('rp-hint');
+  if (hint) hint.textContent = (section === 'force') ? 'تقرير القوة الحالية: يعرض كل الموظفين مع حالتهم، والفترة تُستخدم كمرجع فقط.' : (_rpHintMap[section] || 'اختر الفترة وولّد التقرير.');
+  document.getElementById('report-overlay').style.display = 'flex';
+}
+function closeReportModal() {
+  document.getElementById('report-overlay').style.display = 'none';
+}
+document.getElementById('report-overlay').addEventListener('click', function(e) {
+  if (e.target === this) closeReportModal();
+});
+function _rpEsc(s) { return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function _rpInRange(dateStr, from, to) {
+  if (!dateStr) return false;
+  var s = String(dateStr);
+  var d = s.match(/(\d{4})-(\d{1,2})-(\d{1,2})/);
+  if (d) s = d[1] + '-' + ('0'+d[2]).slice(-2) + '-' + ('0'+d[3]).slice(-2);
+  else s = s.slice(0, 10);
+  return s >= from && s <= to;
+}
+function _rpDesc(recs, key) {
+  var set = {};
+  recs.forEach(function(r) { var v = String((r && r[key]) || '').trim(); if (v) set[v] = true; });
+  return Object.keys(set).length;
+}
+function buildReportHtml(title, badge, rangeLabel, summaryItems, theadArr, rowsArr, footLine) {
+  var sumHtml = summaryItems.filter(function(s) { return s; }).map(function(s) {
+    return '<div style="background:#fff;border:1px solid #e0e0e0;border-radius:8px;padding:8px 10px;text-align:center;"><div style="font-weight:800;font-size:16px;color:#1b5e20;">' + s.v + '</div><div style="font-size:11px;color:#777;">' + s.l + '</div></div>';
+  }).join('');
+  var rowsHtml = rowsArr.length ? rowsArr.map(function(r) {
+    return '<tr>' + r.map(function(c) { return '<td style="padding:6px 8px;border:1px solid #e0e0e0;font-size:12px;">' + (c == null ? '' : c) + '</td>'; }).join('') + '</tr>';
+  }).join('') : '<tr><td colspan="' + theadArr.length + '" style="padding:15px;text-align:center;color:#999;font-size:13px;">لا توجد بيانات في هذه الفترة.</td></tr>';
+  var thHtml = theadArr.map(function(h) { return '<th style="padding:7px 8px;background:#fff3e0;border:1px solid #e0e0e0;font-weight:700;color:#e65100;font-size:12px;">' + h + '</th>'; }).join('');
+  return '<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="UTF-8"><title>' + title + '</title>' +
+    '<style>@page{size:A4 landscape;margin:1cm}body{font-family:"Cairo","Segoe UI",sans-serif;direction:rtl;margin:0;padding:20px;background:#fafafa;color:#222}.rp{max-width:270mm;margin:0 auto;background:#fff;padding:25px;box-shadow:0 2px 20px rgba(0,0,0,.1)}.rp-h{text-align:center;border-bottom:3px double #1b5e20;padding-bottom:14px;margin-bottom:16px}.rp-h .ic{font-size:34px}.rp-h h1{margin:4px 0 2px;color:#1b5e20;font-size:22px}.rp-h .sub{font-size:12px;color:#666}.rp-sum{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin-bottom:14px}.rp-tab{width:100%;border-collapse:collapse;margin-bottom:12px}.rp-tab th{background:#fff3e0}.rp-foot{text-align:center;font-size:11px;color:#888;border-top:2px solid #e0e0e0;padding-top:10px;margin-top:12px}@media print{body{background:#fff;padding:0}.rp{box-shadow:none;padding:10px}.no-print{display:none}}</style>' +
+    '</head><body><div class="rp">' +
+    '<div class="rp-h"><div class="ic">' + (badge || '📊') + '</div><h1>' + title + '</h1><div class="sub">الفترة: ' + rangeLabel + ' — لينه فارمز · تم التوليد: ' + new Date().toLocaleString('ar-EG') + '</div></div>' +
+    '<div class="no-print" style="text-align:center;margin-bottom:12px;"><button onclick="window.print()" style="padding:8px 24px;background:#1b5e20;color:#fff;border:none;border-radius:8px;font-family:inherit;font-size:14px;cursor:pointer;font-weight:700;">🖨️ طباعة التقرير</button></div>' +
+    '<div class="rp-sum">' + sumHtml + '</div>' +
+    '<table class="rp-tab"><thead><tr>' + thHtml + '</tr></thead><tbody>' + rowsHtml + '</tbody></table>' +
+    (footLine ? '<div class="rp-foot">' + footLine + '</div>' : '<div class="rp-foot">لينه فارمز — منظومة الشئون الإدارية المتكاملة</div>') +
+    '</div></body></html>';
+}
+function downloadReportHtml(html, filename) {
+  try {
+    var blob = new Blob(['\ufeff' + html], { type: 'text/html;charset=utf-8' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click();
+    document.body.removeChild(a);
+    setTimeout(function() { URL.revokeObjectURL(url); }, 5000);
+  } catch(e) {
+    var w = window.open('', '_blank');
+    if (w) { w.document.write(html); w.document.close(); }
+    else alert('تعذر فتح التقرير.');
+  }
+}
+function _rpNamedDateRange() {
+  var from = document.getElementById('rp-from').value;
+  var to = document.getElementById('rp-to').value;
+  if (!from || !to) return { from: '', to: '' };
+  if (from > to) { showMsg('⚠️ تاريخ البداية بعد تاريخ النهاية.', true); return { from: '', to: '' }; }
+  return { from: from, to: to };
+}
+function generateReportForSection() {
+  var sec = _rpSection;
+  var r = _rpNamedDateRange();
+  if (!r.from || !r.to) return;
+  var out;
+  switch (sec) {
+    case 'tea': out = rpTea(r.from, r.to); break;
+    case 'maint': out = rpMaint(r.from, r.to); break;
+    case 'septic': out = rpSeptic(r.from, r.to); break;
+    case 'vacation': out = rpVacation(r.from, r.to); break;
+    case 'stores': out = rpStores(r.from, r.to); break;
+    case 'minia': out = rpMinia(r.from, r.to); break;
+    case 'force': out = rpForce(); break;
+    case 'empadd': out = rpEmpadd(r.from, r.to); break;
+    case 'hosp': out = rpHosp(r.from, r.to); break;
+    default: alert('قسم غير معروف.'); return;
+  }
+  if (!out || !out.rows.length) { showMsg('⚠️ لا توجد بيانات ' + outTitle(sec) + ' في هذه الفترة.', true); return; }
+  downloadReportHtml(out.html, 'تقرير_' + out.file + '_' + r.from + '_' + r.to + '.html');
+  if (typeof showMsg === 'function') showMsg('✅ تم توليد تقرير ' + outTitle(sec), false);
+}
+function outTitle(sec) {
+  var m = { tea:'الشاي والسكر', maint:'الصيانة', septic:'البيارات', vacation:'الإجازات', stores:'المخازن', minia:'أصول المنيا', force:'القوة', empadd:'الموظفين المعفيين', hosp:'الضيافة' };
+  return m[sec] || sec;
+}
+
+// مكتبة جمع البيانات الشائعة
+function _rpRecordsFrom(secKey) {
+  var list = [];
+  try { var dd = localStorage.getItem('linah_daily_data'); if (dd) dailyData = JSON.parse(dd); } catch(e){}
+  if (secKey === 'daily') return dailyData;
+  if (secKey === 'vacations') return vacations;
+  if (secKey === 'hospitalities') return hospitalities;
+  if (secKey === 'archive') return archiveData;
+  if (secKey === 'minia') { try { miniaAssets = JSON.parse(localStorage.getItem('lineh_minia_assets') || '[]'); } catch(e){} return miniaAssets; }
+  return [];
+}
+
+// 1) الشاي
+function rpTea(from, to) {
+  var recs = _rpRecordsFrom('daily').filter(function(r) { return r && r.section === 'tea' && _rpInRange(r.date, from, to); });
+  recs.sort(function(a, b) { return String(a.date).localeCompare(String(b.date)); });
+  var rows = recs.map(function(r) {
+    return [_rpEsc(r.date), _rpEsc(r.empCode), _rpEsc(r.empName), _rpEsc(r.period), r.teaPacks || 0, r.sugar || 0];
+  });
+  var tTea = 0, tSugar = 0;
+  recs.forEach(function(r) { tTea += parseFloat(r.teaPacks) || 0; tSugar += parseFloat(r.sugar) || 0; });
+  var summary = [
+    { l: 'عدد عمليات الصرف', v: recs.length },
+    { l: 'عدد العمال المستلمين', v: _rpDesc(recs, 'empCode') },
+    { l: 'إجمالي الشاي (باكيت)', v: tTea },
+    { l: 'إجمالي السكر (كجم)', v: tSugar }
+  ];
+  var html = buildReportHtml('تقرير صرف الشاي والسكر', '🍵', from + ' → ' + to, summary, ['التاريخ','الكود','الاسم','الدورة','الشاي (باكيت)','السكر (كجم)'], rows, 'إجمالي الشاي: ' + tTea + ' باكيت — إجمالي السكر: ' + tSugar + ' كجم');
+  return { rows: rows, html: html, file: 'شاي_وسكر' };
+}
+
+// 2) الصيانة
+function rpMaint(from, to) {
+  var recs = _rpRecordsFrom('daily').filter(function(r) { return r && r.section === 'maint' && _rpInRange(r.date, from, to); });
+  recs.sort(function(a, b) { return String(a.date).localeCompare(String(b.date)); });
+  var rows = recs.map(function(r) {
+    var mats = (r.maintMats || []).map(function(m) { return (m.name || '') + ' ×' + (m.qty || 0) + (m.unit ? ' ' + m.unit : ''); }).join(' ، ');
+    return [_rpEsc(r.date), _rpEsc(r.maintCat), _rpEsc(r.maintTask), _rpEsc(r.maintTech), _rpEsc(r.maintStatus || 'تم'), mats || '—', _rpEsc(r.maintNotes)];
+  });
+  var open = 0, done = 0, prog = 0, canc = 0;
+  recs.forEach(function(r) {
+    var st = r.maintStatus || '';
+    if (st === 'مفتوحة') open++; else if (st === 'تمت') done++; else if (st === 'تحت التنفيذ') prog++; else if (st === 'ملغاة') canc++;
+  });
+  var summary = [
+    { l: 'عدد طلبات الصيانة', v: recs.length },
+    { l: 'مفتوحة', v: open }, { l: 'تحت التنفيذ', v: prog }, { l: 'تمت', v: done }, { l: 'ملغاة', v: canc },
+    { l: 'عدد الفنيين', v: _rpDesc(recs, 'maintTech') }
+  ];
+  var html = buildReportHtml('تقرير الصيانة', '🛠️', from + ' → ' + to, summary, ['التاريخ','النوع','بند الصيانة','الفني','الحالة','الخامات','ملاحظات'], rows);
+  return { rows: rows, html: html, file: 'صيانة' };
+}
+
+// 3) البيارات
+function rpSeptic(from, to) {
+  var recs = _rpRecordsFrom('daily').filter(function(r) { return r && r.section === 'septic' && _rpInRange(r.date, from, to); });
+  recs.sort(function(a, b) { return String(a.date).localeCompare(String(b.date)); });
+  var rows = recs.map(function(r) {
+    return [_rpEsc(r.date), _rpEsc(r.septicName), r.septicTrips || 0, _rpEsc(r.septicSupervisor)];
+  });
+  var tTrips = 0; recs.forEach(function(r) { tTrips += parseInt(r.septicTrips) || 0; });
+  var summary = [
+    { l: 'عدد عمليات الكسح', v: recs.length },
+    { l: 'عدد البيارات', v: _rpDesc(recs, 'septicName') },
+    { l: 'إجمالي النقلات', v: tTrips }
+  ];
+  var html = buildReportHtml('تقرير البيارات (الكسح)', '🚽', from + ' → ' + to, summary, ['التاريخ','البيارة','عدد النقلات','المشرف'], rows, 'إجمالي النقلات: ' + tTrips);
+  return { rows: rows, html: html, file: 'بيارات' };
+}
+
+// 4) الإجازات
+function rpVacation(from, to) {
+  var recs = vacations.filter(function(r) { return r && _rpInRange(r.start, from, to); });
+  recs.sort(function(a, b) { return String(a.start).localeCompare(String(b.start)); });
+  var rows = recs.map(function(r) {
+    return [_rpEsc(r.name), _rpEsc(r.code), _rpEsc(r.info), _rpEsc(r.type || 'اعتيادية'), _rpEsc(r.start), r.days, _rpEsc(r.end), _rpEsc(r.travelDate), _rpEsc(r.lastWorkDay), _rpEsc(r.returnDate)];
+  });
+  var tDays = 0; recs.forEach(function(r) { tDays += parseInt(r.days) || 0; });
+  var summary = [
+    { l: 'عدد الإجازات', v: recs.length },
+    { l: 'عدد الموظفين', v: _rpDesc(recs, 'code') },
+    { l: 'إجمالي الأيام', v: tDays }
+  ];
+  var html = buildReportHtml('تقرير الإجازات', '🏖️', from + ' → ' + to, summary, ['الاسم','الكود','الوظيفة / الإدارة','النوع','البداية','المدة','النهاية','السفر','آخر يوم عمل','العودة'], rows);
+  return { rows: rows, html: html, file: 'اجازات' };
+}
+
+// 5) المخازن
+function rpStores(from, to) {
+  var recs = archiveData.filter(function(r) { return r && _rpInRange(r.date || r.modifiedAt, from, to); });
+  recs.sort(function(a, b) { return String(a.date || '').localeCompare(String(b.date || '')); });
+  var rows = recs.map(function(r) {
+    var qty = parseInt(r.qty) || 0;
+    var iss = parseInt(r.issuedQty) || 0;
+    var rem = Math.max(0, qty - iss);
+    return [_rpEsc(r.date), _rpEsc(r.item), _rpEsc(r.location), _rpEsc(r.condition), qty, iss, rem, _rpEsc(r.issueto), _rpEsc(r.issuedate)];
+  });
+  var tIn = 0, tOut = 0, tRem = 0;
+  recs.forEach(function(r) { var q = parseInt(r.qty) || 0, s = parseInt(r.issuedQty) || 0; tIn += q; tOut += s; tRem += Math.max(0, q - s); });
+  var summary = [
+    { l: 'عدد العهد (الأصناف)', v: recs.length },
+    { l: 'إجمالي الوارد', v: tIn },
+    { l: 'إجمالي المصروف', v: tOut },
+    { l: 'المتبقي الحالي', v: tRem }
+  ];
+  var html = buildReportHtml('تقرير المخازن (وارد/صادر)', '🏪', from + ' → ' + to, summary, ['التاريخ','العهدة (الصنف)','المخزن','الحالة','الوارد','الصادر','المتبقي','جهة الصرف','تاريخ الصرف'], rows);
+  return { rows: rows, html: html, file: 'مخازن' };
+}
+
+// 6) أصول المنيا
+function rpMinia(from, to) {
+  var recs = _rpRecordsFrom('minia').filter(function(r) { return r && _rpInRange(r.date, from, to); });
+  recs.sort(function(a, b) { return String(a.date || '').localeCompare(String(b.date || '')); });
+  var rows = recs.map(function(r) {
+    return [_rpEsc(r.item), _rpEsc(r.desc), _rpEsc(r.unit), parseInt(r.qty) || 0, _rpEsc(r.receiver), _rpEsc(r.date)];
+  });
+  var tQ = 0; recs.forEach(function(r) { tQ += parseInt(r.qty) || 0; });
+  var summary = [
+    { l: 'عدد الأصول', v: recs.length },
+    { l: 'إجمالي الكميات', v: tQ },
+    { l: 'عدد المستلمين', v: _rpDesc(recs, 'receiver') }
+  ];
+  var html = buildReportHtml('كشف أصول مزرعة المنيا — تسليم الواحات', '📋', from + ' → ' + to, summary, ['الأصل','البيان','الوحدة','الكمية','المستلم','تاريخ التسليم'], rows);
+  return { rows: rows, html: html, file: 'اصول_المنيا' };
+}
+
+// 7) القوة (الحالي)
+function rpForce() {
+  var recs = employees.slice();
+  recs.sort(function(a, b) { return String(a.code || '').localeCompare(String(b.code || ''), 'ar', { numeric: true }); });
+  var rows = recs.map(function(e) {
+    var st = (e.status === 'P') ? '🟢 متواجد' : '🔴 إجازة';
+    return [_rpEsc(e.code), _rpEsc(e.name), _rpEsc(e.dept), _rpEsc(e.title), _rpEsc(e.gov), _rpEsc(e.sector), _rpEsc(e.room), st, _rpEsc(e.contract), _rpEsc(e.hireDate)];
+  });
+  var p = 0, v = 0;
+  recs.forEach(function(e) { if (e.status === 'P') p++; else v++; });
+  var summary = [
+    { l: 'إجمالي القوة', v: recs.length },
+    { l: 'متواجد (P)', v: p }, { l: 'في إجازة (V)', v: v }
+  ];
+  var html = buildReportHtml('تقرير القوة العاملة', '👤', new Date().toLocaleDateString('ar-EG'), summary, ['الكود','الاسم','الإدارة','الوظيفة','المحافظة','المبنى','الغرفة','الموقف','التعاقد','تاريخ التعيين'], rows);
+  return { rows: rows, html: html, file: 'القوة' };
+}
+
+// 8) إضافة موظف
+function rpEmpadd(from, to) {
+  var recs = employees.filter(function(e) { return e && _rpInRange(e.hireDate || e.createdAt, from, to); });
+  recs.sort(function(a, b) { return String(a.hireDate || '').localeCompare(String(b.hireDate || '')); });
+  var rows = recs.map(function(e) {
+    return [_rpEsc(e.hireDate), _rpEsc(e.code), _rpEsc(e.name), _rpEsc(e.dept), _rpEsc(e.title), _rpEsc(e.contract), _rpEsc(e.gov)];
+  });
+  var summary = [
+    { l: 'عدد الموظفين الجدد', v: recs.length },
+    { l: 'دائم', v: recs.filter(function(e) { return e.contract !== 'كاجول'; }).length },
+    { l: 'كاجول', v: recs.filter(function(e) { return e.contract === 'كاجول'; }).length }
+  ];
+  var html = buildReportHtml('تقرير الموظفين المضافين', '➕', from + ' → ' + to, summary, ['تاريخ التعيين','الكود','الاسم','الإدارة','الوظيفة','التعاقد','المحافظة'], rows);
+  return { rows: rows, html: html, file: 'موظفين_جدد' };
+}
+
+// 9) الضيافة
+function rpHosp(from, to) {
+  var recs = hospitalities.filter(function(r) { return r && _rpInRange(r.arrival, from, to); });
+  recs.sort(function(a, b) { return String(a.arrival || '').localeCompare(String(b.arrival || '')); });
+  var rows = recs.map(function(r) {
+    return [_rpEsc(r.arrival), _rpEsc(r.name), _rpEsc(r.type), _rpEsc(r.title), r.guests || 1, _rpEsc(r.departure), (r.meals || []).join('، ') || '—'];
+  });
+  var tGuests = 0; recs.forEach(function(r) { tGuests += parseInt(r.guests) || 1; });
+  var summary = [
+    { l: 'عدد الزيارات', v: recs.length },
+    { l: 'إجمالي الضيوف', v: tGuests },
+    { l: 'عدد الجهات', v: _rpDesc(recs, 'name') }
+  ];
+  var html = buildReportHtml('تقرير الضيافة', '🍽️', from + ' → ' + to, summary, ['تاريخ الوصول','الاسم','التصنيف','الصفة','عدد الضيوف','تاريخ المغادرة','الوجبات'], rows);
+  return { rows: rows, html: html, file: 'ضيافة' };
 }
 </script>
 <script src="minia-assets.js"></script>
