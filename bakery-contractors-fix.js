@@ -64,8 +64,8 @@
 
   // ---- تزامن الحذف عبر السحابة: كتابة/إزالة شاهد الحذف في ent:syncDeletions
   //      حتى تلتزم بها كل الأجهزة وفورم تقرير المخابز ----
-  const SB_URL = 'https://idejmgmftmrniviftcce.supabase.co';
-  const SB_KEY = 'sb_publishable_AvMTa-zmQ4hgA1hJNpYc3g_gu8rlirz';
+  const SB_URL = 'https://cwqghiqykohefaggedjl.supabase.co';
+  const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN3cWdoaXF5a29oZWZhZ2dlZGpsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEwMjUyMjEsImV4cCI6MjA5NjYwMTIyMX0.3a3hRcNdmYQCtjYjBroAT6df1T_7oz-XWUeD3wagYw8';
   function _sbHeaders(extra) {
     const h = { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY, 'Content-Type': 'application/json' };
     if (extra) Object.keys(extra).forEach(function(k){ h[k] = extra[k]; });

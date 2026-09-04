@@ -1,3 +1,6 @@
 ﻿node_modules/
 temp-chrome/
 .net-state.txt
+
+app.js.supabase_backup
+
