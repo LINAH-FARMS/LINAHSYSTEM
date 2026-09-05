@@ -129,6 +129,7 @@ def fetch_row_old(row_id):
 
 def _entity_merge_key(entity, x):
     if not isinstance(x, dict): return _json_key(x)
+    if entity == 'bakeryContractorSupplies': return f"{x.get('name','')}|{x.get('date','')}|{x.get('count','')}|{x.get('price','')}"
     if x.get('id') or x.get('_id'): return str(x.get('id') or x.get('_id'))
     if entity == 'employees': return f"code:{x.get('code','')}|name:{x.get('name','')}"
     if entity == 'mealLogs': return f"date:{norm_date(str(x.get('date','')))}"
