@@ -26,13 +26,89 @@ def norm_date(s):
 def strip_emoji(s):
     return _EMOJI_PATTERN.sub('', s).strip() if isinstance(s, str) else (s or '')
 
+LOCAL_DATA_FILES = [
+    'C:\\Users\\Salem Magdy\\Desktop\\New folder\\linah_merged_cloud.json',
+    'C:\\Users\\Salem Magdy\\Desktop\\New folder\\linah_cloud_final.json',
+    'C:\\Users\\Salem Magdy\\Desktop\\New folder\\linah_working_project_full.json',
+]
+
+_LOCAL_DATA = None
+def _load_local_data():
+    global _LOCAL_DATA
+    if _LOCAL_DATA is not None:
+        return _LOCAL_DATA
+    merged = {}
+    for _p in LOCAL_DATA_FILES:
+        try:
+            with open(_p, encoding='utf-8') as f:
+                _d = json.load(f)
+        except Exception as e:
+            print(f'[تحذير] تعذر قراءة الملف المحلي {_p}: {e}')
+            continue
+        if not isinstance(_d, dict):
+            continue
+        for _k, _v in _d.items():
+            if not isinstance(_v, list):
+                continue
+            # دمج السجلات مع إزالة التكرار لكل كيان (بدون فقدان أي سجل من أي ملف)
+            _existing = merged.get(_k)
+            if _existing is None:
+                merged[_k] = list(_v)
+            else:
+                _seen = set(_json_key(x) for x in _existing)
+                for _x in _v:
+                    if _json_key(_x) not in _seen:
+                        _existing.append(_x)
+                        _seen.add(_json_key(_x))
+    _LOCAL_DATA = merged
+    return merged
+
+def _json_key(x):
+    try:
+        return json.dumps(x, ensure_ascii=False, sort_keys=True)
+    except Exception:
+        return str(x)
+
+_LOCAL_ENTITY_MAP = {
+    'ent:employees': 'employees',
+    'ent:hospitalities': 'hospitalities',
+    'ent:bakeryProductions': 'bakeryProductions',
+    'ent:bakeryContractorSupplies': 'bakeryContractorSupplies',
+    'ent:mealLogs': 'mealLogs',
+    'ent:maintenanceRecords': 'maintenanceRecords',
+    'ent:septicRecords': 'septicRecords',
+    'ent:teaSugarBatches': 'teaSugarBatches',
+    'ent:teaSugarDisbursements': 'teaSugarDisbursements',
+    'ent:dailyStats': 'dailyStats',
+    'ent:mealWaste': 'mealWaste',
+    'ent:syncDeletions': 'syncDeletions',
+    'incident_reports': 'incident_reports',
+    'meal_waste_entries': 'mealWaste',
+}
+
+def fetch_row_local(row_id):
+    data = _load_local_data()
+    key = _LOCAL_ENTITY_MAP.get(row_id, row_id)
+    v = data.get(key)
+    if v is None:
+        # try common alternate names
+        for k, val in data.items():
+            if key.lower() in k.lower() or k.lower() in key.lower():
+                return val if isinstance(val, list) else []
+        return []
+    return v if isinstance(v, list) else []
+
 def fetch_row(row_id):
-    r = requests.get(f'{SUPABASE_URL}/rest/v1/sync_data', params={'id': 'eq.' + row_id}, headers={'apikey': SUPABASE_KEY, 'Authorization': f'Bearer {SUPABASE_KEY}'}, timeout=30)
-    j = r.json()
-    if isinstance(j, list) and len(j) > 0:
-        raw = j[0].get('data')
-        return json.loads(raw) if isinstance(raw, str) else raw
-    return []
+    try:
+        r = requests.get(f'{SUPABASE_URL}/rest/v1/sync_data', params={'id': 'eq.' + row_id}, headers={'apikey': SUPABASE_KEY, 'Authorization': f'Bearer {SUPABASE_KEY}'}, timeout=20)
+        j = r.json()
+        if isinstance(j, list) and len(j) > 0:
+            raw = j[0].get('data')
+            return json.loads(raw) if isinstance(raw, str) else raw
+        return []
+    except Exception as e:
+        print(f'[تحذير] فشل سحب {row_id} من السحابة: {e}')
+        return []
 
 def last_completed_friday():
     today = datetime.now()
@@ -68,7 +144,7 @@ def norm_filter(arr, key):
     return [x for x in arr if norm_date(x.get(key,'')) >= fmt(start) and norm_date(x.get(key,'')) <= fmt(end)]
 
 print('[جاري سحب البيانات...]')
-data = {k: fetch_row(rid) for k, rid in [
+_ENT_IDS = [
     ('employees', 'ent:employees'),
     ('hospitalities', 'ent:hospitalities'),
     ('bakeryProductions', 'ent:bakeryProductions'),
@@ -81,7 +157,12 @@ data = {k: fetch_row(rid) for k, rid in [
     ('dailyStats', 'ent:dailyStats'),
     ('mealWaste', 'ent:mealWaste'),
     ('syncDeletions', 'ent:syncDeletions'),
-]}    
+]
+data = {k: fetch_row(rid) for k, rid in _ENT_IDS}
+if all(len(data[k]) == 0 for k, _ in _ENT_IDS):
+    print('[السحابة غير متاحة (egress quota) — الجأ للملف المحلي...]')
+    for k, rid in _ENT_IDS:
+        data[k] = fetch_row_local(rid)
 print(f'[تم السحب] الكيانات: {", ".join(f"{k}={len(v)}" for k, v in data.items())}')
 
 sync_del = data.get('syncDeletions', [])
@@ -130,9 +211,9 @@ maint = norm_filter(data.get('maintenanceRecords', []), 'date')
 septic = norm_filter(data.get('septicRecords', []), 'date')
 ts_batches = norm_filter(data.get('teaSugarBatches', []), 'date')
 tea_sugar = norm_filter(data.get('teaSugarDisbursements', []), 'date')
-incidents = norm_filter(filt(fetch_row('incident_reports'), 'incident_reports'), 'opened_at')
+incidents = norm_filter(filt(fetch_row('incident_reports') or fetch_row_local('incident_reports'), 'incident_reports'), 'opened_at')
 # Fetch meal waste entries (stored under a separate sync_data id)
-mw_data = norm_filter(filt(fetch_row('meal_waste_entries'), 'meal_waste_entries'), 'date')
+mw_data = norm_filter(filt(fetch_row('meal_waste_entries') or fetch_row_local('meal_waste_entries'), 'meal_waste_entries'), 'date')
 
 # ===== تعويض الأيام الناقصة بقيم تقديرية قريبة من الواقع =====
 
@@ -260,36 +341,45 @@ if daily_stats:
 
 if prods:
     ws2 = wb.create_sheet('Bakery')
-    style_sheet(ws2, ['Date', 'Bread', 'Flour', 'Bran', 'Salt', 'Yeast', 'Diesel'], [
-        [norm_date(p.get('date','')), p.get('breadCount',0), p.get('flourUsed',0), p.get('branUsed',0), p.get('saltUsed',0), p.get('yeastUsed',0), p.get('dieselUsed',0)]
-        for p in sorted(prods, key=lambda x: norm_date(x.get('date','')))
-    ], [14,10,10,10,10,10,10], title='Bakery Production')
-    data_end = 3 + len(prods)
-    ws2.cell(row=data_end, column=1, value='الإجمالي').font = Font(bold=True, size=11, color='1B5E20')
-    ws2.cell(row=data_end, column=2, value=round(sum(float(p.get('breadCount',0)or 0) for p in prods)))
-    ws2.cell(row=data_end, column=3, value=round(sum(float(p.get('flourUsed',0)or 0) for p in prods),1))
-    ws2.cell(row=data_end, column=4, value=round(sum(float(p.get('branUsed',0)or 0) for p in prods),1))
-    ws2.cell(row=data_end, column=5, value=round(sum(float(p.get('saltUsed',0)or 0) for p in prods),1))
-    ws2.cell(row=data_end, column=6, value=round(sum(float(p.get('yeastUsed',0)or 0) for p in prods),1))
-    ws2.cell(row=data_end, column=7, value=round(sum(float(p.get('dieselUsed',0)or 0) for p in prods),1))
+    _seen_prod = set()
+    _prod_rows = []
+    for p in sorted(prods, key=lambda x: norm_date(x.get('date',''))):
+        _pk = norm_date(p.get('date','')) + '|' + str(p.get('breadCount','')) + '|' + str(p.get('flourUsed',''))
+        if _pk in _seen_prod: continue
+        _seen_prod.add(_pk)
+        _prod_rows.append([norm_date(p.get('date','')), p.get('breadCount',0), p.get('flourUsed',0), p.get('branUsed',0), p.get('saltUsed',0), p.get('yeastUsed',0), p.get('dieselUsed',0)])
     _prod_days = _count_series(prods, 'date')
     _bser = _sum_series(prods, 'date', ['breadCount','flourUsed','branUsed','saltUsed','yeastUsed','dieselUsed'])
-    _est_rows = []
     for _day in _week_days():
         if _prod_days[_day] == 0:
-            _row = [_day]
+            _row = [f'{_day} (تقديري)']
             for _k in ['breadCount','flourUsed','branUsed','saltUsed','yeastUsed','dieselUsed']:
                 _e = _est(_bser, _day, key=_k)
                 _row.append(_e if _e is not None else 0)
-            _est_rows.append(_row)
-    _append_est_block(ws2, _est_rows)
+            _prod_rows.append(_row)
+    style_sheet(ws2, ['Date', 'Bread', 'Flour', 'Bran', 'Salt', 'Yeast', 'Diesel'],
+                _prod_rows, [14,16,10,10,10,10,10], title='Bakery Production')
+    data_end = 3 + len(_prod_rows)
+    ws2.cell(row=data_end, column=1, value='الإجمالي').font = Font(bold=True, size=11, color='1B5E20')
+    ws2.cell(row=data_end, column=2, value=round(sum(r[1] for r in _prod_rows)))
+    ws2.cell(row=data_end, column=3, value=round(sum(r[2] for r in _prod_rows),1))
+    ws2.cell(row=data_end, column=4, value=round(sum(r[3] for r in _prod_rows),1))
+    ws2.cell(row=data_end, column=5, value=round(sum(r[4] for r in _prod_rows),1))
+    ws2.cell(row=data_end, column=6, value=round(sum(r[5] for r in _prod_rows),1))
+    ws2.cell(row=data_end, column=7, value=round(sum(r[6] for r in _prod_rows),1))
 
 if ctr_sup:
     ws3 = wb.create_sheet('Contractors')
-    rows = [[norm_date(c.get('date','')), c.get('name',''), c.get('count',0), c.get('price',0),
-             int(c.get('count',0)or 0)*float(c.get('price',0)or 0)] for c in sorted(ctr_sup, key=lambda x: norm_date(x.get('date','')))]
+    _seen_ctr = set()
+    rows = []
+    for c in sorted(ctr_sup, key=lambda x: norm_date(x.get('date',''))):
+        _ck = norm_date(c.get('date','')) + '|' + str(c.get('name','')) + '|' + str(c.get('count','')) + '|' + str(c.get('price',''))
+        if _ck in _seen_ctr: continue
+        _seen_ctr.add(_ck)
+        rows.append([norm_date(c.get('date','')), c.get('name',''), c.get('count',0), c.get('price',0),
+                     int(c.get('count',0)or 0)*float(c.get('price',0)or 0)])
     style_sheet(ws3, ['Date', 'Name', 'Loaves', 'Price', 'Total'], rows, [14,20,10,10,12], title='Contractor Supply')
-    data_end = 3 + len(ctr_sup)
+    data_end = 3 + len(rows)
     ws3.cell(row=data_end, column=1, value='الإجمالي').font = Font(bold=True, size=11, color='1B5E20')
     ws3.cell(row=data_end, column=3, value=sum(r[2] for r in rows))
     ws3.cell(row=data_end, column=5, value=round(sum(r[4] for r in rows),2))
@@ -320,31 +410,57 @@ if meals:
     rows = [[norm_date(m.get('date','')), m.get('breakfast',0), m.get('lunch',0), m.get('dinner',0),
              int(m.get('breakfast',0)or 0)+int(m.get('lunch',0)or 0)+int(m.get('dinner',0)or 0)]
             for m in sorted(meals, key=lambda x: norm_date(x.get('date','')))]
-    _m_days = _count_series(meals, 'date')
-    _mser = _sum_series(meals, 'date', ['breakfast','lunch','dinner'])
+    # أكمل الوجبات الناقصة (breakfast/lunch/dinner = 0) بمتوسط القيم الفعلية في بقية الأسبوع
+    _real_mean = {}
+    for _k in ('breakfast','lunch','dinner'):
+        _vals = [float(r[_ci]) for _ci, rk in ((1,'breakfast'),(2,'lunch'),(3,'dinner'))
+                 for r in rows if rk == _k and float(r[_ci]) > 0]
+        _real_mean[_k] = int(round(sum(_vals) / len(_vals))) if _vals else 0
     for _r in rows:
         for _ci, _k in ((1,'breakfast'),(2,'lunch'),(3,'dinner')):
-            if _r[_ci] == 0:
-                _e = _est(_mser, _r[0], key=_k)
-                if _e is not None:
-                    _r[_ci] = _e
+            if float(_r[_ci]) == 0 and _real_mean.get(_k, 0) > 0:
+                _r[_ci] = _real_mean[_k]
         _r[4] = int(_r[1]) + int(_r[2]) + int(_r[3])
     style_sheet(ws6, ['Date', 'Breakfast', 'Lunch', 'Dinner', 'Total'], rows, [14,10,10,10,12], title='Meals')
+    # أضف الأيام الناقصة كلياً (بدون سجل وجبات) بمتوسط الوجبات
+    _meal_days = {norm_date(m.get('date','')) for m in meals}
     _est_rows = []
     for _day in _week_days():
-        if _m_days[_day] == 0:
-            _b = _est(_mser, _day, key='breakfast'); _l = _est(_mser, _day, key='lunch'); _dn = _est(_mser, _day, key='dinner')
-            if _b is not None and _l is not None and _dn is not None:
+        if _day not in _meal_days:
+            _b = _real_mean.get('breakfast',0); _l = _real_mean.get('lunch',0); _dn = _real_mean.get('dinner',0)
+            if _b > 0 and _l > 0 and _dn > 0:
                 _est_rows.append([_day, _b, _l, _dn, _b + _l + _dn])
     _append_est_block(ws6, _est_rows)
 
 if septic:
     ws7 = wb.create_sheet('Septic')
-    style_sheet(ws7, ['Date', 'Name', 'Trips', 'Quantity (m³)'], [
-        [norm_date(s.get('date','')), s.get('name',s.get('sector','')), s.get('trips',0),
-         s.get('quantity',s.get('pumpQty',s.get('amount',s.get('حجم',(s.get('trips',0) or 0)*5))))]
-        for s in sorted(septic, key=lambda x: norm_date(x.get('date','')))
-    ], [14,20,10,12], title='Septic')
+    _septic_rows = [{
+        'date': norm_date(s.get('date','')),
+        'name': s.get('name', s.get('sector','')),
+        'trips': int(s.get('trips',0) or s.get('quantity',0) or 0),
+        'qty': float(s.get('quantity', s.get('pumpQty', s.get('amount', s.get('حجم', (s.get('trips',0) or 0)*5)) )) or 0)
+    } for s in septic if norm_date(s.get('date',''))]
+    _septic_days = {d: 0 for d in _week_days()}
+    _septic_total_by_day = {d: 0 for d in _week_days()}
+    _septic_qty_by_day = {d: 0.0 for d in _week_days()}
+    for r in _septic_rows:
+        if r['date'] in _septic_days:
+            _septic_days[r['date']] += 1
+            _septic_total_by_day[r['date']] += r['trips']
+            _septic_qty_by_day[r['date']] += r['qty']
+    # متوسط النقلات اليومية في الأيام اللي فيها سجلات
+    _dates_with = [d for d in _week_days() if _septic_total_by_day[d] > 0]
+    _avg_trips = int(round(sum(_septic_total_by_day[d] for d in _dates_with) / max(len(_dates_with),1))) if _dates_with else 0
+    _avg_qty = round(sum(_septic_qty_by_day[d] for d in _dates_with) / max(len(_dates_with),1), 1) if _dates_with else 0
+    _septic_out = []
+    for _day in _week_days():
+        if _septic_total_by_day.get(_day, 0) > 0:
+            for r in _septic_rows:
+                if r['date'] == _day:
+                    _septic_out.append([r['date'], r['name'], r['trips'], r['qty']])
+        elif _avg_trips > 0:
+            _septic_out.append([_day, '(تقديري - لا سجلات)', _avg_trips, _avg_qty])
+    style_sheet(ws7, ['Date', 'Name', 'Trips', 'Quantity (m³)'], _septic_out, [14,30,10,12], title='Septic')
 
 if incidents:
     ws8 = wb.create_sheet('Incidents')
@@ -378,15 +494,44 @@ if ts_batches:
     ], [14,20,10,10], title='Tea Sugar Batches')
 
 if mw_data:
+    # استبعاد السجلات التلقائية الفارغة (autoGenerated/autoFilled بكل القيم صفر) — ليست هدراً حقيقياً
+    real_mw = [
+        m for m in mw_data
+        if not (m.get('autoGenerated') or m.get('autoFilled'))
+        or float(m.get('wasteEng',0) or 0) + float(m.get('wasteWrk',0) or 0) + float(m.get('wasteGuests',0) or 0) + float(m.get('prepWaste',0) or 0) > 0
+    ]
     ws11 = wb.create_sheet('MealWaste')
+    _seen_mw = set()
     rows = []
-    for m in sorted(mw_data, key=lambda x: (norm_date(x.get('date','')), str(x.get('meal','')))):
-        waste = float(m.get('wasteEng',0)or 0) + float(m.get('wasteWrk',0)or 0) + float(m.get('wasteGuests',0)or 0)
-        ppl = (int(m.get('engAte',0)or 0) + int(m.get('wrkAte',0)or 0) + int(m.get('guests',0)or 0)) or 1
+    for m in sorted(real_mw, key=lambda x: (norm_date(x.get('date','')), str(x.get('meal','')))):
+        _dkey = norm_date(m.get('date','')) + '|' + str(m.get('meal','')).strip()
+        if _dkey in _seen_mw:
+            continue
+        _seen_mw.add(_dkey)
+        waste = float(m.get('wasteEng',0)or 0) + float(m.get('wasteWrk',0)or 0) + float(m.get('wasteGuests',0)or 0) + float(m.get('prepWaste',0) or 0)
+        ppl = (int(m.get('engAte',0)or 0) + int(m.get('wrkAte',0)or 0) + int(m.get('guests',0)or 0) + int(m.get('engTakeaway',0)or 0) + int(m.get('wrkTakeaway',0)or 0)) or 1
         cost = float(m.get('cost',0)or 0)
         wp_g = round(waste / ppl * 1000) if ppl > 0 else 0
-        rows.append([norm_date(m.get('date','')), m.get('meal',''), m.get('chef',m.get('responsible','')),
+        meals_str = str(m.get('meal',''))
+        marker = ''
+        if str(meals_str).endswith('(تلقائي)') or (m.get('autoFilled') and not (float(m.get('wasteEng',0)or 0) + float(m.get('wasteWrk',0)or 0) + float(m.get('wasteGuests',0)or 0)) ):
+            marker = ' •'
+        rows.append([norm_date(m.get('date','')), meals_str + marker, m.get('chef',m.get('responsible','')),
                       ppl, round(waste, 1), wp_g, round(cost)])
+    real_real = [m for m in real_mw if not (m.get('autoGenerated') or m.get('autoFilled'))]
+    def _waste_avg(meal):
+        vals = []
+        for m in real_real:
+            if str(m.get('meal','')).strip() == meal:
+                w = float(m.get('wasteEng',0)or 0) + float(m.get('wasteWrk',0)or 0) + float(m.get('wasteGuests',0)or 0) + float(m.get('prepWaste',0) or 0)
+                if w > 0: vals.append(w)
+        return round(sum(vals)/len(vals), 1) if vals else 0
+    waste_days = {r[0] for r in rows}
+    _b_avg = _waste_avg('فطار'); _l_avg = _waste_avg('غداء'); _dn_avg = _waste_avg('عشاء')
+    for _day in _week_days():
+        if _day in waste_days: continue
+        if _b_avg or _l_avg or _dn_avg:
+            rows.append([_day, '(تقديري) متوسط الهدر/اليوم', '', 1, round(_b_avg+_l_avg+_dn_avg, 1), 0, 0])
     style_sheet(ws11, ['Date', 'Meal', 'Chef', 'Meals Count', 'Waste (kg)', 'Waste/Person (g)', 'Cost (ج.م)'],
                 rows, [14,10,20,12,12,16,12], title='Meal Waste')
     data_end = 3 + len(rows)
