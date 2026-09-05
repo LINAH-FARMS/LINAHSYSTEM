@@ -9517,7 +9517,7 @@ function exportContractorsToExcel() {
             var ctKey = (ct.name||'') + '|' + normalizeDateStr(p.date) + '|' + (ct.count||'');
             if (_importedKeys['ctr_' + ctKey]) return;
             if (_isDeleted('bakeryContractorSupplies', ctKey)) return;
-            var cExists = bakeryContractorSupplies.some(function(bc) { return normalizeDateStr(bc.date) === normalizeDateStr(p.date) && bc.name === ct.name && bc.count == ct.count; });
+            var cExists = bakeryContractorSupplies.some(function(bc) { return normalizeDateStr(bc.date) === normalizeDateStr(p.date) && bc.name === ct.name; });
             if (!cExists) { var ing = ct.ingredients || {}; bakeryContractorSupplies.push(_ts({ id: getBakeryNextId('CTR', bakeryContractorSupplies), date: p.date, name: ct.name, count: ct.count, price: ct.price || 2, paid: 0, responsible: ct.responsible || '', notes: '', ingredients: ing })); imported++; }
             _importedKeys['ctr_' + ctKey] = true;
           });
@@ -9553,7 +9553,7 @@ reports.forEach(function(r) {
               var ctKey = (ct.name||'') + '|' + normalizeDateStr(p.date) + '|' + (ct.count||'');
               if (_importedKeys['ctr_' + ctKey]) return;
               if (_isDeleted('bakeryContractorSupplies', ctKey)) return;
-              var cExists = bakeryContractorSupplies.some(function(bc) { return normalizeDateStr(bc.date) === normalizeDateStr(p.date) && bc.name === ct.name && bc.count == ct.count; });
+              var cExists = bakeryContractorSupplies.some(function(bc) { return normalizeDateStr(bc.date) === normalizeDateStr(p.date) && bc.name === ct.name; });
               if (!cExists) {
                 var ing = ct.ingredients || {};
                 bakeryContractorSupplies.push(_ts({
@@ -9573,6 +9573,28 @@ reports.forEach(function(r) {
             });
           });
           _lsSet('linah_imported_bakery_keys_session', JSON.stringify(_importedKeys));
+          // إزالة تكرار الاستيراد التلقائي فقط: نفس اليوم + نفس المقاول وسجلات بدون دفع/مسؤول => يُمسك الأعلى عدد،
+          // مع إبقاء التكرار الحقيقي (سجل عليه دفع أو مسؤول لنفس اليوم والمقاول) كما هو
+          try {
+            var seenN = {}, dropIdx = [];
+            bakeryContractorSupplies.forEach(function(bc, i2) {
+              if (!bc || !bc.name) return;
+              var nn = normalizeDateStr(bc.date) + '|' + bc.name;
+              var autoish = !(parseFloat(bc.paid) > 0) && !bc.responsible;
+              if (!autoish) { seenN[nn] = null; return; }
+              var prev = seenN[nn];
+              if (prev === null) return;
+              if (prev === undefined) { seenN[nn] = i2; return; }
+              if ((parseInt(bc.count) || 0) > (parseInt(bakeryContractorSupplies[prev].count) || 0)) {
+                dropIdx.push(prev); seenN[nn] = i2;
+              } else {
+                dropIdx.push(i2);
+              }
+            });
+            dropIdx.sort(function(x, y) { return y - x; });
+            dropIdx.forEach(function(i2) { bakeryContractorSupplies.splice(i2, 1); });
+            if (dropIdx.length) { imported += dropIdx.length; }
+          } catch(_dupE) {}
           if (imported > 0) {
             syncStorage();
             renderBakeryProductions();
