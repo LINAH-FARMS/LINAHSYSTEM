@@ -364,9 +364,9 @@
     <!-- Bakery Consumption Panel -->
     <div class="dash-chart-panel" style="grid-column:1/-1;margin-top:10px;">
       <div class="dash-chart-title" style="display:flex;justify-content:space-between;align-items:center;">
-        <span>🧑‍🍳 استهلاك خامات الفرن</span>
+        <span>🧑‍🍳 استهلاك خامات الفرن والمقاولين</span>
         <div style="display:flex;align-items:center;gap:8px;">
-          <span style="font-size:11px;color:#888;">محسوب من بيانات الإنتاج</span>
+          <span style="font-size:11px;color:#888;">محسوب من بيانات الإنتاج والتوريد</span>
           <button class="btn btn-excel" style="padding:3px 10px;font-size:11px;background:#1565c0;color:white;" onclick="exportBakeryConsumptionToExcel()">📤 تصدير Excel</button>
         </div>
       </div>
@@ -3099,6 +3099,7 @@
   <script src="item-search.js"></script>
   <script src="weekly-excel.js"></script>
   <script src="vacation-print-fix.js"></script>
+  <script src="bakery-consumption-detail.js"></script>
   <script>
   // سحب الإجازات المسجلة من daily-data.html ودمجها (دوري كل 10 ثوانٍ)
   (function() {
