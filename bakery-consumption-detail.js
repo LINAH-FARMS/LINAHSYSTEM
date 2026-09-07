@@ -1,11 +1,17 @@
 /* استهلاك خامات الفرن والمقاولين بالتفصيل — يستبدل compute/render/export الخاصة
    بـ استهلاك الخامات في app.js ليُظهر خامات الفرن (من الإنتاج) + خامات المقاولين
-   (من ingredients في توريد المقاولين) والإجماليات مضبوطة في الكروت والجدول والرسم. */
+   (من ingredients في توريد المقاولين) والإجماليات مضبوطة في الكروت والجدول والرسم.
+   ملاحظة: bakeryProductions/bakeryContractorSupplies مُعرّفة بـ let (ربط معجمي)
+   لذا نصل إليها بالاسم المباشر وليس عبر window. */
 (function () {
   'use strict';
 
   var _bakeryChart = null;
+  var _lastSig = '';
 
+  function _arr(v) { return v && typeof v.length === 'number' ? v : []; }
+  function _prods() { return _arr(typeof bakeryProductions !== 'undefined' ? bakeryProductions : null); }
+  function _ctrs() { return _arr(typeof bakeryContractorSupplies !== 'undefined' ? bakeryContractorSupplies : null); }
   function _ndz(v) { var n = parseFloat(v); return isNaN(n) ? 0 : n; }
   function _r2(n) { return Math.round(n * 100) / 100; }
   function _ds(s) { return String(s === null || s === undefined ? '' : s).slice(0, 10); }
@@ -17,10 +23,12 @@
     var d = new Date(fromDate + 'T00:00:00');
     var end = new Date(toDate + 'T00:00:00');
     if (isNaN(d.getTime()) || isNaN(end.getTime())) return results;
+    var prodsAll = _prods(), ctrsAll = _ctrs();
     while (d <= end) {
       var dateStr = d.toISOString().split('T')[0];
-      var prods = (window.bakeryProductions || []).filter(function (p) { return _ds(p.date) === dateStr; });
-      var ctrs = (window.bakeryContractorSupplies || []).filter(function (c) { return _ds(c.date) === dateStr; });
+      var prods = [], ctrs = [], i;
+      for (i = 0; i < prodsAll.length; i++) if (_ds(prodsAll[i].date) === dateStr) prods.push(prodsAll[i]);
+      for (i = 0; i < ctrsAll.length; i++) if (_ds(ctrsAll[i].date) === dateStr) ctrs.push(ctrsAll[i]);
       var f = { flour: 0, bran: 0, salt: 0, yeast: 0, diesel: 0 };
       var cf = { flour: 0, bran: 0, salt: 0, yeast: 0, diesel: 0 };
       var breadFarm = 0, breadCtr = 0;
@@ -57,88 +65,106 @@
   }
 
   var _MATS = [
-    { key: 'flour', label: 'دقيق', ov: 'flour', ctr: 'ctrFlour', tot: 'totalFlour' },
-    { key: 'bran', label: 'ردة', ov: 'bran', ctr: 'ctrBran', tot: 'totalBran' },
-    { key: 'salt', label: 'ملح', ov: 'salt', ctr: 'ctrSalt', tot: 'totalSalt' },
-    { key: 'yeast', label: 'خميرة', ov: 'yeast', ctr: 'ctrYeast', tot: 'totalYeast' },
-    { key: 'diesel', label: 'سولار', ov: 'diesel', ctr: 'ctrDiesel', tot: 'totalDiesel' }
+    { ov: 'flour', ctr: 'ctrFlour', tot: 'totalFlour', label: 'دقيق' },
+    { ov: 'bran', ctr: 'ctrBran', tot: 'totalBran', label: 'ردة' },
+    { ov: 'salt', ctr: 'ctrSalt', tot: 'totalSalt', label: 'ملح' },
+    { ov: 'yeast', ctr: 'ctrYeast', tot: 'totalYeast', label: 'خميرة' },
+    { ov: 'diesel', ctr: 'ctrDiesel', tot: 'totalDiesel', label: 'سولار' }
   ];
 
+  function _th(html, bg, attrs) {
+    return '<th ' + (attrs || '') + 'style="padding:6px;background:' + bg + ';color:white;border:1px solid #ddd;font-size:11px;white-space:nowrap;">' + html + '</th>';
+  }
+
+  window._bakerySetDefaultRange = function () {
+    var f = document.getElementById('bakeryConsFrom');
+    var t = document.getElementById('bakeryConsTo');
+    if (!f || !t) return;
+    if (!f.value || !t.value) {
+      var d = new Date();
+      t.value = d.toISOString().split('T')[0];
+      d.setDate(d.getDate() - 7);
+      f.value = d.toISOString().split('T')[0];
+    }
+  };
+
   window.renderBakeryConsumptionTable = function () {
-    var thead = document.getElementById('bakery-consumption-thead');
-    var tbody = document.getElementById('bakery-consumption-tbody');
-    if (!thead || !tbody) return;
-    var fromEl = document.getElementById('bakeryConsFrom');
-    var toEl = document.getElementById('bakeryConsTo');
-    var fromDate = fromEl ? fromEl.value : '';
-    var toDate = toEl ? toEl.value : '';
-    if (!fromDate || !toDate) { if (tbody) tbody.innerHTML = ''; return; }
-    var data = window.computeBakeryConsumptionForRange(fromDate, toDate);
-    if (!data.length) { tbody.innerHTML = '<tr><td colspan="19" style="padding:15px;color:#888;">لا توجد بيانات استهلاك في هذا النطاق</td></tr>'; return; }
+    try {
+      window._bakerySetDefaultRange();
+      var thead = document.getElementById('bakery-consumption-thead');
+      var tbody = document.getElementById('bakery-consumption-tbody');
+      if (!thead || !tbody) return;
+      var fromEl = document.getElementById('bakeryConsFrom');
+      var toEl = document.getElementById('bakeryConsTo');
+      var fromDate = fromEl ? fromEl.value : '';
+      var toDate = toEl ? toEl.value : '';
+      if (!fromDate || !toDate) { tbody.innerHTML = ''; return; }
+      var data = window.computeBakeryConsumptionForRange(fromDate, toDate);
+      if (!data.length) { tbody.innerHTML = '<tr><td colspan="19" style="padding:15px;color:#888;">لا توجد بيانات استهلاك في هذا النطاق</td></tr>'; return; }
 
-    var t = {
-      breadFarm: _isum(data, 'breadFarm'), breadCtr: _isum(data, 'breadCtr'), breadTotal: _isum(data, 'breadTotal')
-    };
-    _MATS.forEach(function (m) { t[m.ov] = _sum(data, m.ov); t[m.ctr] = _sum(data, m.ctr); t[m.tot] = _sum(data, m.tot); });
+      var t = {
+        breadFarm: _isum(data, 'breadFarm'), breadCtr: _isum(data, 'breadCtr'), breadTotal: _isum(data, 'breadTotal')
+      };
+      _MATS.forEach(function (m) { t[m.ov] = _sum(data, m.ov); t[m.ctr] = _sum(data, m.ctr); t[m.tot] = _sum(data, m.tot); });
 
-    var cards = document.getElementById('bakery-summary-cards');
-    if (cards) {
-      cards.innerHTML = [
-        _card('#1b5e20', _r2(t.breadTotal).toLocaleString('en-US'), 'إجمالي الأرغفة', 'المزرعة ' + t.breadFarm.toLocaleString('en-US') + ' | المقاولين ' + t.breadCtr.toLocaleString('en-US'))
-      ];
-      _MATS.forEach(function (m) {
-        cards.innerHTML += _card(m.key === 'diesel' ? '#0d47a1' : (m.key === 'bran' ? '#6d4c00' : '#37474f'),
-          _r2(t[m.tot]), m.label + (m.key === 'diesel' ? ' (لتر)' : ' (كجم)'),
-          'فرن ' + _r2(t[m.ov]) + ' | مقاولين ' + _r2(t[m.ctr]));
-      });
-    }
+      var cards = document.getElementById('bakery-summary-cards');
+      if (cards) {
+        cards.innerHTML = _card('#1b5e20', _r2(t.breadTotal).toLocaleString('en-US'), 'إجمالي الأرغفة',
+          'المزرعة ' + t.breadFarm.toLocaleString('en-US') + ' | المقاولين ' + t.breadCtr.toLocaleString('en-US'));
+        _MATS.forEach(function (m) {
+          cards.innerHTML += _card(m.ov === 'diesel' ? '#0d47a1' : (m.ov === 'bran' ? '#6d4c00' : '#37474f'),
+            _r2(t[m.tot]), m.label + (m.ov === 'diesel' ? ' (لتر)' : ' (كجم)'),
+            'فرن ' + _r2(t[m.ov]) + ' | مقاولين ' + _r2(t[m.ctr]));
+        });
+      }
 
-    function th(html, bg, extra) {
-      return '<th style="padding:6px;background:' + bg + ';color:white;border:1px solid #ddd;font-size:11px;white-space:nowrap;' + (extra || '') + '">' + html + '</th>';
-    }
-    thead.innerHTML = '<tr>'
-      + th('التاريخ', '#263238', 'rowspan:2;')
-      + th('خبز المزرعة', '#1b5e20', 'rowspan:2;')
-      + th('خبز المقاولين', '#1b5e20', 'rowspan:2;')
-      + th('إجمالي الأرغفة', '#1b5e20', 'rowspan:2;')
-      + th('خامات الفرن', '#37474f', 'colspan:5;')
-      + th('خامات المقاولين', '#00695c', 'colspan:5;')
-      + th('الإجمالي', '#1b5e20', 'colspan:5;')
-      + '</tr><tr>'
-      + _MATS.map(function (m) { return th(m.label, '#455a64'); }).join('')
-      + _MATS.map(function (m) { return th(m.label, '#00796b'); }).join('')
-      + _MATS.map(function (m) { return th(m.label, '#2e7d32'); }).join('')
-      + '</tr>';
-
-    var rows = '';
-    data.slice().reverse().forEach(function (s) {
-      rows += '<tr>'
-        + '<td style="padding:5px;border:1px solid #ddd;font-weight:700;font-family:monospace;">' + s.date + '</td>'
-        + '<td style="padding:5px;border:1px solid #ddd;">' + s.breadFarm + '</td>'
-        + '<td style="padding:5px;border:1px solid #ddd;">' + s.breadCtr + (s.ctrCount ? ' <span style="color:#888;font-size:10px;">(' + s.ctrCount + ')</span>' : '') + '</td>'
-        + '<td style="padding:5px;border:1px solid #ddd;font-weight:700;">' + s.breadTotal + '</td>'
-        + _MATS.map(function (m) { return '<td style="padding:5px;border:1px solid #ddd;background:#fafafa;">' + s[m.ov] + '</td>'; }).join('')
-        + _MATS.map(function (m) { return '<td style="padding:5px;border:1px solid #ddd;background:#f1faf8;">' + s[m.ctr] + '</td>'; }).join('')
-        + _MATS.map(function (m) { return '<td style="padding:5px;border:1px solid #ddd;font-weight:700;background:#e8f5e9;">' + s[m.tot] + '</td>'; }).join('')
+      thead.innerHTML =
+        '<tr>'
+        + _th('التاريخ', '#263238', 'rowspan="2" ')
+        + _th('خبز المزرعة', '#1b5e20', 'rowspan="2" ')
+        + _th('خبز المقاولين', '#1b5e20', 'rowspan="2" ')
+        + _th('إجمالي الأرغفة', '#1b5e20', 'rowspan="2" ')
+        + _th('خامات الفرن', '#37474f', 'colspan="5" ')
+        + _th('خامات المقاولين', '#00695c', 'colspan="5" ')
+        + _th('الإجمالي', '#1b5e20', 'colspan="5" ')
+        + '</tr><tr>'
+        + _MATS.map(function (m) { return _th(m.label, '#455a64'); }).join('')
+        + _MATS.map(function (m) { return _th(m.label, '#00796b'); }).join('')
+        + _MATS.map(function (m) { return _th(m.label, '#2e7d32'); }).join('')
         + '</tr>';
-    });
-    rows += '<tr style="font-weight:900;background:#c8e6c9;">'
-      + '<td style="padding:5px;border:1px solid #999;">الإجمالي</td>'
-      + '<td style="padding:5px;border:1px solid #999;">' + t.breadFarm + '</td>'
-      + '<td style="padding:5px;border:1px solid #999;">' + t.breadCtr + '</td>'
-      + '<td style="padding:5px;border:1px solid #999;">' + t.breadTotal + '</td>'
-      + _MATS.map(function (m) { return '<td style="padding:5px;border:1px solid #999;">' + _r2(t[m.ov]) + '</td>'; }).join('')
-      + _MATS.map(function (m) { return '<td style="padding:5px;border:1px solid #999;">' + _r2(t[m.ctr]) + '</td>'; }).join('')
-      + _MATS.map(function (m) { return '<td style="padding:5px;border:1px solid #999;">' + _r2(t[m.tot]) + '</td>'; }).join('')
-      + '</tr>';
-    tbody.innerHTML = rows;
-    window.renderBakeryChart(data);
+
+      var rows = '';
+      data.slice().reverse().forEach(function (s) {
+        rows += '<tr>'
+          + '<td style="padding:5px;border:1px solid #ddd;font-weight:700;font-family:monospace;">' + s.date + '</td>'
+          + '<td style="padding:5px;border:1px solid #ddd;">' + s.breadFarm + '</td>'
+          + '<td style="padding:5px;border:1px solid #ddd;">' + s.breadCtr + (s.ctrCount ? ' <span style="color:#888;font-size:10px;">(' + s.ctrCount + ')</span>' : '') + '</td>'
+          + '<td style="padding:5px;border:1px solid #ddd;font-weight:700;">' + s.breadTotal + '</td>'
+          + _MATS.map(function (m) { return '<td style="padding:5px;border:1px solid #ddd;background:#fafafa;">' + s[m.ov] + '</td>'; }).join('')
+          + _MATS.map(function (m) { return '<td style="padding:5px;border:1px solid #ddd;background:#f1faf8;">' + s[m.ctr] + '</td>'; }).join('')
+          + _MATS.map(function (m) { return '<td style="padding:5px;border:1px solid #ddd;font-weight:700;background:#e8f5e9;">' + s[m.tot] + '</td>'; }).join('')
+          + '</tr>';
+      });
+      rows += '<tr style="font-weight:900;background:#c8e6c9;">'
+        + '<td style="padding:5px;border:1px solid #999;">الإجمالي</td>'
+        + '<td style="padding:5px;border:1px solid #999;">' + t.breadFarm + '</td>'
+        + '<td style="padding:5px;border:1px solid #999;">' + t.breadCtr + '</td>'
+        + '<td style="padding:5px;border:1px solid #999;">' + t.breadTotal + '</td>'
+        + _MATS.map(function (m) { return '<td style="padding:5px;border:1px solid #999;">' + _r2(t[m.ov]) + '</td>'; }).join('')
+        + _MATS.map(function (m) { return '<td style="padding:5px;border:1px solid #999;">' + _r2(t[m.ctr]) + '</td>'; }).join('')
+        + _MATS.map(function (m) { return '<td style="padding:5px;border:1px solid #999;">' + _r2(t[m.tot]) + '</td>'; }).join('')
+        + '</tr>';
+      tbody.innerHTML = rows;
+      window.renderBakeryChart(data);
+    } catch (e) {
+      if (window.console && console.error) console.error('renderBakeryConsumptionTable error:', e);
+    }
   };
 
   window.renderBakeryChart = function (data) {
     var canvas = document.getElementById('bakery-chart');
     if (!canvas) return;
-    if (_bakeryChart) { _bakeryChart.destroy(); _bakeryChart = null; }
+    if (_bakeryChart) { try { _bakeryChart.destroy(); } catch (e) {} _bakeryChart = null; }
     if (!data || data.length < 2) { canvas.parentElement.style.height = '0'; return; }
     canvas.parentElement.style.height = '250px';
     var ctx = canvas.getContext('2d');
@@ -222,40 +248,67 @@
   };
 
   window.exportBakeryConsumptionToExcel = function () {
-    var fromEl = document.getElementById('bakeryConsFrom');
-    var toEl = document.getElementById('bakeryConsTo');
-    var fromDate = fromEl ? fromEl.value : '';
-    var toDate = toEl ? toEl.value : '';
-    if (!fromDate || !toDate) return alert('الرجاء تحديد نطاق التاريخ');
-    var data = window.computeBakeryConsumptionForRange(fromDate, toDate);
-    if (!data.length) return alert('لا توجد بيانات في هذا النطاق');
-    var xlData = data.map(function (s) {
-      var o = { 'التاريخ': s.date, 'خبز المزرعة': s.breadFarm, 'خبز المقاولين': s.breadCtr, 'إجمالي الأرغفة': s.breadTotal };
-      _MATS.forEach(function (m) {
-        o[m.label + ' الفرن' + (m.key === 'diesel' ? ' (لتر)' : ' (كجم)')] = s[m.ov];
-        o[m.label + ' المقاولين' + (m.key === 'diesel' ? ' (لتر)' : ' (كجم)')] = s[m.ctr];
-        o[m.label + ' الإجمالي' + (m.key === 'diesel' ? ' (لتر)' : ' (كجم)')] = s[m.tot];
+    try {
+      window._bakerySetDefaultRange();
+      var fromEl = document.getElementById('bakeryConsFrom');
+      var toEl = document.getElementById('bakeryConsTo');
+      var fromDate = fromEl ? fromEl.value : '';
+      var toDate = toEl ? toEl.value : '';
+      if (!fromDate || !toDate) return alert('الرجاء تحديد نطاق التاريخ');
+      var data = window.computeBakeryConsumptionForRange(fromDate, toDate);
+      if (!data.length) return alert('لا توجد بيانات في هذا النطاق');
+      var xlData = data.map(function (s) {
+        var o = { 'التاريخ': s.date, 'خبز المزرعة': s.breadFarm, 'خبز المقاولين': s.breadCtr, 'إجمالي الأرغفة': s.breadTotal };
+        _MATS.forEach(function (m) {
+          o[m.label + ' الفرن' + (m.ov === 'diesel' ? ' (لتر)' : ' (كجم)')] = s[m.ov];
+          o[m.label + ' المقاولين' + (m.ov === 'diesel' ? ' (لتر)' : ' (كجم)')] = s[m.ctr];
+          o[m.label + ' الإجمالي' + (m.ov === 'diesel' ? ' (لتر)' : ' (كجم)')] = s[m.tot];
+        });
+        return o;
       });
-      return o;
-    });
-    var t = { breadFarm: _isum(data, 'breadFarm'), breadCtr: _isum(data, 'breadCtr'), breadTotal: _isum(data, 'breadTotal') };
-    _MATS.forEach(function (m) { t[m.ov] = _sum(data, m.ov); t[m.ctr] = _sum(data, m.ctr); t[m.tot] = _sum(data, m.tot); });
-    var row = { 'التاريخ': 'الإجمالي', 'خبز المزرعة': t.breadFarm, 'خبز المقاولين': t.breadCtr, 'إجمالي الأرغفة': t.breadTotal };
-    _MATS.forEach(function (m) {
-      row[m.label + ' الفرن' + (m.key === 'diesel' ? ' (لتر)' : ' (كجم)')] = _r2(t[m.ov]);
-      row[m.label + ' المقاولين' + (m.key === 'diesel' ? ' (لتر)' : ' (كجم)')] = _r2(t[m.ctr]);
-      row[m.label + ' الإجمالي' + (m.key === 'diesel' ? ' (لتر)' : ' (كجم)')] = _r2(t[m.tot]);
-    });
-    xlData.push(row);
-    var ws = XLSX.utils.json_to_sheet(xlData);
-    var wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Bakery Consumption');
-    XLSX.writeFile(wb, 'BakeryConsumption_' + (fromDate + '_to_' + toDate).replace(/-/g, '') + '_' + new Date().toISOString().split('T')[0].replace(/-/g, '') + '.xlsx');
+      var t = { breadFarm: _isum(data, 'breadFarm'), breadCtr: _isum(data, 'breadCtr'), breadTotal: _isum(data, 'breadTotal') };
+      _MATS.forEach(function (m) { t[m.ov] = _sum(data, m.ov); t[m.ctr] = _sum(data, m.ctr); t[m.tot] = _sum(data, m.tot); });
+      var row = { 'التاريخ': 'الإجمالي', 'خبز المزرعة': t.breadFarm, 'خبز المقاولين': t.breadCtr, 'إجمالي الأرغفة': t.breadTotal };
+      _MATS.forEach(function (m) {
+        row[m.label + ' الفرن' + (m.ov === 'diesel' ? ' (لتر)' : ' (كجم)')] = _r2(t[m.ov]);
+        row[m.label + ' المقاولين' + (m.ov === 'diesel' ? ' (لتر)' : ' (كجم)')] = _r2(t[m.ctr]);
+        row[m.label + ' الإجمالي' + (m.ov === 'diesel' ? ' (لتر)' : ' (كجم)')] = _r2(t[m.tot]);
+      });
+      xlData.push(row);
+      var ws = XLSX.utils.json_to_sheet(xlData);
+      var wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Bakery Consumption');
+      XLSX.writeFile(wb, 'BakeryConsumption_' + (fromDate + '_to_' + toDate).replace(/-/g, '') + '_' + new Date().toISOString().split('T')[0].replace(/-/g, '') + '.xlsx');
+    } catch (e) {
+      if (window.console && console.error) console.error('exportBakeryConsumptionToExcel error:', e);
+    }
   };
 
-  document.addEventListener('DOMContentLoaded', function () {
+  function _dataSig() {
+    var bp = _prods(), bc = _ctrs();
+    var s = 0, i;
+    for (i = 0; i < bp.length; i++) s += parseInt(bp[i].breadCount, 10) || 0;
+    for (i = 0; i < bc.length; i++) { s += parseInt(bc[i].count, 10) || 0; s += Math.round((_ndz(bc[i].ingredients && bc[i].ingredients.flour)) * 10); }
     var f = document.getElementById('bakeryConsFrom');
     var t = document.getElementById('bakeryConsTo');
-    if (f && t && f.value && t.value) window.renderBakeryConsumptionTable();
+    return (f && f.value || '') + '|' + (t && t.value || '') + '|' + bp.length + '|' + bc.length + '|' + s;
+  }
+
+  function _maybeRender() {
+    var sig;
+    try { sig = _dataSig(); } catch (e) { return; }
+    if (sig !== _lastSig) {
+      _lastSig = sig;
+      window.renderBakeryConsumptionTable();
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', function () {
+    window._bakerySetDefaultRange();
+    window.renderBakeryConsumptionTable();
+    window.setInterval(_maybeRender, 2000);
+  });
+  document.addEventListener('visibilitychange', function () {
+    if (!document.hidden) _maybeRender();
   });
 })();
