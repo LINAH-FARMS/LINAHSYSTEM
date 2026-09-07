@@ -14,7 +14,23 @@
   function _ctrs() { return _arr(typeof bakeryContractorSupplies !== 'undefined' ? bakeryContractorSupplies : null); }
   function _ndz(v) { var n = parseFloat(v); return isNaN(n) ? 0 : n; }
   function _r2(n) { return Math.round(n * 100) / 100; }
-  function _ds(s) { return String(s === null || s === undefined ? '' : s).slice(0, 10); }
+  function _ds(s) {
+    return String(s === null || s === undefined ? '' : s).replace(/^[\u200e\u200f\u202a-\u202e\u00a0\s]+|[\u200e\u200f\u202a-\u202e\u00a0\s]+$/g, '').slice(0, 10);
+  }
+  /* خامات المقاولين تُخزن أحياناً بمفاتيح ING001..ING007 وأحياناً بالاسم المباشر */
+  function _fmtLocal(d) {
+    var y = d.getFullYear(), m = d.getMonth() + 1, dd = d.getDate();
+    return y + '-' + (m < 10 ? '0' + m : m) + '-' + (dd < 10 ? '0' + dd : dd);
+  }
+  function _ingVal(ing, plainKey, ingKey) {
+    if (ing && typeof ing === 'object') {
+      var v = ing[plainKey];
+      if (v !== undefined && v !== null && v !== '') return v;
+      v = ing[ingKey];
+      if (v !== undefined && v !== null && v !== '') return v;
+    }
+    return 0;
+  }
   function _isum(data, key) { var s = 0; data.forEach(function (x) { s += parseInt(x[key], 10) || 0; }); return s; }
   function _sum(data, key) { var s = 0; data.forEach(function (x) { s += _ndz(x[key]); }); return s; }
 
@@ -25,7 +41,7 @@
     if (isNaN(d.getTime()) || isNaN(end.getTime())) return results;
     var prodsAll = _prods(), ctrsAll = _ctrs();
     while (d <= end) {
-      var dateStr = d.toISOString().split('T')[0];
+      var dateStr = _fmtLocal(d);
       var prods = [], ctrs = [], i;
       for (i = 0; i < prodsAll.length; i++) if (_ds(prodsAll[i].date) === dateStr) prods.push(prodsAll[i]);
       for (i = 0; i < ctrsAll.length; i++) if (_ds(ctrsAll[i].date) === dateStr) ctrs.push(ctrsAll[i]);
@@ -40,8 +56,11 @@
       ctrs.forEach(function (c) {
         breadCtr += parseInt(c.count, 10) || 0;
         var ing = c.ingredients || {};
-        cf.flour += _ndz(ing.flour); cf.bran += _ndz(ing.bran); cf.salt += _ndz(ing.salt);
-        cf.yeast += _ndz(ing.yeast); cf.diesel += _ndz(ing.diesel);
+        cf.flour += _ndz(_ingVal(ing, 'flour', 'ING001'));
+        cf.bran += _ndz(_ingVal(ing, 'bran', 'ING004'));
+        cf.salt += _ndz(_ingVal(ing, 'salt', 'ING003'));
+        cf.yeast += _ndz(_ingVal(ing, 'yeast', 'ING002'));
+        cf.diesel += _ndz(_ingVal(ing, 'diesel', 'ING007'));
       });
       results.push({
         date: dateStr,
@@ -82,9 +101,9 @@
     if (!f || !t) return;
     if (!f.value || !t.value) {
       var d = new Date();
-      t.value = d.toISOString().split('T')[0];
+      t.value = _fmtLocal(d);
       d.setDate(d.getDate() - 7);
-      f.value = d.toISOString().split('T')[0];
+      f.value = _fmtLocal(d);
     }
   };
 
@@ -288,7 +307,7 @@
     var bp = _prods(), bc = _ctrs();
     var s = 0, i;
     for (i = 0; i < bp.length; i++) s += parseInt(bp[i].breadCount, 10) || 0;
-    for (i = 0; i < bc.length; i++) { s += parseInt(bc[i].count, 10) || 0; s += Math.round((_ndz(bc[i].ingredients && bc[i].ingredients.flour)) * 10); }
+    for (i = 0; i < bc.length; i++) { s += parseInt(bc[i].count, 10) || 0; s += Math.round(_ndz(_ingVal(bc[i].ingredients, 'flour', 'ING001')) * 10); }
     var f = document.getElementById('bakeryConsFrom');
     var t = document.getElementById('bakeryConsTo');
     return (f && f.value || '') + '|' + (t && t.value || '') + '|' + bp.length + '|' + bc.length + '|' + s;
