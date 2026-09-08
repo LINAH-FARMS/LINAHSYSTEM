@@ -76,6 +76,26 @@
       }
       return drop.length;
     }
+    function _dedupeCtrArr(arr) {
+      // نفس قاعدة _dedupeCtrByNameDate لكن على مصفوفة مباشرة (تُستخدم لحماية
+      // كتابة السحابة: أي جهاز يرفع تكرارات تُنقّى قبل الحفظ فلا ترجع ثانية).
+      if (!Array.isArray(arr)) return arr;
+      if (arr.length < 2) return arr.slice();
+      var seen = {}, out = [];
+      arr.forEach(function(r) {
+        if (!r || !r.name) { out.push(r); return; }
+        var k = normalizeDateStr(r.date) + '|' + _nName(r.name);
+        var prevIdx = seen[k];
+        if (prevIdx === undefined) { out.push(r); seen[k] = out.length - 1; return; }
+        var pr = out[prevIdx];
+        var pc = parseInt(pr && pr.count) || 0, rc = parseInt(r.count) || 0;
+        var pRank = ((parseFloat(pr && pr.paid) > 0) ? 1 : 0) + (((pr && pr.responsible || '').trim()) ? 1 : 0);
+        var rRank = ((parseFloat(r.paid) > 0) ? 1 : 0) + (((r.responsible || '').trim()) ? 1 : 0);
+        var keepNew = (rc > pc) || (rc === pc && rRank > pRank);
+        if (keepNew) { out[prevIdx] = r; seen[k] = prevIdx; }
+      });
+      return out;
+    }
 
     setInterval(() => {
       var lc = document.getElementById('live-clock');
@@ -6079,6 +6099,7 @@ function toggleEmployeeStatus(empId) {
       if (rec && rec.arrival) updateMealLogFromHospitality(rec.arrival);
       syncStorage(); renderHospitalityTable(); renderMealLogTable();
       scanAndShowDuplicates();
+      pushToSupabase();
     }
 
     function deleteDupProduction(idx) {
@@ -6090,6 +6111,7 @@ function toggleEmployeeStatus(empId) {
       bakeryProductions.splice(idx, 1);
       syncStorage(); renderBakeryProductions(); updateBakeryProductionIngredientStocks();
       scanAndShowDuplicates();
+      pushToSupabase();
     }
 
     function deleteDupContractor(idx) {
@@ -6100,6 +6122,7 @@ function toggleEmployeeStatus(empId) {
       bakeryContractorSupplies.splice(idx, 1);
       syncStorage(); renderBakeryContractorSupplies(); updateBakeryStats(); updateBreadSupplyStats();
       scanAndShowDuplicates();
+      pushToSupabase();
     }
 
     function deleteDupTeaSugar(idx) {
@@ -6110,38 +6133,51 @@ function toggleEmployeeStatus(empId) {
       teaSugarDisbursements.splice(idx, 1);
       syncStorage(); renderTeaSugarTable(); renderTeaSugarBatchSummary();
       scanAndShowDuplicates();
+      pushToSupabase();
     }
 
     function deleteAllDuplicates() {
       if (!requireAdmin()) return;
       if (!confirm('هل أنت متأكد من حذف جميع البيانات المكررة؟')) return;
 
-      // إعادة تعيين الفورم
+      // إعادة تعيين الفورم + تسجيل الحذف ليرفع للسحابة (وإلا السحب يُعيدها بعد التحميل)
       var hospSeen = {};
       for (var i = hospitalities.length - 1; i >= 0; i--) {
         var key = hospitalities[i].name + '|' + hospitalities[i].arrival;
-        if (hospSeen[key]) { hospitalities.splice(i, 1); } else { hospSeen[key] = true; }
+        if (hospSeen[key]) {
+          _logDeletion('hospitalities', (hospitalities[i].name || '') + '|' + (hospitalities[i].arrival || '') + '|' + (hospitalities[i].type || ''));
+          hospitalities.splice(i, 1);
+        } else { hospSeen[key] = true; }
       }
 
       // تسجيل الإجازة تم
       var prodSeen = {};
       for (var i = bakeryProductions.length - 1; i >= 0; i--) {
         var key = normalizeDateStr(bakeryProductions[i].date);
-        if (prodSeen[key]) { bakeryProductions.splice(i, 1); } else { prodSeen[key] = true; }
+        if (prodSeen[key]) {
+          _logDeletion('bakeryProductions', normalizeDateStr(bakeryProductions[i].date) + '|' + (bakeryProductions[i].breadCount || ''));
+          bakeryProductions.splice(i, 1);
+        } else { prodSeen[key] = true; }
       }
 
       // تعديل الإجازة بنجاح اسم
       var ctrSeen = {};
       for (var i = bakeryContractorSupplies.length - 1; i >= 0; i--) {
         var key = bakeryContractorSupplies[i].name + '|' + normalizeDateStr(bakeryContractorSupplies[i].date);
-        if (ctrSeen[key]) { bakeryContractorSupplies.splice(i, 1); } else { ctrSeen[key] = true; }
+        if (ctrSeen[key]) {
+          _logDeletion('bakeryContractorSupplies', (bakeryContractorSupplies[i].name || '') + '|' + normalizeDateStr(bakeryContractorSupplies[i].date) + '|' + (bakeryContractorSupplies[i].count || ''));
+          bakeryContractorSupplies.splice(i, 1);
+        } else { ctrSeen[key] = true; }
       }
 
       // الشاي والسكر
       var tsSeen = {};
       for (var i = teaSugarDisbursements.length - 1; i >= 0; i--) {
         var key = (teaSugarDisbursements[i].empCode||teaSugarDisbursements[i].empId||'') + '|' + teaSugarDisbursements[i].period + '|' + _tsMonthKey(teaSugarDisbursements[i].date);
-        if (tsSeen[key]) { teaSugarDisbursements.splice(i, 1); } else { tsSeen[key] = true; }
+        if (tsSeen[key]) {
+          _logDeletion('teaSugarDisbursements', (teaSugarDisbursements[i].date||'') + '|' + (teaSugarDisbursements[i].period||teaSugarDisbursements[i].type||'') + '|' + (teaSugarDisbursements[i].empCode||teaSugarDisbursements[i].empId||'') + '|' + (teaSugarDisbursements[i].teaPacks||teaSugarDisbursements[i].quantity||'') + '|' + (teaSugarDisbursements[i].sugarKg||''));
+          teaSugarDisbursements.splice(i, 1);
+        } else { tsSeen[key] = true; }
       }
 
       syncStorage(); renderHospitalityTable(); renderMealLogTable();
@@ -6149,7 +6185,8 @@ function toggleEmployeeStatus(empId) {
       renderBakeryContractorSupplies(); updateBakeryStats(); updateBreadSupplyStats();
       renderTeaSugarTable(); renderTeaSugarBatchSummary();
       scanAndShowDuplicates();
-      alert('تم حفظ البيانات بنجاح ✅');
+      pushToSupabase();
+      alert('تم حذف جميع البيانات المكررة وتحديث السحابة ✅');
     }
 
     async function addMaintenanceRecord() {
@@ -11484,6 +11521,9 @@ var cExists = bakeryContractorSupplies.some(function(bc) { return normalizeDateS
           });
           ['bakeryContractorsNames','dynamicVisitorTypes','dynamicSeptics','dynamicDepts','dynamicTitles','dynamicSectors','contractorSectors','dynamicStores','bakeryContractorsNames'].forEach(function(k) { if (Array.isArray(currentAlldata[k])) currentAlldata[k] = _strArr(currentAlldata[k]); });
           if (Array.isArray(currentAlldata.bakeryContractorSupplies)) currentAlldata.bakeryContractorSupplies = currentAlldata.bakeryContractorSupplies.map(function(r) { if (typeof r === 'object' && r && (typeof r.name !== 'string' || r.name === '[object Object]' || !r.name.trim())) r.name = 'غير معروف'; return r; });
+          // حماية نهائية: لا يُكتب للسحابة سجلان لنفس المقاول في نفس اليوم — أي
+          // جهاز قديم يحمل تكرارات لن يُعيدها للسحابة مرة أخرى (تُنقّى قبل الحفظ).
+          if (Array.isArray(currentAlldata.bakeryContractorSupplies)) currentAlldata.bakeryContractorSupplies = _dedupeCtrArr(currentAlldata.bakeryContractorSupplies);
           var resp = await fetch(_sbEndpoint, {
             method: 'POST',
             headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/json', 'Prefer': 'resolution=merge-duplicates' },
