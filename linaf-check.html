@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>فحص القوة — تشخيص</title>
+<style>
+  body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #f4f6f8; margin: 0; padding: 20px; }
+  .box { background: #fff; border-radius: 12px; padding: 16px 20px; margin-bottom: 14px; box-shadow: 0 1px 4px rgba(0,0,0,.08); }
+  h1 { font-size: 20px; color: #1b5e20; }
+  h3 { margin: 0 0 8px; color: #333; font-size: 15px; }
+  table { border-collapse: collapse; width: 100%; font-size: 13px; }
+  td, th { border: 1px solid #dfe4e8; padding: 6px 8px; text-align: right; }
+  th { background: #eef4ee; }
+  .ok { color: #1b5e20; font-weight: 700; }
+  .bad { color: #c62828; font-weight: 700; }
+  .warn { color: #bf6b00; font-weight: 700; }
+  #spin { font-size: 15px; color: #555; }
+</style>
+</head>
+<body>
+  <h1>فحص القوة — أين الفرق؟</h1>
+  <div id="spin">جارٍ القراءة من ذاكرة هذا المتصفح ومن السحابة...</div>
+  <div id="out"></div>
+
+<script>
+const SB  = 'https://cwqghiqykohefaggedjl.supabase.co';
+const KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN3cWdoaXF5a29oZWZhZ2dlZGpsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEwMjUyMjEsImV4cCI6MjA5NjYwMTIyMX0.3a3hRcNdmYQCtjYjBroAT6df1T_7oz-XWUeD3wagYw8';
+const get = k => { try { const v = JSON.parse(localStorage.getItem(k) || '[]'); return Array.isArray(v) ? v : []; } catch(e) { return []; } };
+
+(async function (){
+  const local    = get('lineh_employees');
+  const excluded = get('excludedEmployees');
+  const dels     = get('lineh_sync_deletions').filter(d => d && d.entity === 'employees');
+  let cloud = [];
+  try {
+    const r = await fetch(SB + '/rest/v1/sync_data?id=eq.ent:employees&select=data', { headers: { apikey: KEY, Authorization: 'Bearer ' + KEY } });
+    const a = await r.json();
+    cloud = (a && a[0] && a[0].data);
+    if (typeof cloud === 'string') cloud = JSON.parse(cloud);
+    if (!Array.isArray(cloud)) cloud = [];
+  } catch(e) { cloud = []; }
+
+  const nrm = s => String(s||'').replace(/[\u064B-\u0652\u0670]/g,'').replace(/[أإآٱ]/g,'ا').replace(/ؤ/g,'و').replace(/ئ/g,'ي').replace(/ة/g,'ه').replace(/ى/g,'ي').replace(/\s+/g,' ').trim();
+  const lp = e => (e && e.status === 'P') ? 'P' : 'V';
+  const P = (arr) => arr.filter(e => e && e.status === 'P').length;
+  const V = (arr) => arr.filter(e => e && e.status === 'V').length;
+
+  const cloudIds  = new Set(cloud.map(x => String(x.id||'').trim()));
+  const cloudCodes= new Set(cloud.map(x => String(x.code||'').trim()).filter(Boolean));
+  const cloudNms  = new Set(cloud.map(x => nrm(x.name)).filter(Boolean));
+
+  const localKeys = new Set(local.map(x => String(x.id||'').trim() + '|' + String(x.code||'').trim() + '|' + nrm(x.name)));
+
+  const extraInCloud = cloud.filter(x =>
+    !local.some(e => String(e.id||'').trim() === String(x.id||'').trim()) &&
+    !local.some(e => String(e.code||'').trim() && String(e.code||'').trim() === String(x.code||'').trim()) &&
+    !local.some(e => nrm(e.name) === nrm(x.name)));
+
+  const dupLocal = (() => { const seen={}, out=[]; local.forEach(e => { const k = String(e.code || e.name || '').trim(); if (seen[k]) out.push(e); else seen[k]=1; }); return out; })();
+
+  const excludedHits = excluded.filter(v => {
+    const k = String(v.code || v.id || v.name || '').trim();
+    return k && (cloudIds.has(k) || cloudCodes.has(k) || cloudNms.has(nrm(k)) ||
+      (() => { let hit = false; cloud.forEach(x => { if (String(x.code||'').trim() === k || String(x.id||'').trim() === k || nrm(x.name) === nrm(k)) hit = true; }); return hit; })());
+  });
+
+  const delHits = dels.filter(d => {
+    const k = String(d.key || '').trim();
+    return k && (cloudIds.has(k) || cloudCodes.has(k) || cloudNms.has(nrm(k)));
+  });
+
+  const sect = (t, body) => '<div class="box"><h3>' + t + '</h3>' + body + '</div>';
+  const tbl = (rows) => rows.length ? '<table><tr><th>الاسم</th><th>الكود</th><th>المعرّف</th><th>الحالة</th></tr>' + rows.map(r =>
+      '<tr><td>' + (r.name || '-') + '</td><td>' + (r.code || '-') + '</td><td>' + (r.id || '-') + '</td><td>' + (r.status ? lp(r) : '-') + '</td></tr>').join('') + '</table>'
+    : '<div class="ok">لا يوجد (0)</div>';
+
+  let html = '';
+
+  html += sect('١. الأرقام الآن',
+    '<table><tr><th>المصدر</th><th>الإجمالي</th><th>متواجد P</th><th>غير متواجد V</th></tr>' +
+    '<tr><td>السحابة (ent:employees)</td><td class="' + (cloud.length ? 'ok' : 'bad') + '">' + cloud.length + '</td><td>' + P(cloud) + '</td><td>' + V(cloud) + '</td></tr>' +
+    '<tr><td>هذا المتصفح (localStorage)</td><td class="' + (local.length ? 'ok' : 'bad') + '">' + local.length + '</td><td>' + P(local) + '</td><td>' + V(local) + '</td></tr></table>' +
+    '<div>الفرق: <b class="' + (cloud.length - local.length === 0 ? 'ok' : 'bad') + '">' + (cloud.length - local.length) + '</b> موظف (في السحابة وليس في المتصفح)</div>');
+
+  html += sect('٢. اللي في السحابة ومش عند المتصفح (' + extraInCloud.length + ')',
+    tbl(extraInCloud) + '<div style="font-size:12px;color:#888;">لو الرقم فوق = 5 → دول اللي اختفو بعد كل سحب.</div>');
+
+  html += sect('٣. متكررين بالمفتاح code|name داخل المتصفح (' + dupLocal.length + ')',
+    tbl(dupLocal));
+
+  html += sect('٤. مستبعدين (excludedEmployees) مطابقين لموظف موجود في السحابة (' + excludedHits.length + ')',
+    tbl(excludedHits));
+
+  html += sect('٥. شهادات حذف محلية مطابقة لموظف موجود في السحابة (' + delHits.length + ')',
+    tbl(delHits));
+
+  document.getElementById('spin').style.display = 'none';
+  document.getElementById('out').innerHTML = html;
+})();
+</script>
+</body>
+</html>
