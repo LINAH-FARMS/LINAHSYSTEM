@@ -11412,9 +11412,10 @@ var cExists = bakeryContractorSupplies.some(function(bc) { return normalizeDateS
         });
         // Always push if no snapshot exists (first sync) or if deletions pending
         var hasDeletions = syncDeletions.length > 0;
-        // دفع كامل دائماً: قراءة السحابة + دمج عنصري (الزيادة التزايدية RPC تستبدل
-        // الكيان كاملاً في السحابة فتطمس تعديلات الأجهزة الأخرى وتُرجع الإجازات المحذوفة)
-        var doFullPush = true;
+        // حفظ استهلاك الكوتة المجانية: لا ندفع إلا لو في تغيير فعلي (أو حذف معلق
+        // أو أول مزامنة). حين ندفع نظل نقرأ السحابة وندمج عنصري ولا نستخدم RPC
+        // التزايدي لأنه يستبدل الكيان كاملاً ويطمس تعديلات الأجهزة الأخرى.
+        var doFullPush = changed.length > 0 || hasDeletions;
         // Build merge from remote only when needed
         var currentAlldata = {};
         var _delByEntity = {};
@@ -11548,6 +11549,28 @@ var cExists = bakeryContractorSupplies.some(function(bc) { return normalizeDateS
       while (_pullInProgress) { await new Promise(function(r) { setTimeout(r, 300); }); }
       _pullInProgress = true;
       try {
+        // فحص خفيف أولاً: ننزل الـ updated_at لكل صف فقط (بايتات قليلة) ونقارنها
+        // بآخر سحب، والتنزيل الكامل للـ data يتم فقط لو حصل تغيير فعلي — ده يوفر
+        // استهلاك الكوتة المجانية (لا تنزيل alldata الكبير بدون داعي كل مرة).
+        var _prevMeta = {};
+        try { _prevMeta = JSON.parse(_lsGet('_linah_sync_row_meta') || '{}'); } catch(e) { _prevMeta = {}; }
+        var metaResp = await fetch(_sbEndpoint + '?select=id,updated_at', { method: 'GET', headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Range': '0-*' } });
+        if (!metaResp.ok) {           syncLog('فشل السحب، حالة: ' + metaResp.status); return; }
+        var metaRows = await metaResp.json();
+        var _nowMeta = {};
+        (metaRows || []).forEach(function(_m) { if (_m && _m.id) _nowMeta[_m.id] = _m.updated_at || ''; });
+        var _changedIds = [];
+        Object.keys(_nowMeta).forEach(function(_rid) {
+          if (!_prevMeta[_rid] || _prevMeta[_rid] !== _nowMeta[_rid]) _changedIds.push(_rid);
+        });
+        var _firstPull = Object.keys(_prevMeta).length === 0;
+        if (_changedIds.length === 0 && !_firstPull && metaRows && metaRows.length > 0) {
+          syncLog('لا تغييرات في السحابة منذ آخر سحب — تم تخطي التنزيل الكامل');
+          _pulledAt['_lastPull'] = new Date().toISOString();
+          _lsSet('_pulledAt', JSON.stringify(_pulledAt));
+          _lsSet('_linah_sync_row_meta', JSON.stringify(_nowMeta));
+          return;
+        }
         var resp = await fetch(_sbEndpoint + '?select=id,data,updated_at', { method: 'GET', headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Range': '0-*' } });
         if (!resp.ok) {           syncLog('فشل السحب، حالة: ' + resp.status); return; }
         var rows = await resp.json();
@@ -11640,6 +11663,7 @@ var cExists = bakeryContractorSupplies.some(function(bc) { return normalizeDateS
           syncLog('تم سحب ' + Object.keys(mergedData).length + ' عنصر من Supabase');
           _pulledAt['_lastPull'] = new Date().toISOString();
           _lsSet('_pulledAt', JSON.stringify(_pulledAt));
+          _lsSet('_linah_sync_row_meta', JSON.stringify(_nowMeta));
           _takeSnapshot();
           syncStorage(true, true);
           // Update push snapshot so next push only sends real changes
@@ -11727,6 +11751,7 @@ var cExists = bakeryContractorSupplies.some(function(bc) { return normalizeDateS
         // فاضي أو مش بيانات تم (استلام من توريد)
         var reportsPollInterval = setInterval(function() {
           if (!supabaseConnected) return;
+          if (document.hidden) return; // توفير استهلاك البيانات والكوتة لما التبويب مخفي
           try {
             fetch(SUPABASE_URL + '/rest/v1/sync_data?id=eq.incident_reports&select=data', {
               method: 'GET',
@@ -11756,6 +11781,7 @@ var reportsTab = document.getElementById('tab-reports');
       // لو موظف رجع في القوة، شيله من المستبعدين
           window._mealFormsPollInterval = setInterval(function() {
             if (!supabaseConnected) return;
+            if (document.hidden) return; // توفير استهلاك البيانات لما التبويب مخفي
             try { importBakeryFormData(); } catch(e) {}
             try { importMealWasteFormData(); } catch(e) {}
             try { importDailyDataFormData(); } catch(e) {}
