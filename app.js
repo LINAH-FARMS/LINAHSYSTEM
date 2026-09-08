@@ -11440,10 +11440,28 @@ var cExists = bakeryContractorSupplies.some(function(bc) { return normalizeDateS
         }
         if (doFullPush) {
           // Full push: read remote, merge all, send back
+          // أمان حرج: لو فشلت قراءة بيانات السحابة (انقطاع/مهلة اتصال) لا نستبدل
+          // السحابة ببيانات هذا الجهاز — وإلا حُذف الموظفون الجدد ورجعت أرقام
+          // الحضور لحالة آخر مرة فُتح فيها الموقع على هذا الجهاز.
+          var _adLoaded = false;
           try {
             var adResp = await fetch(_sbEndpoint + '?id=eq.alldata&select=data', { method: 'GET', headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } });
-            if (adResp.ok) { var adRows = await adResp.json(); if (adRows && adRows[0] && adRows[0].data) { currentAlldata = typeof adRows[0].data === 'string' ? JSON.parse(adRows[0].data) : adRows[0].data; } }
+            if (adResp.ok) {
+              var adRows = await adResp.json();
+              if (Array.isArray(adRows) && adRows.length > 0 && adRows[0] && adRows[0].data) {
+                currentAlldata = typeof adRows[0].data === 'string' ? JSON.parse(adRows[0].data) : adRows[0].data;
+                _adLoaded = true;
+              } else if (Array.isArray(adRows)) {
+                // الجدول يُقرأ بلا أخطاء لكن لا يوجد صف alldata بعد (أول جهاز فقط) — يُسمح بالبذر
+                _adLoaded = true;
+              }
+            }
           } catch(e) {}
+          if (!_adLoaded) {
+            syncLog('⚠️ تعذر التحقق من بيانات السحابة — أُجهض الرفع حفاظاً على السحابة من استبدالها ببيانات هذا الجهاز');
+            showSyncToast('⚠️ لُغِي الرفع: لم تُقرأ بيانات السحابة');
+            return false;
+          }
           Object.keys(allData).forEach(function(ak) {
             if (Array.isArray(currentAlldata[ak]) && Array.isArray(allData[ak])) {
               if (ak === 'vacations' && typeof window._mergeVacations === 'function') {
@@ -11926,7 +11944,15 @@ var reportsTab = document.getElementById('tab-reports');
       remoteArr.forEach(function(item) { remoteKeyed[_getKey(item, keyFn)] = item; });
       var merged = localArr.map(function(item) {
         var k = _getKey(item, keyFn);
-        return remoteKeyed[k] ? Object.assign({}, remoteKeyed[k], item) : item;
+        var r = remoteKeyed[k];
+        if (!r) return item;
+        // الأحدث زمنياً هو الصحيح: جهاز ببيانات قديمة لا يطمس تعديلات
+        // الجهات الأحدث في السحابة (مثل أرقام الحضور) والعكس صحيح.
+        // بدون توقيت نرجع للسلوك القديم (المحلي يربح) حفاظاً على الحذف المحلي.
+        var lm = item.modifiedAt || item.updatedAt || '';
+        var rm = r.modifiedAt || r.updatedAt || '';
+        var remoteNewer = lm && rm ? rm > lm : (!lm && !!rm);
+        return remoteNewer ? Object.assign({}, item, r) : Object.assign({}, r, item);
       });
       var localKeys = {};
       localArr.forEach(function(item) { localKeys[_getKey(item, keyFn)] = true; });
