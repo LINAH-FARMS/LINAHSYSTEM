@@ -351,6 +351,20 @@
       _scheduleIDBBackup();
       _saveWaterDocsToIDB(); // Save waterDocs to IndexedDB immediately
       callUpdateDXStats();
+      // أي تغيير محلي يُجدول رفعاً تلقائياً للسحابة (آمن: لا يرفع إلا عند التغيير الفعلي)
+      if (!skipSync) scheduleCloudSync();
+    }
+
+    var _cloudSyncTimer = null;
+    function scheduleCloudSync() {
+      try { if (!supabaseConnected) return; } catch(e) { return; }
+      if (_cloudSyncTimer) clearTimeout(_cloudSyncTimer);
+      _cloudSyncTimer = setTimeout(function() {
+        _cloudSyncTimer = null;
+        var _f = false;
+        try { _f = !!window._pendingScalarPush; window._pendingScalarPush = false; } catch(e) {}
+        try { pushToSupabase(_f); } catch(e) {}
+      }, 800);
     }
 
     function renderDashboard() {
@@ -11427,7 +11441,7 @@ var cExists = bakeryContractorSupplies.some(function(bc) { return normalizeDateS
       return keyFns[entity] ? keyFns[entity](item) : JSON.stringify(item);
     }
 
-    async function pushToSupabase() {
+    async function pushToSupabase(_forcePush) {
       if (!supabaseConnected) {
         showSyncToast('? عدد الأرغفة بيانات Supabase — بيانات سعر الوحدة بيانات الإجمالي');
         return false;
@@ -11437,6 +11451,14 @@ var cExists = bakeryContractorSupplies.some(function(bc) { return normalizeDateS
       try {
         var ts = new Date().toISOString();
         var allData = getAllDataForSync();
+        // جهاز قديم (لم يسحب منذ أكثر من 12 ساعة) لا يحق له طمس قيم السحابة
+        // بالقيم المحلية القديمة خاصةً الكائنات المفردة (أرقام مثل manualTotalBeds).
+        var _staleDevice = true;
+        try {
+          if (_pulledAt && _pulledAt['_lastPull']) {
+            _staleDevice = (Date.now() - new Date(_pulledAt['_lastPull']).getTime()) > 12 * 3600 * 1000;
+          }
+        } catch(e) { _staleDevice = true; }
         // Load last push snapshot to detect changes
         var _snap = {};
         try { _snap = JSON.parse(_lsGet('_lastPushSnapshot') || '{}'); } catch(e) { _snap = {}; }
@@ -11452,7 +11474,7 @@ var cExists = bakeryContractorSupplies.some(function(bc) { return normalizeDateS
         // حفظ استهلاك الكوتة المجانية: لا ندفع إلا لو في تغيير فعلي (أو حذف معلق
         // أو أول مزامنة). حين ندفع نظل نقرأ السحابة وندمج عنصري ولا نستخدم RPC
         // التزايدي لأنه يستبدل الكيان كاملاً ويطمس تعديلات الأجهزة الأخرى.
-        var doFullPush = changed.length > 0 || hasDeletions;
+        var doFullPush = changed.length > 0 || hasDeletions || !!_forcePush;
         // Build merge from remote only when needed
         var currentAlldata = {};
         var _delByEntity = {};
@@ -11500,6 +11522,18 @@ var cExists = bakeryContractorSupplies.some(function(bc) { return normalizeDateS
             showSyncToast('⚠️ لُغِي الرفع: لم تُقرأ بيانات السحابة');
             return false;
           }
+          // دمج شهادات الحذف من السحابة نفسها مع شهادات الجهاز: أي جهاز قديم
+          // لم يسحب بعد لن يُعيد سجلاً محذوفاً من أجهزة أخرى (لا يظهر تاني).
+          try {
+            var delResp = await fetch(_sbEndpoint + '?id=eq.syncDeletions&select=data', { method: 'GET', headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } });
+            if (delResp.ok) {
+              var delRows = await delResp.json();
+              if (delRows && delRows[0] && delRows[0].data) {
+                var delCloud = typeof delRows[0].data === 'string' ? JSON.parse(delRows[0].data) : delRows[0].data;
+                if (Array.isArray(delCloud)) delCloud.forEach(function(_d) { if (_d && _d.entity && _d.key) { if (!_delByEntity[_d.entity]) _delByEntity[_d.entity] = {}; _delByEntity[_d.entity][_d.key] = true; } });
+              }
+            }
+          } catch(e) {}
           Object.keys(allData).forEach(function(ak) {
             if (Array.isArray(currentAlldata[ak]) && Array.isArray(allData[ak])) {
               if (ak === 'vacations' && typeof window._mergeVacations === 'function') {
@@ -11510,13 +11544,24 @@ var cExists = bakeryContractorSupplies.some(function(bc) { return normalizeDateS
                 currentAlldata[ak] = mergeArraysPush(allData[ak], currentAlldata[ak], function(item) { return _getItemKey(item, ak); }, _delByEntity[ak] || {});
               }
             } else {
-              currentAlldata[ak] = allData[ak];
+              // كائن/قيمة مفردة (رقم مثل manualTotalBeds): لو الجهاز قديم ولم يسحب
+              // منذ 12 ساعة والسحابة فيها قيمة، نُبقي قيمة السحابة (الصحيحة) ولا
+              // نستبدلها بقيمة الجهاز القديمة — إلا لو السحابة فاضية.
+              var _lv = allData[ak];
+              var _cv = currentAlldata[ak];
+              if (_staleDevice && _cv !== undefined && _cv !== null && _lv !== undefined && _lv !== null) {
+                currentAlldata[ak] = _cv;
+              } else {
+                currentAlldata[ak] = _lv;
+              }
             }
           });
-          syncDeletions.forEach(function(_del) {
-            var _arr = currentAlldata[_del.entity];
+          // تطبيق شهادات الحذف (الجهاز + السحابة معاً) على الناتج النهائي قبل الحفظ
+          Object.keys(_delByEntity).forEach(function(_en) {
+            var _arr = currentAlldata[_en];
             if (Array.isArray(_arr)) {
-              currentAlldata[_del.entity] = _arr.filter(function(_item) { return _getItemKey(_item, _del.entity) !== _del.key; });
+              var _delMap = _delByEntity[_en];
+              currentAlldata[_en] = _arr.filter(function(_item) { return !_delMap[_getItemKey(_item, _en)]; });
             }
           });
           ['bakeryContractorsNames','dynamicVisitorTypes','dynamicSeptics','dynamicDepts','dynamicTitles','dynamicSectors','contractorSectors','dynamicStores','bakeryContractorsNames'].forEach(function(k) { if (Array.isArray(currentAlldata[k])) currentAlldata[k] = _strArr(currentAlldata[k]); });
@@ -11572,15 +11617,14 @@ var cExists = bakeryContractorSupplies.some(function(bc) { return normalizeDateS
     }
     async function forceFullSync() {
       if (!supabaseConnected) return alert('غير متصل بـ Supabase');
-      if (!confirm('هل تريد تنفيذ مزامنة كاملة (رفع + سحب)؟ سيتم دمج البيانات من جميع الأجهزة.')) return;
-      // تخطي مكرر خطأ بيانات push في
+      if (!confirm('هل تريد تنفيذ مزامنة كاملة (سحب + رفع)؟ سيتم دمج البيانات من جميع الأجهزة.')) return;
       while (_pushInProgress) { await new Promise(function(r) { setTimeout(r, 500); }); }
-      syncLog('جارٍ قراءة البيانات...');
-      await pushToSupabase();
-      syncLog('جارٍ السحب من السحابة...');
+      syncLog('جارٍ السحب من السحابة أولاً...');
       _forcePull = true;
       await pullFromSupabase();
       _forcePull = false;
+      syncLog('جارٍ رفع التغييرات المحلية...');
+      await pushToSupabase();
       syncLog('تمت المزامنة الكاملة بنجاح');
       alert('تمت المزامنة الكاملة بنجاح ✅');
     }
@@ -11609,6 +11653,8 @@ var cExists = bakeryContractorSupplies.some(function(bc) { return normalizeDateS
           _pulledAt['_lastPull'] = new Date().toISOString();
           _lsSet('_pulledAt', JSON.stringify(_pulledAt));
           _lsSet('_linah_sync_row_meta', JSON.stringify(_nowMeta));
+          // التغييرات المحلية المعلّقة تُرفع بعد تأكدنا أن لا تغيير في السحابة
+          try { scheduleCloudSync(); } catch(e) {}
           return;
         }
         var resp = await fetch(_sbEndpoint + '?select=id,data,updated_at', { method: 'GET', headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Range': '0-*' } });
@@ -11622,8 +11668,13 @@ var cExists = bakeryContractorSupplies.some(function(bc) { return normalizeDateS
           // تُفقد الأيام الناقصة عند السحب.
           for (var ri = 0; ri < rows.length; ri++) {
             var row = rows[ri]; if (!row.id || !row.data) continue;
-            if (row.id !== 'alldata' && row.id.indexOf('ent:') !== 0) continue;
+            if (row.id !== 'alldata' && row.id.indexOf('ent:') !== 0 && row.id !== 'syncDeletions') continue;
             var _ad = typeof row.data === 'string' ? JSON.parse(row.data) : row.data;
+            if (row.id === 'syncDeletions' && Array.isArray(_ad)) {
+              // شهادات الحذف من صفها المخصص: نمنع عودة السجلات المحذوفة من أي جهاز قديم
+              _remoteDels = _remoteDels.concat(_ad);
+              continue;
+            }
             if (row.id === 'alldata') {
               if (_ad && typeof _ad === 'object') {
                 if (Array.isArray(_ad.syncDeletions)) _remoteDels = _remoteDels.concat(_ad.syncDeletions);
@@ -11653,10 +11704,27 @@ var cExists = bakeryContractorSupplies.some(function(bc) { return normalizeDateS
                     // دمج بدلاً من الاستبدال: تعديل محلي غير مرفوع بعد لا يضيع
                     setEntityVar(_dk, window._mergeVacations(_localVal, _dv, 'remote', null));
                   } else {
-                    setEntityVar(_dk, _dv);
+                    // دمج ذكي بدلاً من الاستبدال: يحفظ التغيير المحلي المعلّق
+                    // (مثل موظف أُضيف للتو) وفي تعارض المفتاح يربح الأحدث زمنياً
+                    // فلا يطمس جهاز قديم الأرقام الصحيحة من السحابة.
+                    setEntityVar(_dk, _mergeRemoteFresh(_localVal, _dv, function(item) { return _getItemKey(item, _dk); }));
                   }
                 } else {
-                  setEntityVar(_dk, _dv);
+                  // كائن/قيمة مفردة (مثل manualTotalBeds): تعديل محلي أحدث من آخر
+                  // سحب لا يُستبدل بقيمة السحابة القديمة أثناء السحب — يُحفظ ثم يدفع.
+                  var _keepLocalScalar = false;
+                  try {
+                    var _lct2 = parseInt(_lsGet('_localChangeTime') || '0', 10) || 0;
+                    var _lpt2 = 0;
+                    if (_pulledAt && _pulledAt['_lastPull']) _lpt2 = new Date(_pulledAt['_lastPull']).getTime() || 0;
+                    _keepLocalScalar = (JSON.stringify(_localVal) !== JSON.stringify(_dv)) && (_lct2 > _lpt2);
+                  } catch(e) {}
+                  if (_keepLocalScalar) {
+                    setEntityVar(_dk, _localVal);
+                    try { window._pendingScalarPush = true; } catch(e) {}
+                  } else {
+                    setEntityVar(_dk, _dv);
+                  }
                 }
               }
             }
@@ -11721,6 +11789,10 @@ var cExists = bakeryContractorSupplies.some(function(bc) { return normalizeDateS
         } else {
           syncLog('الجهاز هو المصدر الوحيد للبيانات');
         }
+        // بعد استكمال السحب (جهاز أصبح محدَّثاً) نرفع أي تغيير محلي معلّق
+        // (موظف جديد مثلاً) للسحابة — الترتيب سحبٌ أولاً ثم رفعٌ يحمي السحابة
+        // من أي بيانات قديمة: لا جهاز قديم يرفع قبل أن يستقبل حالة السحابة.
+        try { scheduleCloudSync(); } catch(e) {}
       } catch(e) {
         syncLog('خطأ أثناء السحب: ' + e.message);
       } finally {
@@ -11827,10 +11899,22 @@ var reportsTab = document.getElementById('tab-reports');
             try { importDailyDataFormData(); } catch(e) {}
             try { importMealSurveyFormData(); } catch(e) {}
           }, 60000);
+          // (د) سحب تلقائي خفيف كل دقيقتين: فحص updated_at فقط (بايتات قليلة)
+          // وهو لا ينزل الـ data الكاملة إلا لو حصل تغيير فعلي في السحابة —
+          // فيظهر تعديل الزميل تلقائيًا دون فتح/تحديث يدوي، وبلا استهلاك يذكر.
+          if (!window._linahLightPoll) {
+            window._linahLightPoll = setInterval(function() {
+              if (!supabaseConnected) return;
+              if (document.hidden) return; // توفير استهلاك البيانات لما التبويب مخفي
+              if (_pullInProgress || _pushInProgress) return;
+              try { pullFromSupabase(); } catch(e) {}
+            }, 120000);
+          }
       } catch(e) { 
           // Clear intervals when disconnected
           if (window._reportsPollInterval) { clearInterval(window._reportsPollInterval); window._reportsPollInterval = null; }
           if (window._mealFormsPollInterval) { clearInterval(window._mealFormsPollInterval); window._mealFormsPollInterval = null; }
+          if (window._linahLightPoll) { clearInterval(window._linahLightPoll); window._linahLightPoll = null; }
           console.log('بيانات Supabase connect error — retry 30s'); 
           setTimeout(connectSupabase, 30000); 
         }
@@ -11985,6 +12069,34 @@ var reportsTab = document.getElementById('tab-reports');
       else if (key === 'syncDeletions') return syncDeletions;
       else if (key === 'ingredientMaster') return ingredientMaster;
       else if (key === 'mealSurveys') return mealSurveys;
+    }
+    function _mergeRemoteFresh(localArr, remoteArr, keyFn) {
+      // دمج السحب مع المحلي بدلاً من الاستبدال المطلق:
+      // - السجلات المحلية فقط (جديدة/غير مرفوعة) تُحفظ (تغيير معلّق لا يضيع)
+      // - سجلات السحابة فقط تُضاف
+      // - عند تعارض المفتاح نفسه يربح الأحدث modifiedAt، وبدون توقيت تبقى المحلية
+      // (بعدها تُطبَّق شهادات الحذف من السحابة فلا تعود السجلات المحذوفة).
+      if (!Array.isArray(localArr)) return Array.isArray(remoteArr) ? remoteArr.slice() : [];
+      if (!Array.isArray(remoteArr) || !remoteArr.length) return localArr;
+      var remoteKeyed = {};
+      remoteArr.forEach(function(it) { remoteKeyed[_getKey(it, keyFn)] = it; });
+      var localKeyed = {};
+      localArr.forEach(function(it) { localKeyed[_getKey(it, keyFn)] = true; });
+      var out = localArr.slice();
+      out.forEach(function(item, i) {
+        var k = _getKey(item, keyFn);
+        var r = remoteKeyed[k];
+        if (!r) return;
+        var lm = item.modifiedAt || item.updatedAt || '';
+        var rm = r.modifiedAt || r.updatedAt || '';
+        var remoteNewer = lm && rm ? rm > lm : (!lm && !!rm);
+        if (remoteNewer) out[i] = Object.assign({}, item, r);
+      });
+      remoteArr.forEach(function(item) {
+        var k = _getKey(item, keyFn);
+        if (!localKeyed[k]) out.push(item);
+      });
+      return out;
     }
     function mergeArrays(localArr, remoteArr, keyFn) {
       if (!remoteArr || !remoteArr.length) return localArr || [];
