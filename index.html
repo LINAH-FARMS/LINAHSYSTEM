@@ -99,7 +99,7 @@
     <button class="btn btn-sm admin-only" style="padding:5px 12px;font-size:12px;background:#6a1b9a;color:white;border:none;border-radius:6px;cursor:pointer;" onclick="openManageUsers()">👥 إدارة المستخدمين</button>
     <button class="btn btn-sm" style="padding:5px 12px;font-size:12px;background:#1565c0;color:white;border:none;border-radius:6px;cursor:pointer;" onclick="exportBackupSystem()" title="تنزيل نسخة احتياطية كاملة من بيانات النظام">💾 نسخة احتياطية كاملة</button>
     <button class="btn btn-sm" style="padding:5px 12px;font-size:12px;background:#1b5e20;color:white;border:none;border-radius:6px;cursor:pointer;" onclick="exportFullBackup()" title="نسخة كاملة مرفوعة للسحابة (نفس زر الإدارة المرنة)">☁️ نسخة كاملة + سحابة</button>
-    <span id="quota-meter" onclick="updateQuotaMeter()" title="نسبة استهلاك مجانية Supabase (الحد 500MB) — اضغط للتحديث" style="font-size:11px;background:#e8f5e9;color:#1b5e20;border:1px solid #a5d6a7;border-radius:50px;padding:3px 10px;cursor:pointer;font-weight:700;white-space:nowrap;">☁️ …%</span>
+    <span id="quota-meter" onclick="quotaClick()" title="استهلاك صادر (Egress) + عدد الأيام المتبقية على تجديد الكوتة — اضغط لتغيير يوم التجديد" style="font-size:11px;background:#e8f5e9;color:#1b5e20;border:1px solid #a5d6a7;border-radius:50px;padding:3px 10px;cursor:pointer;font-weight:700;white-space:nowrap;">☁️ …%</span>
     <button class="btn btn-sm" style="padding:5px 12px;font-size:12px;background:#e65100;color:white;border:none;border-radius:6px;cursor:pointer;" onclick="openBreadPlanReport()">🥖 اعداد الخبز للغد</button>
 
     <span style="flex:1;"></span>
