@@ -58,40 +58,5 @@
     }).from(element).save();
   };
 
-  // Add button to toolbar
-  var interval = setInterval(function() {
-    var toolbar = document.querySelector('.toolbar');
-    if (toolbar) {
-      var btn = document.createElement('button');
-      btn.className = 'btn btn-sm';
-      btn.style.cssText = 'padding:5px 12px;font-size:12px;background:#c62828;color:white;border:none;border-radius:6px;cursor:pointer;';
-      btn.textContent = '\u{1F5A8}\uFE0F PDF \u0645\u062D\u062A\u0631\u0641';
-      btn.onclick = function() {
-        var tables = document.querySelectorAll('.tab-content.active table');
-        if (!tables.length) { alert('لا توجد بيانات للتصدير'); return; }
-        var headers = [];
-        tables[0].querySelectorAll('thead th, thead td').forEach(function(th) {
-          var txt = th.textContent.trim().replace(/[^ \u0600-\u06FF\u0660-\u0669\w]/g, '');
-          if (txt) headers.push(txt);
-        });
-        if (!headers.length) {
-          tables[0].querySelectorAll('tr:first-child th, tr:first-child td').forEach(function(td) {
-            var txt = td.textContent.trim().replace(/[^ \u0600-\u06FF\u0660-\u0669\w]/g, '');
-            if (txt) headers.push(txt);
-          });
-          if (!headers.length) { alert('لم يتم التعرف على عناوين الجدول'); return; }
-        }
-        var rows = [];
-        tables[0].querySelectorAll('tbody tr').forEach(function(tr) {
-          var cells = [];
-          tr.querySelectorAll('td').forEach(function(td) { cells.push(td.textContent.trim()); });
-          if (cells.length) rows.push(cells);
-        });
-        var tabName = (document.querySelector('.tab-btn.active')?.textContent || '').replace(/[^ \u0600-\u06FF\u0660-\u0669\w]/g, '').trim();
-        exportPdfStyled(tabName || 'تقرير', rows, headers, 'بيانات');
-      };
-      toolbar.appendChild(btn);
-      clearInterval(interval);
-    }
-  }, 600);
+  // (زر PDF محترف أُزيل من شريط الأدوات حسب طلب المستخدم — الدالة محفوظة للاستخدام من المنطق الداخلي فقط)
 })();

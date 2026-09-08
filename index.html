@@ -97,10 +97,9 @@
 
   <div class="toolbar no-print" style="display:flex;gap:6px;padding:8px 12px;background:white;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.06);margin-bottom:6px;flex-wrap:wrap;align-items:center;border:1px solid rgba(27,94,32,0.08);">
     <button class="btn btn-sm admin-only" style="padding:5px 12px;font-size:12px;background:#6a1b9a;color:white;border:none;border-radius:6px;cursor:pointer;" onclick="openManageUsers()">👥 إدارة المستخدمين</button>
-    <button class="btn btn-sm" style="padding:5px 12px;font-size:12px;background:#c62828;color:white;border:none;border-radius:6px;cursor:pointer;" onclick="exportPdfActiveTab()">📄 تصدير PDF</button>
-    <button class="btn btn-sm" style="padding:5px 12px;font-size:12px;background:#e65100;color:white;border:none;border-radius:6px;cursor:pointer;" onclick="exportSelectedToExcel()">📤 تصدير المحدد Excel</button>
-    <button class="btn btn-sm" style="padding:5px 12px;font-size:12px;background:#2e7d32;color:white;border:none;border-radius:6px;cursor:pointer;" onclick="printActiveTab()">🖨️ طباعة</button>
-    <button class="btn btn-sm" style="padding:5px 12px;font-size:12px;background:#1b5e20;color:white;border:none;border-radius:6px;cursor:pointer;" onclick="openDailyReport()">📋 التقرير</button>
+    <button class="btn btn-sm" style="padding:5px 12px;font-size:12px;background:#1565c0;color:white;border:none;border-radius:6px;cursor:pointer;" onclick="exportBackupSystem()" title="تنزيل نسخة احتياطية كاملة من بيانات النظام">💾 نسخة احتياطية كاملة</button>
+    <button class="btn btn-sm" style="padding:5px 12px;font-size:12px;background:#1b5e20;color:white;border:none;border-radius:6px;cursor:pointer;" onclick="exportFullBackup()" title="نسخة كاملة مرفوعة للسحابة (نفس زر الإدارة المرنة)">☁️ نسخة كاملة + سحابة</button>
+    <span id="quota-meter" onclick="updateQuotaMeter()" title="نسبة استهلاك مجانية Supabase (الحد 500MB) — اضغط للتحديث" style="font-size:11px;background:#e8f5e9;color:#1b5e20;border:1px solid #a5d6a7;border-radius:50px;padding:3px 10px;cursor:pointer;font-weight:700;white-space:nowrap;">☁️ …%</span>
     <button class="btn btn-sm" style="padding:5px 12px;font-size:12px;background:#e65100;color:white;border:none;border-radius:6px;cursor:pointer;" onclick="openBreadPlanReport()">🥖 اعداد الخبز للغد</button>
 
     <span style="flex:1;"></span>
@@ -3100,6 +3099,7 @@
   <script src="weekly-excel.js"></script>
   <script src="vacation-print-fix.js"></script>
   <script src="bakery-consumption-detail.js"></script>
+  <script src="quota-meter.js"></script>
   <script>
   // سحب الإجازات المسجلة من daily-data.html ودمجها (دوري كل 10 ثوانٍ)
   (function() {

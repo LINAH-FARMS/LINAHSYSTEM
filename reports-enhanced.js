@@ -4,21 +4,7 @@
 var __stripEmoji = function(s) { return (s||'').replace(/[^\u0600-\u06FF\u0660-\u0669\u0020-\u007E\u066A-\u066D\u066E-\u06FF\s]/g,'').trim(); };
 var _reportAlert = (typeof showAlert === 'function') ? showAlert : function(m) { alert(m); };
 
-// Inject comprehensive report button into toolbar on load
-(function() {
-  var interval = setInterval(function() {
-    var toolbar = document.querySelector('.toolbar');
-    if (toolbar) {
-      var btn = document.createElement('button');
-      btn.className = 'btn btn-sm';
-      btn.style.cssText = 'padding:5px 12px;font-size:12px;background:#1b5e20;color:white;border:none;border-radius:6px;cursor:pointer;';
-      btn.textContent = '\u{1F4CA} \u062A\u0642\u0631\u064A\u0631 \u0634\u0627\u0645\u0644';
-      btn.onclick = exportComprehensiveReport;
-      toolbar.insertBefore(btn, toolbar.querySelector('span'));
-      clearInterval(interval);
-    }
-  }, 500);
-})();
+// (زر تقرير شامل أُزيل من شريط الأدوات حسب طلب المستخدم — الدالة محفوظة للرجوع إليها من لوحة التحكم فقط)
 
 function exportComprehensiveReport() {
   if (typeof XLSX === 'undefined' || typeof ExcelStyle === 'undefined') {
