@@ -2,8 +2,8 @@
 // يقيس حجم بيانات sync_data في السحابة ويعرض نسبة الاستهلاك من حد 500MB المجاني.
 
 const QUOTA_FREE_BYTES = 500 * 1024 * 1024;
-const _qSB_URL = 'https://cwqghiqykohefaggedjl.supabase.co';
-const _qSB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN3cWdoaXF5a29oZWZhZ2dlZGpsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzkyMDQ0NjgsImV4cCI6MjA1NDc4MDQ2OH0.5mH2Za1AscfPb3G7g3vMe2Zz2cMSI4xyMJpBkuVVDno';
+const _qSB_URL = (typeof SUPABASE_URL !== 'undefined') ? SUPABASE_URL : 'https://cwqghiqykohefaggedjl.supabase.co';
+const _qSB_KEY = (typeof SUPABASE_KEY !== 'undefined') ? SUPABASE_KEY : 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN3cWdoaXF5a29oZWZhZ2dlZGpsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEwMjUyMjEsImV4cCI6MjA5NjYwMTIyMX0.3a3hRcNdmYQCtjYjBroAT6df1T_7oz-XWUeD3wagYw8';
 
 function _qSizeOf(value) {
   try {
