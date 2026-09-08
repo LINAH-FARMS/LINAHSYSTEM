@@ -93,13 +93,15 @@ function updateQuotaMeter() {
   _qStorageBytes(function (storageBytes) {
     var egress = rec.bytes;
     var ePct = (egress / _qEGRESS_MAX) * 100;
+    var sPct = storageBytes >= 0 ? (storageBytes / _qSTORAGE_MAX) * 100 : -1;
     var daysLeft = Math.max(0, Math.round((_qNextRenewal().getTime() - new Date().getTime()) / 86400000));
-    var pctTxt = ePct > 0 && ePct < 0.01 ? '<0.01' : ePct.toFixed(2);
-    el.textContent = '☁️ ' + pctTxt + '% · ' + daysLeft + ' يوم';
-    el.title = 'استهلاك صادر (Egress) من هذا الجهاز: ' + (egress / 1048576).toFixed(2) + ' MB من 5GB مجانية (تقريبي).\n' +
-      (storageBytes >= 0 ? 'التخزين في السحابة: ' + (storageBytes / 1048576).toFixed(2) + ' MB من 500MB.\n' : 'تعذر قياس التخزين.\n') +
-      'التجديد الشهري يوم ' + _qCycleDay() + ' — فاضل ' + daysLeft + ' يوم.\n' +
-      'اضغط لتغيير يوم التجديد / تحديث يدوي.';
+    var eTxt = ePct > 0 && ePct < 0.01 ? '<0.01' : ePct.toFixed(2);
+    var sTxt = sPct >= 0 ? (sPct > 0 && sPct < 0.01 ? '<0.01' : sPct.toFixed(2)) : '?';
+    el.textContent = '☁️ صادر ' + eTxt + '% · تخزين ' + sTxt + '% · فاضل ' + daysLeft + ' يوم';
+    el.title = 'صادر (Egress) من هذا الجهاز: ' + (egress / 1048576).toFixed(2) + ' MB من 5GB شهريًا (تقريبي، يُحسب من الآن).\n' +
+      (storageBytes >= 0 ? 'تخزين السحابة (مقاس فعلي): ' + (storageBytes / 1048576).toFixed(2) + ' MB من 500MB.\n' : 'تعذر قياس التخزين.\n') +
+      'يوم التجديد: ' + _qCycleDay() + ' (افتراضي من تاريخ إنشاء المشروع) — لو غير دقيق اضغط واذكر اليوم.\n' +
+      '📌 أنا مش بقرا الأرقام الرسمية لـ Supabase (استهلاك الشهر الماضي وتاريخ التجديد الصحيح) إلا من لوحة التحكم بتاعهم — أول ما تقدر افتح supabase.com > Dashboard > Usage واقصلي الحالة.';
     var bg = ePct >= 90 ? '#ffebee' : ePct >= 70 ? '#fff8e1' : '#e8f5e9';
     var fg = ePct >= 90 ? '#c62828' : ePct >= 70 ? '#e65100' : '#1b5e20';
     var bd = ePct >= 90 ? '#ef9a9a' : ePct >= 70 ? '#ffe082' : '#a5d6a7';
