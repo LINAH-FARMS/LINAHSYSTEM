@@ -26,14 +26,13 @@ function updateQuotaMeter() {
       .catch(function() { return null; });
   };
 
-  Promise.all([fetchRows('sync_data'), fetchRows('employee_photos')])
-    .then(function(res) {
+  fetchRows('sync_data')
+    .then(function(list) {
       let bytes = 0;
-      res.forEach(function(list) {
-        if (!Array.isArray(list)) return;
+      if (Array.isArray(list)) {
         list.forEach(function(row) { bytes += _qSizeOf(row.data); });
-      });
-      if (!bytes && res[0] === null && res[1] === null) {
+      }
+      if (!Array.isArray(list)) {
         el.textContent = '☁️ ؟%';
         el.title = 'تعذر قراءة السحابة — افحص الاتصال واضغط للتحديث';
         return;
