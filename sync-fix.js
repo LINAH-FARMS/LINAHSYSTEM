@@ -97,7 +97,7 @@
         // ضمان جلب صفوف المخبز دائماً (غائبة من alldata): حتى لو ظل
         // updated_at دون تغيير فترة طويلة، تُدمج بياناتها الكاملة مع المحلي
         // فلا تفقد أيام إنتاج الفرن بعد أول سحب.
-        ['ent:bakeryProductions','ent:bakeryContractorSupplies','ent:bakeryInvoices','ent:bakeryStockLog','ent:bakeryIngredients'].forEach(function (eid) {
+        ['ent:employees','ent:bakeryProductions','ent:bakeryContractorSupplies','ent:bakeryInvoices','ent:bakeryStockLog','ent:bakeryIngredients'].forEach(function (eid) {
           if (changedIds.indexOf(eid) === -1) changedIds.push(eid);
         });
         out.cloudMs = maxCloudMs;
