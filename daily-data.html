@@ -1595,11 +1595,11 @@ function renderVacationPrintList() {
 }
 function _vpBuildSheet(rows, pageNo, pagesTotal, sheetDate, totalCount) {
   const rowsHtml = rows.map(function(r, i) {
-    const info = (r.info || '').split('/').slice(-1)[0].trim() || '—';
+    const info = (r.info || '').trim() || '—';
     return '<tr>' +
       '<td>' + ((pageNo - 1) * 5 + i + 1) + '</td>' +
       '<td style="font-weight:800;">' + _rpEsc(r.name || r.code) + '</td>' +
-      '<td style="font-size:11px;">' + _rpEsc(info) + '</td>' +
+      '<td style="font-size:11px;text-align:center;">' + _rpEsc(info) + '</td>' +
       '<td>' + _rpEsc(r.type || '') + '</td>' +
       '<td>' + _rpEsc(r.start) + '<br><span style="color:#555;font-size:10.5px;">↔</span><br>' + _rpEsc(r.end || '') + '</td>' +
       '<td>' + (r.days || 0) + '</td></tr>';
