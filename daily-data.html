@@ -197,14 +197,16 @@ textarea{resize:vertical;min-height:60px}
 </div>
 <div class="form-row">
 <div class="form-group"><label>نوع الإجازة</label><select id="vac-type"><option value="سنوية">سنوية</option><option value="امتداد">امتداد</option><option value="مرضي">مرضي</option></select></div>
-<div class="form-group"><label>تاريخ البداية</label><input type="date" id="vac-start" onchange="previewVacDates()"></div>
+<div class="form-group"><label>تاريخ البداية</label><input type="date" id="vac-start" onchange="syncVacDates()"></div>
+<div class="form-group"><label>تاريخ النهاية</label><input type="date" id="vac-end" onchange="syncVacDates()"></div>
 </div>
 <div class="form-row">
-<div class="form-group"><label>المدة (أيام)</label><input type="number" id="vac-days" min="1" value="1" oninput="previewVacDates()"></div>
+<div class="form-group"><label>عدد الأيام (يُحسب تلقائياً)</label><input type="number" id="vac-days" min="1" value="1" oninput="syncVacDates()"></div>
 </div>
 <div id="vac-preview"></div>
 <div class="form-group"><label>ملاحظات</label><textarea id="vac-notes" rows="2" placeholder="اختياري"></textarea></div>
 <button type="button" class="btn-save-section" onclick="saveVacationData()" style="background:#7b1fa2;">🏖️ تسجيل الإجازة</button>
+<button type="button" class="btn-save-section" onclick="openVacationPrint()" style="background:#00695c;margin-top:8px;">🖨️ طباعة مذكرة إجازات</button>
 </div>
 
 <div id="modal-stores" class="modal-section section section-stores">
@@ -1439,9 +1441,113 @@ function resetSepticFields() {
 function resetVacationFields() {
   document.getElementById('vac-emp-search').value = ''; vacHid.value = ''; vacCode.value = ''; vacName.value = '';
   document.getElementById('vac-start').value = '';
+  document.getElementById('vac-end').value = '';
   document.getElementById('vac-days').value = 1;
   document.getElementById('vac-notes').value = '';
   document.getElementById('vac-preview').style.display = 'none';
+}
+
+function _vpNorm(d) { const m = String(d || '').match(/(\d{4})-(\d{1,2})-(\d{1,2})/); return m ? m[1] + '-' + ('0' + m[2]).slice(-2) + '-' + ('0' + m[3]).slice(-2) : String(d || '').slice(0, 10); }
+function _vpDateAr(d) {
+  try {
+    const t = new Date(d + 'T00:00:00');
+    if (isNaN(t)) return d;
+    return t.toLocaleDateString('ar-EG', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+  } catch (e) { return d; }
+}
+function openVacationPrint() {
+  let ov = document.getElementById('vacprint-overlay');
+  if (!ov) {
+    ov = document.createElement('div');
+    ov.id = 'vacprint-overlay';
+    ov.style.cssText = 'display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:99999;align-items:center;justify-content:center;font-family:Cairo,sans-serif;';
+    ov.innerHTML = '<div style="background:#fff;border-radius:14px;width:min(94vw,620px);max-height:90vh;display:flex;flex-direction:column;box-shadow:0 12px 45px rgba(0,0,0,.35);overflow:hidden;">' +
+      '<div style="padding:14px 18px;background:#00695c;color:#fff;display:flex;justify-content:space-between;align-items:center;font-weight:800;font-size:16px;">' +
+      '<span>🖨️ طباعة مذكرة إجازات</span>' +
+      '<span onclick="closeVacationPrint()" style="cursor:pointer;font-size:22px;line-height:1;">✖</span></div>' +
+      '<div style="padding:14px 18px;">' +
+      '<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">' +
+      '<label style="font-size:13px;font-weight:700;">📅 اليوم:</label>' +
+      '<input type="date" id="vacprint-date" onchange="renderVacationPrintList()" style="flex:1;min-width:160px;padding:8px 10px;border:1.5px solid #b0bec5;border-radius:8px;font-family:inherit;font-size:14px;">' +
+      '<label style="font-size:12px;color:#00695c;cursor:pointer;font-weight:700;"><input type="checkbox" id="vacprint-all" onchange="toggleVacPrintAll()"> تحديد الكل</label>' +
+      '</div>' +
+      '<div id="vacprint-list" style="max-height:46vh;overflow-y:auto;border:1px solid #e0e0e0;border-radius:10px;margin-top:12px;padding:4px;"></div>' +
+      '<div style="font-size:12px;color:#777;margin-top:8px;">كل ورقة تطبع حتى 5 موظفين — لو اخترت أكثر من 5 ستطبع على عدة صفحات تلقائياً، وكل صفحة تحمل توقيعات الاعتماد.</div>' +
+      '<div style="margin-top:12px;display:flex;gap:8px;">' +
+      '<button onclick="doPrintVacations()" style="flex:1;padding:10px;background:#00695c;color:#fff;border:none;border-radius:10px;font-family:inherit;font-size:14px;font-weight:800;cursor:pointer;">🖨️ طباعة المحدد</button>' +
+      '<button onclick="closeVacationPrint()" style="flex:1;padding:10px;background:#eceff1;color:#333;border:none;border-radius:10px;font-family:inherit;font-size:14px;font-weight:800;cursor:pointer;">إغلاق</button>' +
+      '</div></div></div>';
+    document.body.appendChild(ov);
+  }
+  const dp = document.getElementById('dd-date-vacation').value;
+  document.getElementById('vacprint-date').value = dp || new Date().toISOString().slice(0, 10);
+  renderVacationPrintList();
+  ov.style.display = 'flex';
+}
+function closeVacationPrint() {
+  const ov = document.getElementById('vacprint-overlay');
+  if (ov) ov.style.display = 'none';
+}
+function toggleVacPrintAll() {
+  const on = document.getElementById('vacprint-all').checked;
+  document.querySelectorAll('#vacprint-list input[type="checkbox"]').forEach(function(c) { c.checked = on; });
+}
+function renderVacationPrintList() {
+  const date = _vpNorm(document.getElementById('vacprint-date').value);
+  const box = document.getElementById('vacprint-list');
+  if (!date) { box.innerHTML = ''; return; }
+  const recs = vacations.filter(function(r) { return r && r.start && _vpNorm(r.start) === date; });
+  if (!recs.length) {
+    box.innerHTML = '<div style="padding:20px;text-align:center;color:#999;font-size:13px;">لا توجد إجازات تبدأ في هذا اليوم.</div>';
+    return;
+  }
+  box.innerHTML = recs.map(function(r, i) {
+    return '<label style="display:flex;align-items:center;gap:10px;padding:9px 10px;border-bottom:1px solid #f0f0f0;cursor:pointer;font-size:13.5px;">' +
+      '<input type="checkbox" class="vacprint-item" checked style="width:16px;height:16px;">' +
+      '<span style="flex:1;"><b>' + _rpEsc(r.name || r.code) + '</b>' +
+      (r.info ? ' <span style="color:#888;font-size:12px;">· ' + _rpEsc(r.info) + '</span>' : '') +
+      '<span style="display:block;color:#666;font-size:11.5px;">' + _rpEsc(r.type || '') + ' · من ' + _rpEsc(r.start) + ' إلى ' + _rpEsc(r.end || '') + ' · ' + (r.days || 0) + ' يوم' + (r.notes ? ' · ' + _rpEsc(r.notes) : '') + '</span></span>' +
+      '</label>';
+  }).join('');
+}
+function _vpBuildSheet(rows, pageNo, pagesTotal, sheetDate, totalCount) {
+  const rowsHtml = rows.map(function(r, i) {
+    const info = (r.info || '').split('/').slice(-1)[0].trim() || '—';
+    return '<tr><td>' + ((pageNo - 1) * 5 + i + 1) + '</td><td>' + _rpEsc(r.name || r.code) + '</td><td>' + _rpEsc(info) + '</td><td>' + _rpEsc(r.type || '') + '</td><td>' + _rpEsc(r.start) + ' ← ' + _rpEsc(r.end || '') + '</td><td>' + (r.days || 0) + '</td></tr>';
+  }).join('');
+  return '<div class="sh"><div class="cap">لينة فارمز — مزرعة لينة</div><div class="head">' +
+    '<h1>مذكرة إجازات</h1>' +
+    '<div class="sub">التاريخ: ' + sheetDate + ' · عدد الموظفين: ' + totalCount + (pagesTotal > 1 ? ' · الصفحة ' + pageNo + ' من ' + pagesTotal : '') + '</div></div>' +
+    '<table><thead><tr><th style="width:6%">م</th><th style="width:24%">اسم الموظف</th><th style="width:28%">الوظيفة / القسم</th><th style="width:13%">نوع الإجازة</th><th style="width:22%">من ← إلى</th><th style="width:7%">أيام</th></tr></thead>' +
+    '<tbody>' + rowsHtml + '</tbody></table>' +
+    '<div class="sign"><div class="box"><div class="line"></div><div class="label">اعتماد المدير / رئيس القسم</div></div>' +
+    '<div class="box"><div class="line"></div><div class="label">اعتماد الموارد البشرية</div></div>' +
+    '<div class="box"><div class="line"></div><div class="label">اعتماد مدير المزرعة</div></div></div>' +
+    '</div>';
+}
+function doPrintVacations() {
+  const boxes = Array.prototype.slice.call(document.querySelectorAll('#vacprint-list input.vacprint-item'));
+  const anyChecked = boxes.some(function(b) { return b.checked; });
+  if (!anyChecked) { showMsg('اختر إجازة واحدة على الأقل للطباعة.', true); return; }
+  const date = _vpNorm(document.getElementById('vacprint-date').value);
+  const recs = vacations.filter(function(r) { return r && r.start && _vpNorm(r.start) === date; });
+  const chosen = recs.filter(function(r, i) { return boxes[i] && boxes[i].checked; });
+  const sheetDate = _vpDateAr(date);
+  let html = '<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="UTF-8"><title>مذكرة إجازات</title>' +
+    '<style>@page{size:A4;margin:1.2cm}body{font-family:"Cairo","Segoe UI",Tahoma,sans-serif;color:#1b1b1b;margin:0;padding:0}.sh{padding:6mm 4mm;position:relative}.cap{text-align:center;font-size:13px;font-weight:800;color:#1b5e20;letter-spacing:1px}.head{text-align:center;border-bottom:3px double #1b5e20;padding-bottom:8px;margin-bottom:10px}.head h1{margin:2px 0;font-size:21px;color:#1b5e20}.head .sub{font-size:12.5px;color:#555;margin-top:4px}table{width:100%;border-collapse:collapse;margin-top:8px;font-size:12.5px}th{background:#e8f5e9;color:#1b5e20;border:1px solid #777;padding:7px}td{border:1px solid #777;padding:6px;text-align:center}.sign{display:flex;justify-content:space-between;gap:18px;margin-top:38px}.sign .box{flex:1;text-align:center}.sign .line{border-top:1.2px solid #333;height:24px}.sign .label{font-size:12.5px;font-weight:700}.foot{margin-top:12px;font-size:10.5px;color:#888;text-align:center;border-top:1px solid #ddd;padding-top:6px}.pb{page-break-before:always}@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}' +
+    '</style></head><body>';
+  const chunks = [];
+  for (let i = 0; i < chosen.length; i += 5) chunks.push(chosen.slice(i, i + 5));
+  chunks.forEach(function(ch, ci) {
+    if (ci > 0) html += '<div class="pb"></div>';
+    html += _vpBuildSheet(ch, ci + 1, chunks.length, sheetDate, chosen.length);
+  });
+  html += '<div class="foot">لينة فارمز — منظومة الشئون الإدارية · مذكرة إجازات</div></body></html>';
+  closeVacationPrint();
+  const w = window.open('', '_blank');
+  if (!w) { alert('تعذر فتح نافذة الطباعة — السماح بالنوافذ المنبثقة لهذا الموقع.'); return; }
+  w.document.open(); w.document.write(html); w.document.close();
+  setTimeout(function() { try { w.focus(); w.print(); } catch (e) {} }, 400);
 }
 
 function saveTeaData() {
@@ -1489,6 +1595,30 @@ function saveSepticData() {
   resetSepticFields();
 }
 
+function _vpFmtD(d) {
+  var y = d.getFullYear();
+  var m = String(d.getMonth() + 1).padStart(2, '0');
+  var day = String(d.getDate()).padStart(2, '0');
+  return y + '-' + m + '-' + day;
+}
+function syncVacDates() {
+  var start = document.getElementById('vac-start').value;
+  var endEl = document.getElementById('vac-end');
+  var daysEl = document.getElementById('vac-days');
+  if (start && endEl.value) {
+    var s = new Date(start + 'T00:00:00');
+    var e = new Date(endEl.value + 'T00:00:00');
+    if (!isNaN(s) && !isNaN(e) && e >= s) {
+      daysEl.value = Math.round((e - s) / 86400000) + 1;
+    }
+  } else if (start && (parseInt(daysEl.value) || 0) >= 1) {
+    var d = new Date(start + 'T00:00:00');
+    d.setDate(d.getDate() + (parseInt(daysEl.value) || 1) - 1);
+    endEl.value = _vpFmtD(d);
+  }
+  previewVacDates();
+}
+
 function calcVacDates(start, days) {
   days = parseInt(days) || 0;
   if (!start || days < 1) return null;
@@ -1517,7 +1647,7 @@ function previewVacDates() {
   var result = calcVacDates(start, days);
   if (result) {
     preview.style.display = 'block';
-    preview.innerHTML = '✈️ السفر: <span>' + result.travelDate + '</span><br>📅 آخر يوم عمل: <span>' + result.lastWorkDay + '</span><br>📅 البداية: <span>' + start + '</span><br>📅 النهاية: <span>' + result.end + '</span><br>🏁 العودة: <span>' + result.returnDate + '</span>';
+    preview.innerHTML = '✈️ السفر: <span>' + result.travelDate + '</span><br>📅 آخر يوم عمل: <span>' + result.lastWorkDay + '</span><br>📅 البداية: <span>' + start + '</span><br>📅 النهاية: <span>' + result.end + '</span><br>⏳ المدة: <span>' + days + ' يوم</span><br>🏁 العودة: <span>' + result.returnDate + '</span>';
   } else {
     preview.style.display = 'none';
   }
