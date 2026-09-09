@@ -1466,24 +1466,26 @@ function openVacationPrint() {
       '<span>🖨️ طباعة مذكرة إجازات</span>' +
       '<span onclick="closeVacationPrint()" style="cursor:pointer;font-size:22px;line-height:1;">✖</span></div>' +
       '<div style="padding:14px 18px;">' +
-      '<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">' +
-      '<label style="font-size:13px;font-weight:700;">📅 اليوم:</label>' +
-      '<input type="date" id="vacprint-date" onchange="renderVacationPrintList()" style="flex:1;min-width:150px;padding:8px 10px;border:1.5px solid #b0bec5;border-radius:8px;font-family:inherit;font-size:14px;">' +
+      '<input type="text" id="vacprint-search" placeholder="🔍 ابحث بالاسم أو الكود…" style="width:100%;box-sizing:border-box;padding:9px 10px;border:1.5px solid #b0bec5;border-radius:8px;font-family:inherit;font-size:13.5px;">' +
+      '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:10px;">' +
+      '<label style="font-size:12.5px;font-weight:700;">📅 من:</label>' +
+      '<input type="date" id="vacprint-from" style="flex:1;min-width:120px;padding:7px 10px;border:1.5px solid #b0bec5;border-radius:8px;font-family:inherit;font-size:13px;">' +
+      '<label style="font-size:12.5px;font-weight:700;">إلى:</label>' +
+      '<input type="date" id="vacprint-to" style="flex:1;min-width:120px;padding:7px 10px;border:1.5px solid #b0bec5;border-radius:8px;font-family:inherit;font-size:13px;">' +
+      '<button onclick="renderVacationPrintList()" style="padding:8px 14px;background:#00695c;color:#fff;border:none;border-radius:8px;font-family:inherit;font-size:13px;font-weight:800;cursor:pointer;">🔍 تحديد</button>' +
       '<button id="vacprint-all-btn" onclick="toggleVacPrintAll()" style="padding:8px 12px;background:#e8f5e9;color:#1b5e20;border:1.5px solid #1b5e20;border-radius:8px;font-family:inherit;font-size:12.5px;font-weight:800;cursor:pointer;">✓ تحديد الكل</button>' +
       '</div>' +
-      '<div style="position:relative;margin-top:10px;">' +
-      '<input type="text" id="vacprint-search" placeholder="🔍 ابحث بالاسم أو الكود… (يبحث في كل الإجازات حتى غير الظاهرة)" oninput="renderVacationPrintList()" style="width:100%;box-sizing:border-box;padding:9px 10px;border:1.5px solid #b0bec5;border-radius:8px;font-family:inherit;font-size:13.5px;">' +
-      '</div>' +
       '<div id="vacprint-list" style="max-height:42vh;overflow-y:auto;border:1px solid #e0e0e0;border-radius:10px;margin-top:12px;padding:4px;"></div>' +
-      '<div style="font-size:12px;color:#777;margin-top:8px;">كل اللي تحدده يطبع مع بعض في ورقة واحدة — لو اخترت أكثر من 5 ستقسم تلقائياً على صفحات (كل صفحة 5 + توقيعات الاعتماد). عند البحث ستظهر الإجازات من أي تاريخ وتُجمع كلها في نفس الورقة.</div>' +
+      '<div style="font-size:12px;color:#777;margin-top:8px;">اكتب اسم أو كود الموظف، حدد الفترة (من/إلى، اختياري)، ثم اضغط "🔍 تحديد". كل اللي تحدده يطبع مع بعض في ورقة واحدة — أكثر من 5 يقسم تلقائياً لصفحات مع توقيعات الاعتماد.</div>' +
       '<div style="margin-top:12px;display:flex;gap:8px;">' +
       '<button onclick="doPrintVacations()" style="flex:1;padding:10px;background:#00695c;color:#fff;border:none;border-radius:10px;font-family:inherit;font-size:14px;font-weight:800;cursor:pointer;">🖨️ طباعة المحدد</button>' +
       '<button onclick="closeVacationPrint()" style="flex:1;padding:10px;background:#eceff1;color:#333;border:none;border-radius:10px;font-family:inherit;font-size:14px;font-weight:800;cursor:pointer;">إغلاق</button>' +
       '</div></div></div>';
     document.body.appendChild(ov);
   }
-  const dp = document.getElementById('dd-date-vacation').value;
-  document.getElementById('vacprint-date').value = dp || new Date().toISOString().slice(0, 10);
+  document.getElementById('vacprint-search').value = '';
+  document.getElementById('vacprint-from').value = '';
+  document.getElementById('vacprint-to').value = '';
   renderVacationPrintList();
   ov.style.display = 'flex';
 }
@@ -1500,23 +1502,39 @@ function toggleVacPrintAll() {
   if (btn) btn.innerHTML = allOn ? '✓ تحديد الكل' : '✗ إلغاء التحديد';
 }
 function _vpCurrentList() {
-  const date = _vpNorm(document.getElementById('vacprint-date').value);
   const q = String(document.getElementById('vacprint-search').value || '').trim().toLowerCase();
-  if (q) {
-    return vacations.filter(function(r) {
-      if (!r) return false;
+  const from = document.getElementById('vacprint-from').value;
+  const to = document.getElementById('vacprint-to').value;
+  if (!q && !from && !to) return [];
+  return vacations.filter(function(r) {
+    if (!r) return false;
+    if (q) {
       const n = String(r.name || '').toLowerCase();
       const c = String(r.code || '').toLowerCase();
-      return n.indexOf(q) !== -1 || c.indexOf(q) !== -1;
-    });
-  }
-  return vacations.filter(function(r) { return r && r.start && _vpNorm(r.start) === date; });
+      if (n.indexOf(q) === -1 && c.indexOf(q) === -1) return false;
+    }
+    const s = _vpNorm(r.start);
+    if (from && s) { if (s < from) return false; }
+    if (to && s) { if (s > to) return false; }
+    return true;
+  });
 }
 function renderVacationPrintList() {
   const box = document.getElementById('vacprint-list');
+  const q = String(document.getElementById('vacprint-search').value || '').trim();
+  const from = document.getElementById('vacprint-from').value;
+  const to = document.getElementById('vacprint-to').value;
+  if (!q && !from && !to) {
+    box.innerHTML = '<div style="padding:20px;text-align:center;color:#999;font-size:13px;">اكتب اسم/كود الموظف أو حدد فترة ثم اضغط "🔍 تحديد".</div>';
+    const btn = document.getElementById('vacprint-all-btn');
+    if (btn) btn.innerHTML = '✓ تحديد الكل';
+    return;
+  }
   const recs = _vpCurrentList();
   if (!recs.length) {
-    box.innerHTML = '<div style="padding:20px;text-align:center;color:#999;font-size:13px;">لا يوجد نتائج.</div>';
+    box.innerHTML = '<div style="padding:20px;text-align:center;color:#999;font-size:13px;">لا يوجد نتائج لهذا البحث.</div>';
+    const btn = document.getElementById('vacprint-all-btn');
+    if (btn) btn.innerHTML = '✓ تحديد الكل';
     return;
   }
   box.innerHTML = recs.map(function(r, i) {
@@ -1578,9 +1596,8 @@ function doPrintVacations() {
   if (!anyChecked) { showMsg('اختر إجازة واحدة على الأقل للطباعة.', true); return; }
   const recs = _vpCurrentList();
   const chosen = recs.filter(function(r, i) { return boxes[i] && boxes[i].checked; });
-  const date = _vpNorm(document.getElementById('vacprint-date').value);
   closeVacationPrint();
-  _vpPrintRecords(chosen, date);
+  _vpPrintRecords(chosen);
 }
 
 function saveTeaData() {
