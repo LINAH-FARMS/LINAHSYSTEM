@@ -1652,19 +1652,48 @@ function _vpPrintRecords(records, dateHint) {
     html += _vpBuildSheet(ch, ci + 1, chunks.length, dateLabel, records.length);
   });
   html += '<div class="foot">لينة فارمز — منظومة الشئون الإدارية · مذكرة إجازات</div></body></html>';
-  const w = window.open('', '_blank');
-  if (!w) { alert('تعذر فتح نافذة الطباعة — السماح بالنوافذ المنبثقة لهذا الموقع.'); return; }
-  w.document.open(); w.document.write(html); w.document.close();
+  _vpDoPrint(html);
+}
+
+function _vpDoPrint(html) {
+  let w = null;
+  try { w = window.open('', '_blank'); } catch (e) { w = null; }
+  if (w && w.document) {
+    w.document.open(); w.document.write(html); w.document.close();
+    setTimeout(function() {
+      try {
+        if (w.resizeTo) w.resizeTo(794, 1123);
+        w.focus();
+        w.print();
+      } catch (e) {}
+    }, 600);
+    return;
+  }
+  let f = document.getElementById('vacprint-iframe');
+  if (!f) {
+    f = document.createElement('iframe');
+    f.id = 'vacprint-iframe';
+    f.style.cssText = 'position:fixed;right:-10000px;top:0;width:210mm;height:297mm;border:0;';
+    document.body.appendChild(f);
+  }
+  try { f.srcdoc = html; } catch (e) { f.srcdoc = ''; }
   setTimeout(function() {
-    try {
-      if (w.resizeTo) w.resizeTo(794, 1123);
-      w.focus();
-      w.print();
-    } catch (e) {}
+    try { f.contentWindow.focus(); f.contentWindow.print(); } catch (e) { alert('الطباعة محجوبة — استخدم Ctrl+P من المتصفح.'); }
   }, 600);
 }
 function doPrintVacations() {
-  if (!_vpCart.length) { showMsg('لا يوجد إجازات مضافة للطباعة — أضف إجازة واحدة على الأقل بالزر "➕ أضف المحدد".', true); return; }
+  const boxes = Array.prototype.slice.call(document.querySelectorAll('#vacprint-list input.vacprint-item'));
+  const anyChecked = boxes.some(function(b) { return b.checked; });
+  if (anyChecked) {
+    const recs = _vpCurrentList();
+    const chosen = recs.filter(function(r, i) { return boxes[i] && boxes[i].checked; });
+    const keys = _vpCart.map(_vpCartKey);
+    chosen.forEach(function(r) {
+      const k = _vpCartKey(r);
+      if (keys.indexOf(k) === -1) { _vpCart.push(r); keys.push(k); }
+    });
+  }
+  if (!_vpCart.length) { showMsg('لم تجد إجازات للطباعة — ابحث عن شخص وحدد الفترة ثم اضغط "🔍 تحديد" وعلّم على النتائج.', true); return; }
   closeVacationPrint();
   _vpPrintRecords(_vpCart);
 }
