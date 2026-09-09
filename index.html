@@ -3118,10 +3118,44 @@
         var entries = rows[0].data;
         if (typeof entries === 'string') entries = JSON.parse(entries);
         if (!Array.isArray(entries) || !entries.length) return;
+        // احترام سجل الحذف: إجازة محذوفة من تبويب الإجازات لا تعود من السحابة أبداً
+        var delReg = [];
+        try { delReg = JSON.parse(localStorage.getItem('lineh_sync_deletions') || '[]'); } catch (e) { delReg = []; }
+        var delKeys = {};   // المفتاح الدقيق: code|start|end
+        var delRanges = {}; // نطاقات محذوفة لكل موظف (تغطي الحذف بعد التعديل)
+        delReg.forEach(function(d) {
+          if (!d || d.entity !== 'vacations' || !d.key) return;
+          delKeys[d.key] = true;
+          var parts = String(d.key).split('|');
+          var dc = parts[0] || '';
+          if (!dc) return;
+          (delRanges[dc] = delRanges[dc] || []).push({ s: String(parts[1] || '').replace(/[^0-9-]/g, ''), e: String(parts[2] || '').replace(/[^0-9-]/g, '') });
+        });
+        function _normD(d) { return String(d || '').replace(/[^0-9-]/g, ''); }
+        function _skippedByDelete(e) {
+          var eKey = String(e.code || e.employeeCode || e.employeeName || e.name || '') + '|' + (e.start || e.startDate || e.dateFrom || '') + '|' + (e.end || e.endDate || e.dateTo || '');
+          if (delKeys[eKey]) return true;
+          var dc = String(e.code || e.employeeCode || e.employeeName || '').trim();
+          var esS = _normD(e.start) || _normD(e.end), esE = _normD(e.end) || _normD(e.start);
+          if (!esS || !dc) return false;
+          var dr = delRanges[dc];
+          if (dr) {
+            for (var i = 0; i < dr.length; i++) { if (esS <= dr[i].e && dr[i].s <= esE) return true; }
+          }
+          // تعديل محلي أحدث يمنع عودة النسخة القديمة من السحابة (نفس الموظف + تداخل أيام)
+          for (var j = 0; j < vacations.length; j++) {
+            var v = vacations[j];
+            if (String(v.code || v.employeeCode || '') !== dc) continue;
+            var vsS = _normD(v.start) || _normD(v.end), vsE = _normD(v.end) || _normD(v.start);
+            if (vsS && esS <= vsE && vsS <= esE) return true;
+          }
+          return false;
+        }
         var existingKeys = {};
         vacations.forEach(function(v) { existingKeys[v.code + '_' + v.start + '_' + v.type + '_' + v.days] = true; });
         var added = [], hasNew = false;
         entries.forEach(function(e) {
+          if (_skippedByDelete(e)) return;
           var key = e.code + '_' + e.start + '_' + e.type + '_' + e.days;
           // تعبئة info لو ناقصة (الوظيفة والإدارة)
           if (!e.info || e.info === '' || e.info === ' / ') {
