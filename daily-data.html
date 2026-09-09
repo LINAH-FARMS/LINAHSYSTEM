@@ -1552,12 +1552,18 @@ function renderVacationPrintList() {
 function _vpBuildSheet(rows, pageNo, pagesTotal, sheetDate, totalCount) {
   const rowsHtml = rows.map(function(r, i) {
     const info = (r.info || '').split('/').slice(-1)[0].trim() || '—';
-    return '<tr><td>' + ((pageNo - 1) * 5 + i + 1) + '</td><td>' + _rpEsc(r.name || r.code) + '</td><td>' + _rpEsc(info) + '</td><td>' + _rpEsc(r.type || '') + '</td><td>' + _rpEsc(r.start) + ' ← ' + _rpEsc(r.end || '') + '</td><td>' + (r.days || 0) + '</td></tr>';
+    return '<tr>' +
+      '<td>' + ((pageNo - 1) * 5 + i + 1) + '</td>' +
+      '<td style="font-weight:800;">' + _rpEsc(r.name || r.code) + '</td>' +
+      '<td style="font-size:11px;">' + _rpEsc(info) + '</td>' +
+      '<td>' + _rpEsc(r.type || '') + '</td>' +
+      '<td><span style="white-space:nowrap;">' + _rpEsc(r.start) + '</span><br><span style="color:#555;font-size:10.5px;">↔</span><br><span style="white-space:nowrap;">' + _rpEsc(r.end || '') + '</span></td>' +
+      '<td>' + (r.days || 0) + '</td></tr>';
   }).join('');
-  return '<div class="sh"><div class="cap">لينة فارمز — مزرعة لينة</div><div class="head">' +
+  return '<div class="sheet"><div class="cap">لينة فارمز — مزرعة لينة</div><div class="head">' +
     '<h1>مذكرة إجازات</h1>' +
     '<div class="sub">التاريخ: ' + sheetDate + ' · عدد الموظفين: ' + totalCount + (pagesTotal > 1 ? ' · الصفحة ' + pageNo + ' من ' + pagesTotal : '') + '</div></div>' +
-    '<table><thead><tr><th style="width:6%">م</th><th style="width:24%">اسم الموظف</th><th style="width:28%">الوظيفة / القسم</th><th style="width:13%">نوع الإجازة</th><th style="width:22%">من ← إلى</th><th style="width:7%">أيام</th></tr></thead>' +
+    '<table><thead><tr><th style="width:5%">م</th><th style="width:23%">اسم الموظف</th><th style="width:24%">الوظيفة / القسم</th><th style="width:10%">نوع الإجازة</th><th style="width:30%">من ⟵ إلى</th><th style="width:8%">الأيام</th></tr></thead>' +
     '<tbody>' + rowsHtml + '</tbody></table>' +
     '<div class="sign"><div class="box"><div class="line"></div><div class="label">اعتماد المدير / رئيس القسم</div></div>' +
     '<div class="box"><div class="line"></div><div class="label">اعتماد الموارد البشرية</div></div>' +
@@ -1566,8 +1572,25 @@ function _vpBuildSheet(rows, pageNo, pagesTotal, sheetDate, totalCount) {
 }
 function _vpPrintRecords(records, dateHint) {
   let html = '<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="UTF-8"><title>مذكرة إجازات</title>' +
-    '<style>@page{size:A4;margin:1.2cm}body{font-family:"Cairo","Segoe UI",Tahoma,sans-serif;color:#1b1b1b;margin:0;padding:0}.sh{padding:6mm 4mm;position:relative}.cap{text-align:center;font-size:13px;font-weight:800;color:#1b5e20;letter-spacing:1px}.head{text-align:center;border-bottom:3px double #1b5e20;padding-bottom:8px;margin-bottom:10px}.head h1{margin:2px 0;font-size:21px;color:#1b5e20}.head .sub{font-size:12.5px;color:#555;margin-top:4px}table{width:100%;border-collapse:collapse;margin-top:8px;font-size:12.5px}th{background:#e8f5e9;color:#1b5e20;border:1px solid #777;padding:7px}td{border:1px solid #777;padding:6px;text-align:center}.sign{display:flex;justify-content:space-between;gap:18px;margin-top:38px}.sign .box{flex:1;text-align:center}.sign .line{border-top:1.2px solid #333;height:24px}.sign .label{font-size:12.5px;font-weight:700}.foot{margin-top:12px;font-size:10.5px;color:#888;text-align:center;border-top:1px solid #ddd;padding-top:6px}.pb{page-break-before:always}@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}' +
-    '</style></head><body>';
+    '<style>@page{size:A4 portrait;margin:1.4cm 1cm}' +
+    '*{box-sizing:border-box}html,body{direction:rtl;margin:0;padding:0}' +
+    'body{font-family:"Cairo","Segoe UI",Tahoma,sans-serif;color:#111}' +
+    '.sheet{width:186mm;margin:0 auto;padding:0 2mm}' +
+    '.cap{text-align:center;font-size:12.5px;font-weight:800;color:#1b5e20;letter-spacing:1px}' +
+    '.head{text-align:center;border-bottom:3px double #1b5e20;padding-bottom:7px;margin-bottom:10px}' +
+    '.head h1{margin:2px 0;font-size:20px;color:#1b5e20}' +
+    '.head .sub{font-size:12px;color:#555;margin-top:3px}' +
+    'table{width:100%;table-layout:fixed;border-collapse:collapse;font-size:12px}' +
+    'th,td{border:1px solid #555;padding:7px 5px;text-align:center;vertical-align:middle;word-break:break-word;overflow-wrap:anywhere}' +
+    'th{background:#e8f5e9;color:#1b5e20;font-weight:800}' +
+    '.sign{display:flex;justify-content:space-between;gap:14px;margin-top:42px}' +
+    '.sign .box{flex:1;text-align:center}' +
+    '.sign .line{border-bottom:1.4px solid #111;height:28px;width:78%;margin:0 auto}' +
+    '.sign .label{font-size:12.5px;font-weight:800}' +
+    '.foot{margin-top:14px;font-size:10px;color:#888;text-align:center;border-top:1px solid #ccc;padding-top:6px}' +
+    '.pb{page-break-before:always}@media print{body{background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact}.no-print{display:none}}' +
+    '</style></head><body>' +
+    '<div class="no-print" style="direction:rtl;text-align:center;padding:10px;font-family:Cairo,sans-serif;"><button onclick="window.print()" style="padding:10px 26px;background:#1b5e20;color:#fff;border:none;border-radius:8px;font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;">🖨️ طباعة المذكرة</button></div>';
   const starts = records.map(function(r) { return _vpNorm(r.start); }).filter(Boolean).sort();
   const ends = records.map(function(r) { return _vpNorm(r.end); }).filter(Boolean).sort();
   let dateLabel;
@@ -1588,7 +1611,13 @@ function _vpPrintRecords(records, dateHint) {
   const w = window.open('', '_blank');
   if (!w) { alert('تعذر فتح نافذة الطباعة — السماح بالنوافذ المنبثقة لهذا الموقع.'); return; }
   w.document.open(); w.document.write(html); w.document.close();
-  setTimeout(function() { try { w.focus(); w.print(); } catch (e) {} }, 400);
+  setTimeout(function() {
+    try {
+      if (w.resizeTo) w.resizeTo(794, 1123);
+      w.focus();
+      w.print();
+    } catch (e) {}
+  }, 600);
 }
 function doPrintVacations() {
   const boxes = Array.prototype.slice.call(document.querySelectorAll('#vacprint-list input.vacprint-item'));
