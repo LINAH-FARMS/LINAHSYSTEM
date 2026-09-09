@@ -2273,9 +2273,9 @@
       box.innerHTML = '<h3 style="margin:0 0 16px;">اختيار مستخدم للدخول</h3><select id="backdoor-user" style="width:100%;padding:10px;border:2px solid #e0e0e0;border-radius:8px;font-size:14px;font-family:Cairo,sans-serif;margin-bottom:12px;">' +
         appUsers.map(function(u) { return '<option value="' + u.name + '">' + u.name + '</option>'; }).join('') +
         '</select><button onclick="doBackdoorLogin()" style="width:100%;padding:10px;background:#2e7d32;color:#fff;border:none;border-radius:8px;font-size:15px;font-family:Cairo,sans-serif;cursor:pointer;">دخول</button>';
-      modal.appendChild(box);
+modal.appendChild(box);
       document.body.appendChild(modal);
-      document.getElementById('backdoor-user').focus();
+      updateBreadPlanTotal();
     }
     function doBackdoorLogin() {
       var sel = document.getElementById('backdoor-user');
@@ -2899,11 +2899,13 @@ var _breadSuggestionIdCounter = 0;
         else otherGuestsCount += g;
       });
       var workerLoaves = pCount * 6;
-      var womenLoaves = womenCount * 2;
+      var womenLoaves = 110; // 55 سيدة (افتراضي الحقل) × 2
       var studentLoaves = studentCount * 2;
       var otherLoaves = otherGuestsCount * 6;
-      var returnFromVacation = 5 * 6;
-      var totalLoaves = workerLoaves + womenLoaves + studentLoaves + otherLoaves + returnFromVacation;
+      var groundLoaves = 40;
+      var nightLoaves = 24;
+      var returnFromVacation = 30;
+      var totalLoaves = workerLoaves + groundLoaves + womenLoaves + studentLoaves + otherLoaves + returnFromVacation + nightLoaves;
       var existing = document.getElementById('bread-plan-modal');
       if (existing) existing.remove();
       var modal = document.createElement('div');
@@ -2938,18 +2940,18 @@ var _breadSuggestionIdCounter = 0;
         '</div>' +
         '</div>' +
         '<div style="background:#fff3e0;border-radius:10px;padding:12px;margin-bottom:10px;border:1px solid #ffcc80;">' +
-        '<div style="font-weight:700;color:#e65100;margin-bottom:8px;font-size:14px;">بيانات نسخ الإجمالي</div>' +
+        '<div style="font-weight:700;color:#e65100;margin-bottom:8px;font-size:14px;">🧮 ملخص الأرغفة (يتحدث تلقائياً من الأرقام أعلاه)</div>' +
         '<div style="font-size:13px;display:grid;grid-template-columns:1fr auto;gap:4px 12px;">' +
-        '<span>رغيف:</span><b id="bp-loaves-workers">' + workerLoaves + '</b>' +
-        '<span>عمال الأرض:</span><b id="bp-loaves-ground">40</b>' +
-        '<span>انسخ:</span><b id="bp-loaves-women">' + womenLoaves + '</b>' +
-        '<span>العدد:</span><b id="bp-loaves-students">' + studentLoaves + '</b>' +
-        '<span>يدوياً تم:</span><b id="bp-loaves-other">' + otherLoaves + '</b>' +
-        '<span>تعبئة بيانات عدد (5):</span><b id="bp-loaves-return">' + returnFromVacation + '</b>' +
-        '<span>الأمن الليلي:</span><b id="bp-loaves-night">2</b>' +
-        '<span>الأرغفة:</span><b id="bp-loaves-ctr">0</b>' +
+        '<span>👤 العمال (' + pCount + ' × 6):</span><b id="bp-loaves-workers">' + workerLoaves + '</b>' +
+        '<span>🧑\u200D🌾 عمال الأرض:</span><b id="bp-loaves-ground">' + groundLoaves + '</b>' +
+        '<span>👩 السيدات:</span><b id="bp-loaves-women">' + womenLoaves + '</b>' +
+        '<span>🎒 طلبة المدرسة:</span><b id="bp-loaves-students">' + studentLoaves + '</b>' +
+        '<span>🚗 ضيوف آخرون:</span><b id="bp-loaves-other">' + otherLoaves + '</b>' +
+        '<span>↩️ عائدون من إجازة (5×6):</span><b id="bp-loaves-return">' + returnFromVacation + '</b>' +
+        '<span>🌙 الأمن الليلي:</span><b id="bp-loaves-night">' + nightLoaves + '</b>' +
+        '<span>👷 المقاولين:</span><b id="bp-loaves-ctr">0</b>' +
         '<hr style="grid-column:span 2;border:none;border-top:1px dashed #e0e0e0;margin:4px 0;">' +
-        '<span style="font-weight:700;">سيدات:</span><b style="color:#e65100;font-size:15px;" id="bread-plan-total-display">' + totalLoaves + ' طلبة</b>' +
+        '<span style="font-weight:700;">🍞 إجمالي الأرغفة:</span><b style="color:#e65100;font-size:15px;" id="bread-plan-total-display">' + totalLoaves + ' رغيف</b>' +
         '</div></div>' +
         '</div>' +
         '<div style="margin-top:14px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">' +
@@ -2976,8 +2978,8 @@ var _breadSuggestionIdCounter = 0;
       var womenCount = 0, studentCount = 0, otherGuestsCount = 0;
       planGuests.forEach(function(h) {
         var g = h.guests || 1;
-        if (h.type === 'التاريخ') womenCount += g;
-        else if (h.type === 'عدّل التاريخ') studentCount += g;
+        if (h.type === 'نساء') womenCount += g;
+        else if (h.type === 'أجانب') studentCount += g;
         else otherGuestsCount += g;
       });
       document.getElementById('bp-workers').value = pCount;
@@ -3035,7 +3037,7 @@ var _breadSuggestionIdCounter = 0;
       if (eo) eo.textContent = otherLoaves;
       if (en) en.textContent = nightLoaves;
       if (ec) ec.textContent = ctrTotal;
-      if (et) et.textContent = total + ' التقرير';
+      if (et) et.textContent = total + ' رغيف';
     }
     function generateBreadPlanReport() {
       var dateEl = document.getElementById('bp-date-select');
@@ -3103,7 +3105,7 @@ var _breadSuggestionIdCounter = 0;
       var logoSrc = '';
       var logoEl = document.querySelector('img[alt="Logo"]');
       if (logoEl) logoSrc = logoEl.src;
-      var fullHtml = '<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8"><title>عدد الأشخاص عدّل</title>' +
+      var fullHtml = '<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8"><title>تقرير خطة توزيع الخبز</title>' +
         '<style>@page{size:A4;margin:1.5cm}body{font-family:"Cairo","Segoe UI",sans-serif;direction:rtl;padding:20px;color:#222;background:#fafafa;margin:0}' +
         '.rp-container{max-width:190mm;margin:0 auto;background:white;padding:20px 25px;box-shadow:0 2px 20px rgba(0,0,0,0.1)}' +
         '.rp-header{text-align:center;border-bottom:3px double #e65100;padding-bottom:15px;margin-bottom:18px}' +
@@ -3124,7 +3126,7 @@ var _breadSuggestionIdCounter = 0;
         '<tr><td>العمال (' + bpWorkers + ' × 6)</td><td style="text-align:center;">' + workerLoaves + '</td></tr>' +
         '<tr><td>عمال الأرض</td><td style="text-align:center;">' + groundLoaves + '</td></tr>' +
         '<tr><td>السيدات (' + bpWomen + ' × 2)</td><td style="text-align:center;">' + womenLoaves + '</td></tr>' +
-        '<tr><td>الطالبات (' + bpStudents + ' × 2)</td><td style="text-align:center;">' + studentLoaves + '</td></tr>' +
+        '<tr><td>طلبة المدرسة (' + bpStudents + ' × 2)</td><td style="text-align:center;">' + studentLoaves + '</td></tr>' +
         '<tr><td>ضيوف آخرون (' + bpOther + ' × 6)</td><td style="text-align:center;">' + otherLoaves + '</td></tr>' +
         '<tr><td>العائد من الإجازة</td><td style="text-align:center;">' + returnFromVacation + '</td></tr>' +
         '<tr><td>الأمن الليلي (' + nightSecurity + ' × 2)</td><td style="text-align:center;">' + nightLoaves + '</td></tr>' +
