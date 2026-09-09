@@ -897,10 +897,6 @@
     .role-user button[onclick*="reset"],
     .role-user .btn-exclude,
     .role-user .admin-only { display: none !important; }
-    body:not(.backup-allowed) button[onclick*="exportBackup"],
-    body:not(.backup-allowed) button[onclick*="importBackup"],
-    body:not(.backup-allowed) button[onclick*="Backup"],
-    body:not(.backup-allowed) button[onclick*="backup"] { display: none !important; }
 
     .role-readonly .tab-btn,
     .role-readonly .tab-btn.active { display: inline-flex !important; }

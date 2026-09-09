@@ -3193,7 +3193,6 @@ var _breadSuggestionIdCounter = 0;
     function applyPermissions() {
       document.body.className = document.body.className.replace(/\brole-\w+\b/g, '').trim();
       document.body.classList.add('role-' + currentUserRole);
-      if (currentUser === 'سالم مجدي') document.body.classList.add('backup-allowed');
     }
 
     var _dataChangedSinceBackup = false;
