@@ -1476,7 +1476,7 @@ function openVacationPrint() {
       '<button id="vacprint-all-btn" onclick="toggleVacPrintAll()" style="padding:8px 12px;background:#e8f5e9;color:#1b5e20;border:1.5px solid #1b5e20;border-radius:8px;font-family:inherit;font-size:12.5px;font-weight:800;cursor:pointer;">✓ تحديد الكل</button>' +
       '</div>' +
       '<div id="vacprint-list" style="max-height:42vh;overflow-y:auto;border:1px solid #e0e0e0;border-radius:10px;margin-top:12px;padding:4px;"></div>' +
-      '<div style="font-size:12px;color:#777;margin-top:8px;">اكتب اسم أو كود الموظف، حدد الفترة (من/إلى، اختياري)، ثم اضغط "🔍 تحديد". كل اللي تحدده يطبع مع بعض في ورقة واحدة — أكثر من 5 يقسم تلقائياً لصفحات مع توقيعات الاعتماد.</div>' +
+      '<div style="font-size:12px;color:#777;margin-top:8px;">اختار من اللستة اللي عاوزه بالظبط (الكل غير محدد افتراضياً) — لو عاوز الكل اضغط "✓ تحديد الكل". وكل ما تختاره يطبع مع بعض في ورقة واحدة؛ أكثر من 5 يقسم تلقائياً لصفحات مع توقيعات الاعتماد.</div>' +
       '<div style="margin-top:12px;display:flex;gap:8px;">' +
       '<button onclick="doPrintVacations()" style="flex:1;padding:10px;background:#00695c;color:#fff;border:none;border-radius:10px;font-family:inherit;font-size:14px;font-weight:800;cursor:pointer;">🖨️ طباعة المحدد</button>' +
       '<button onclick="closeVacationPrint()" style="flex:1;padding:10px;background:#eceff1;color:#333;border:none;border-radius:10px;font-family:inherit;font-size:14px;font-weight:800;cursor:pointer;">إغلاق</button>' +
@@ -1539,7 +1539,7 @@ function renderVacationPrintList() {
   }
   box.innerHTML = recs.map(function(r, i) {
     return '<label style="display:flex;align-items:center;gap:10px;padding:9px 10px;border-bottom:1px solid #f0f0f0;cursor:pointer;font-size:13.5px;">' +
-      '<input type="checkbox" class="vacprint-item" checked style="width:16px;height:16px;">' +
+      '<input type="checkbox" class="vacprint-item" style="width:16px;height:16px;">' +
       '<span style="flex:1;"><b>' + _rpEsc(r.name || r.code) + '</b>' +
       (r.code ? ' <span style="background:#e0f2f1;color:#004d40;border-radius:6px;padding:1px 6px;font-size:11px;font-weight:700;">#' + _rpEsc(r.code) + '</span>' : '') +
       (r.info ? ' <span style="color:#888;font-size:12px;">· ' + _rpEsc(r.info) + '</span>' : '') +
