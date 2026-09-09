@@ -1525,6 +1525,23 @@ function _vpBuildSheet(rows, pageNo, pagesTotal, sheetDate, totalCount) {
     '<div class="box"><div class="line"></div><div class="label">اعتماد مدير المزرعة</div></div></div>' +
     '</div>';
 }
+function _vpPrintRecords(records, dateStr) {
+  const sheetDate = _vpDateAr(dateStr);
+  let html = '<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="UTF-8"><title>مذكرة إجازات</title>' +
+    '<style>@page{size:A4;margin:1.2cm}body{font-family:"Cairo","Segoe UI",Tahoma,sans-serif;color:#1b1b1b;margin:0;padding:0}.sh{padding:6mm 4mm;position:relative}.cap{text-align:center;font-size:13px;font-weight:800;color:#1b5e20;letter-spacing:1px}.head{text-align:center;border-bottom:3px double #1b5e20;padding-bottom:8px;margin-bottom:10px}.head h1{margin:2px 0;font-size:21px;color:#1b5e20}.head .sub{font-size:12.5px;color:#555;margin-top:4px}table{width:100%;border-collapse:collapse;margin-top:8px;font-size:12.5px}th{background:#e8f5e9;color:#1b5e20;border:1px solid #777;padding:7px}td{border:1px solid #777;padding:6px;text-align:center}.sign{display:flex;justify-content:space-between;gap:18px;margin-top:38px}.sign .box{flex:1;text-align:center}.sign .line{border-top:1.2px solid #333;height:24px}.sign .label{font-size:12.5px;font-weight:700}.foot{margin-top:12px;font-size:10.5px;color:#888;text-align:center;border-top:1px solid #ddd;padding-top:6px}.pb{page-break-before:always}@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}' +
+    '</style></head><body>';
+  const chunks = [];
+  for (let i = 0; i < records.length; i += 5) chunks.push(records.slice(i, i + 5));
+  chunks.forEach(function(ch, ci) {
+    if (ci > 0) html += '<div class="pb"></div>';
+    html += _vpBuildSheet(ch, ci + 1, chunks.length, sheetDate, records.length);
+  });
+  html += '<div class="foot">لينة فارمز — منظومة الشئون الإدارية · مذكرة إجازات</div></body></html>';
+  const w = window.open('', '_blank');
+  if (!w) { alert('تعذر فتح نافذة الطباعة — السماح بالنوافذ المنبثقة لهذا الموقع.'); return; }
+  w.document.open(); w.document.write(html); w.document.close();
+  setTimeout(function() { try { w.focus(); w.print(); } catch (e) {} }, 400);
+}
 function doPrintVacations() {
   const boxes = Array.prototype.slice.call(document.querySelectorAll('#vacprint-list input.vacprint-item'));
   const anyChecked = boxes.some(function(b) { return b.checked; });
@@ -1532,22 +1549,8 @@ function doPrintVacations() {
   const date = _vpNorm(document.getElementById('vacprint-date').value);
   const recs = vacations.filter(function(r) { return r && r.start && _vpNorm(r.start) === date; });
   const chosen = recs.filter(function(r, i) { return boxes[i] && boxes[i].checked; });
-  const sheetDate = _vpDateAr(date);
-  let html = '<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="UTF-8"><title>مذكرة إجازات</title>' +
-    '<style>@page{size:A4;margin:1.2cm}body{font-family:"Cairo","Segoe UI",Tahoma,sans-serif;color:#1b1b1b;margin:0;padding:0}.sh{padding:6mm 4mm;position:relative}.cap{text-align:center;font-size:13px;font-weight:800;color:#1b5e20;letter-spacing:1px}.head{text-align:center;border-bottom:3px double #1b5e20;padding-bottom:8px;margin-bottom:10px}.head h1{margin:2px 0;font-size:21px;color:#1b5e20}.head .sub{font-size:12.5px;color:#555;margin-top:4px}table{width:100%;border-collapse:collapse;margin-top:8px;font-size:12.5px}th{background:#e8f5e9;color:#1b5e20;border:1px solid #777;padding:7px}td{border:1px solid #777;padding:6px;text-align:center}.sign{display:flex;justify-content:space-between;gap:18px;margin-top:38px}.sign .box{flex:1;text-align:center}.sign .line{border-top:1.2px solid #333;height:24px}.sign .label{font-size:12.5px;font-weight:700}.foot{margin-top:12px;font-size:10.5px;color:#888;text-align:center;border-top:1px solid #ddd;padding-top:6px}.pb{page-break-before:always}@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}' +
-    '</style></head><body>';
-  const chunks = [];
-  for (let i = 0; i < chosen.length; i += 5) chunks.push(chosen.slice(i, i + 5));
-  chunks.forEach(function(ch, ci) {
-    if (ci > 0) html += '<div class="pb"></div>';
-    html += _vpBuildSheet(ch, ci + 1, chunks.length, sheetDate, chosen.length);
-  });
-  html += '<div class="foot">لينة فارمز — منظومة الشئون الإدارية · مذكرة إجازات</div></body></html>';
   closeVacationPrint();
-  const w = window.open('', '_blank');
-  if (!w) { alert('تعذر فتح نافذة الطباعة — السماح بالنوافذ المنبثقة لهذا الموقع.'); return; }
-  w.document.open(); w.document.write(html); w.document.close();
-  setTimeout(function() { try { w.focus(); w.print(); } catch (e) {} }, 400);
+  _vpPrintRecords(chosen, date);
 }
 
 function saveTeaData() {
@@ -1682,11 +1685,60 @@ function saveVacationData() {
     returnDate: dates.returnDate,
     notes: notes
   };
-  vacations.push(vRecord);
+  _vpPending = vRecord;
+  showVacSaveChoice(name, days);
+}
+
+let _vpPending = null;
+function showVacSaveChoice(name, days) {
+  let ov = document.getElementById('vacchoice-overlay');
+  if (!ov) {
+    ov = document.createElement('div');
+    ov.id = 'vacchoice-overlay';
+    ov.style.cssText = 'display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:99998;align-items:center;justify-content:center;font-family:Cairo,sans-serif;';
+    ov.innerHTML = '<div style="background:#fff;border-radius:14px;width:min(94vw,480px);box-shadow:0 12px 45px rgba(0,0,0,.35);overflow:hidden;">' +
+      '<div style="padding:14px 18px;background:#7b1fa2;color:#fff;font-weight:800;font-size:16px;display:flex;justify-content:space-between;align-items:center;">' +
+      '<span>🏖️ حفظ الإجازة</span>' +
+      '<span onclick="vacChoiceCancel()" style="cursor:pointer;font-size:22px;line-height:1;">✖</span></div>' +
+      '<div style="padding:16px 18px;">' +
+      '<div style="font-size:14px;font-weight:700;margin-bottom:14px;" id="vacchoice-txt"></div>' +
+      '<button onclick="vacChoicePrint()" style="width:100%;padding:12px;background:#00695c;color:#fff;border:none;border-radius:10px;font-family:inherit;font-size:15px;font-weight:800;cursor:pointer;margin-bottom:10px;">🖨️ اطبعها بمفردها (أوراق إجازة جاهزة)</button>' +
+      '<button onclick="vacChoiceAdd()" style="width:100%;padding:12px;background:#7b1fa2;color:#fff;border:none;border-radius:10px;font-family:inherit;font-size:15px;font-weight:800;cursor:pointer;margin-bottom:10px;">📋 أضفها لقائمة الإجازات فقط</button>' +
+      '<button onclick="vacChoiceCancel()" style="width:100%;padding:10px;background:#eceff1;color:#333;border:none;border-radius:10px;font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;">إلغاء — تعديل البيانات</button>' +
+      '<div style="font-size:11.5px;color:#777;margin-top:12px;line-height:1.6;">ملاحظة: الخياران يسجّلان الإجازة في القائمة — الفرق أن الأول يفتح الطباعة فوراً، والثاني يحفظها فقط.</div>' +
+      '</div></div>';
+    document.body.appendChild(ov);
+  }
+  const t = document.getElementById('vacchoice-txt');
+  const d = _vpPending && _vpPending.start ? _vpDateAr(_vpPending.start) : '';
+  t.innerHTML = 'إجازة <b>' + _rpEsc(name) + '</b> — ' + days + ' يوم' + (d ? '<br><span style="color:#777;font-size:12px;font-weight:400;">' + d + '</span>' : '');
+  ov.style.display = 'flex';
+}
+function vacChoiceCancel() {
+  const ov = document.getElementById('vacchoice-overlay');
+  if (ov) ov.style.display = 'none';
+}
+function _vpCommitPending(msg) {
+  const rec = _vpPending;
+  if (!rec) return null;
+  vacations.push(rec);
   try { localStorage.setItem('lineh_vacations', JSON.stringify(vacations)); } catch(e){}
-  showMsg('✅ تم تسجيل إجازة ' + name + ' لمدة ' + days + ' يوم', false);
-  _saveVacationToRemote(vRecord, '✅ تم تسجيل إجازة ' + name + ' لمدة ' + days + ' يوم');
   resetVacationFields();
+  _saveVacationToRemote(rec, msg);
+  return rec;
+}
+function vacChoicePrint() {
+  const rec = _vpPending;
+  if (!rec) { vacChoiceCancel(); return; }
+  _vpCommitPending('✅ تم تسجيل وطباعة إجازة ' + rec.name + ' — ' + rec.days + ' يوم');
+  vacChoiceCancel();
+  _vpPrintRecords([rec], rec.start);
+}
+function vacChoiceAdd() {
+  const rec = _vpPending;
+  if (!rec) { vacChoiceCancel(); return; }
+  _vpCommitPending('✅ تمت إضافة إجازة ' + rec.name + ' إلى القائمة — ' + rec.days + ' يوم');
+  vacChoiceCancel();
 }
 
 (function retryPending() {
