@@ -1474,11 +1474,13 @@ function openVacationPrint() {
       '<input type="date" id="vacprint-to" style="flex:1;min-width:120px;padding:7px 10px;border:1.5px solid #b0bec5;border-radius:8px;font-family:inherit;font-size:13px;">' +
       '<button onclick="renderVacationPrintList()" style="padding:8px 14px;background:#00695c;color:#fff;border:none;border-radius:8px;font-family:inherit;font-size:13px;font-weight:800;cursor:pointer;">🔍 تحديد</button>' +
       '<button id="vacprint-all-btn" onclick="toggleVacPrintAll()" style="padding:8px 12px;background:#e8f5e9;color:#1b5e20;border:1.5px solid #1b5e20;border-radius:8px;font-family:inherit;font-size:12.5px;font-weight:800;cursor:pointer;">✓ تحديد الكل</button>' +
+      '<button onclick="addCartFromList()" style="padding:8px 14px;background:#e65100;color:#fff;border:none;border-radius:8px;font-family:inherit;font-size:13px;font-weight:800;cursor:pointer;">➕ أضف المحدد للطباعة</button>' +
       '</div>' +
-      '<div id="vacprint-list" style="max-height:42vh;overflow-y:auto;border:1px solid #e0e0e0;border-radius:10px;margin-top:12px;padding:4px;"></div>' +
-      '<div style="font-size:12px;color:#777;margin-top:8px;">اختار من اللستة اللي عاوزه بالظبط (الكل غير محدد افتراضياً) — لو عاوز الكل اضغط "✓ تحديد الكل". وكل ما تختاره يطبع مع بعض في ورقة واحدة؛ أكثر من 5 يقسم تلقائياً لصفحات مع توقيعات الاعتماد.</div>' +
+      '<div style="font-size:11.5px;color:#888;margin-top:8px;line-height:1.7;">1) ابحث عن شخص + حدد الفترة من/إلى واضغط "🔍 تحديد".<br>2) علّم على إجازاته ثم اضغط "➕ أضف المحدد للطباعة".<br>3) كرر للشخص التالي، ثم اضغط "🖨️ طباعة المذكرة". الكل يطبع مع بعض (حتى 5 بالورقة).</div>' +
+      '<div id="vacprint-cartbar" style="font-size:12.5px;color:#004d40;background:#e0f2f1;border-radius:8px;padding:7px 10px;margin-top:10px;line-height:1.7;"></div>' +
+      '<div id="vacprint-list" style="max-height:34vh;overflow-y:auto;border:1px solid #e0e0e0;border-radius:10px;margin-top:10px;padding:4px;"></div>' +
       '<div style="margin-top:12px;display:flex;gap:8px;">' +
-      '<button onclick="doPrintVacations()" style="flex:1;padding:10px;background:#00695c;color:#fff;border:none;border-radius:10px;font-family:inherit;font-size:14px;font-weight:800;cursor:pointer;">🖨️ طباعة المحدد</button>' +
+      '<button id="vacprint-print-btn" onclick="doPrintVacations()" style="flex:1;padding:10px;background:#00695c;color:#fff;border:none;border-radius:10px;font-family:inherit;font-size:14px;font-weight:800;cursor:pointer;">🖨️ طباعة المذكرة</button>' +
       '<button onclick="closeVacationPrint()" style="flex:1;padding:10px;background:#eceff1;color:#333;border:none;border-radius:10px;font-family:inherit;font-size:14px;font-weight:800;cursor:pointer;">إغلاق</button>' +
       '</div></div></div>';
     document.body.appendChild(ov);
@@ -1486,8 +1488,50 @@ function openVacationPrint() {
   document.getElementById('vacprint-search').value = '';
   document.getElementById('vacprint-from').value = '';
   document.getElementById('vacprint-to').value = '';
+  _vpCart = [];
   renderVacationPrintList();
+  _vpUpdateCartUI();
   ov.style.display = 'flex';
+}
+let _vpCart = [];
+function _vpCartKey(r) {
+  return String(r.code || '') + '|' + _vpNorm(r.start) + '|' + String(r.type || '') + '|' + (r.days || 0);
+}
+function _vpUpdateCartUI() {
+  const bar = document.getElementById('vacprint-cartbar');
+  const btn = document.getElementById('vacprint-print-btn');
+  if (bar) {
+    if (_vpCart.length) {
+      const names = [];
+      _vpCart.forEach(function(r) {
+        const n = String(r.name || r.code || '').trim();
+        if (names.indexOf(n) === -1) names.push(n);
+      });
+      bar.innerHTML = '🛒 مضاف للطباعة: <b>' + _vpCart.length + '</b> — ' + names.slice(0, 4).map(function(n) { return '<span style="background:#fff;border:1px solid #b2dfdb;border-radius:6px;padding:1px 6px;margin:0 2px;">' + _rpEsc(n) + '</span>'; }).join('') + (names.length > 4 ? ' …' : '');
+    } else {
+      bar.innerHTML = '';
+    }
+  }
+  if (btn) btn.innerHTML = _vpCart.length ? ('🖨️ طباعة المذكرة (' + _vpCart.length + ')') : '🖨️ طباعة المذكرة';
+}
+function addCartFromList() {
+  const boxes = Array.prototype.slice.call(document.querySelectorAll('#vacprint-list input.vacprint-item'));
+  const anyChecked = boxes.some(function(b) { return b.checked; });
+  if (!anyChecked) { showMsg('علّم على إجازة واحدة على الأقل في النتائج أولاً.', true); return; }
+  const recs = _vpCurrentList();
+  const chosen = recs.filter(function(r, i) { return boxes[i] && boxes[i].checked; });
+  const keys = _vpCart.map(_vpCartKey);
+  let added = 0;
+  chosen.forEach(function(r) {
+    const k = _vpCartKey(r);
+    if (keys.indexOf(k) === -1) { _vpCart.push(r); keys.push(k); added++; }
+  });
+  document.getElementById('vacprint-search').value = '';
+  document.getElementById('vacprint-from').value = '';
+  document.getElementById('vacprint-to').value = '';
+  renderVacationPrintList();
+  _vpUpdateCartUI();
+  showMsg(added ? ('✅ تمت إضافة ' + added + ' إجازة للطباعة') : '⚠️ الإجازات دي اتضافت قبل كده', added ? false : true);
 }
 function closeVacationPrint() {
   const ov = document.getElementById('vacprint-overlay');
@@ -1620,13 +1664,9 @@ function _vpPrintRecords(records, dateHint) {
   }, 600);
 }
 function doPrintVacations() {
-  const boxes = Array.prototype.slice.call(document.querySelectorAll('#vacprint-list input.vacprint-item'));
-  const anyChecked = boxes.some(function(b) { return b.checked; });
-  if (!anyChecked) { showMsg('اختر إجازة واحدة على الأقل للطباعة.', true); return; }
-  const recs = _vpCurrentList();
-  const chosen = recs.filter(function(r, i) { return boxes[i] && boxes[i].checked; });
+  if (!_vpCart.length) { showMsg('لا يوجد إجازات مضافة للطباعة — أضف إجازة واحدة على الأقل بالزر "➕ أضف المحدد".', true); return; }
   closeVacationPrint();
-  _vpPrintRecords(chosen);
+  _vpPrintRecords(_vpCart);
 }
 
 function saveTeaData() {
