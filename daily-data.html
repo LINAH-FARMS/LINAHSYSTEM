@@ -341,6 +341,7 @@ const KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZi
 var HEADERS = { 'apikey': KEY, 'Authorization': 'Bearer ' + KEY, 'Content-Type': 'application/json' };
 var employees = [];
 var _cloudSyncDeletions = [];
+var _ddCloudLoaded = false;
 try { var d = localStorage.getItem('dd_lineh_employees') || localStorage.getItem('lineh_employees'); if (d) employees = JSON.parse(d); } catch(e){}
 var dailyData = [];
 try { var dd = localStorage.getItem('linah_daily_data'); if (dd) dailyData = JSON.parse(dd); } catch(e){}
@@ -415,7 +416,7 @@ try { var sn = localStorage.getItem('dyn_septics'); if (sn) { septicNames = _cle
     dynamicVisitorTypes: 'ent:dynamicVisitorTypes',
     dynamicDepts: 'ent:dynamicDepts',
     roomsCapacity: 'ent:roomsCapacity',
-    syncDeletions: 'ent:syncDeletions'
+    syncDeletions: 'syncDeletions'
   };
   var entNames = Object.keys(ENT_IDS);
   var entTasks = entNames.map(function(name){
@@ -539,10 +540,15 @@ try { var sn = localStorage.getItem('dyn_septics'); if (sn) { septicNames = _cle
         var names = septicNames.length ? septicNames : ["بيارة محطة الفرز الجديدة قطاع 22","بيارة المطبخ","بيارة السكن الاداري","بيارة ق3","بيارة سكن نخالين 22","بيارة ق30","بيارة ق6","بيارة ق27","بيارة قطاع 25","بيارة قطاع 33","بيارة قطاع 24","بيارة البير الجديد","بيارة مبني الادارة","بيارة قطاع 27","بيارة قطاع 29","بيارة قطاع 30","بيارة قطاع 21","بيارة قطاع 1","بيارة قطاع 31","بيارة مجمع الحمامات الخارجيه"];
         dl.innerHTML = names.map(function(s){ return '<option value="' + s.replace(/"/g, '&quot;') + '">'; }).join('');
       }
-      dbg.textContent = '✅ تم تحميل ' + cnt + ' بيارة';
-      setTimeout(function(){ dbg.style.display = 'none'; }, 4000);
+      dbg.textContent = '✅ متصلة بالسحابة — القوة: ' + employees.length + ' موظف (منهم ' + employees.filter(function(e){ return e.status === 'P'; }).length + ' متواجد)';
+      _ddCloudLoaded = true;
+      setTimeout(function(){ dbg.style.display = 'none'; }, 5000);
     })
-    .catch(function(e){ dbg.textContent = '❌ فشل التحميل: ' + (e.message || e); });
+    .catch(function(e){
+      _ddCloudLoaded = true;
+      dbg.textContent = '⚠️ تعذر الاتصال بالسحابة — الأرقام الظاهرة من نسخة محفوظة وقد تكون قديمة. حدّث الصفحة للمحاولة مجدداً.';
+      dbg.style.color = '#e65100';
+    });
 })();
 
 // ─── Modal ───
@@ -589,7 +595,8 @@ function renderForceMobile() {
   var stats = document.getElementById('force-stats');
   var pCount = 0, npCount = 0;
   employees.forEach(function(e) { if (e.status === 'P') pCount++; else npCount++; });
-  stats.innerHTML =
+  var staleNote = _ddCloudLoaded ? '' : '<div style="padding:6px 8px;margin-bottom:6px;border-radius:8px;background:#fff3e0;color:#e65100;font-size:12px;font-weight:700;text-align:center;">⏳ جاري تحديث الأرقام من السحابة…</div>';
+  stats.innerHTML = staleNote +
     '<div style="flex:1;background:#fff;border:1px solid #c5cae9;border-radius:10px;padding:8px;text-align:center;"><div style="font-weight:800;font-size:18px;color:#3f51b5;">' + employees.length + '</div><div style="font-size:11px;color:#777;">إجمالي القوة</div></div>' +
     '<div style="flex:1;background:#fff;border:1px solid #c8e6c9;border-radius:10px;padding:8px;text-align:center;"><div style="font-weight:800;font-size:18px;color:#2e7d32;">' + pCount + '</div><div style="font-size:11px;color:#777;">🟢 متواجد</div></div>' +
     '<div style="flex:1;background:#fff;border:1px solid #ffcdd2;border-radius:10px;padding:8px;text-align:center;"><div style="font-weight:800;font-size:18px;color:#c62828;">' + npCount + '</div><div style="font-size:11px;color:#777;">🔴 غير متواجد</div></div>';
