@@ -530,21 +530,12 @@
         try { await pullWaterDocsFromCloud(true); } catch (e) { console.error('pullWaterDocsFromCloud:', e); }
       }
 
-      // ----------------- معالجة لاحقة (مثل الأصلية) -----------------
-      // إصلاح مصدر القراءة الموحد: أي "مستبعد" مطابق لموظف موجود فعلاً في
-      // القائمة المسحوبة (عاد رسمياً للسحابة) يُشطب من قائمة المستبعدين
-      // تلقائياً بدل شطبه من شاشة الموظفين — حتى لا تختفي قوة رسمية من
-      // متصفح واحد بينما باقي المتصفحات والسحابة تعرضها.
-      {
-        const _liveKeys = {};
-        (employees || []).forEach(function (e) { if (!e) return; const c = String(e.code || e.id || e.name || '').trim(); if (c) _liveKeys[c] = true; });
-        const _oldExcl = excludedEmployees || [];
-        const _newExcl = _oldExcl.filter(function (x) { if (!x) return false; return !(x.code && _liveKeys[String(x.code).trim()]); });
-        if (_newExcl.length !== _oldExcl.length) {
-          excludedEmployees = _newExcl;
-          _lsSet('excludedEmployees', JSON.stringify(excludedEmployees));
-        }
-      }
+      // ملاحظة: كان هنا "تنقية تلقائية" تشطب أي سجل استبعاد كودُه موجود في
+      // قائمة الموظفين المسحوبة — وكانت تمحو استبعادات حقيقية لأن المُستبعد
+      // يبقى كودُه موجوداً في النسخة السحابية لجدول الموظفين (أجهزة أخرى لم
+      // يصلها شاهد الحذف بعد). الاستبعاد/الاسترجاع يعمل الآن بالشواهد فقط
+      // عبر syncDeletions (زر الاستبعاد يسجل حذف الموظف وزر الاسترجاع يسجل
+      // حذف سجل المستبعد)، فلا حاجة لتنقية تلقائية تمحو القائمة.
       const _exclMap2 = {};
       (excludedEmployees || []).forEach(function (e) { _exclMap2[e.code || e.id || e.name] = true; });
       employees = employees.filter(function (e) { return !_exclMap2[e.code || e.id || e.name]; });
@@ -679,6 +670,17 @@
             const lv = getEntityVar('vacations');
             if (Array.isArray(lv) && Array.isArray(remoteData[k])) {
               setEntityVar('vacations', _mergeVacations(lv, remoteData[k], TIE_REMOTE, loadDelKeys[k] || {}));
+              return;
+            }
+          } catch (e) {}
+        }
+        if (k === 'excludedEmployees') {
+          // دمج اتحادي محمي: قائمة المستبعدين لا تنقص أبداً بسبب نسخة
+          // سحابية أصغر/أقدم — الإزالة الوحيدة عبر شاهد الحذف (زر استرجاع)
+          try {
+            const lex = getEntityVar('excludedEmployees');
+            if (Array.isArray(lex) && Array.isArray(remoteData[k])) {
+              setEntityVar('excludedEmployees', _mergeSyncElements(lex, remoteData[k], 'excludedEmployees', loadDelKeys['excludedEmployees'] || {}, TIE_REMOTE));
               return;
             }
           } catch (e) {}
