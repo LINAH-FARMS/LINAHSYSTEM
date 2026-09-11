@@ -74,16 +74,6 @@
         if (v && _isKilled(kind, v)) { arr.splice(i, 1); changed = true; }
       }
     });
-    // مصدر البيارات: سجلات بأي صيغة قريبة من اسم محذوف تُمسح حتى لا
-    // يعيد اكتشافها التلقائي إنشائها من جديد
-    try {
-      if (typeof septicRecords !== 'undefined' && Array.isArray(septicRecords)) {
-        for (let i = septicRecords.length - 1; i >= 0; i--) {
-          const s = septicRecords[i];
-          if (s && _isKilled('septic', s.name || s.sector)) { septicRecords.splice(i, 1); changed = true; }
-        }
-      }
-    } catch (e) {}
     // مصدر الإدارات: إدارة الموظف باسم محذوف (أو صيغة قريبة) تُفرَّغ
     try {
       if (typeof employees !== 'undefined' && Array.isArray(employees)) {

@@ -144,10 +144,6 @@
         var f4 = roomsCapacity.filter(function (r) { return !(r && (_killed('sectors', r.sector) || _killed('rooms', r.number))); });
         if (f4.length !== roomsCapacity.length) { roomsCapacity = f4; changed = true; }
       }
-      if (Array.isArray(septicRecords)) {
-        var f5 = septicRecords.filter(function (s) { return !(s && _killed('septics', s.name || s.sector)); });
-        if (f5.length !== septicRecords.length) { septicRecords = f5; changed = true; }
-      }
       // تفريغ حقول الموظفين المرتبطة بالمحذوف (بدون حذف الموظف نفسه)
       if (Array.isArray(employees)) {
         employees.forEach(function (e) {

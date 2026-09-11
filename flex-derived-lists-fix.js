@@ -144,15 +144,19 @@
       } else {
         wantNames = [];
         const seen = {};
-        const push = name => {
+        // من المصدر (السجلات الفعلية) لا يُطرد الاسم أبداً — وجود أنواع
+        // سجل حية دليل استخدام فعلي. قائمة المنع تمنع فقط الأسماء المخترعة
+        // أو اليدوية التي لا يوجد لها أي سجل (عناصر وهمية بلا بيانات).
+        const push = (name, fromSrc) => {
           if (typeof name !== 'string') return;
           const k = _norm(name);
-          if (!k || k.length < 2 || seen[k] || _isKilled(t, name)) return;
+          if (!k || k.length < 2 || seen[k]) return;
+          if (!fromSrc && _isKilled(t, name)) return;
           seen[k] = true;
           wantNames.push(name);
         };
-        srcArr.forEach(push);
-        (manual[t] || []).forEach(push);
+        srcArr.forEach(n => push(n, true));
+        (manual[t] || []).forEach(n => push(n, false));
         wantKey = wantNames.map(_norm).join('\u0001');
         c = _cacheT[t] = { rev, rawWant, wantKey, wantNames, rawCur: null, curKey: null };
       }
